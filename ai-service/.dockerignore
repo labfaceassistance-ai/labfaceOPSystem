@@ -1,0 +1,10 @@
+venv
+.git
+.env
+Dockerfile
+*.pyc
+__pycache__
+# packages/ (Removed so BuildKit --mount can see it)
+models
+downloads
+.cache

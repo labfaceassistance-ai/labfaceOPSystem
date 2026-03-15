@@ -1,0 +1,707 @@
+{
+    "project": "AI-Orchestra",
+    "version": "1.0",
+    "created": "2026-02-13T05:36:00Z",
+    "tasks": [
+        {
+            "id": "1.1",
+            "title": "Project Structure Setup",
+            "description": "Create directory structure and skeleton files for orchestrator, agents, docs, ui, scripts, ci, and tests",
+            "owner": "Developer",
+            "status": "in_progress",
+            "priority": "critical",
+            "effort_hours": 2,
+            "dependencies": [],
+            "artifacts": [
+                "Directory tree",
+                "README files"
+            ],
+            "acceptance_tests": [
+                "All directories exist",
+                "Each directory has README.md"
+            ]
+        },
+        {
+            "id": "1.2",
+            "title": "Architecture Design",
+            "description": "Design system architecture, data models, API contracts, and technology stack decisions",
+            "owner": "Architect",
+            "status": "pending",
+            "priority": "critical",
+            "effort_hours": 4,
+            "dependencies": [
+                "1.1"
+            ],
+            "artifacts": [
+                "docs/AI-Orchestra-Architecture.md",
+                "docs/api_spec.md",
+                "Mermaid diagrams"
+            ],
+            "acceptance_tests": [
+                "Architecture document complete",
+                "All components defined",
+                "API contracts specified",
+                "Reviewed and approved by PM"
+            ]
+        },
+        {
+            "id": "1.3",
+            "title": "Task Graph Definition",
+            "description": "Define complete task dependencies and execution order in tasks.json",
+            "owner": "PM",
+            "status": "complete",
+            "priority": "critical",
+            "effort_hours": 3,
+            "dependencies": [
+                "1.2"
+            ],
+            "artifacts": [
+                "docs/tasks.json"
+            ],
+            "acceptance_tests": [
+                "All tasks have clear owners",
+                "Dependencies are acyclic",
+                "Effort estimates provided"
+            ]
+        },
+        {
+            "id": "2.1",
+            "title": "FastAPI Orchestrator Skeleton",
+            "description": "Implement FastAPI app with core endpoints: /spawn, /task, /artifact, /status, /webhook",
+            "owner": "Developer",
+            "status": "pending",
+            "priority": "critical",
+            "effort_hours": 4,
+            "dependencies": [
+                "1.2"
+            ],
+            "artifacts": [
+                "orchestrator/app.py",
+                "orchestrator/models.py",
+                "tests/test_app.py"
+            ],
+            "acceptance_tests": [
+                "All endpoints respond with 200",
+                "OpenAPI schema generated",
+                "Unit tests pass"
+            ]
+        },
+        {
+            "id": "2.2",
+            "title": "Task Executor Implementation",
+            "description": "Implement task execution engine with queue management and worker processes",
+            "owner": "Developer",
+            "status": "pending",
+            "priority": "critical",
+            "effort_hours": 6,
+            "dependencies": [
+                "2.1"
+            ],
+            "artifacts": [
+                "orchestrator/executor.py",
+                "orchestrator/worker.py",
+                "tests/test_executor.py"
+            ],
+            "acceptance_tests": [
+                "Tasks execute in dependency order",
+                "Failed tasks retry with backoff",
+                "Worker pool scales correctly"
+            ]
+        },
+        {
+            "id": "2.3",
+            "title": "Docker Sandbox",
+            "description": "Create isolated Docker execution environment for safe task execution",
+            "owner": "Developer",
+            "status": "pending",
+            "priority": "high",
+            "effort_hours": 5,
+            "dependencies": [
+                "2.2"
+            ],
+            "artifacts": [
+                "orchestrator/docker_sandbox.py",
+                "orchestrator/Dockerfile.sandbox",
+                "tests/test_sandbox.py"
+            ],
+            "acceptance_tests": [
+                "Tasks run in isolated containers",
+                "Artifacts extracted successfully",
+                "Resource limits enforced",
+                "Network isolation verified"
+            ]
+        },
+        {
+            "id": "2.4",
+            "title": "Git Integration",
+            "description": "Implement Git operations: branch creation, commits, PR opening via GitHub API",
+            "owner": "Developer",
+            "status": "pending",
+            "priority": "critical",
+            "effort_hours": 4,
+            "dependencies": [
+                "2.3"
+            ],
+            "artifacts": [
+                "orchestrator/git_ops.py",
+                "tests/test_git_ops.py"
+            ],
+            "acceptance_tests": [
+                "Can create branches programmatically",
+                "Commits include proper messages",
+                "PRs created with description and labels"
+            ]
+        },
+        {
+            "id": "3.1",
+            "title": "Agent Role Definitions",
+            "description": "Define capabilities, constraints, and interfaces for each agent type",
+            "owner": "Architect",
+            "status": "pending",
+            "priority": "critical",
+            "effort_hours": 3,
+            "dependencies": [
+                "1.2"
+            ],
+            "artifacts": [
+                "agents/PM.md",
+                "agents/ARCHITECT.md",
+                "agents/DEVELOPER.md",
+                "agents/QA.md",
+                "agents/REVIEWER.md",
+                "agents/PLANNER.md"
+            ],
+            "acceptance_tests": [
+                "Each role has clear responsibilities",
+                "No overlapping responsibilities",
+                "Input/output schemas defined"
+            ]
+        },
+        {
+            "id": "3.2",
+            "title": "Prompt Templates",
+            "description": "Create structured prompt templates for each agent with context injection points",
+            "owner": "PM",
+            "status": "pending",
+            "priority": "high",
+            "effort_hours": 4,
+            "dependencies": [
+                "3.1"
+            ],
+            "artifacts": [
+                "agents/prompt_templates/pm_template.md",
+                "agents/prompt_templates/architect_template.md",
+                "agents/prompt_templates/developer_template.md",
+                "agents/prompt_templates/qa_template.md",
+                "agents/prompt_templates/reviewer_template.md",
+                "agents/prompt_templates/planner_template.md"
+            ],
+            "acceptance_tests": [
+                "Templates include context variables",
+                "Output format specified",
+                "Examples provided"
+            ]
+        },
+        {
+            "id": "3.3",
+            "title": "Agent Spawning Logic",
+            "description": "Implement agent instantiation and lifecycle management",
+            "owner": "Developer",
+            "status": "pending",
+            "priority": "critical",
+            "effort_hours": 5,
+            "dependencies": [
+                "3.2",
+                "2.1"
+            ],
+            "artifacts": [
+                "orchestrator/agent_manager.py",
+                "tests/test_agent_manager.py"
+            ],
+            "acceptance_tests": [
+                "Agents spawn with correct prompts",
+                "Agents receive and acknowledge tasks",
+                "Agent status tracked correctly"
+            ]
+        },
+        {
+            "id": "3.4",
+            "title": "State Management",
+            "description": "Implement persistent state tracking for agents and tasks",
+            "owner": "Developer",
+            "status": "pending",
+            "priority": "high",
+            "effort_hours": 4,
+            "dependencies": [
+                "3.3"
+            ],
+            "artifacts": [
+                "orchestrator/state_manager.py",
+                "orchestrator/db_schema.sql",
+                "tests/test_state.py"
+            ],
+            "acceptance_tests": [
+                "State persists across restarts",
+                "State queryable via API",
+                "Concurrent updates handled safely"
+            ]
+        },
+        {
+            "id": "4.1",
+            "title": "GitHub API Integration",
+            "description": "Full GitHub integration for PR management, reviews, and status checks",
+            "owner": "Developer",
+            "status": "pending",
+            "priority": "critical",
+            "effort_hours": 5,
+            "dependencies": [
+                "2.4"
+            ],
+            "artifacts": [
+                "orchestrator/github_client.py",
+                "tests/test_github_client.py"
+            ],
+            "acceptance_tests": [
+                "Can create and update PRs",
+                "Can add review comments",
+                "Status checks update correctly",
+                "Rate limiting handled"
+            ]
+        },
+        {
+            "id": "4.2",
+            "title": "Headless Browser Testing",
+            "description": "Integrate Puppeteer/Playwright for automated UI testing and screenshots",
+            "owner": "Developer",
+            "status": "pending",
+            "priority": "medium",
+            "effort_hours": 6,
+            "dependencies": [
+                "2.3"
+            ],
+            "artifacts": [
+                "scripts/browser_tests.py",
+                "scripts/screenshot_utils.py",
+                "tests/test_browser.py"
+            ],
+            "acceptance_tests": [
+                "Can navigate to pages",
+                "Screenshots captured correctly",
+                "Element validation works",
+                "Runs in headless mode"
+            ]
+        },
+        {
+            "id": "4.3",
+            "title": "Benchmark Scripts",
+            "description": "Create performance benchmarks for face detection pipeline",
+            "owner": "Developer",
+            "status": "pending",
+            "priority": "high",
+            "effort_hours": 5,
+            "dependencies": [],
+            "artifacts": [
+                "scripts/benchmarks/run_bench.py",
+                "scripts/benchmarks/mock_bench.py",
+                "scripts/benchmarks/sample_results.json"
+            ],
+            "acceptance_tests": [
+                "Measures inference latency",
+                "Reports FPS for 720p/1080p",
+                "GPU utilization tracked",
+                "Mock mode available if no GPU"
+            ]
+        },
+        {
+            "id": "4.4",
+            "title": "CI/CD Workflow",
+            "description": "Create GitHub Actions workflow for automated testing and benchmarks",
+            "owner": "Developer",
+            "status": "pending",
+            "priority": "high",
+            "effort_hours": 4,
+            "dependencies": [
+                "4.3"
+            ],
+            "artifacts": [
+                "ci/ci.yml",
+                ".github/workflows/orchestra-ci.yml"
+            ],
+            "acceptance_tests": [
+                "Workflow triggers on PR",
+                "Runs linter and tests",
+                "Executes smoke benchmark",
+                "Reports results to PR"
+            ]
+        },
+        {
+            "id": "5.1",
+            "title": "React Dashboard Setup",
+            "description": "Initialize React app with routing and state management",
+            "owner": "Developer",
+            "status": "pending",
+            "priority": "medium",
+            "effort_hours": 2,
+            "dependencies": [],
+            "artifacts": [
+                "ui/package.json",
+                "ui/src/App.tsx",
+                "ui/README.md"
+            ],
+            "acceptance_tests": [
+                "App runs on localhost:3000",
+                "Routing configured",
+                "API client setup"
+            ]
+        },
+        {
+            "id": "5.2",
+            "title": "Agent Status Display",
+            "description": "Show active agents, their tasks, and current status in real-time",
+            "owner": "Developer",
+            "status": "pending",
+            "priority": "medium",
+            "effort_hours": 4,
+            "dependencies": [
+                "5.1",
+                "3.4"
+            ],
+            "artifacts": [
+                "ui/src/components/AgentStatus.tsx",
+                "ui/src/hooks/useAgentStatus.ts"
+            ],
+            "acceptance_tests": [
+                "Displays all active agents",
+                "Updates in real-time",
+                "Shows task progress"
+            ]
+        },
+        {
+            "id": "5.3",
+            "title": "Task Graph Visualization",
+            "description": "Interactive task dependency graph with progress indicators",
+            "owner": "Developer",
+            "status": "pending",
+            "priority": "medium",
+            "effort_hours": 5,
+            "dependencies": [
+                "5.2"
+            ],
+            "artifacts": [
+                "ui/src/components/TaskGraph.tsx"
+            ],
+            "acceptance_tests": [
+                "Shows task dependencies",
+                "Highlights active tasks",
+                "Interactive (zoom, pan)"
+            ]
+        },
+        {
+            "id": "5.4",
+            "title": "Artifact Viewer",
+            "description": "Display code diffs, logs, screenshots, and test results",
+            "owner": "Developer",
+            "status": "pending",
+            "priority": "medium",
+            "effort_hours": 4,
+            "dependencies": [
+                "5.3"
+            ],
+            "artifacts": [
+                "ui/src/components/ArtifactViewer.tsx"
+            ],
+            "acceptance_tests": [
+                "Renders diffs with syntax highlighting",
+                "Displays images and logs",
+                "Downloadable artifacts"
+            ]
+        },
+        {
+            "id": "5.5",
+            "title": "Anti-Gravity Floating UI",
+            "description": "Implement draggable, floating panel interface (optional)",
+            "owner": "Developer",
+            "status": "pending",
+            "priority": "low",
+            "effort_hours": 6,
+            "dependencies": [
+                "5.4"
+            ],
+            "artifacts": [
+                "ui/src/components/FloatingPanel.tsx"
+            ],
+            "acceptance_tests": [
+                "Panels are draggable",
+                "Panels resize and minimize",
+                "State persists"
+            ]
+        },
+        {
+            "id": "6.1",
+            "title": "Unit Tests",
+            "description": "Write unit tests for orchestrator and agent components (70% coverage target)",
+            "owner": "QA",
+            "status": "pending",
+            "priority": "high",
+            "effort_hours": 6,
+            "dependencies": [
+                "2.1",
+                "3.1"
+            ],
+            "artifacts": [
+                "tests/test_orchestrator.py",
+                "tests/test_agents.py",
+                "reports/coverage_report.html"
+            ],
+            "acceptance_tests": [
+                "All tests pass",
+                "Coverage >= 70%",
+                "No flaky tests"
+            ]
+        },
+        {
+            "id": "6.2",
+            "title": "Integration Tests",
+            "description": "Test end-to-end agent workflows (PM→Architect→Developer→QA→Reviewer)",
+            "owner": "QA",
+            "status": "pending",
+            "priority": "critical",
+            "effort_hours": 5,
+            "dependencies": [
+                "6.1",
+                "4.1"
+            ],
+            "artifacts": [
+                "tests/test_integration.py",
+                "tests/fixtures/sample_flow.json"
+            ],
+            "acceptance_tests": [
+                "Full workflow completes successfully",
+                "Artifacts generated at each step",
+                "PR created with correct content"
+            ]
+        },
+        {
+            "id": "6.3",
+            "title": "Benchmark Execution",
+            "description": "Run performance benchmarks and collect metrics",
+            "owner": "QA",
+            "status": "pending",
+            "priority": "high",
+            "effort_hours": 3,
+            "dependencies": [
+                "4.3"
+            ],
+            "artifacts": [
+                "reports/benchmark_results.json",
+                "reports/benchmark_report.md"
+            ],
+            "acceptance_tests": [
+                "Benchmarks complete without errors",
+                "Metrics within expected ranges",
+                "Report includes all required metrics"
+            ]
+        },
+        {
+            "id": "6.4",
+            "title": "CI Validation",
+            "description": "Verify CI pipeline executes correctly on PR",
+            "owner": "QA",
+            "status": "pending",
+            "priority": "high",
+            "effort_hours": 2,
+            "dependencies": [
+                "4.4",
+                "6.1"
+            ],
+            "artifacts": [
+                "reports/ci_report.md",
+                "GitHub Actions logs"
+            ],
+            "acceptance_tests": [
+                "All CI checks pass",
+                "Logs accessible and readable",
+                "Status reported to PR"
+            ]
+        },
+        {
+            "id": "6.5",
+            "title": "Code Review",
+            "description": "Static analysis, security scan, and best practices check",
+            "owner": "Reviewer",
+            "status": "pending",
+            "priority": "high",
+            "effort_hours": 4,
+            "dependencies": [
+                "2.1",
+                "3.1",
+                "4.1"
+            ],
+            "artifacts": [
+                "docs/review_report.md",
+                "reports/static_analysis.txt"
+            ],
+            "acceptance_tests": [
+                "No critical issues found",
+                "Security scan passes",
+                "Type annotations present",
+                "Recommendations documented"
+            ]
+        },
+        {
+            "id": "7.1",
+            "title": "Architecture Documentation",
+            "description": "Complete architecture docs with deployment instructions and diagrams",
+            "owner": "Architect",
+            "status": "pending",
+            "priority": "high",
+            "effort_hours": 3,
+            "dependencies": [
+                "6.2"
+            ],
+            "artifacts": [
+                "docs/AI-Orchestra-Architecture.md"
+            ],
+            "acceptance_tests": [
+                "All components documented",
+                "Diagrams included",
+                "Deployment steps clear",
+                "Examples provided"
+            ]
+        },
+        {
+            "id": "7.2",
+            "title": "API Specification",
+            "description": "OpenAPI spec for orchestrator endpoints with examples",
+            "owner": "Architect",
+            "status": "pending",
+            "priority": "medium",
+            "effort_hours": 2,
+            "dependencies": [
+                "2.1"
+            ],
+            "artifacts": [
+                "docs/api_spec.md",
+                "orchestrator/openapi.json"
+            ],
+            "acceptance_tests": [
+                "Spec validates against OpenAPI 3.0",
+                "All endpoints documented",
+                "Request/response examples included"
+            ]
+        },
+        {
+            "id": "7.3",
+            "title": "Deployment Scripts",
+            "description": "Create automated deployment scripts for orchestrator and UI",
+            "owner": "Developer",
+            "status": "pending",
+            "priority": "high",
+            "effort_hours": 3,
+            "dependencies": [
+                "2.1",
+                "5.1"
+            ],
+            "artifacts": [
+                "deploy.sh",
+                "docker-compose.orchestra.yml",
+                "ui/deploy.sh"
+            ],
+            "acceptance_tests": [
+                "Script deploys successfully",
+                "Services start and respond",
+                "Environment variables documented"
+            ]
+        },
+        {
+            "id": "7.4",
+            "title": "Release Notes",
+            "description": "Summarize changes, artifacts, known issues, and next steps",
+            "owner": "PM",
+            "status": "pending",
+            "priority": "critical",
+            "effort_hours": 2,
+            "dependencies": [
+                "7.1",
+                "7.2",
+                "7.3"
+            ],
+            "artifacts": [
+                "RELEASE_NOTES.md"
+            ],
+            "acceptance_tests": [
+                "All sections complete",
+                "Deployment instructions clear",
+                "Known issues documented",
+                "Next steps prioritized"
+            ]
+        },
+        {
+            "id": "7.5",
+            "title": "PR Creation",
+            "description": "Create PR with all artifacts, screenshots, and test results",
+            "owner": "Developer",
+            "status": "pending",
+            "priority": "critical",
+            "effort_hours": 2,
+            "dependencies": [
+                "7.4"
+            ],
+            "artifacts": [
+                "GitHub PR",
+                "screenshots/demo_flow.png",
+                "screenshots/dashboard.png"
+            ],
+            "acceptance_tests": [
+                "PR created successfully",
+                "All artifacts attached",
+                "CI passes",
+                "Ready for review"
+            ]
+        }
+    ],
+    "milestones": [
+        {
+            "name": "MVP Complete",
+            "tasks": [
+                "2.1",
+                "2.2",
+                "2.3",
+                "2.4",
+                "3.1",
+                "3.2",
+                "3.3",
+                "4.1",
+                "6.2"
+            ],
+            "target_date": "2026-02-17"
+        },
+        {
+            "name": "Full Feature Set",
+            "tasks": [
+                "3.4",
+                "4.3",
+                "4.4",
+                "5.1",
+                "5.2",
+                "5.3"
+            ],
+            "target_date": "2026-02-20"
+        },
+        {
+            "name": "Production Ready",
+            "tasks": [
+                "6.1",
+                "6.3",
+                "6.4",
+                "6.5",
+                "7.1",
+                "7.2",
+                "7.3",
+                "7.4",
+                "7.5"
+            ],
+            "target_date": "2026-02-22"
+        }
+    ]
+}

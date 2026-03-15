@@ -8,3 +8,9 @@ backend/uploads/
 .env.*
 
 *.log
+
+ai-service/packages/
+ai-service/models/__pycache__/
+ai-service/services/__pycache__/
+
+.vscode/
