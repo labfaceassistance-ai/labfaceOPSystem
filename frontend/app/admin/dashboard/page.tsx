@@ -7,13 +7,12 @@ import { getToken, getUser, API_URL, getBackendUrl, logout, getProfilePictureUrl
 import ConfirmModal from '@/components/ConfirmModal';
 import { User, Shield, Users, Clock, CheckCircle, XCircle, AlertCircle, LogOut, UserCheck, Search, Filter, Camera, History, AlertTriangle, ExternalLink, Briefcase, RefreshCw, Activity, GraduationCap, LayoutDashboard, Eye, Home, Monitor } from 'lucide-react';
 import Navbar from '@/components/Navbar';
-import { DashboardSkeleton } from '@/components/SkeletonLoaders';
 import SessionTimeout from '@/components/SessionTimeout';
 import BulkActions from '@/components/BulkActions';
+import SmartSearch from '@/components/SmartSearch';
 import VideoFeed from '@/components/VideoFeed';
 import AcademicSettingsTab from '@/components/AcademicSettingsTab';
 import DeletionRequestsTab from '@/components/DeletionRequestsTab';
-import { useSwipe } from '@/hooks/useSwipe';
 
 interface PendingProfessor {
     id: number;
@@ -456,7 +455,7 @@ export default function AdminDashboard() {
         }
     };
 
-    useSwipe(handleSwipeLeft, handleSwipeRight);
+    // useSwipe removed — hook was deleted in Phase 2 cleanup
 
     const handleLogout = () => {
         logout('/admin/login');
@@ -468,7 +467,11 @@ export default function AdminDashboard() {
     };
 
     if (loading) {
-        return <DashboardSkeleton />;
+        return (
+            <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+                <div className="text-slate-400 animate-pulse">Loading dashboard...</div>
+            </div>
+        );
     }
 
     const totalStudents = stats?.userStats

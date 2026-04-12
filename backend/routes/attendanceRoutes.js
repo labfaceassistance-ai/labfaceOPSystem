@@ -3,6 +3,7 @@ const pool = require('../config/db');
 const router = express.Router();
 const { authenticateToken } = require('../middleware/auth');
 const warningService = require('../services/attendanceWarningService');
+const conflictResolver = require('../services/conflictResolver');
 const multer = require('multer');
 const fs = require('fs');
 const path = require('path');
@@ -704,6 +705,17 @@ router.post('/mark', async (req, res) => {
 
         if (diffMins > 30) status = 'Absent';
         else if (diffMins > lateThreshold) status = 'Late';
+
+        // Check for duplicate attendance within 5-minute window
+        const isDuplicate = await conflictResolver.checkDuplicateAttendance(
+            studentId, sessionId, now.getTime()
+        );
+        if (isDuplicate) {
+            return res.status(409).json({
+                success: false,
+                message: 'Duplicate attendance detected within 5-minute window'
+            });
+        }
 
         // Insert MAIN attendance log
         const [result] = await pool.query(

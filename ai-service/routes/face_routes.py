@@ -371,28 +371,49 @@ async def detect_emotion(data: dict):
 async def classroom_mood(data: dict):
     return {"average_mood": "positive", "engagement_score": 0.90}
 
-# --- ANALYTICS ROUTES (MOCK) ---
+# --- ANALYTICS ROUTES ---
 @router.get("/status")
 async def get_status():
     return {"status": "online", "gpu": False, "models_loaded": True}
 
+try:
+    from services.predictive_analytics import predictive_analytics
+    ANALYTICS_AVAILABLE = True
+except ImportError as e:
+    print(f"⚠️  Predictive analytics not available: {e}")
+    ANALYTICS_AVAILABLE = False
+
 @router.get("/student-insights/{student_id}")
-async def get_student_insights(student_id: int):
-    return {
+async def get_student_insights(student_id: int, request: Request):
+    base = {
+        "student_id": student_id,
         "attendance_rate": 95,
         "punctuality": "High",
         "risk_level": "Low",
         "engagement": "Active"
     }
+    return base
 
 @router.post("/predict/attendance")
 async def predict_attendance(data: dict):
-    return {"predicted_rate": 98.5, "confidence": 0.92}
+    if not ANALYTICS_AVAILABLE:
+        return {"predicted_rate": 85.0, "confidence": 0.60, "fallback": True}
+    forecast = predictive_analytics.forecast_attendance(
+        data.get("historical_data", []),
+        data.get("days_ahead", 7)
+    )
+    return {"forecast": forecast, "days_ahead": data.get("days_ahead", 7)}
 
 @router.post("/predict/risk")
 async def predict_risk(data: dict):
-    return {"risk_score": 0.1, "risk_level": "Low", "factors": []}
+    if not ANALYTICS_AVAILABLE:
+        return {"risk_score": 0.1, "risk_level": "Low", "factors": [], "fallback": True}
+    result = predictive_analytics.calculate_risk_score(data)
+    return result
 
 @router.post("/predict/success")
 async def predict_success(data: dict):
-    return {"success_probability": 0.95, "factors": ["High Attendance", "Consistent Punctuality"]}
+    if not ANALYTICS_AVAILABLE:
+        return {"success_probability": 0.85, "factors": [], "fallback": True}
+    result = predictive_analytics.predict_student_success(data)
+    return result
