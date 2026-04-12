@@ -10,7 +10,6 @@ COPY services/ ./services/
 COPY utils/ ./utils/
 COPY main.py .
 COPY requirements.txt .
-COPY requirements_light.txt .
 COPY download_models.py .
 
 EXPOSE 8000
