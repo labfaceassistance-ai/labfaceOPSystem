@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import AttendanceInsights from '../../../components/AttendanceInsights';
-import { DashboardSkeleton } from '../../../components/SkeletonLoaders';
 import Navbar from '../../../components/Navbar';
 
 import { getUser } from '../../../utils/auth';
@@ -20,7 +19,11 @@ export default function AIInsightsPage() {
         setLoading(false);
     }, []);
 
-    if (loading) return <DashboardSkeleton />;
+    if (loading) return (
+        <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+            <div className="text-slate-400 animate-pulse">Loading insights...</div>
+        </div>
+    );
 
     return (
         <div className="min-h-screen bg-slate-950">

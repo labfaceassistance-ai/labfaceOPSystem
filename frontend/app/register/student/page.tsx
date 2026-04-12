@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 import { useState, useRef, useEffect } from 'react';
 import Navbar from '../../../components/Navbar';
 import axios from 'axios';
@@ -6,7 +6,6 @@ import { User, Mail, Lock, ShieldCheck, Camera, Upload, X, CheckCircle, AlertCir
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { getToken, getUser, fetchCurrentUser } from '../../../utils/auth';
-import { useMediaQuery } from '../../../hooks/useMediaQuery';
 import { removeBackgroundHybrid } from '../../../lib/background-removal';
 import ConsentStep, { CONSENT_VERSION } from '../../../components/ConsentStep';
 import { useToast } from '../../../components/Toast';
@@ -297,7 +296,7 @@ export default function StudentRegisterPage() {
         return result;
     };
 
-    const isDesktop = useMediaQuery('(min-width: 768px)');
+    const isDesktop = typeof window !== 'undefined' ? window.innerWidth >= 768 : true;
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         let value = e.target.value;

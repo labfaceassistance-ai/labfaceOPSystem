@@ -1,7 +1,6 @@
 "use client";
 import { useState, useEffect, useRef } from 'react';
 import Navbar from '../../../components/Navbar';
-import { useSwipe } from '../../../hooks/useSwipe';
 import Link from 'next/link';
 import { User, Mail, MapPin, Save, Camera, Lock, Shield, Image as ImageIcon, CheckCircle, AlertCircle, X, Eye, EyeOff, ArrowLeft, FileText, AlertTriangle, CheckCircle2, XCircle, Download, Trash2, MessageSquare, ExternalLink } from 'lucide-react';
 import axios from 'axios';
@@ -109,23 +108,7 @@ export default function ProfessorProfile() {
         setIsEditing(false);
     };
 
-    useSwipe(
-        () => {
-            const currentIndex = profileTabs.indexOf(activeTab);
-            const nextIndex = Math.min(currentIndex + 1, profileTabs.length - 1);
-            if (nextIndex !== currentIndex) {
-                handleTabChange(profileTabs[nextIndex]);
-            }
-        },
-        () => {
-            const currentIndex = profileTabs.indexOf(activeTab);
-            const prevIndex = Math.max(currentIndex - 1, 0);
-            if (prevIndex !== currentIndex) {
-                handleTabChange(profileTabs[prevIndex]);
-            }
-        },
-        50
-    );
+    // useSwipe removed — hook deleted in Phase 2 cleanup; tab buttons remain fully functional
 
     const fetchLatestUserData = async (userId: number) => {
         try {

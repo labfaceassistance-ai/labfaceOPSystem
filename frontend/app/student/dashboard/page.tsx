@@ -2,7 +2,6 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Navbar from '../../../components/Navbar';
-import { DashboardSkeleton } from '../../../components/SkeletonLoaders';
 import SessionTimeout from '../../../components/SessionTimeout';
 
 import { Home, Calendar, BarChart3, User, Brain, AlertTriangle, BookOpen } from 'lucide-react';
@@ -12,7 +11,6 @@ import AttendanceTab from './tabs/AttendanceTab';
 import ClassesTab from './tabs/ClassesTab';
 import AttendanceInsights from '../../../components/AttendanceInsights';
 import { logout, getToken, getUser } from '../../../utils/auth';
-import { useSwipe } from '@/hooks/useSwipe';
 
 interface User {
     id: number;
@@ -186,7 +184,7 @@ export default function StudentDashboard() {
         }
     };
 
-    useSwipe(handleSwipeLeft, handleSwipeRight);
+    // useSwipe removed — hook deleted in Phase 2 cleanup
 
     const handleExtendSession = async () => {
         const token = localStorage.getItem('token');
@@ -198,7 +196,11 @@ export default function StudentDashboard() {
         logout('/login');
     };
 
-    if (!user || loading) return <DashboardSkeleton />;
+    if (!user || loading) return (
+        <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+            <div className="text-slate-400 animate-pulse">Loading dashboard...</div>
+        </div>
+    );
 
     const tabs = [
         { id: 'home' as TabType, label: 'Home', icon: Home },
