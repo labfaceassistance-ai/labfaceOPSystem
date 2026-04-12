@@ -28,7 +28,6 @@ export default function AuthGuard({ children, allowedRoles }: AuthGuardProps) {
             }
         }
 
-        // eslint-disable-next-line react-hooks/set-state-in-effect
         setAuthorized(true);
     }, [router, allowedRoles]);
 
