@@ -3,10 +3,10 @@ const nextConfig = {
     reactStrictMode: true,
     swcMinify: true,
     // Disable standalone and experimental features for better dev stability
-    // output: 'standalone', 
+    // output: 'standalone',
     // Force restart timestamp: 2026-02-06T14:55:00
 
-    // Experimental optimizations - Disabled for now to debug 500 error
+    // Experimental optimizations
     experimental: {
         // optimizeCss: true,
         optimizePackageImports: ['lucide-react'],
@@ -14,16 +14,13 @@ const nextConfig = {
 
     // Image optimization
     images: {
-        domains: ['labface.site', 'www.labface.site'],
+        domains: ['labface.site', 'www.labface.site', 'localhost'],
         formats: ['image/webp', 'image/avif'],
     },
 
-    eslint: {
-        ignoreDuringBuilds: true,
-    },
-    typescript: {
-        ignoreBuildErrors: true,
-    },
+    // ESLint and TypeScript checks restored — fix surfaced errors before deploying
+    // eslint.ignoreDuringBuilds: removed
+    // typescript.ignoreBuildErrors: removed
 
     webpack: (config) => {
         config.watchOptions = {

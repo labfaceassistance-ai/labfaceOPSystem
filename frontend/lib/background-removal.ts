@@ -1,4 +1,3 @@
-// import removeBackground from '@imgly/background-removal';
 import axios from 'axios';
 
 /**
