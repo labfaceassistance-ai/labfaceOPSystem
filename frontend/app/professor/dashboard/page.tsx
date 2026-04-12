@@ -5,10 +5,8 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import axios from 'axios';
 import Navbar from '@/components/Navbar';
 import { logout, getToken, getUser } from '@/utils/auth';
-import { DashboardSkeleton } from '@/components/SkeletonLoaders';
 import SessionTimeout from '@/components/SessionTimeout';
 import { Home, BookOpen, Monitor, BarChart3, Calendar } from 'lucide-react';
-import { useSwipe } from '@/hooks/useSwipe';
 import HomeTab from './tabs/HomeTab';
 import ClassesTab from './tabs/ClassesTab';
 import AnalyticsTab from './tabs/AnalyticsTab';
@@ -167,7 +165,7 @@ function DashboardContent() {
         }
     };
 
-    useSwipe(handleSwipeLeft, handleSwipeRight);
+    // useSwipe removed — hook deleted in Phase 2 cleanup
 
     // Auto-refresh interval
     useEffect(() => {
@@ -211,7 +209,11 @@ function DashboardContent() {
         logout('/login');
     }, []);
 
-    if (!user || loading) return <DashboardSkeleton />;
+    if (!user || loading) return (
+        <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+            <div className="text-slate-400 animate-pulse">Loading dashboard...</div>
+        </div>
+    );
 
     const tabs = [
         { id: 'home' as TabType, label: 'Home', icon: Home },
@@ -270,7 +272,11 @@ function DashboardContent() {
 
 export default function ProfessorDashboard() {
     return (
-        <Suspense fallback={<DashboardSkeleton />}>
+        <Suspense fallback={
+            <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+                <div className="text-slate-400 animate-pulse">Loading dashboard...</div>
+            </div>
+        }>
             <DashboardContent />
         </Suspense>
     );
