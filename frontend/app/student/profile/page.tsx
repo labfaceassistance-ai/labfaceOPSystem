@@ -2,7 +2,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { getToken, getUser, API_URL, createAuthAxios, getProfilePictureUrl, logout } from '../../../utils/auth';
 import Navbar from '../../../components/Navbar';
-import { useSwipe } from '../../../hooks/useSwipe';
 import Link from 'next/link';
 import { User, Mail, MapPin, Save, Camera, Lock, Shield, Image as ImageIcon, ArrowLeft, Eye, EyeOff, CheckCircle, AlertCircle, X, Upload, RefreshCw, Check, FileText, AlertTriangle, CheckCircle2, XCircle, Download, Trash2, Undo2, Edit, MessageSquare, ExternalLink } from 'lucide-react';
 import axios from 'axios';
@@ -190,23 +189,7 @@ export default function StudentProfile() {
         setIsEditing(false);
     };
 
-    useSwipe(
-        () => {
-            const currentIndex = profileTabs.indexOf(activeTab);
-            const nextIndex = Math.min(currentIndex + 1, profileTabs.length - 1);
-            if (nextIndex !== currentIndex) {
-                handleTabChange(profileTabs[nextIndex]);
-            }
-        },
-        () => {
-            const currentIndex = profileTabs.indexOf(activeTab);
-            const prevIndex = Math.max(currentIndex - 1, 0);
-            if (prevIndex !== currentIndex) {
-                handleTabChange(profileTabs[prevIndex]);
-            }
-        },
-        50
-    );
+    // useSwipe removed — hook deleted in Phase 2 cleanup; tab buttons remain fully functional
 
     const fetchLatestUserData = async (userId: number) => {
         try {
