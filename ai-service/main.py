@@ -55,8 +55,10 @@ face_enhancer = None  # GFPGAN super-resolution
 TEST_MODE = os.getenv("TEST_MODE", "false").lower() == "true"  # Enable test pattern for debugging
 print(f"🔧 DEBUG: TEST_MODE env var = '{os.getenv('TEST_MODE', 'NOT_SET')}'")
 print(f"🔧 DEBUG: TEST_MODE enabled = {TEST_MODE}")
-RTSP_URL_1 = os.getenv("RTSP_URL_1", "rtsp://admin:glason27@192.168.1.220:554/cam/realmonitor?channel=1&subtype=1")
-RTSP_URL_2 = os.getenv("RTSP_URL_2", "rtsp://admin:glason27@192.168.1.220:554/cam/realmonitor?channel=2&subtype=1")
+RTSP_URL_1 = os.getenv("RTSP_URL_1", "")
+RTSP_URL_2 = os.getenv("RTSP_URL_2", "")
+if not RTSP_URL_1 or not RTSP_URL_2:
+    print("⚠️  WARNING: RTSP_URL_1 / RTSP_URL_2 not set in environment. Cameras will not connect.")
 
 BACKEND_URL = os.getenv("BACKEND_URL", "http://backend:5000")
 DB_HOST = os.getenv("DB_HOST", "mariadb")
@@ -256,7 +258,8 @@ async def capture_worker(rtsp_url, camera_id):
             # Still update latest_frames for AI to have freshest data
             try:
                 latest_frames[camera_id] = cv2.resize(frame, (1280, 720))
-            except:
+            except Exception as e:
+                logger.warning(f"[CAM {camera_id}] Frame resize (FPS cap) failed: {e}")
                 latest_frames[camera_id] = frame
             await asyncio.sleep(0.01)
             continue
@@ -267,7 +270,8 @@ async def capture_worker(rtsp_url, camera_id):
         # Upgraded to 720p (1280x720) for better far-distance detail
         try:
             processed_frame = cv2.resize(frame, (1280, 720))
-        except:
+        except Exception as e:
+            logger.warning(f"[CAM {camera_id}] Frame resize failed: {e}")
             processed_frame = frame
 
         # Update Latest Frame (Atomic assignment)
@@ -288,8 +292,8 @@ async def capture_worker(rtsp_url, camera_id):
                 cv2.rectangle(display_frame, (x, y-30), (x+w, y), color, -1)
                 cv2.putText(display_frame, label, (x+5, y-5), 
                            cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
-            except:
-                pass
+            except Exception as e:
+                logger.warning(f"[CAM {camera_id}] Detection draw error: {e}")
 
         # Encode (Heavyish op, but better than AI)
         # Lower quality from 65 to 55 for better streaming performance
@@ -538,7 +542,8 @@ async def process_face(face, camera_id, frame):
                 if score > adaptive_threshold and score > best_score:
                     best_score = score
                     best_match = student
-            except:
+            except Exception as e:
+                logger.warning(f"[FaceMatch] Embedding comparison failed for {student.get('first_name', '?')}: {e}")
                 continue
             
     # Result Data
@@ -583,27 +588,31 @@ async def handle_attendance_event(student_id, action, camera_id, frame, bbox):
         # Crop & Upload
         x, y, w, h = bbox
         face_crop = frame[max(0, y):min(frame.shape[0], y+h), max(0, x):min(frame.shape[1], x+w)]
-        if face_crop.size == 0: return
-        
-        if face_crop.size == 0: return
-        
+        if face_crop.size == 0:
+            logger.warning(f"[Attendance] Empty face crop for student {student_id}, skipping snapshot")
+            return
+
         # Pass session object directly to helper
         snapshot_url = await save_snapshot_to_minio(face_crop, student_id, session)
-        
-        # Mark API
-        response = requests.post(
-            f"{BACKEND_URL}/api/attendance/mark",
-            json={
-                "sessionId": session['id'],
-                "studentId": student_id,
-                "direction": action,
-                "snapshotUrl": snapshot_url
-            },
-            timeout=5
+
+        # Mark API — use executor to avoid blocking the asyncio event loop
+        loop = asyncio.get_event_loop()
+        response = await loop.run_in_executor(
+            None,
+            lambda: requests.post(
+                f"{BACKEND_URL}/api/attendance/mark",
+                json={
+                    "sessionId": session['id'],
+                    "studentId": student_id,
+                    "direction": action,
+                    "snapshotUrl": snapshot_url
+                },
+                timeout=5
+            )
         )
         print(f"[Attendance] API response: {response.status_code}")
     except Exception as e:
-        print(f"Attendance event error: {e}")
+        logger.error(f"[Attendance] Event error for student {student_id}: {e}")
         import traceback
         traceback.print_exc()
 

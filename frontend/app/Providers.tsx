@@ -1,10 +1,8 @@
 'use client';
 import { useEffect } from 'react';
-import PageTransition from "../components/PageTransition";
 import { ToastProvider } from "../components/Toast";
 import { PersonalizationProvider } from "../components/Personalization";
-import SmartSearch from "../components/SmartSearch";
-import OfflineIndicator from "../components/OfflineIndicator";
+import NetworkStatusIndicator from "../components/NetworkStatusIndicator";
 import { registerServiceWorker } from "../lib/offline";
 
 export default function Providers({ children }: { children: React.ReactNode }) {
@@ -40,11 +38,8 @@ export default function Providers({ children }: { children: React.ReactNode }) {
     return (
         <PersonalizationProvider>
             <ToastProvider>
-                <OfflineIndicator />
-                <SmartSearch />
-                <PageTransition>
-                    {children}
-                </PageTransition>
+                <NetworkStatusIndicator />
+                {children}
             </ToastProvider>
         </PersonalizationProvider>
     );

@@ -151,7 +151,8 @@ CREATE TABLE IF NOT EXISTS face_photos (
     embedding JSON,
     is_primary BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    INDEX idx_user_id (user_id)
 );
 
 -- ==================== 5. SESSIONS & ATTENDANCE ====================
@@ -307,7 +308,6 @@ INSERT IGNORE INTO courses (code, name) VALUES
 ('DIT', 'Diploma in Information Technology');
 
 -- Seed Admins
--- Passwords: Glason_27, Manza_814, Echowecho#31, Cl0ckworkLu!1aby, Andie_2026
 INSERT IGNORE INTO users 
 (user_id, first_name, middle_name, last_name, email, password_hash, admin_password_hash, role, approval_status) 
 VALUES 

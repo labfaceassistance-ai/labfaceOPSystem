@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const path = require('path');
+const { errorHandler, notFoundHandler } = require('./middleware/errorHandler');
 
 dotenv.config();
 
@@ -59,6 +60,11 @@ app.get('/api/health', (req, res) => {
 app.get('/', (req, res) => {
   res.send('LabFace Backend API is running');
 });
+
+// Catch-all 404 — must come after all defined routes
+app.use(notFoundHandler);
+// Centralized error handler — must be last middleware
+app.use(errorHandler);
 
 // Run server
 app.listen(PORT, () => {

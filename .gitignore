@@ -6,8 +6,13 @@ backend/uploads/
 
 .env
 .env.*
+!.env.example
 
 *.log
+
+__pycache__/
+*.pyc
+*.pyo
 
 ai-service/packages/
 ai-service/models/__pycache__/
