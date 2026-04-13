@@ -29,7 +29,7 @@ interface ClassesTabProps {
     user: any;
     classes: Class[];
     loading: boolean;
-    onRefresh: () => void;
+    onRefresh: (isBackground?: boolean) => void;
     onTabChange?: (tab: 'home' | 'classes' | 'monitor' | 'analytics') => void;
 }
 
@@ -748,7 +748,8 @@ export default function ClassesTab({ user, classes, loading, onRefresh, onTabCha
                 isOpen={isCreateModalOpen}
                 onClose={() => setIsCreateModalOpen(false)}
                 onSuccess={() => {
-                    onRefresh();
+                    // Small delay to ensure database consistency before refresh
+                    setTimeout(() => onRefresh(false), 500);
                 }}
                 professorId={user.professorId || user.userId}
             />
@@ -759,7 +760,7 @@ export default function ClassesTab({ user, classes, loading, onRefresh, onTabCha
                 onClose={() => setIsSessionModalOpen(false)}
                 classId={selectedClassId}
                 className={selectedClassName}
-                onSuccess={onRefresh}
+                onSuccess={() => onRefresh(false)}
             />
 
             <ClassDetailsModal
@@ -778,7 +779,7 @@ export default function ClassesTab({ user, classes, loading, onRefresh, onTabCha
                 className={selectedClassName}
                 isArchived={selectedClassIsArchived}
                 onSuccess={() => {
-                    onRefresh();
+                    onRefresh(false);
                 }}
             />
             <ConfirmModal

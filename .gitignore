@@ -3,6 +3,7 @@ backend/node_modules/
 frontend/node_modules/
 
 backend/uploads/
+backend/reports/
 
 .env
 .env.*
@@ -15,7 +16,9 @@ __pycache__/
 *.pyo
 
 ai-service/packages/
-ai-service/models/__pycache__/
-ai-service/services/__pycache__/
+ai-service/models/
+ai-service/.cache/
 
 .vscode/
+.next/
+frontend/.next/

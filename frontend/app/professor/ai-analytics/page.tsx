@@ -93,7 +93,7 @@ export default function ProfessorAIPage() {
         try {
             const token = getToken();
             // Get students for this course
-            const studentsResponse = await axios.get(`${API_URL}/api/analytics/student-insights?limit=20`, {
+            const studentsResponse = await axios.get(`${API_URL}/api/analytics/student-insights?limit=20&classId=${courseId}`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
 

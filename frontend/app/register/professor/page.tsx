@@ -4,7 +4,7 @@ import Navbar from '../../../components/Navbar';
 import DataPrivacyConsent from '../../../components/DataPrivacyConsent';
 import TermsAndConditions from '../../../components/TermsAndConditions';
 import axios from 'axios';
-import { User, Mail, Lock, ShieldCheck, ArrowRight, Eye, EyeOff, X, CheckCircle, AlertCircle, Image as ImageIcon, Upload, ChevronLeft, ChevronRight, Shield, Clock } from 'lucide-react';
+import { User, Mail, Lock, ShieldCheck, ArrowRight, Eye, EyeOff, X, CheckCircle, AlertCircle, Image as ImageIcon, Upload, ChevronLeft, ChevronRight, Shield, Clock, FileText } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { getToken, getUser, fetchCurrentUser } from '../../../utils/auth';
@@ -723,13 +723,22 @@ export default function ProfessorRegisterPage() {
                                                 </div>
 
                                                 <div className="col-span-full">
-                                                    <label className="block text-sm font-medium text-slate-300 mb-1">Professor ID Photo <span className="text-red-500">*</span></label>
+                                                    <label className="block text-sm font-medium text-slate-300 mb-1">Professor ID (Image or PDF) <span className="text-red-500">*</span></label>
+
                                                     <div className="relative">
                                                         <div className="flex items-center justify-center w-full">
                                                             <label htmlFor="id-photo-upload" className={`flex flex-col items-center justify-center w-full h-32 border-2 ${emptyFields.includes('profilePicture') ? 'border-red-500 border-dashed' : 'border-slate-700 border-dashed'} rounded-lg cursor-pointer bg-slate-800 hover:bg-slate-700 transition-colors`}>
                                                                 {profilePicture ? (
                                                                     <div className="relative w-full h-full p-2">
-                                                                        <img src={profilePicture} alt="ID Preview" className="w-full h-full object-contain rounded" />
+                                                                        {profilePicture?.startsWith('data:application/pdf') ? (
+                                                                            <div className="flex flex-col items-center justify-center h-full">
+                                                                                <FileText className="w-12 h-12 text-brand-500 mb-2" />
+                                                                                <span className="text-white text-sm font-semibold">PDF Document Loaded</span>
+                                                                            </div>
+                                                                        ) : (
+                                                                            <img src={profilePicture} alt="ID Preview" className="w-full h-full object-contain rounded" />
+                                                                        )}
+
                                                                         <button
                                                                             type="button"
                                                                             onClick={(e) => {
@@ -746,14 +755,16 @@ export default function ProfessorRegisterPage() {
                                                                     <div className="flex flex-col items-center justify-center pt-5 pb-6">
                                                                         <Upload className={`w-8 h-8 mb-2 ${emptyFields.includes('profilePicture') ? 'text-red-400' : 'text-slate-400'}`} />
                                                                         <p className={`mb-1 text-sm ${emptyFields.includes('profilePicture') ? 'text-red-400' : 'text-slate-400'}`}><span className="font-semibold">Click to upload</span> Professor ID</p>
-                                                                        <p className="text-xs text-slate-500">PNG, JPG or JPEG</p>
+                                                                        <p className="text-xs text-slate-500">PNG, JPG, JPEG or PDF</p>
+
                                                                     </div>
                                                                 )}
                                                                 <input
                                                                     id="id-photo-upload"
                                                                     type="file"
                                                                     className="hidden"
-                                                                    accept="image/*"
+                                                                    accept="image/*,application/pdf"
+
                                                                     ref={profilePicInputRef}
                                                                     onChange={(e) => {
                                                                         const file = e.target.files?.[0];
@@ -773,7 +784,8 @@ export default function ProfessorRegisterPage() {
                                                             </label>
                                                         </div>
                                                     </div>
-                                                    <p className={`mt-1 text-xs ${emptyFields.includes('profilePicture') ? 'text-red-400' : 'text-slate-500'}`}>Please upload a clear photo of your University ID for verification.</p>
+                                                    <p className={`mt-1 text-xs ${emptyFields.includes('profilePicture') ? 'text-red-400' : 'text-slate-500'}`}>Please upload a clear photo or PDF of your University ID for verification.</p>
+
                                                 </div>
 
                                                 <div>

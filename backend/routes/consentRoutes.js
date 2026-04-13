@@ -26,64 +26,98 @@ const pool = require('../config/db');
     }
 })();
 
+// Helper to resolve any ID (PK or string-based user_id) to the string-based user_id
+const resolveUserId = async (idOrUserid) => {
+    if (!idOrUserid || idOrUserid === 'undefined' || idOrUserid === 'null') return null;
+    
+    // Convert to string and trim
+    const input = idOrUserid.toString().trim();
+
+    // 1. Check if it already exists as user_id string (e.g. "2022-00330-LQ-0" or "admin")
+    // Support fuzzy matching (ignore dashes/spaces)
+    const [rows] = await pool.query(
+        "SELECT user_id FROM users WHERE REPLACE(REPLACE(user_id, '-', ''), ' ', '') = REPLACE(REPLACE(?, '-', ''), ' ', '')", 
+        [input]
+    );
+    if (rows.length > 0) return rows[0].user_id;
+
+    // 2. If not found as user_id, check if it's an internal numeric PK (id)
+    if (/^\d+$/.test(input)) {
+        const [u] = await pool.query('SELECT user_id FROM users WHERE id = ?', [input]);
+        if (u.length > 0) {
+            console.log(`[Consent] Resolved internal ID ${input} to string ID ${u[0].user_id}`);
+            return u[0].user_id;
+        }
+    }
+    
+    // 3. Last fallback: Check if input is a valid user_id format even if user record doesn't exist yet
+    if (input.length > 3) {
+        return input;
+    }
+
+    console.warn(`[Consent] Could not resolve user ID for: ${input}`);
+    return null;
+};
+
 // Get Consent Status (Latest)
 // GET /api/consent/status/:userId
 router.get('/status/:userId', async (req, res) => {
     try {
         const { userId } = req.params;
+        const targetUserId = await resolveUserId(userId);
 
-        // Resolve userId if it's an integer
-        let targetUserId = userId;
-        if (/^\d+$/.test(userId)) {
-            const [u] = await pool.query('SELECT user_id FROM users WHERE id = ?', [userId]);
-            if (u.length > 0) targetUserId = u[0].user_id;
+        if (!targetUserId) {
+            return res.status(404).json({ error: 'User not found' });
         }
 
-        // Get latest consent record from consent_records table
-        const [consentRecords] = await pool.query(
-            'SELECT * FROM consent_records WHERE user_id = ? ORDER BY timestamp DESC LIMIT 1',
+        // 1. Get ALL latest records for different consent types
+        const [rows] = await pool.query(
+            'SELECT * FROM consent_records WHERE user_id = ? ORDER BY timestamp DESC',
             [targetUserId]
         );
 
-        // Get privacy policy fields from users table
+        // 2. Get status from users table
         const [users] = await pool.query(
-            `SELECT privacy_policy_accepted, privacy_policy_version, privacy_policy_accepted_at, consent_status
+            `SELECT privacy_policy_accepted, privacy_policy_version, privacy_policy_accepted_at, consent_status, role
             FROM users WHERE user_id = ?`,
             [targetUserId]
         );
 
         const user = users.length > 0 ? users[0] : null;
 
-        // Determine consent status from consent_records
-        let recordStatus = 'pending';
-        let recordConsentGiven = false;
-        let recordType = null;
-        let recordVersion = null;
-        let recordTimestamp = null;
+        // Find binary consent types
+        // 'registration' or 'biometric' counted for biometric status
+        const biometric = rows.find(r => r.consent_type === 'biometric' || r.consent_type === 'registration');
+        // 'data_privacy' or 'privacy_policy' counted for privacy status
+        const privacy = rows.find(r => r.consent_type === 'data_privacy' || r.consent_type === 'privacy_policy');
 
-        if (consentRecords.length > 0) {
-            const record = consentRecords[0];
-            recordStatus = record.consent_given ? 'given' : 'revoked';
-            recordConsentGiven = !!record.consent_given;
-            recordType = record.consent_type;
-            recordVersion = record.consent_version;
-            recordTimestamp = record.timestamp;
-        }
+        // Combined logic: 
+        // 1. Biometric is accepted if record exists OR if user table says 'given'
+        const isBiometricAccepted = biometric ? !!biometric.consent_given : (user?.consent_status === 'given');
+        
+        // 2. Privacy is accepted if record exists OR user table has flag OR (Legacy Fallback) biometric exists
+        // Legacy accounts checked both boxes during registration but only saved one record.
+        const isPrivacyAccepted = privacy ? !!privacy.consent_given : (user?.privacy_policy_accepted === 1 || isBiometricAccepted);
 
-        // Return combined data
+        // 3. Overall status is 'given' if either biometric or privacy was ever accepted
+        const overallStatus = (isBiometricAccepted || isPrivacyAccepted || user?.consent_status === 'given') ? 'given' : 'pending';
+
         res.json({
-            // From consent_records table
-            status: recordStatus,
-            consentGiven: recordConsentGiven,
-            type: recordType,
-            version: recordVersion,
-            lastUpdated: recordTimestamp,
-
-            // From users table (for profile page compatibility)
-            consent_status: recordStatus,
-            privacy_policy_accepted: user?.privacy_policy_accepted || false,
-            privacy_policy_version: user?.privacy_policy_version || null,
-            privacy_policy_accepted_at: user?.privacy_policy_accepted_at || null
+            // Status icons logic
+            consent_status: overallStatus,
+            biometricAccepted: isBiometricAccepted,
+            privacyPolicyAccepted: isPrivacyAccepted,
+            
+            // Dates
+            lastUpdated: rows.length > 0 ? rows[0].timestamp : (user?.privacy_policy_accepted_at || null),
+            
+            // Legacy/Detail fields
+            biometricDate: biometric?.timestamp || null,
+            privacyDate: privacy?.timestamp || user?.privacy_policy_accepted_at || null,
+            
+            // User info
+            userId: targetUserId,
+            role: user?.role || 'user'
         });
     } catch (err) {
         console.error('Consent status error:', err);
@@ -97,12 +131,10 @@ router.get('/status/:userId', async (req, res) => {
 router.get('/check/:userId', async (req, res) => {
     try {
         const { userId } = req.params;
+        const targetUserId = await resolveUserId(userId);
 
-        // Resolve userId
-        let targetUserId = userId;
-        if (/^\d+$/.test(userId)) {
-            const [u] = await pool.query('SELECT user_id FROM users WHERE id = ?', [userId]);
-            if (u.length > 0) targetUserId = u[0].user_id;
+        if (!targetUserId) {
+            return res.status(404).json({ error: 'User not found' });
         }
 
         // Get latest consent record
@@ -150,10 +182,15 @@ router.get('/check/:userId', async (req, res) => {
 router.get('/history/:userId', async (req, res) => {
     try {
         const { userId } = req.params;
+        const targetUserId = await resolveUserId(userId);
+
+        if (!targetUserId) {
+            return res.status(404).json({ error: 'User not found' });
+        }
 
         const [rows] = await pool.query(
             'SELECT * FROM consent_records WHERE user_id = ? ORDER BY timestamp DESC',
-            [userId]
+            [targetUserId]
         );
 
         res.json({ history: rows });
@@ -177,38 +214,10 @@ router.post('/record', async (req, res) => {
             return res.status(400).json({ error: 'userId and consentType are required' });
         }
 
-        // FIX: Check if userId is an internal integer ID, and if so, fetch the string user_id
-        // The consent_records table links to users.user_id (varchar), not users.id (int)
-        // If userId resembles an integer (e.g., 15), look it up.
-        // If it resembles a school ID (e.g., 2022-00322-LQ-0), use it directly.
+        const targetUserId = await resolveUserId(userId);
 
-        let targetUserId = userId;
-        const isIntegerId = /^\d+$/.test(userId.toString());
-
-        if (isIntegerId) {
-            const [userRows] = await pool.query('SELECT user_id FROM users WHERE id = ?', [userId]);
-            if (userRows.length > 0) {
-                targetUserId = userRows[0].user_id;
-            } else {
-                // Fallback: check if it exists as user_id string (unlikely for short integers but possible)
-                const [stringRows] = await pool.query('SELECT user_id FROM users WHERE user_id = ?', [userId]);
-                if (stringRows.length === 0) {
-                    return res.status(404).json({ error: 'User not found' });
-                }
-            }
-        }
-
-        // Final check to ensure targetUserId exists in users table (to satisfy Foreign Key)
-        const [checkUser] = await pool.query('SELECT id FROM users WHERE user_id = ?', [targetUserId]);
-        if (checkUser.length === 0) {
-            console.error(`[Consent] Foreign Key Check Failed: ${targetUserId} not found in users.user_id`);
-            // Try to see if we can find it by ID one last time
-            const [lastResort] = await pool.query('SELECT user_id FROM users WHERE id = ?', [userId]);
-            if (lastResort.length > 0) {
-                targetUserId = lastResort[0].user_id;
-            } else {
-                return res.status(400).json({ error: `Invalid User ID: ${userId}` });
-            }
+        if (!targetUserId) {
+            return res.status(404).json({ error: `User not found for provided ID: ${userId}` });
         }
 
         await pool.query(
@@ -249,14 +258,20 @@ router.post('/withdraw', async (req, res) => {
             return res.status(400).json({ error: 'userId and consentType are required' });
         }
 
+        const targetUserId = await resolveUserId(userId);
+
+        if (!targetUserId) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
         await pool.query(
             `INSERT INTO consent_records 
             (user_id, consent_type, consent_given, consent_text, timestamp) 
             VALUES (?, ?, 0, ?, NOW())`,
-            [userId, consentType, reason ? `Withdrawn: ${reason}` : 'Consent withdrawn']
+            [targetUserId, consentType, reason ? `Withdrawn: ${reason}` : 'Consent withdrawn']
         );
 
-        console.log(`[Consent] Withdrawn for user ${userId}: ${consentType}`);
+        console.log(`[Consent] Withdrawn for user ${targetUserId}: ${consentType}`);
         res.json({ message: 'Consent withdrawn successfully' });
     } catch (err) {
         console.error('Consent withdraw error:', err);
@@ -268,9 +283,14 @@ router.post('/withdraw', async (req, res) => {
 router.post('/revoke', async (req, res) => {
     const { userId, type } = req.body;
     try {
+        const targetUserId = await resolveUserId(userId);
+        if (!targetUserId) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
         await pool.query(
             'INSERT INTO consent_records (user_id, consent_type, consent_given, timestamp) VALUES (?, ?, 0, NOW())',
-            [userId, type || 'revocation']
+            [targetUserId, type || 'revocation']
         );
         res.json({ message: 'Consent revoked' });
     } catch (err) {

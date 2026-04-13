@@ -510,7 +510,7 @@ export default function ProfessorProfile() {
                                             <div className="space-y-3">
                                                 <div className="flex items-center justify-between p-3 bg-slate-700/50 rounded-lg">
                                                     <span className="text-slate-300">Biometric Data</span>
-                                                    {consentStatus.consent_status === 'given' ? (
+                                                    {consentStatus.biometricAccepted ? (
                                                         <span className="flex items-center gap-2 text-green-400">
                                                             <CheckCircle2 size={18} /> Consented
                                                         </span>
@@ -522,7 +522,7 @@ export default function ProfessorProfile() {
                                                 </div>
                                                 <div className="flex items-center justify-between p-3 bg-slate-700/50 rounded-lg">
                                                     <span className="text-slate-300">Privacy Policy</span>
-                                                    {consentStatus.privacy_policy_accepted ? (
+                                                    {consentStatus.privacyPolicyAccepted ? (
                                                         <span className="flex items-center gap-2 text-green-400">
                                                             <CheckCircle2 size={18} /> Accepted
                                                         </span>

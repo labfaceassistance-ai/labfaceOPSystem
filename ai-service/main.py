@@ -35,12 +35,12 @@ import cv2
 import requests
 import asyncio
 import numpy as np
-import aiomysql
+import aiomysql  # type: ignore
 import json
 import time
 from datetime import datetime
-from minio import Minio
-from minio.error import S3Error
+from minio import Minio  # type: ignore
+from minio.error import S3Error  # type: ignore
 from routes import face_routes
 
 app = FastAPI()
@@ -148,7 +148,8 @@ async def startup_event():
             # 3. Initialize GFPGAN Face Enhancer (Phase 2) - if available
             if ENHANCEMENTS_AVAILABLE:
                 print("Initializing GFPGAN face enhancer...")
-                face_enhancer = get_face_enhancer(use_gpu=False)  # Set True if GPU available
+                # Move to executor to prevent blocking the event loop during heavy download
+                face_enhancer = await asyncio.get_event_loop().run_in_executor(None, lambda: get_face_enhancer(use_gpu=False))
                 if face_enhancer and face_enhancer.is_available():
                     print("✅ GFPGAN super-resolution enabled - Far-distance recognition active!")
                 else:
@@ -440,6 +441,20 @@ def get_adaptive_threshold(frame, face):
     else:
         return 0.50  # Moderate (was 0.55)
 
+def get_human_confidence(sim, threshold):
+    """
+    Translate raw cosine similarity into a human-readable 0-100 percentage.
+    Provides better UX rather than showing 45% for a highly confident match.
+    """
+    if sim < 0.2:
+        return sim * 100
+    elif sim >= threshold:
+        # Map [threshold, 1.0] -> [85.0, 99.9]
+        return 85.0 + ((sim - threshold) / (1.0 - threshold)) * 14.9
+    else:
+        # Map [0.2, threshold] -> [20.0, 85.0]
+        return 20.0 + ((sim - 0.2) / (threshold - 0.2)) * 65.0
+
 students_cache = []
 last_cache_update = 0
 
@@ -455,7 +470,7 @@ async def refresh_student_cache_if_needed():
                     # Use JOIN to get student details + specific angle embedding
                     # Use LIKE to support multi-role users (e.g., 'student,admin')
                     await cursor.execute("""
-                        SELECT u.id, u.user_id, u.first_name, u.last_name, fp.embedding as angle_embedding
+                        SELECT u.id, u.user_id, u.first_name, u.last_name, u.profile_picture, fp.embedding as angle_embedding
                         FROM users u
                         JOIN face_photos fp ON u.id = fp.user_id
                         WHERE u.role LIKE '%student%' 
@@ -476,6 +491,7 @@ async def refresh_student_cache_if_needed():
                                 'user_id': row['user_id'],
                                 'first_name': row['first_name'],
                                 'last_name': row['last_name'],
+                                'profile_picture': row['profile_picture'],
                                 'embeddings': []
                             }
                         if row['angle_embedding']:
@@ -551,8 +567,9 @@ async def process_face(face, camera_id, frame):
 
     if best_match:
         # --- KNOWN STUDENT ---
-        print(f"[AI CAM {camera_id}] ✅ MATCH: {best_match['first_name']} ({best_score:.4f})")
-        name = f"{best_match['first_name']} ({int(best_score*100)}%)"
+        human_conf = get_human_confidence(best_score, adaptive_threshold)
+        print(f"[AI CAM {camera_id}] ✅ MATCH: {best_match['first_name']} ({best_score:.4f} -> {human_conf:.1f}%)")
+        name = f"{best_match['first_name']} ({int(human_conf)}%)"
         color = (0, 255, 0) # Green
         
         # Update Attendance Manager
@@ -618,16 +635,10 @@ async def handle_attendance_event(student_id, action, camera_id, frame, bbox):
 
 async def handle_unknown_event(camera_id, frame, bbox):
     """
-    Log unknown person with rate limiting
+    Unknown person logging is disabled per user request.
+    Unknown faces are still detected visually (red box overlay) but not saved.
     """
-    # USER REQUEST: Stop saving unknown images to attendance folder.
-    # We simply return early here to disable this feature.
     return
-
-    # Original Logic (Disabled)
-    # now = time.time()
-    # last_log = unknown_log_cooldowns.get(camera_id, 0)
-    # ...
 
 # --- DB & MINIO UTILS ---
 
@@ -740,7 +751,13 @@ async def save_snapshot_to_minio(face_crop, student_id, session_data):
 
 @app.get("/")
 def read_root():
-    return {"status": "online", "online": True, "message": "LabFace AI Service Optimized Ready"}
+    is_ready = face_recognizer is not None
+    return {
+        "status": "online" if is_ready else "initializing",
+        "online": True, # The service is up even if models aren't ready
+        "ready": is_ready,
+        "message": "LabFace AI Service Optimized Ready" if is_ready else "AI Service is starting up and loading models..."
+    }
 
 @app.get("/video_feed/{camera_id}")
 async def video_feed(camera_id: int):
@@ -801,6 +818,133 @@ async def generate_frames(camera_id):
         else:
             yield p_frame
             await asyncio.sleep(0.5)
+
+# ==========================================
+# TEMPORARY CAMERA TEST TOOL START
+# ==========================================
+from pydantic import BaseModel
+import base64
+
+class TestFrameRequest(BaseModel):
+    image: str
+
+@app.post("/api/test-frame")
+async def test_frame(request: TestFrameRequest):
+    """
+    Temporary endpoint to test accuracy against the loaded cache using local webcam frames.
+    """
+    try:
+        if not face_recognizer:
+            return {"success": False, "error": "AI is still initializing (loading models). Please wait 1-2 minutes after deployment."}
+            
+        # Decode base64
+        image_data = request.image
+        if ',' in image_data:
+            image_data = image_data.split(',')[1]
+            
+        img_bytes = base64.b64decode(image_data)
+        nparr = np.frombuffer(img_bytes, np.uint8)
+        img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+        
+        if img is None:
+            return {"success": False, "error": "Invalid image format"}
+            
+        h, w = img.shape[:2]
+        cv2.imwrite("debug_boxes.jpg", img) # Replaced with cleaner save later
+            
+        t_start = time.time()
+        # Detect faces
+        faces = face_recognizer.get_faces_two_stage(img)
+        t_detect = time.time()
+        
+        # DEBUG: Draw boxes and save locally
+        debug_img = img.copy()
+        for f in faces:
+            b = [int(n) for n in f.bbox]
+            cv2.rectangle(debug_img, (b[0], b[1]), (b[2], b[3]), (0, 0, 255), 2)
+        cv2.imwrite("debug_boxes.jpg", debug_img)
+        
+        print(f"[CameraDiagnostic] 🔍 Detected {len(faces)} faces (Detect: {int((t_detect-t_start)*1000)}ms)")
+        results = []
+        
+        for face in faces:
+            bbox = [int(n) for n in face.bbox] # x1, y1, x2, y2
+            print(f"[CameraDiagnostic] - Face found at {bbox}")
+            embedding = face.embedding
+            
+            # --- Generate Thumbnail for Log ---
+            # Add some padding to crop
+            pad = 20
+            fy1 = max(0, bbox[1] - pad)
+            fy2 = min(img.shape[0], bbox[3] + pad)
+            fx1 = max(0, bbox[0] - pad)
+            fx2 = min(img.shape[1], bbox[2] + pad)
+            face_crop = img[fy1:fy2, fx1:fx2]
+            
+            thumbnail_b64 = ""
+            if face_crop.size > 0:
+                try:
+                    res, thumb_buf = cv2.imencode('.jpg', face_crop, [int(cv2.IMWRITE_JPEG_QUALITY), 70])
+                    if res:
+                        thumbnail_b64 = f"data:image/jpeg;base64,{base64.b64encode(thumb_buf.tobytes()).decode('utf-8')}"
+                except:
+                    pass
+            
+            best_match = None
+            max_sim = 0.0
+            
+            # Compare against cache
+            for student in students_cache:
+                for db_emb in student['embeddings']:
+                    sim = face_recognizer.compare_faces(embedding, db_emb)
+                    if sim > max_sim:
+                        max_sim = sim
+                        best_match = student
+            
+            # Use the same adaptive threshold logic as the CCTV background worker
+            threshold = get_adaptive_threshold(img, face)
+            is_match = bool(best_match and max_sim > threshold)
+            
+            human_conf = get_human_confidence(max_sim, threshold)
+            
+            res_item = {
+                "bbox": bbox,
+                "match": is_match,
+                "confidence": float(round(human_conf, 1)),
+                "threshold_used": float(threshold),
+                "thumbnail": thumbnail_b64,
+                "timestamp": datetime.now().isoformat()
+            }
+            
+            if is_match:
+                res_item.update({
+                    "name": f"{best_match['first_name']} {best_match['last_name']}",
+                    "student_id": best_match['user_id'],
+                    "profile_picture": best_match['profile_picture']
+                })
+            else:
+                res_item.update({
+                    "name": "Unknown",
+                    "student_id": "N/A",
+                    "profile_picture": None
+                })
+                
+            results.append(res_item)
+                
+        return {
+            "success": True, 
+            "faces": results,
+            "source_width": w,
+            "source_height": h,
+            "raw_latency": int((time.time() - t_start) * 1000)
+        }
+        
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+# ==========================================
+# TEMPORARY CAMERA TEST TOOL END
+# ==========================================
 
 @app.on_event("shutdown")
 async def shutdown_event():

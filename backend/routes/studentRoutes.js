@@ -35,7 +35,13 @@ router.post('/update-academic-data', async (req, res) => {
         if (!corFile) return res.status(400).json({ message: 'Certificate of Registration is required' });
 
         // 1. Get Active Academic Period
-        const [periods] = await pool.query('SELECT id, school_year, semester FROM academic_periods WHERE is_active = 1 ORDER BY id DESC LIMIT 1');
+        const [periods] = await pool.query(`
+            SELECT id, school_year, semester 
+            FROM academic_periods 
+            WHERE effective_date <= CONVERT_TZ(NOW(), 'UTC', 'Asia/Manila')
+            ORDER BY effective_date DESC 
+            LIMIT 1
+        `);
         if (periods.length === 0) {
             return res.status(400).json({ message: 'No active academic period found. Please contact Admin.' });
         }
@@ -154,15 +160,16 @@ router.get('/classes/:id', async (req, res) => {
                 CONCAT(u.first_name, ' ', u.last_name) as professor_id
             FROM classes c
             JOIN enrollments e ON c.id = e.class_id
+            JOIN users u_student ON u_student.id = ?
             LEFT JOIN users u ON c.professor_id = u.id
-            WHERE e.student_id = ?
+            WHERE (e.student_id = u_student.id OR (e.student_id IS NULL AND REPLACE(REPLACE(u_student.user_id, '-', ''), ' ', '') = REPLACE(REPLACE(e.student_number, '-', ''), ' ', '')))
         `;
 
         if (!includeArchived) {
             query += ` AND (c.is_archived = 0 OR c.is_archived IS NULL)`;
         }
 
-        const [classes] = await pool.query(query, [studentId]);
+        const [classes] = await pool.query(query, [studentId, studentId]);
 
         res.json(classes);
     } catch (err) {
@@ -188,8 +195,8 @@ router.get('/dashboard/:id', async (req, res) => {
             FROM classes c
             JOIN enrollments e ON c.id = e.class_id
             LEFT JOIN users u ON c.professor_id = u.id
-            WHERE e.student_id = ?
-        `, [studentId]);
+            WHERE (e.student_id = ? OR (e.student_id IS NULL AND REPLACE(REPLACE(?, '-', ''), ' ', '') = REPLACE(REPLACE(e.student_number, '-', ''), ' ', '')))
+        `, [studentId, studentStringId]);
 
 
         // Helper function to format time with AM/PM
@@ -399,10 +406,10 @@ router.get('/dashboard/:id', async (req, res) => {
                 AND s.date <= DATE(CONVERT_TZ(NOW(), '+00:00', '+08:00'))
                 AND s.monitoring_started_at IS NOT NULL
             LEFT JOIN attendance_logs al ON s.id = al.session_id AND al.student_id = ?
-            WHERE e.student_id = ?
+            WHERE (e.student_id = ? OR (e.student_id IS NULL AND REPLACE(REPLACE(?, '-', ''), ' ', '') = REPLACE(REPLACE(e.student_number, '-', ''), ' ', '')))
             AND (c.is_archived = 0 OR c.is_archived IS NULL)
             GROUP BY c.id
-        `, [studentId, studentId]);
+        `, [studentId, studentId, studentStringId]);
 
         // Transform class stats
         const classesSummary = classStats.map(cls => {
@@ -465,13 +472,13 @@ router.get('/dashboard/:id', async (req, res) => {
             FROM sessions s
             JOIN enrollments e ON s.class_id = e.class_id
             JOIN classes c ON s.class_id = c.id
-            WHERE e.student_id = ?
+            WHERE (e.student_id = ? OR (e.student_id IS NULL AND REPLACE(REPLACE(?, '-', ''), ' ', '') = REPLACE(REPLACE(e.student_number, '-', ''), ' ', '')))
             AND s.date <= DATE(CONVERT_TZ(NOW(), '+00:00', '+08:00'))
             AND s.monitoring_started_at IS NOT NULL
             AND (c.is_archived = 0 OR c.is_archived IS NULL)
             ORDER BY s.date DESC, s.start_time DESC
             LIMIT 5
-        `, [studentId]);
+        `, [studentId, studentStringId]);
 
         const recentActivity = recentActivities.map(act => {
             const status = act.log_status || 'Absent';
@@ -541,11 +548,15 @@ router.get('/attendance-summary/:id', async (req, res) => {
                 AND s.date <= DATE(CONVERT_TZ(NOW(), '+00:00', '+08:00'))
                 AND s.monitoring_started_at IS NOT NULL
             LEFT JOIN attendance_logs al ON s.id = al.session_id AND al.student_id = ?
-            WHERE e.student_id = ?
+            WHERE (e.student_id = ? OR (e.student_id IS NULL AND REPLACE(REPLACE(?, '-', ''), ' ', '') = REPLACE(REPLACE(e.student_number, '-', ''), ' ', '')))
             AND (c.is_archived = 0 OR c.is_archived IS NULL)
-        `, [studentId, studentId]);
+        `, [studentId, studentId, studentStringId]);
 
         const stats = classStats[0] || {};
+        // Fetch studentStringId fallback
+        const [u_info] = await pool.query('SELECT user_id FROM users WHERE id = ?', [studentId]);
+        const studentStringId = u_info[0]?.user_id;
+
         const total = parseInt(stats.total_sessions) || 0;
         const present = parseInt(stats.present_count) || 0;
         const late = parseInt(stats.late_count) || 0;
@@ -608,8 +619,11 @@ router.get('/classes/:classId/details', async (req, res) => {
                 SUM(CASE WHEN al.status = 'Late' THEN 1 ELSE 0 END) as late_count,
                 SUM(CASE WHEN al.status = 'Excused' THEN 1 ELSE 0 END) as excused_count
             FROM sessions s
-            LEFT JOIN attendance_logs al ON s.id = al.session_id AND al.student_id = ?
+            JOIN enrollments e ON s.class_id = e.class_id
+            CROSS JOIN (SELECT id, user_id FROM users WHERE id = ?) u_student
+            LEFT JOIN attendance_logs al ON s.id = al.session_id AND al.student_id = u_student.id
             WHERE s.class_id = ?
+            AND (e.student_id = u_student.id OR (e.student_id IS NULL AND REPLACE(REPLACE(u_student.user_id, '-', ''), ' ', '') = REPLACE(REPLACE(e.student_number, '-', ''), ' ', '')))
             AND s.date <= DATE(CONVERT_TZ(NOW(), '+00:00', '+08:00'))
             AND s.monitoring_started_at IS NOT NULL
         `, [studentId, classId]);
@@ -639,8 +653,11 @@ router.get('/classes/:classId/details', async (req, res) => {
                 al.snapshot_url,
                 al.recognition_method
             FROM sessions s
-            LEFT JOIN attendance_logs al ON s.id = al.session_id AND al.student_id = ?
+            JOIN enrollments e ON s.class_id = e.class_id
+            CROSS JOIN (SELECT id, user_id FROM users WHERE id = ?) u_student
+            LEFT JOIN attendance_logs al ON s.id = al.session_id AND al.student_id = u_student.id
             WHERE s.class_id = ?
+            AND (e.student_id = u_student.id OR (e.student_id IS NULL AND REPLACE(REPLACE(u_student.user_id, '-', ''), ' ', '') = REPLACE(REPLACE(e.student_number, '-', ''), ' ', '')))
             AND s.date <= DATE(CONVERT_TZ(NOW(), '+00:00', '+08:00'))
             AND s.monitoring_started_at IS NOT NULL
             ORDER BY s.date DESC, s.start_time DESC
@@ -721,12 +738,13 @@ router.get('/recent-activity/:id', async (req, res) => {
             FROM sessions s
             JOIN enrollments e ON s.class_id = e.class_id
             JOIN classes c ON s.class_id = c.id
-            WHERE e.student_id = ?
+            CROSS JOIN (SELECT user_id FROM users WHERE id = ?) u_info
+            WHERE (e.student_id = ? OR (e.student_id IS NULL AND REPLACE(REPLACE(u_info.user_id, '-', ''), ' ', '') = REPLACE(REPLACE(e.student_number, '-', ''), ' ', '')))
                 AND s.date <= DATE(CONVERT_TZ(NOW(), '+00:00', '+08:00'))
                 AND (c.is_archived = 0 OR c.is_archived IS NULL)
             ORDER BY s.date DESC, s.start_time DESC
             LIMIT ?
-        `, [studentId, limit]);
+        `, [studentId, studentId, limit]);
 
         const formattedActivities = activities.map(act => {
             // Determine effective status

@@ -2,7 +2,7 @@
 import { useState, useRef, useEffect } from 'react';
 import Navbar from '../../../components/Navbar';
 import axios from 'axios';
-import { User, Mail, Lock, ShieldCheck, Camera, Upload, X, CheckCircle, AlertCircle, Image as ImageIcon, ChevronLeft, ChevronRight, BookOpen, Check, RefreshCw, Edit2, Eye, EyeOff, Loader2, Shield } from 'lucide-react';
+import { User, Mail, Lock, ShieldCheck, Camera, Upload, X, CheckCircle, AlertCircle, Image as ImageIcon, ChevronLeft, ChevronRight, BookOpen, Check, RefreshCw, Edit2, Eye, EyeOff, Loader2, Shield, FileText } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { getToken, getUser, fetchCurrentUser } from '../../../utils/auth';
@@ -1330,16 +1330,27 @@ export default function StudentRegisterPage() {
                                                                         </div>
                                                                     </div>
 
-                                                                    {/* Inline PDF preview */}
+                                                                    {/* Inline Preview */}
                                                                     {showCorPreview && formData.certificateOfRegistration && typeof formData.certificateOfRegistration !== 'string' && (
-                                                                        <div className="mt-3 border border-slate-700 rounded-lg overflow-hidden">
-                                                                            <iframe
-                                                                                src={URL.createObjectURL(formData.certificateOfRegistration)}
-                                                                                className="w-full h-96"
-                                                                                title="COR Preview"
-                                                                            />
+                                                                        <div className="mt-3 border border-slate-700 rounded-lg overflow-hidden bg-slate-800">
+                                                                            {(formData.certificateOfRegistration as File).type === 'application/pdf' ? (
+                                                                                <iframe
+                                                                                    src={URL.createObjectURL(formData.certificateOfRegistration as File)}
+                                                                                    className="w-full h-96"
+                                                                                    title="COR Preview"
+                                                                                />
+                                                                            ) : (
+                                                                                <div className="p-2 flex items-center justify-center min-h-[200px]">
+                                                                                    <img
+                                                                                        src={URL.createObjectURL(formData.certificateOfRegistration as File)}
+                                                                                        alt="COR Preview"
+                                                                                        className="max-w-full max-h-96 object-contain rounded"
+                                                                                    />
+                                                                                </div>
+                                                                            )}
                                                                         </div>
                                                                     )}
+
                                                                 </div>
                                                             </div>
                                                         ) : (
@@ -1350,17 +1361,21 @@ export default function StudentRegisterPage() {
                                                                         <span className="text-brand-400 hover:text-brand-300 font-medium">Click to upload</span>
                                                                         <span className="text-slate-400"> or drag and drop</span>
                                                                     </label>
-                                                                    <p className="text-xs text-slate-500 mt-1">PDF only, up to 10MB</p>
+                                                                    <p className="text-xs text-slate-500 mt-1">Image or PDF, up to 10MB</p>
+
                                                                 </div>
                                                                 <input
                                                                     id="cor-upload"
                                                                     type="file"
-                                                                    accept=".pdf,application/pdf"
+                                                                    accept="image/*,application/pdf"
                                                                     onChange={(e) => {
                                                                         const file = e.target.files?.[0];
                                                                         if (file) {
-                                                                            if (file.type !== 'application/pdf') {
-                                                                                showToast('Please upload a PDF file');
+                                                                            const isPdf = file.type === 'application/pdf';
+                                                                            const isImage = file.type.startsWith('image/');
+                                                                            
+                                                                            if (!isPdf && !isImage) {
+                                                                                showToast('Please upload an image or PDF file');
                                                                                 return;
                                                                             }
                                                                             if (file.size > 10 * 1024 * 1024) {
@@ -1370,6 +1385,7 @@ export default function StudentRegisterPage() {
                                                                             setFormData({ ...formData, certificateOfRegistration: file });
                                                                         }
                                                                     }}
+
                                                                     className="hidden"
                                                                 />
                                                             </div>

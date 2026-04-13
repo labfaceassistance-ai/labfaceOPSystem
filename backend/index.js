@@ -14,6 +14,7 @@ app.use(cors({
     'https://labface.site',
     'https://www.labface.site',
     'http://localhost:3000',
+    'http://localhost:8090',
     process.env.FRONTEND_URL
   ].filter(Boolean),
   credentials: true
@@ -36,6 +37,7 @@ const userRoutes = require('./routes/userRoutes');
 const classRoutes = require('./routes/classRoutes');
 const attendanceRoutes = require('./routes/attendanceRoutes');
 const adminRoutes = require('./routes/adminRoutes');
+const { getObjectStream } = require('./utils/minioHelper');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
@@ -50,6 +52,44 @@ app.use('/api/data-rights', require('./routes/dataRightsRoutes'));
 app.use('/api/groups', require('./routes/groupRoutes'));
 app.use('/api/public', require('./routes/publicRoutes'));
 app.use('/api/warnings', require('./routes/attendanceWarningRoutes'));
+app.use('/api/analytics', require('./routes/analyticsRoutes'));
+
+// MinIO Proxy Route — Serves files from MinIO buckets
+app.get('/api/minio/:bucket/*', async (req, res) => {
+  const bucket = req.params.bucket;
+  const objectName = req.params[0]; // The wildcard matches the rest of the path
+
+  if (!bucket || !objectName) {
+    return res.status(400).send('Bucket and object name are required');
+  }
+
+  try {
+    const dataStream = await getObjectStream(bucket, objectName);
+    
+    // Attempt to set correct content type based on extension
+    const ext = path.extname(objectName).toLowerCase();
+    const mimeTypes = {
+      '.jpg': 'image/jpeg',
+      '.jpeg': 'image/jpeg',
+      '.png': 'image/png',
+      '.pdf': 'application/pdf',
+      '.webp': 'image/webp'
+    };
+    
+    if (mimeTypes[ext]) {
+      res.setHeader('Content-Type', mimeTypes[ext]);
+    }
+
+    dataStream.pipe(res);
+  } catch (err) {
+    console.error(`[MinIO Proxy] Error fetching ${bucket}/${objectName}:`, err.message);
+    if (err.code === 'NoSuchKey') {
+      res.status(404).send('File not found');
+    } else {
+      res.status(500).send('Internal Server Error');
+    }
+  }
+});
 
 app.get('/api/health', (req, res) => {
   res.status(200).send('OK');

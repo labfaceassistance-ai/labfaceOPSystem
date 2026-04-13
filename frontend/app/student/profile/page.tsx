@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 import { getToken, getUser, API_URL, createAuthAxios, getProfilePictureUrl, logout } from '../../../utils/auth';
 import Navbar from '../../../components/Navbar';
 import Link from 'next/link';
-import { User, Mail, MapPin, Save, Camera, Lock, Shield, Image as ImageIcon, ArrowLeft, Eye, EyeOff, CheckCircle, AlertCircle, X, Upload, RefreshCw, Check, FileText, AlertTriangle, CheckCircle2, XCircle, Download, Trash2, Undo2, Edit, MessageSquare, ExternalLink } from 'lucide-react';
+import { User, Mail, MapPin, Save, Camera, Lock, Shield, ShieldCheck, Image as ImageIcon, ArrowLeft, Eye, EyeOff, CheckCircle, AlertCircle, X, Upload, RefreshCw, Check, FileText, AlertTriangle, CheckCircle2, XCircle, Download, Trash2, Undo2, Edit, MessageSquare, ExternalLink } from 'lucide-react';
 import axios from 'axios';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -11,6 +11,7 @@ import autoTable from 'jspdf-autotable';
 interface UserData {
     id: number;
     firstName: string;
+    middleName?: string;
     lastName: string;
     email?: string;
     studentId?: string;
@@ -76,6 +77,9 @@ export default function StudentProfile() {
         corPreview: null
     });
     const [isSubmittingAcademic, setIsSubmittingAcademic] = useState(false);
+    const [corVerifying, setCorVerifying] = useState(false);
+    const [corVerified, setCorVerified] = useState(false);
+    const [corVerificationResult, setCorVerificationResult] = useState<any>(null);
 
     useEffect(() => {
         // Clear deleted IDs when face photos list is refreshed from server
@@ -144,15 +148,29 @@ export default function StudentProfile() {
                     console.log('Using cached user data');
                     setUser(storedUser);
                     setFormData(storedUser);
+                    // Update academic form with current data
+                    setAcademicForm(prev => ({
+                        ...prev,
+                        course: storedUser.course || '',
+                        yearLevel: storedUser.yearLevel || ''
+                    }));
                     fetchFacePhotos(storedUser.id);
                 } else {
-                    window.location.href = '/login';
+                    logout();
                 }
             }
         };
 
         fetchUserData();
-        fetchUserData();
+
+        // Handle direct tab access from URL
+        const params = new URLSearchParams(window.location.search);
+        const tabParam = params.get('tab');
+        if (tabParam === 'academic') {
+            setActiveTab('profile'); // The academic update is currently in the profile tab
+            // In the future we might want a dedicated 'academic' tab, 
+            // but for now we'll ensure the academic alert is visible.
+        }
 
         // Enumerate devices initially
         const getDevices = async () => {
@@ -263,17 +281,70 @@ export default function StudentProfile() {
     const handleCorFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
+            const isPdf = file.type === 'application/pdf';
             setAcademicForm({
                 ...academicForm,
                 corFile: file,
-                corPreview: URL.createObjectURL(file)
+                corPreview: isPdf ? null : URL.createObjectURL(file)
             });
+        }
+    };
+
+    const verifyCOR = async () => {
+        if (!academicForm.corFile || !user) {
+            showMessage('Please upload your Certificate of Registration first', 'error');
+            return;
+        }
+
+        setCorVerifying(true);
+        setCorVerificationResult(null);
+
+        try {
+            // Convert file to base64
+            const base64Data = await new Promise<string>((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result as string);
+                reader.onerror = reject;
+                reader.readAsDataURL(academicForm.corFile as File);
+            });
+
+            const response = await axios.post(`${API_URL}/api/auth/validate-cor`, {
+                studentId: user.studentId || user.userId,
+                firstName: user.firstName,
+                middleName: user.middleName,
+                lastName: user.lastName,
+                course: academicForm.course,
+                yearLevel: parseInt(academicForm.yearLevel),
+                certificateOfRegistration: base64Data
+            });
+
+            setCorVerificationResult(response.data);
+
+            if (response.data.valid) {
+                setCorVerified(true);
+                showMessage('COR Verified Successfully!', 'success');
+            } else {
+                setCorVerified(false);
+                showMessage(response.data.reason || 'Verification failed', 'error');
+            }
+        } catch (err: any) {
+            console.error('COR verification error:', err);
+            setCorVerified(false);
+            const reason = err.response?.data?.reason || err.response?.data?.message || err.message || 'Verification failed';
+            setCorVerificationResult({ valid: false, reason });
+            showMessage(reason, 'error');
+        } finally {
+            setCorVerifying(false);
         }
     };
 
     const handleAcademicUpdate = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!user || !academicForm.corFile) return;
+        if (!corVerified) {
+            showMessage('Please verify your Certificate of Registration first.', 'error');
+            return;
+        }
 
         setIsSubmittingAcademic(true);
         try {
@@ -303,7 +374,14 @@ export default function StudentProfile() {
                     };
                     setUser(updatedUser);
                     setFormData(updatedUser);
-                    localStorage.setItem('user', JSON.stringify(updatedUser)); // Update cache
+
+                    // Update cache in both storages
+                    localStorage.setItem('user', JSON.stringify(updatedUser));
+                    sessionStorage.setItem('user', JSON.stringify(updatedUser));
+
+                    // Reset verification state
+                    setCorVerified(false);
+                    setCorVerificationResult(null);
 
                     // Clear form
                     setAcademicForm({ course: '', yearLevel: '', corFile: null, corPreview: null });
@@ -845,208 +923,287 @@ export default function StudentProfile() {
                         <div key={activeTab} className="tab-content-fade">
                             {/* Profile Tab */}
                             {activeTab === 'profile' && (
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                    <div className="space-y-6">
-
-                                        {/* Academic Update Alert */}
-                                        {academicSettings && user && user.lastVerifiedPeriodId !== academicSettings.id && (
-                                            <div className="bg-amber-500/10 border border-amber-500/50 rounded-xl p-6 mb-8 animate-fade-in">
-                                                <div className="flex items-start gap-4">
-                                                    <div className="p-3 bg-amber-500/20 rounded-full">
-                                                        <AlertTriangle className="w-6 h-6 text-amber-500" />
-                                                    </div>
-                                                    <div className="flex-1">
-                                                        <h3 className="text-lg font-bold text-white mb-2">
+                                <div className="space-y-8">
+                                    {/* Academic Update Alert */}
+                                    {academicSettings && user && user.lastVerifiedPeriodId !== academicSettings.id && (
+                                        <div className="bg-amber-500/10 border border-amber-500/50 rounded-2xl p-6 sm:p-8 animate-fade-in">
+                                            <div className="flex flex-col xl:flex-row gap-8">
+                                                <div className="xl:w-1/3 space-y-4">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="p-2.5 bg-amber-500/20 rounded-xl">
+                                                            <AlertTriangle className="w-6 h-6 text-amber-500" />
+                                                        </div>
+                                                        <h3 className="text-xl font-bold text-white">
                                                             Academic Update Required
                                                         </h3>
-                                                        <p className="text-slate-300 mb-4">
-                                                            The current academic period is <span className="text-white font-semibold">{academicSettings.schoolYear} - {academicSettings.semester}</span>.
-                                                            Please update your course and year level, and upload a new Certificate of Registration (COR) for validation.
-                                                        </p>
+                                                    </div>
+                                                    <p className="text-slate-300 leading-relaxed">
+                                                        The current academic period is <span className="text-white font-semibold">{academicSettings.schoolYear} - {academicSettings.semester}</span>.
+                                                        Please update your record and upload a new COR to maintain access to your classes.
+                                                    </p>
+                                                </div>
 
-                                                        {/* Update Form */}
-                                                        <form onSubmit={handleAcademicUpdate} className="space-y-4 bg-slate-900/50 p-4 rounded-lg border border-slate-700">
-                                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                                {/* Course */}
-                                                                <div>
-                                                                    <label className="block text-sm font-medium text-slate-400 mb-1">Course</label>
-                                                                    <input
-                                                                        type="text"
-                                                                        value={academicForm.course}
-                                                                        onChange={(e) => setAcademicForm({ ...academicForm, course: e.target.value })}
-                                                                        className="w-full px-4 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white disabled:opacity-50"
-                                                                        placeholder="e.g. BSCS"
-                                                                        required
-                                                                        disabled={isSubmittingAcademic}
-                                                                    />
-                                                                </div>
-                                                                {/* Year Level */}
-                                                                <div>
-                                                                    <label className="block text-sm font-medium text-slate-400 mb-1">Year Level</label>
-                                                                    <select
-                                                                        value={academicForm.yearLevel}
-                                                                        onChange={(e) => setAcademicForm({ ...academicForm, yearLevel: e.target.value })}
-                                                                        className="w-full px-4 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white disabled:opacity-50"
-                                                                        required
-                                                                        disabled={isSubmittingAcademic}
-                                                                    >
-                                                                        <option value="">Select Year Level</option>
-                                                                        <option value="1">1st Year</option>
-                                                                        <option value="2">2nd Year</option>
-                                                                        <option value="3">3rd Year</option>
-                                                                        <option value="4">4th Year</option>
-                                                                    </select>
-                                                                </div>
+                                                <div className="xl:w-2/3">
+                                                    <form onSubmit={handleAcademicUpdate} className="space-y-6 bg-slate-900/40 p-6 sm:p-8 rounded-2xl border border-slate-700/50 shadow-2xl backdrop-blur-sm">
+                                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                                            {/* Course */}
+                                                            <div className="space-y-2">
+                                                                <label className="block text-sm font-medium text-slate-400 ml-1">Current Course</label>
+                                                                <input
+                                                                    type="text"
+                                                                    value={academicForm.course}
+                                                                    onChange={(e) => {
+                                                                        setAcademicForm({ ...academicForm, course: e.target.value });
+                                                                        setCorVerified(false);
+                                                                    }}
+                                                                    className="w-full px-4 py-3 bg-slate-950 border border-slate-700 rounded-xl text-white focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 transition-all outline-none placeholder:text-slate-700"
+                                                                    placeholder="e.g. BSIT"
+                                                                    required
+                                                                    disabled={isSubmittingAcademic || corVerifying}
+                                                                />
                                                             </div>
+                                                            {/* Year Level */}
+                                                            <div className="space-y-2">
+                                                                <label className="block text-sm font-medium text-slate-400 ml-1">Current Year Level</label>
+                                                                <select
+                                                                    value={academicForm.yearLevel}
+                                                                    onChange={(e) => {
+                                                                        setAcademicForm({ ...academicForm, yearLevel: e.target.value });
+                                                                        setCorVerified(false);
+                                                                    }}
+                                                                    className="w-full px-4 py-3 bg-slate-950 border border-slate-700 rounded-xl text-white focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 transition-all outline-none"
+                                                                    required
+                                                                    disabled={isSubmittingAcademic || corVerifying}
+                                                                >
+                                                                    <option value="">Select Year Level</option>
+                                                                    <option value="1">1st Year</option>
+                                                                    <option value="2">2nd Year</option>
+                                                                    <option value="3">3rd Year</option>
+                                                                    <option value="4">4th Year</option>
+                                                                    <option value="5">5th Year</option>
+                                                                </select>
+                                                            </div>
+                                                        </div>
 
-                                                            {/* COR Upload */}
-                                                            <div>
-                                                                <label className="block text-sm font-medium text-slate-400 mb-1">Upload COR (Image)</label>
-                                                                <div className="flex items-center gap-4">
+                                                        {/* COR Upload & Verification */}
+                                                        <div className="space-y-3">
+                                                            <label className="block text-sm font-medium text-slate-400 ml-1">Certificate of Registration (COR)</label>
+                                                            <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-4">
+                                                                <div className="flex-1">
                                                                     <input
                                                                         type="file"
-                                                                        accept="image/*"
-                                                                        onChange={handleCorFileChange}
+                                                                        accept="image/*,application/pdf"
+                                                                        onChange={(e) => {
+                                                                            handleCorFileChange(e);
+                                                                            setCorVerified(false);
+                                                                            setCorVerificationResult(null);
+                                                                        }}
                                                                         className="hidden"
-                                                                        id="cor-upload"
-                                                                        required={!academicForm.corFile}
-                                                                        disabled={isSubmittingAcademic}
+                                                                        id="cor-upload-profile"
+                                                                        disabled={isSubmittingAcademic || corVerifying}
                                                                     />
-                                                                    <label htmlFor="cor-upload" className={`flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg cursor-pointer transition-colors border border-slate-600 ${isSubmittingAcademic ? 'opacity-50 pointer-events-none' : ''}`}>
-                                                                        <Upload size={18} />
-                                                                        {academicForm.corFile ? 'Change File' : 'Select File'}
-                                                                    </label>
-                                                                    {academicForm.corFile && (
-                                                                        <span className="text-sm text-green-400 flex items-center gap-1">
-                                                                            <CheckCircle size={14} /> File Selected
+                                                                    <label
+                                                                        htmlFor="cor-upload-profile"
+                                                                        className="flex items-center justify-center gap-3 px-4 py-3 bg-slate-950 border border-slate-700 rounded-xl text-white cursor-pointer hover:bg-slate-900 transition-all w-full group overflow-hidden"
+                                                                    >
+                                                                        <FileText className="w-5 h-5 text-brand-500 group-hover:scale-110 transition-transform" />
+                                                                        <span className="truncate max-w-[200px] text-sm font-medium">
+                                                                            {academicForm.corFile ? academicForm.corFile.name : 'Click to Upload COR Document'}
                                                                         </span>
-                                                                    )}
+                                                                    </label>
                                                                 </div>
-                                                                {/* Preview */}
-                                                                {academicForm.corPreview && (
-                                                                    <div className="mt-2 relative w-32 h-32 rounded-lg overflow-hidden border border-slate-600">
-                                                                        <img src={academicForm.corPreview} alt="COR Preview" className="w-full h-full object-cover" />
-                                                                    </div>
-                                                                )}
-                                                            </div>
 
-                                                            <div className="flex justify-end pt-2">
                                                                 <button
-                                                                    type="submit"
-                                                                    disabled={isSubmittingAcademic}
-                                                                    className={`px-6 py-2 rounded-lg font-bold text-white transition-colors flex items-center gap-2 ${isSubmittingAcademic ? 'bg-slate-600 cursor-not-allowed' : 'bg-brand-600 hover:bg-brand-500'}`}
+                                                                    type="button"
+                                                                    onClick={verifyCOR}
+                                                                    disabled={!academicForm.corFile || corVerifying || corVerified || isSubmittingAcademic}
+                                                                    className={`px-8 py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all shadow-xl hover:-translate-y-0.5 active:translate-y-0 ${corVerified
+                                                                            ? 'bg-green-500/10 text-green-400 border border-green-500/30 cursor-default'
+                                                                            : 'bg-brand-600 hover:bg-brand-500 text-white disabled:opacity-50 disabled:translate-y-0 shadow-brand-600/20'
+                                                                        }`}
                                                                 >
-                                                                    {isSubmittingAcademic ? <RefreshCw className="animate-spin w-4 h-4" /> : <Save size={18} />}
-                                                                    {isSubmittingAcademic ? 'Verifying...' : 'Submit & Verify'}
+                                                                    {corVerifying ? (
+                                                                        <RefreshCw className="w-5 h-5 animate-spin" />
+                                                                    ) : corVerified ? (
+                                                                        <Check className="w-5 h-5" />
+                                                                    ) : (
+                                                                        <ShieldCheck className="w-5 h-5" />
+                                                                    )}
+                                                                    {corVerifying ? 'Verifying...' : corVerified ? 'Verified' : 'Verify Now'}
                                                                 </button>
                                                             </div>
-                                                        </form>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        )}
+                                                            <p className="text-[10px] text-slate-500 uppercase tracking-widest font-bold px-1 flex items-center gap-2">
+                                                                <span className="w-1 h-1 bg-slate-700 rounded-full"></span>
+                                                                PDF or Image (Max 10MB)
+                                                            </p>
+                                                        </div>
 
-                                        <h3 className="text-lg font-bold text-white border-b border-slate-800 pb-2">Personal Information</h3>
+                                                        {/* Verification Results Alert */}
+                                                        {corVerificationResult && (
+                                                            <div className={`p-5 rounded-2xl border flex gap-4 animate-in slide-in-from-top-4 duration-500 ${corVerificationResult.valid
+                                                                    ? 'bg-green-500/5 border-green-500/20'
+                                                                    : 'bg-red-500/5 border-red-500/20'
+                                                                }`}>
+                                                                <div className={`p-2.5 rounded-full h-fit flex-shrink-0 ${corVerificationResult.valid ? 'bg-green-500/20 text-green-500' : 'bg-red-500/20 text-red-500'
+                                                                    }`}>
+                                                                    {corVerificationResult.valid ? <Check size={20} /> : <X size={20} />}
+                                                                </div>
+                                                                <div className="flex-1 min-w-0">
+                                                                    <div className={`font-bold text-base ${corVerificationResult.valid ? 'text-green-400' : 'text-red-400'}`}>
+                                                                        {corVerificationResult.valid ? 'Identity Verified' : 'Verification Failed'}
+                                                                    </div>
+                                                                    <div className="text-sm text-slate-400 mt-2 space-y-2">
+                                                                        {corVerificationResult.valid ? (
+                                                                            <>
+                                                                                <p className="flex items-center gap-2">
+                                                                                    Matched: <span className="text-white font-semibold">{corVerificationResult.extractedName}</span>
+                                                                                    <span className="text-slate-600">|</span>
+                                                                                    <span className="text-white font-semibold">{corVerificationResult.extractedId}</span>
+                                                                                </p>
+                                                                                <p>Extracted Course: <span className="text-white font-semibold">{corVerificationResult.extractedCourse || 'N/A'}</span></p>
+                                                                            </>
+                                                                        ) : (
+                                                                            <p className="text-red-300 font-medium bg-red-500/10 p-2 rounded-lg inline-block">{corVerificationResult.reason}</p>
+                                                                        )}
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        )}
 
+                                                        {/* Preview Section */}
+                                                        {academicForm.corPreview && (
+                                                            <div className="mt-2 relative w-full sm:w-64 h-40 rounded-2xl overflow-hidden border border-slate-700/50 bg-slate-950/80 shadow-inner group">
+                                                                <img src={academicForm.corPreview} alt="COR Preview" className="w-full h-full object-contain transition-transform group-hover:scale-105" />
+                                                                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/60 to-transparent pointer-events-none"></div>
+                                                            </div>
+                                                        )}
 
-                                        <div className="space-y-4">
-                                            <div>
-                                                <label className="block text-sm font-medium text-slate-300 mb-1">First Name</label>
-                                                <input
-                                                    type="text"
-                                                    name="firstName"
-                                                    value={formData.firstName || ''}
-                                                    onChange={handleChange}
-                                                    disabled={!isEditing}
-                                                    className="w-full px-4 py-2 border border-slate-700 rounded-lg bg-slate-800 text-white focus:ring-2 focus:outline-none focus:ring-brand-500 focus:border-brand-500 disabled:bg-slate-900 disabled:text-slate-400"
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="block text-sm font-medium text-slate-300 mb-1">Last Name</label>
-                                                <input
-                                                    type="text"
-                                                    name="lastName"
-                                                    value={formData.lastName || ''}
-                                                    onChange={handleChange}
-                                                    disabled={!isEditing}
-                                                    className="w-full px-4 py-2 border border-slate-700 rounded-lg bg-slate-800 text-white focus:ring-2 focus:outline-none focus:ring-brand-500 focus:border-brand-500 disabled:bg-slate-900 disabled:text-slate-400"
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="block text-sm font-medium text-slate-300 mb-1">Email Address</label>
-                                                <div className="relative">
-                                                    <Mail className="absolute left-3 top-2.5 text-slate-500" size={18} />
-                                                    <input
-                                                        type="email"
-                                                        name="email"
-                                                        value={formData.email || ''}
-                                                        onChange={handleChange}
-                                                        disabled={!isEditing}
-                                                        placeholder="email@example.com"
-                                                        className="w-full pl-10 pr-4 py-2 border border-slate-700 rounded-lg bg-slate-800 text-white placeholder-slate-500 focus:ring-2 focus:outline-none focus:ring-brand-500 focus:border-brand-500 disabled:bg-slate-900 disabled:text-slate-400"
-                                                    />
+                                                        {/* Action Button */}
+                                                        <button
+                                                            type="submit"
+                                                            disabled={isSubmittingAcademic || !corVerified}
+                                                            className="w-full py-4 bg-brand-600 hover:bg-brand-500 disabled:bg-slate-800 disabled:opacity-40 text-white font-bold rounded-2xl transition-all shadow-2xl shadow-brand-600/30 disabled:shadow-none hover:-translate-y-0.5 active:translate-y-0.5"
+                                                        >
+                                                            {isSubmittingAcademic ? (
+                                                                <span className="flex items-center justify-center gap-3">
+                                                                    <RefreshCw className="w-5 h-5 animate-spin" />
+                                                                    Applying Changes...
+                                                                </span>
+                                                            ) : (
+                                                                'Confirm & Submit Academic Update'
+                                                            )}
+                                                        </button>
+                                                    </form>
                                                 </div>
                                             </div>
                                         </div>
-                                    </div>
+                                    )}
 
-                                    <div className="space-y-6">
-                                        <h3 className="text-lg font-bold text-white border-b border-slate-800 pb-2">Academic Details</h3>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
+                                        <div className="space-y-6">
 
-                                        <div className="space-y-4">
-                                            <div>
-                                                <label className="block text-sm font-medium text-slate-300 mb-1">Student ID</label>
-                                                <input
-                                                    type="text"
-                                                    value={formData.studentId || formData.schoolId || ''}
-                                                    disabled
-                                                    className="w-full px-4 py-2 border border-slate-700 rounded-lg bg-slate-900 text-slate-400 cursor-not-allowed"
-                                                />
+                                            <h3 className="text-lg font-bold text-white border-b border-slate-800 pb-2">Personal Information</h3>
+
+
+                                            <div className="space-y-4">
+                                                <div>
+                                                    <label className="block text-sm font-medium text-slate-300 mb-1">First Name</label>
+                                                    <input
+                                                        type="text"
+                                                        name="firstName"
+                                                        value={formData.firstName || ''}
+                                                        onChange={handleChange}
+                                                        disabled={!isEditing}
+                                                        className="w-full px-4 py-2 border border-slate-700 rounded-lg bg-slate-800 text-white focus:ring-2 focus:outline-none focus:ring-brand-500 focus:border-brand-500 disabled:bg-slate-900 disabled:text-slate-400"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-sm font-medium text-slate-300 mb-1">Last Name</label>
+                                                    <input
+                                                        type="text"
+                                                        name="lastName"
+                                                        value={formData.lastName || ''}
+                                                        onChange={handleChange}
+                                                        disabled={!isEditing}
+                                                        className="w-full px-4 py-2 border border-slate-700 rounded-lg bg-slate-800 text-white focus:ring-2 focus:outline-none focus:ring-brand-500 focus:border-brand-500 disabled:bg-slate-900 disabled:text-slate-400"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-sm font-medium text-slate-300 mb-1">Email Address</label>
+                                                    <div className="relative">
+                                                        <Mail className="absolute left-3 top-2.5 text-slate-500" size={18} />
+                                                        <input
+                                                            type="email"
+                                                            name="email"
+                                                            value={formData.email || ''}
+                                                            onChange={handleChange}
+                                                            disabled={!isEditing}
+                                                            placeholder="email@example.com"
+                                                            className="w-full pl-10 pr-4 py-2 border border-slate-700 rounded-lg bg-slate-800 text-white placeholder-slate-500 focus:ring-2 focus:outline-none focus:ring-brand-500 focus:border-brand-500 disabled:bg-slate-900 disabled:text-slate-400"
+                                                        />
+                                                    </div>
+                                                </div>
                                             </div>
-                                            <div>
-                                                <label className="block text-sm font-medium text-slate-300 mb-1">Course</label>
-                                                <input
-                                                    type="text"
-                                                    value={formData.course || ''}
-                                                    disabled
-                                                    className="w-full px-4 py-2 border border-slate-700 rounded-lg bg-slate-900 text-slate-400 cursor-not-allowed"
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="block text-sm font-medium text-slate-300 mb-1">Year Level</label>
-                                                <input
-                                                    type="text"
-                                                    value={formData.yearLevel || ''}
-                                                    disabled
-                                                    className="w-full px-4 py-2 border border-slate-700 rounded-lg bg-slate-900 text-slate-400 cursor-not-allowed"
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="block text-sm font-medium text-slate-300 mb-1">Section</label>
-                                                <input
-                                                    type="text"
-                                                    value={formData.section || 'Not specified'}
-                                                    disabled
-                                                    className="w-full px-4 py-2 border border-slate-700 rounded-lg bg-slate-900 text-slate-400 cursor-not-allowed"
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="block text-sm font-medium text-slate-300 mb-1">School Year</label>
-                                                <input
-                                                    type="text"
-                                                    value={academicSettings?.schoolYear || 'Loading...'}
-                                                    disabled
-                                                    className="w-full px-4 py-2 border border-slate-700 rounded-lg bg-slate-900 text-slate-400 cursor-not-allowed"
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="block text-sm font-medium text-slate-300 mb-1">Semester</label>
-                                                <input
-                                                    type="text"
-                                                    value={academicSettings?.semester || 'Loading...'}
-                                                    disabled
-                                                    className="w-full px-4 py-2 border border-slate-700 rounded-lg bg-slate-900 text-slate-400 cursor-not-allowed"
-                                                />
+                                        </div>
+
+                                        <div className="space-y-6">
+                                            <h3 className="text-lg font-bold text-white border-b border-slate-800 pb-2">Academic Details</h3>
+
+                                            <div className="space-y-4">
+                                                <div>
+                                                    <label className="block text-sm font-medium text-slate-300 mb-1">Student ID</label>
+                                                    <input
+                                                        type="text"
+                                                        value={formData.studentId || formData.schoolId || ''}
+                                                        disabled
+                                                        className="w-full px-4 py-2 border border-slate-700 rounded-lg bg-slate-900 text-slate-400 cursor-not-allowed"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-sm font-medium text-slate-300 mb-1">Course</label>
+                                                    <input
+                                                        type="text"
+                                                        value={formData.course || ''}
+                                                        disabled
+                                                        className="w-full px-4 py-2 border border-slate-700 rounded-lg bg-slate-900 text-slate-400 cursor-not-allowed"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-sm font-medium text-slate-300 mb-1">Year Level</label>
+                                                    <input
+                                                        type="text"
+                                                        value={formData.yearLevel || ''}
+                                                        disabled
+                                                        className="w-full px-4 py-2 border border-slate-700 rounded-lg bg-slate-900 text-slate-400 cursor-not-allowed"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-sm font-medium text-slate-300 mb-1">Section</label>
+                                                    <input
+                                                        type="text"
+                                                        value={formData.section || 'Not specified'}
+                                                        disabled
+                                                        className="w-full px-4 py-2 border border-slate-700 rounded-lg bg-slate-900 text-slate-400 cursor-not-allowed"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-sm font-medium text-slate-300 mb-1">School Year</label>
+                                                    <input
+                                                        type="text"
+                                                        value={academicSettings?.schoolYear || 'Loading...'}
+                                                        disabled
+                                                        className="w-full px-4 py-2 border border-slate-700 rounded-lg bg-slate-900 text-slate-400 cursor-not-allowed"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-sm font-medium text-slate-300 mb-1">Semester</label>
+                                                    <input
+                                                        type="text"
+                                                        value={academicSettings?.semester || 'Loading...'}
+                                                        disabled
+                                                        className="w-full px-4 py-2 border border-slate-700 rounded-lg bg-slate-900 text-slate-400 cursor-not-allowed"
+                                                    />
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -1213,7 +1370,7 @@ export default function StudentProfile() {
                                                     const photo = facePhotos.find(p => p.angle.toLowerCase() === angle.toLowerCase());
                                                     // If photo is in deleted list, treat it as non-existent (show empty slot)
                                                     const isDeleted = photo && deletedPhotoIds.includes(photo.id);
-                                                    const photoUrl = (photo && !isDeleted) ? `${API_URL}${photo.photo_url}` : null;
+                                                    const photoUrl = (photo && !isDeleted) ? getProfilePictureUrl(photo.photo_url) : null;
 
                                                     // DEBUG: Check why image isn't showing
                                                     if (photo) {
@@ -1416,7 +1573,7 @@ export default function StudentProfile() {
                                             <div className="space-y-3">
                                                 <div className="flex items-center justify-between p-3 bg-slate-700/50 rounded-lg">
                                                     <span className="text-slate-300">Biometric Data</span>
-                                                    {consentStatus.consent_status === 'given' ? (
+                                                    {consentStatus.biometricAccepted ? (
                                                         <span className="flex items-center gap-2 text-green-400">
                                                             <CheckCircle2 size={18} /> Consented
                                                         </span>
@@ -1428,7 +1585,7 @@ export default function StudentProfile() {
                                                 </div>
                                                 <div className="flex items-center justify-between p-3 bg-slate-700/50 rounded-lg">
                                                     <span className="text-slate-300">Privacy Policy</span>
-                                                    {consentStatus.privacy_policy_accepted ? (
+                                                    {consentStatus.privacyPolicyAccepted ? (
                                                         <span className="flex items-center gap-2 text-green-400">
                                                             <CheckCircle2 size={18} /> Accepted
                                                         </span>

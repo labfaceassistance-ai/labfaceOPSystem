@@ -1,0 +1,9 @@
+{
+  "include": ["**/*.py"],
+  "exclude": ["packages/**", ".cache/**", "models/**"],
+  "reportMissingImports": "none",
+  "reportMissingModuleSource": "none",
+  "pythonVersion": "3.10",
+  "venvPath": ".",
+  "venv": ".venv"
+}

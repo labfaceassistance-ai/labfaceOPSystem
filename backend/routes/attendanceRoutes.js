@@ -3,27 +3,14 @@ const pool = require('../config/db');
 const router = express.Router();
 const { authenticateToken } = require('../middleware/auth');
 const warningService = require('../services/attendanceWarningService');
-const conflictResolver = require('../services/conflictResolver');
+// conflict resolver deleted for cleanup
 const multer = require('multer');
 const fs = require('fs');
 const path = require('path');
+const { uploadBufferToMinio, EXCUSE_BUCKET, standardizeImageUrl, SNAPSHOT_BUCKET } = require('../utils/minioHelper');
 
-// Configure Uploads
-const uploadDir = 'uploads/excuses';
-if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir, { recursive: true });
-}
-
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        cb(null, uploadDir);
-    },
-    filename: (req, file, cb) => {
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        cb(null, uniqueSuffix + path.extname(file.originalname));
-    }
-});
-const upload = multer({ storage: storage });
+// Configure Uploads (Memory Storage for MinIO)
+const upload = multer({ storage: multer.memoryStorage() });
 
 // ============================================
 // SCHEMA INITIALIZATION
@@ -419,7 +406,12 @@ router.get('/sessions/:sessionId/activity', async (req, res) => {
             [sessionId, parseInt(limit)]
         );
 
-        res.json(activity);
+        const standardizedActivity = activity.map(log => ({
+            ...log,
+            snapshot_url: standardizeImageUrl(log.snapshot_url, SNAPSHOT_BUCKET),
+            id_photo: standardizeImageUrl(log.id_photo)
+        }));
+        res.json(standardizedActivity);
     } catch (error) {
         console.error('Error fetching session activity:', error);
         res.status(500).json({ error: error.message });
@@ -542,7 +534,10 @@ router.get('/sessions/:id/students', async (req, res) => {
             sessionId: session.id,
             sessionType: session.type,
             totalStudents: students.length,
-            students
+            students: students.map(s => ({
+                ...s,
+                profile_picture: standardizeImageUrl(s.profile_picture)
+            }))
         });
     } catch (err) {
         console.error('Get session students error:', err);
@@ -770,7 +765,11 @@ router.get('/session/:id/live', async (req, res) => {
         res.json({
             sessionId: parseInt(req.params.id),
             totalPresent: logs.length,
-            attendanceLogs: logs
+            attendanceLogs: logs.map(l => ({
+                ...l,
+                snapshot_url: standardizeImageUrl(l.snapshot_url, SNAPSHOT_BUCKET),
+                profile_picture: standardizeImageUrl(l.profile_picture)
+            }))
         });
     } catch (err) {
         console.error('Get live attendance error:', err);
@@ -924,10 +923,19 @@ router.put('/manual-update', async (req, res) => {
 // EXCUSE MANAGEMENT
 // ============================================
 
-// Upload Excuse Letter
-router.post('/upload-excuse', authenticateToken, upload.single('file'), (req, res) => {
+// Upload Excuse Letter to MinIO
+router.post('/upload-excuse', authenticateToken, upload.single('file'), async (req, res) => {
     if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
-    res.json({ url: `/uploads/excuses/${req.file.filename}` });
+    
+    try {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        const filename = uniqueSuffix + path.extname(req.file.originalname);
+        const url = await uploadBufferToMinio(req.file.buffer, filename, EXCUSE_BUCKET);
+        res.json({ url });
+    } catch (err) {
+        console.error("Excuse Upload Error:", err);
+        res.status(500).json({ error: 'Failed to upload excuse file to storage' });
+    }
 });
 
 // Mark attendance as Excused (Professor only)

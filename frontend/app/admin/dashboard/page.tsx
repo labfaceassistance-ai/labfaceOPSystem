@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useToast } from '@/components/Toast';
 import { getToken, getUser, API_URL, getBackendUrl, logout, getProfilePictureUrl } from '@/utils/auth';
 import ConfirmModal from '@/components/ConfirmModal';
-import { User, Shield, Users, Clock, CheckCircle, XCircle, AlertCircle, LogOut, UserCheck, Search, Filter, Camera, History, AlertTriangle, ExternalLink, Briefcase, RefreshCw, Activity, GraduationCap, LayoutDashboard, Eye, Home, Monitor } from 'lucide-react';
+import { User, Shield, Users, Clock, CheckCircle, XCircle, AlertCircle, LogOut, UserCheck, Search, Filter, Camera, History, AlertTriangle, ExternalLink, Briefcase, RefreshCw, Activity, GraduationCap, LayoutDashboard, Eye, Home, Monitor, FileText } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import SessionTimeout from '@/components/SessionTimeout';
 import BulkActions from '@/components/BulkActions';
@@ -115,6 +115,12 @@ export default function AdminDashboard() {
     const [userStatusFilter, setUserStatusFilter] = useState('all');
     const [loadingUsers, setLoadingUsers] = useState(false);
     const [userSearch, setUserSearch] = useState('');
+    const [isPDF, setIsPDF] = useState<(url: string | undefined | null) => boolean>(() => (url: string | undefined | null) => {
+        if (!url) return false;
+        // Detect PDF by extension or content type in data URI
+        return url.toLowerCase().endsWith('.pdf') || url.startsWith('data:application/pdf');
+    });
+
 
     // Sessions Tab State
     const [activeSessions, setActiveSessions] = useState<ActiveSession[]>([]);
@@ -708,10 +714,19 @@ export default function AdminDashboard() {
                                 )}
                             </div>
 
-                            <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2 mt-12">
-                                <Camera className="w-6 h-6 text-brand-400" />
-                                Live Security Feed
-                            </h2>
+                            <div className="flex justify-between items-center mt-12 mb-6">
+                                <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                                    <Camera className="w-6 h-6 text-brand-400" />
+                                    Live Security Feed
+                                </h2>
+                                <Link 
+                                    href="/admin/camera-test" 
+                                    className="bg-brand-500 hover:bg-brand-400 text-white px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-2 transition-colors"
+                                >
+                                    <Monitor className="w-4 h-4" />
+                                    Run Face Diagnostic
+                                </Link>
+                            </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
                                 <div className="bg-slate-900/50 rounded-2xl border border-slate-800 p-1 shadow-xl">
                                     <div className="px-4 py-3 flex justify-between items-center">
@@ -1167,13 +1182,32 @@ export default function AdminDashboard() {
                                 <div className="bg-slate-800/50 rounded-lg p-4 mt-4">
                                     <h4 className="text-white font-semibold mb-3">Verification Document (COR)</h4>
                                     {selectedReport.certificate_of_registration ? (
-                                        <div className="aspect-video bg-slate-900 rounded border border-slate-700 overflow-hidden">
-                                            <img
-                                                src={`${getBackendUrl()}${selectedReport.certificate_of_registration}`}
-                                                alt="Certificate of Registration"
-                                                className="w-full h-full object-contain"
-                                            />
+                                        <div className="aspect-video bg-slate-900 rounded border border-slate-700 overflow-hidden relative group">
+                                            {isPDF(selectedReport.certificate_of_registration) ? (
+                                                <div className="w-full h-full flex flex-col items-center justify-center text-brand-400">
+                                                    <FileText size={48} className="mb-2" />
+                                                    <span className="text-sm font-bold">PDF COR Document</span>
+                                                </div>
+                                            ) : (
+                                                <img
+                                                    src={getProfilePictureUrl(selectedReport.certificate_of_registration) || ''}
+                                                    alt="Certificate of Registration"
+                                                    className="w-full h-full object-contain"
+                                                />
+                                            )}
+                                            <a
+                                                href={getProfilePictureUrl(selectedReport.certificate_of_registration) || '#'}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2 text-white hover:text-brand-400 cursor-pointer"
+                                            >
+                                                <ExternalLink size={24} />
+                                                <span className="text-xs font-bold px-4 text-center">
+                                                    {isPDF(selectedReport.certificate_of_registration) ? 'Open PDF COR' : 'View Full Image'}
+                                                </span>
+                                            </a>
                                         </div>
+
                                     ) : (
                                         <div className="p-4 border border-slate-700 border-dashed rounded text-center text-slate-500 text-sm">
                                             No Certificate of Registration uploaded.
@@ -1185,13 +1219,32 @@ export default function AdminDashboard() {
                                 <div className="bg-slate-800/50 rounded-lg p-4 mt-4">
                                     <h4 className="text-white font-semibold mb-3">Verification Document (ID Photo)</h4>
                                     {selectedReport.id_photo ? (
-                                        <div className="aspect-video bg-slate-900 rounded border border-slate-700 overflow-hidden">
-                                            <img
-                                                src={`${getBackendUrl()}${selectedReport.id_photo}`}
-                                                alt="ID Photo"
-                                                className="w-full h-full object-contain"
-                                            />
+                                        <div className="aspect-video bg-slate-900 rounded border border-slate-700 overflow-hidden relative group">
+                                            {isPDF(selectedReport.id_photo) ? (
+                                                <div className="w-full h-full flex flex-col items-center justify-center text-brand-400">
+                                                    <FileText size={48} className="mb-2" />
+                                                    <span className="text-sm font-bold">PDF ID Document</span>
+                                                </div>
+                                            ) : (
+                                                <img
+                                                    src={getProfilePictureUrl(selectedReport.id_photo) || ''}
+                                                    alt="ID Photo"
+                                                    className="w-full h-full object-contain"
+                                                />
+                                            )}
+                                            <a
+                                                href={getProfilePictureUrl(selectedReport.id_photo) || '#'}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2 text-white hover:text-brand-400 cursor-pointer"
+                                            >
+                                                <ExternalLink size={24} />
+                                                <span className="text-xs font-bold px-4 text-center">
+                                                    {isPDF(selectedReport.id_photo) ? 'Open PDF ID' : 'View Full Image'}
+                                                </span>
+                                            </a>
                                         </div>
+
                                     ) : (
                                         <div className="p-4 border border-slate-700 border-dashed rounded text-center text-slate-500 text-sm">
                                             No ID Photo uploaded.
@@ -1351,11 +1404,18 @@ export default function AdminDashboard() {
                                             <div className="aspect-[3/4] bg-slate-800 rounded-lg overflow-hidden border border-slate-700 relative group">
                                                 {selectedProfessor.id_photo ? (
                                                     <>
-                                                        <img
-                                                            src={getProfilePictureUrl(selectedProfessor.id_photo) || ''}
-                                                            alt="ID Photo"
-                                                            className="w-full h-full object-cover"
-                                                        />
+                                                        {isPDF(selectedProfessor.id_photo) ? (
+                                                            <div className="w-full h-full flex flex-col items-center justify-center bg-slate-800 text-brand-400">
+                                                                <FileText size={48} className="mb-2" />
+                                                                <span className="text-xs font-bold px-2 text-center">PDF Document</span>
+                                                            </div>
+                                                        ) : (
+                                                            <img
+                                                                src={getProfilePictureUrl(selectedProfessor.id_photo) || ''}
+                                                                alt="ID Photo"
+                                                                className="w-full h-full object-cover"
+                                                            />
+                                                        )}
                                                         <a
                                                             href={getProfilePictureUrl(selectedProfessor.id_photo) || '#'}
                                                             target="_blank"
@@ -1363,7 +1423,9 @@ export default function AdminDashboard() {
                                                             className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2 text-white hover:text-brand-400 cursor-pointer"
                                                         >
                                                             <ExternalLink size={24} />
-                                                            <span className="text-xs font-bold">View Full Image</span>
+                                                            <span className="text-xs font-bold text-center px-4">
+                                                                {isPDF(selectedProfessor.id_photo) ? 'Open PDF Document' : 'View Full Image'}
+                                                            </span>
                                                         </a>
                                                     </>
                                                 ) : (
@@ -1371,6 +1433,7 @@ export default function AdminDashboard() {
                                                         No Photo
                                                     </div>
                                                 )}
+
                                             </div>
                                             {selectedProfessor.id_photo && (
                                                 <a
@@ -1379,7 +1442,8 @@ export default function AdminDashboard() {
                                                     rel="noopener noreferrer"
                                                     className="block w-full text-center mt-2 text-xs bg-slate-800 hover:bg-slate-700 text-brand-400 py-2 rounded transition-colors"
                                                 >
-                                                    View Full Image
+                                                    {isPDF(selectedProfessor.id_photo) ? 'View PDF Document' : 'View Full Image'}
+
                                                 </a>
                                             )}
 

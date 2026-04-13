@@ -20,7 +20,7 @@ const ensureUserSchema = async () => {
 ensureUserSchema();
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret';
-const { uploadBase64ToMinio, deleteFromMinio } = require('../utils/minioHelper');
+const { uploadBase64ToMinio, deleteFromMinio, standardizeImageUrl } = require('../utils/minioHelper');
 const axios = require('axios');
 const FormData = require('form-data');
 
@@ -61,7 +61,12 @@ router.post('/validate-face-quality', async (req, res) => {
 
 // Register Student
 router.post('/register/student', async (req, res) => {
-    let { studentId, firstName, middleName, lastName, email, password, course, yearLevel, section, facePhotos, profilePicture, certificateOfRegistration } = req.body;
+    let { 
+        studentId, firstName, middleName, lastName, email, 
+        password, course, yearLevel, section, facePhotos, 
+        profilePicture, certificateOfRegistration,
+        consentGiven, consentVersion, consentText
+    } = req.body;
 
     // Sanitize Middle Name
     if (middleName) {
@@ -307,14 +312,7 @@ router.post('/register/student', async (req, res) => {
         }
 
         // Save debug log to file
-        try {
-            const fs = require('fs');
-            const path = require('path');
-            const logPath = path.join(__dirname, '../uploads', 'registration_debug.log');
-            fs.appendFileSync(logPath, debugLog + '-------------------\n');
-        } catch (logErr) {
-            console.error('Failed to write debug log:', logErr);
-        }
+        // File logging removed to ensure stateless containers
 
         // Check if student record already exists
         const [existingStudent] = await connection.query('SELECT * FROM students WHERE user_id = ?', [userId]);
@@ -335,8 +333,11 @@ router.post('/register/student', async (req, res) => {
         }
 
         // AUTO-LINK ENROLLMENTS: connect existing class enrollments to this new user (late registration)
+        // Use fuzzy matching to handle dash/formatting differences
         await connection.query(
-            'UPDATE enrollments SET student_id = ? WHERE student_number = ? AND student_id IS NULL',
+            `UPDATE enrollments SET student_id = ? 
+             WHERE REPLACE(REPLACE(student_number, '-', ''), ' ', '') = REPLACE(REPLACE(?, '-', ''), ' ', '') 
+             AND student_id IS NULL`,
             [userId, studentId]
         );
 
@@ -437,6 +438,49 @@ router.post('/register/student', async (req, res) => {
                 'INSERT INTO notifications (user_id, title, message) VALUES (?, ?, ?)',
                 [userId, 'Welcome to LabFace', 'Your student account has been successfully created. Welcome to the platform!']
             );
+        }
+
+        // Record Biometric and Privacy Consents
+        if (consentGiven) {
+            console.log(`[Register] Recording consents for Student: ${studentId}`);
+            
+            // 1. Biometric/Registration Consent
+            await connection.query(`
+                INSERT INTO consent_records (
+                    user_id, consent_type, consent_given, 
+                    consent_text, consent_version, ip_address, 
+                    user_agent, timestamp
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, NOW())
+            `, [
+                studentId, "registration", true, 
+                consentText || "Biometric data collection for attendance monitoring and identity verification", 
+                consentVersion || "1.0", req.ip, 
+                req.headers["user-agent"] || ""
+            ]);
+
+            // 2. Data Privacy Consent
+            await connection.query(`
+                INSERT INTO consent_records (
+                    user_id, consent_type, consent_given, 
+                    consent_text, consent_version, ip_address, 
+                    user_agent, timestamp
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, NOW())
+            `, [
+                studentId, "data_privacy", true, 
+                "Acceptance of Data Privacy Policy and Terms and Conditions", 
+                consentVersion || "1.0", req.ip, 
+                req.headers["user-agent"] || ""
+            ]);
+
+            // 3. Update Users Table statuses
+            await connection.query(`
+                UPDATE users SET 
+                consent_status = "given",
+                privacy_policy_accepted = 1,
+                privacy_policy_version = ?,
+                privacy_policy_accepted_at = NOW()
+                WHERE id = ?
+            `, [consentVersion || '1.0', userId]);
         }
 
         await connection.commit();
@@ -580,35 +624,47 @@ router.post('/register/professor', async (req, res) => {
             userId = result.insertId;
         }
 
-        // Record Biometric Consent
+        // Record Biometric and Privacy Consents
         if (consentGiven) {
+            console.log(`[Register] Recording consents for Professor: ${professorId}`);
+            
+            // 1. Biometric/Registration Consent
             await pool.query(`
                 INSERT INTO consent_records (
-                    user_id,
-                    consent_type,
-                    consent_given,
-                    consent_text,
-                    consent_version,
-                    ip_address,
-                    user_agent,
-                    timestamp
+                    user_id, consent_type, consent_given, 
+                    consent_text, consent_version, ip_address, 
+                    user_agent, timestamp
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, NOW())
             `, [
-                professorId,
-                'registration',
-                true,
-                consentText || 'Biometric data collection',
-                consentVersion || '1.0',
-                req.ip,
+                professorId, 'registration', true, 
+                consentText || 'Biometric data collection for attendance monitoring and identity verification', 
+                consentVersion || '1.0', req.ip, 
                 req.headers['user-agent'] || ''
             ]);
 
-            // Update user consent status
+            // 2. Data Privacy Consent
             await pool.query(`
-                UPDATE users 
-                SET consent_status = 'given'
-                WHERE user_id = ?
-            `, [professorId]);
+                INSERT INTO consent_records (
+                    user_id, consent_type, consent_given, 
+                    consent_text, consent_version, ip_address, 
+                    user_agent, timestamp
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, NOW())
+            `, [
+                professorId, 'data_privacy', true, 
+                'Acceptance of Data Privacy Policy and Terms and Conditions', 
+                consentVersion || '1.0', req.ip, 
+                req.headers['user-agent'] || ''
+            ]);
+
+            // 3. Update Users Table statuses
+            await pool.query(`
+                UPDATE users SET 
+                consent_status = 'given',
+                privacy_policy_accepted = 1,
+                privacy_policy_version = ?,
+                privacy_policy_accepted_at = NOW()
+                WHERE id = ?
+            `, [consentVersion || '1.0', userId]);
         }
 
         // Create Welcome Notification (only for new users)
@@ -642,7 +698,6 @@ router.post('/register/professor', async (req, res) => {
 // Login (General: Student/Professor)
 router.post('/login', async (req, res) => {
     const { userId, password } = req.body;
-    console.log('Login attempt:', req.body);
 
     if (!userId || !password) {
         return res.status(400).json({ message: 'User ID and password are required' });
@@ -662,8 +717,7 @@ router.post('/login', async (req, res) => {
             LEFT JOIN courses c ON s.course_id = c.id
             WHERE u.user_id = ?
         `, [userId]);
-        const { intendedRole } = req.body; // New: Receive intended role from frontend
-        console.log('User found:', users.length > 0 ? 'Yes' : 'No');
+        const { intendedRole } = req.body;
 
         if (users.length === 0) return res.status(400).json({ message: 'User ID not found' });
 
@@ -745,7 +799,7 @@ router.post('/login', async (req, res) => {
 
                 studentId: authenticatedRole === 'student' ? user.user_id : undefined,
                 professorId: authenticatedRole === 'professor' ? user.user_id : undefined,
-                profilePicture: user.profile_picture
+                profilePicture: standardizeImageUrl(user.profile_picture)
             }
         });
     } catch (err) {
@@ -799,8 +853,10 @@ router.get('/me', async (req, res) => {
             section: user.section,
             studentId: decoded.role === 'student' ? user.user_id : undefined,
             professorId: decoded.role === 'professor' ? user.user_id : undefined,
-            profilePicture: user.profile_picture,
-            lastVerifiedPeriodId: user.last_verified_period_id // Return verification status
+            profilePicture: standardizeImageUrl(user.profile_picture),
+            consentStatus: user.consent_status,
+            privacyPolicyAccepted: !!user.privacy_policy_accepted,
+            lastVerifiedPeriodId: user.last_verified_period_id
         });
     } catch (err) {
         if (err.name === 'JsonWebTokenError') {
@@ -818,10 +874,8 @@ router.get('/me', async (req, res) => {
 // Check Availability
 router.get('/check-availability', async (req, res) => {
     const { field, value, registeringAs, userId } = req.query;
-    console.log(`[DEBUG] check-availability called: field=${field}, value=${value}, registeringAs=${registeringAs}, userId=${userId}`);
 
     if (!field || !value) {
-        console.log('[DEBUG] Missing field or value');
         return res.status(400).json({ message: 'Field and value required' });
     }
 
@@ -829,7 +883,6 @@ router.get('/check-availability', async (req, res) => {
     if (field === 'userId') {
         // Block fraud Professor IDs
         if (registeringAs === 'professor' && value === '00000') {
-            console.log('[DEBUG] Blocked fraud Professor ID: 00000');
             return res.json({
                 available: false,
                 canProceed: false,
@@ -839,7 +892,6 @@ router.get('/check-availability', async (req, res) => {
 
         // Block fraud Student IDs
         if (registeringAs === 'student' && value.startsWith('0000-00000')) {
-            console.log('[DEBUG] Blocked fraud Student ID starting with 0000-00000');
             return res.json({
                 available: false,
                 canProceed: false,
@@ -855,17 +907,12 @@ router.get('/check-availability', async (req, res) => {
         } else if (field === 'userId') {
             query = 'SELECT user_id, role, approval_status FROM users WHERE user_id = ?';
         } else {
-            console.log('[DEBUG] Invalid field:', field);
             return res.status(400).json({ message: 'Invalid field' });
         }
 
-        console.log(`[DEBUG] Executing query: ${query} with value: ${value}`);
         const [existing] = await pool.query(query, [value]);
-        console.log(`[DEBUG] Query result count: ${existing.length}`);
 
         if (existing.length === 0) {
-            // User doesn't exist - available
-            console.log('[DEBUG] User does not exist, returning available=true');
             return res.json({
                 available: true,
                 canProceed: true
@@ -874,7 +921,6 @@ router.get('/check-availability', async (req, res) => {
 
         const user = existing[0];
         const roles = user.role ? user.role.split(',').map(r => r.trim()) : [];
-        console.log(`[DEBUG] User found. Roles: ${roles.join(',')}`);
 
         // If checking email
         if (field === 'email') {
@@ -882,7 +928,6 @@ router.get('/check-availability', async (req, res) => {
             if (userId && user.user_id === userId) {
                 // Same user - check if they can add the role
                 if (registeringAs && roles.includes(registeringAs)) {
-                    console.log('[DEBUG] Email same user, explicitly blocked role');
                     return res.json({
                         available: false,
                         canProceed: false,
@@ -891,7 +936,6 @@ router.get('/check-availability', async (req, res) => {
                 }
 
                 // Same user, different role - allow
-                console.log('[DEBUG] Email same user, allowed proceeds');
                 return res.json({
                     available: false,
                     canProceed: true,
@@ -901,7 +945,6 @@ router.get('/check-availability', async (req, res) => {
             }
 
             // Different user - check if we can merge (i.e. existing user doesn't have the role yet)
-            console.log('[DEBUG] Email conflict with different user - checking if mergeable');
 
             const existingRoles = user.role ? user.role.split(',').map(r => r.trim()) : [];
             if (registeringAs && existingRoles.includes(registeringAs)) {
@@ -926,7 +969,6 @@ router.get('/check-availability', async (req, res) => {
         if (field === 'userId' && registeringAs) {
             // Check if user already has the role they're trying to register for
             if (roles.includes(registeringAs)) {
-                console.log(`[DEBUG] UserId conflict, already has role ${registeringAs}`);
                 return res.json({
                     available: false,
                     canProceed: false,
@@ -942,7 +984,6 @@ router.get('/check-availability', async (req, res) => {
 
             if (isAdmin || hasOtherRole) {
                 // Admin or existing user can add another role
-                console.log('[DEBUG] UserId exists, but allowing multi-role addition');
                 return res.json({
                     available: false,
                     canProceed: true,
@@ -953,7 +994,6 @@ router.get('/check-availability', async (req, res) => {
         }
 
         // Default: user exists
-        console.log('[DEBUG] Default block: User ID already registered');
         res.json({
             available: false,
             canProceed: false,
@@ -1012,7 +1052,6 @@ router.post('/forgot-password', async (req, res) => {
 // Verify OTP
 router.post('/verify-otp', async (req, res) => {
     const { email, otp } = req.body;
-    console.log('Verify OTP Request:', { email, otp });
 
     try {
         const [records] = await pool.query('SELECT * FROM password_resets WHERE email = ? AND otp = ?', [email, otp]);
@@ -1021,8 +1060,6 @@ router.post('/verify-otp', async (req, res) => {
         if (new Date() > new Date(records[0].expires_at)) {
             return res.status(400).json({ message: 'OTP expired' });
         }
-
-        console.log('OTP verified, fetching user data for email:', email);
 
         // Fetch user data to return for confirmation
         const [users] = await pool.query(`
@@ -1041,7 +1078,7 @@ router.post('/verify-otp', async (req, res) => {
             WHERE u.email = ?
         `, [email]);
 
-        console.log('User query result:', users);
+
 
         if (users.length === 0) {
             console.error('No user found for email:', email);

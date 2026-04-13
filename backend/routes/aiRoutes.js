@@ -186,6 +186,36 @@ router.get('/student-insights/:studentId', authenticateToken, async (req, res) =
         res.status(500).json({ error: 'Failed to get student insights' });
     }
 });
+// ==========================================
+// TEMPORARY CAMERA TEST TOOL START
+// ==========================================
+/**
+ * POST /api/ai/camera-test
+ * Forward local base64 frontend frame to AI engine for testing
+ */
+router.post('/camera-test', authenticateToken, requireRole(['admin', 'professor']), async (req, res) => {
+    try {
+        const { image } = req.body;
+        if (!image) return res.status(400).json({ error: 'Image payload missing' });
+
+        const axios = require('axios');
+        const AI_SERVICE_URL = process.env.AI_SERVICE_URL || 'http://ai-service:8000';
+        
+        // Proxy to our temporary endpoint
+        const response = await axios.post(`${AI_SERVICE_URL}/api/test-frame`, { image }, {
+            maxBodyLength: Infinity,
+            maxContentLength: Infinity
+        });
+        
+        res.json(response.data);
+    } catch (error) {
+        console.error('[CameraTest] Proxy Error:', error.message);
+        res.status(502).json({ success: false, error: 'AI Service unreachable' });
+    }
+});
+// ==========================================
+// TEMPORARY CAMERA TEST TOOL END
+// ==========================================
 
 
 /**

@@ -25,33 +25,19 @@ export default function ConsentGuard({ userId, onConsentAccepted }: ConsentGuard
     const checkConsent = async () => {
         try {
             const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
-            console.log(`[ConsentGuard] Checking for UserID: ${userId} (${typeof userId})`);
-
-            console.log('[ConsentGuard] API URL:', API_URL);
-
-            const url = `${API_URL}/api/consent/check/${userId}`;
-            console.log('[ConsentGuard] Fetching:', url);
-
-            const response = await fetch(url);
-            console.log('[ConsentGuard] Response status:', response.status);
+            const response = await fetch(`${API_URL}/api/consent/check/${userId}`);
 
             if (!response.ok) {
-                console.error('[ConsentGuard] API returned error:', response.status, response.statusText);
+                console.error('[ConsentGuard] API error:', response.status, response.statusText);
                 return;
             }
 
             const data = await response.json();
-            console.log('[ConsentGuard] Response data:', data);
-
             if (data.needsConsent) {
-                console.log('[ConsentGuard] User needs to accept consent:', data.reason);
                 setShowConsentModal(true);
-            } else {
-                console.log('[ConsentGuard] User has already accepted consent');
             }
         } catch (error) {
             console.error('[ConsentGuard] Failed to check consent:', error);
-            // Don't block user if check fails
         } finally {
             setChecking(false);
         }
@@ -61,7 +47,6 @@ export default function ConsentGuard({ userId, onConsentAccepted }: ConsentGuard
         try {
             const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
 
-            // Record the consent
             const response = await fetch(`${API_URL}/api/consent/record`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -75,22 +60,15 @@ export default function ConsentGuard({ userId, onConsentAccepted }: ConsentGuard
             });
 
             if (response.ok) {
-                const result = await response.json();
-                console.log('[ConsentGuard] Consent recorded successfully:', result);
-                setShowConsentModal(false);
                 setShowConsentModal(false);
                 showToast('Data Privacy Policy accepted successfully', 'success', 6000);
-                if (onConsentAccepted) {
-                    onConsentAccepted();
-                }
+                if (onConsentAccepted) onConsentAccepted();
             } else {
                 const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
-                console.error('[ConsentGuard] Failed to record consent:', errorData);
                 console.error('[ConsentGuard] Failed to record consent:', errorData);
                 showToast('Failed to save consent. Please try again or contact support.', 'error', 6000);
             }
         } catch (error) {
-            console.error('[ConsentGuard] Error recording consent:', error);
             console.error('[ConsentGuard] Error recording consent:', error);
             showToast('An error occurred while saving your consent. Please try again.', 'error', 6000);
         }

@@ -736,7 +736,7 @@ export default function SessionModal({ isOpen, onClose, classId, className, onSu
                                                                 setScheduledBatches([...scheduledBatches, {
                                                                     groupId: group.id,
                                                                     groupName: group.name,
-                                                                    enrollmentIds: group.enrollment_ids,
+                                                                    enrollmentIds: group.enrollmentIds,
                                                                     date: customDate,
                                                                     startTime: customTime,
                                                                     endTime: customEndTime

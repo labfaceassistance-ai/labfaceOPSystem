@@ -230,7 +230,7 @@ router.get('/professor/:id/stats-overview', async (req, res) => {
             const [classStats] = await pool.query(`
                 SELECT c.id, 
                        (SELECT COUNT(*) FROM enrollments e WHERE e.class_id = c.id) as student_count,
-                       (SELECT COUNT(*) FROM sessions s WHERE s.class_id = c.id) as session_count
+                       (SELECT COUNT(*) FROM sessions s WHERE s.class_id = c.id AND (s.monitoring_ended_at IS NOT NULL OR s.date <= CURDATE())) as session_count
                 FROM classes c
                 WHERE c.id IN (${classIds.map(() => '?').join(',')})
             `, classIds);
@@ -584,7 +584,7 @@ router.get('/:id', async (req, res) => {
                     ELSE 'No Account'
                 END as account_status
             FROM enrollments e 
-            LEFT JOIN users u ON e.student_id = u.id OR (e.student_id IS NULL AND u.user_id = e.student_number)
+            LEFT JOIN users u ON e.student_id = u.id OR (e.student_id IS NULL AND REPLACE(REPLACE(u.user_id, '-', ''), ' ', '') = REPLACE(REPLACE(e.student_number, '-', ''), ' ', ''))
             WHERE e.class_id = ?
             ORDER BY e.student_name
         `, [req.params.id]);
@@ -611,7 +611,7 @@ router.get('/:id/students', async (req, res) => {
                 u.year_level,
                 CASE WHEN u.id IS NULL THEN 0 ELSE 1 END as is_registered
             FROM enrollments e
-            LEFT JOIN users u ON e.student_id = u.id OR (e.student_id IS NULL AND u.user_id = e.student_number)
+            LEFT JOIN users u ON e.student_id = u.id OR (e.student_id IS NULL AND REPLACE(REPLACE(u.user_id, '-', ''), ' ', '') = REPLACE(REPLACE(e.student_number, '-', ''), ' ', ''))
             WHERE e.class_id = ?
             ORDER BY COALESCE(u.last_name, e.student_name)
         `, [req.params.id]);
@@ -637,7 +637,7 @@ router.get('/:id/analytics', async (req, res) => {
         const [students] = await pool.query(`
             SELECT e.student_id, e.student_name, u.first_name, u.last_name, u.profile_picture
             FROM enrollments e
-            LEFT JOIN users u ON e.student_id = u.id
+            LEFT JOIN users u ON e.student_id = u.id OR (e.student_id IS NULL AND REPLACE(REPLACE(u.user_id, '-', ''), ' ', '') = REPLACE(REPLACE(e.student_number, '-', ''), ' ', ''))
             WHERE e.class_id = ?
             ORDER BY e.student_name
         `, [classId]);
@@ -746,7 +746,7 @@ router.get('/:id/attendance-grid', async (req, res) => {
                 WHERE class_id = ? 
                 GROUP BY student_number 
              ) e_agg
-             LEFT JOIN users u ON e_agg.student_id = u.id
+             LEFT JOIN users u ON e_agg.student_id = u.id OR (e_agg.student_id IS NULL AND REPLACE(REPLACE(u.user_id, '-', ''), ' ', '') = REPLACE(REPLACE(e_agg.student_number, '-', ''), ' ', ''))
              ORDER BY e_agg.student_name`,
             [classId]
         );
@@ -907,12 +907,15 @@ router.get('/:id/export-attendance', async (req, res) => {
         // Fetch enrolled students (filtered if provided)
         let studentQuery = `
             SELECT 
-                MAX(id) as id, 
-                MAX(student_id) as student_id, 
-                student_name,
-                student_number 
-             FROM enrollments 
-             WHERE class_id = ? 
+                MAX(e.id) as id, 
+                MAX(COALESCE(e.student_id, u.id)) as student_id, 
+                MAX(COALESCE(u.first_name, SUBSTRING_INDEX(e.student_name, ' ', 1))) as first_name,
+                MAX(COALESCE(u.last_name, TRIM(SUBSTRING(e.student_name, LOCATE(' ', e.student_name))))) as last_name,
+                e.student_name,
+                e.student_number 
+             FROM enrollments e
+             LEFT JOIN users u ON e.student_id = u.id OR (e.student_id IS NULL AND u.user_id = e.student_number)
+             WHERE e.class_id = ? 
         `;
         let studentParams = [classId];
 

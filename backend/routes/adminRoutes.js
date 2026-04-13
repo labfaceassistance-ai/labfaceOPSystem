@@ -7,10 +7,31 @@ const {
     sendRejectionEmail,
     sendIdentityTheftUpdateEmail
 } = require('../utils/emailService');
-const { generate2FASecret, verify2FAToken, generateBackupCodes, hashBackupCodes, verifyBackupCode } = require('../services/twoFactorService');
+// removed legacy twoFactorService
 const analyticsService = require('../services/analyticsService');
 const monitoringService = require('../services/monitoringService');
 const reportingService = require('../services/reportingService');
+const { standardizeImageUrl } = require('../utils/minioHelper');
+
+
+
+// ============================================
+// SCHEMA INITIALIZATION
+// ============================================
+(async () => {
+    try {
+        // Add effective_date to academic_periods if it doesn't exist
+        const [columns] = await pool.query("SHOW COLUMNS FROM academic_periods LIKE 'effective_date'");
+        if (columns.length === 0) {
+            console.log('[MIGRATION] Adding effective_date to academic_periods');
+            await pool.query('ALTER TABLE academic_periods ADD COLUMN effective_date DATETIME AFTER semester');
+            // Populate existing rows with their created_at as effective_date
+            await pool.query('UPDATE academic_periods SET effective_date = created_at WHERE effective_date IS NULL');
+        }
+    } catch (err) {
+        console.error('Error initializing admin schemas:', err);
+    }
+})();
 
 /**
  * Middleware to check if user is Laboratory Head (admin)
@@ -251,27 +272,10 @@ router.get('/pending-professors', authenticateToken, requireLabHead, async (req,
             ORDER BY created_at DESC
         `);
 
-        const fixedProfessors = professors.map(prof => {
-            let photoUrl = prof.id_photo;
-            if (photoUrl) {
-                // Fix for old data format
-                photoUrl = photoUrl.replace('/files/', '/labface-profiles/');
-
-                // Replace internal docker host with localhost for browser access
-                // Also force port 9002 for public access if not present
-                photoUrl = photoUrl
-                    .replace('http://minio:9002', 'http://127.0.0.1:9002')
-                    .replace('http://minio:9000', 'http://127.0.0.1:9002');
-
-                console.log(`[PendingProf] Fixed URL for ${prof.email}: ${photoUrl}`);
-            } else {
-                console.log(`[PendingProf] No photo for ${prof.email}`);
-            }
-            return {
-                ...prof,
-                id_photo: photoUrl
-            };
-        });
+        const fixedProfessors = professors.map(prof => ({
+            ...prof,
+            id_photo: standardizeImageUrl(prof.id_photo)
+        }));
 
         res.json(fixedProfessors);
     } catch (error) {
@@ -454,8 +458,13 @@ router.get('/users/:id', authenticateToken, requireLabHead, async (req, res) => 
             [req.params.id]
         );
 
+        const user = users[0];
+        user.profile_picture = standardizeImageUrl(user.profile_picture);
+        user.id_photo = standardizeImageUrl(user.id_photo);
+        user.certificate_of_registration = standardizeImageUrl(user.certificate_of_registration);
+
         res.json({
-            user: users[0],
+            user,
             verificationHistory: verificationLogs
         });
     } catch (error) {
@@ -656,7 +665,8 @@ router.get('/academic-settings', authenticateToken, async (req, res) => {
                 end_date as endDate,
                 created_at as updatedAt
             FROM academic_periods
-            WHERE is_active = 1
+            WHERE effective_date <= CONVERT_TZ(NOW(), 'UTC', 'Asia/Manila')
+            ORDER BY effective_date DESC
             LIMIT 1
         `);
 
@@ -691,15 +701,15 @@ router.get('/academic-settings', authenticateToken, async (req, res) => {
  */
 router.patch('/academic-settings', authenticateToken, async (req, res) => {
     try {
-        const { schoolYear, semester, startDate, endDate } = req.body;
+        const { schoolYear, semester, startDate, endDate, effectiveDate } = req.body;
         const adminId = req.user.id;
 
         if (!schoolYear || !semester) {
             return res.status(400).json({ error: 'School year and semester are required' });
         }
 
-        // Set all as inactive
-        await pool.query('UPDATE academic_periods SET is_active = 0');
+        // Set effectiveDate to PHT if not provided
+        const finalEffectiveDate = effectiveDate || new Date().toLocaleString("en-US", {timeZone: "Asia/Manila"});
 
         // Check if this period already exists
         const [existing] = await pool.query(
@@ -708,21 +718,35 @@ router.patch('/academic-settings', authenticateToken, async (req, res) => {
         );
 
         if (existing.length > 0) {
-            // Update existing record to be active
+            // Update existing record
             await pool.query(
                 `UPDATE academic_periods 
-                SET is_active = 1, start_date = ?, end_date = ?
+                SET effective_date = ?, start_date = ?, end_date = ?
                 WHERE id = ?`,
-                [startDate || null, endDate || null, existing[0].id]
+                [finalEffectiveDate, startDate || null, endDate || null, existing[0].id]
             );
         } else {
             // Create new record
             await pool.query(
-                `INSERT INTO academic_periods (school_year, semester, is_active, start_date, end_date)
-                VALUES (?, ?, 1, ?, ?)` ,
-                [schoolYear, semester, startDate || null, endDate || null]
+                `INSERT INTO academic_periods (school_year, semester, effective_date, start_date, end_date)
+                VALUES (?, ?, ?, ?, ?)` ,
+                [schoolYear, semester, finalEffectiveDate, startDate || null, endDate || null]
             );
         }
+
+        // Maintain is_active for backward compatibility
+        await pool.query('UPDATE academic_periods SET is_active = 0');
+        await pool.query(`
+            UPDATE academic_periods 
+            SET is_active = 1 
+            WHERE id = (
+                SELECT id FROM (
+                    SELECT id FROM academic_periods 
+                    WHERE effective_date <= CONVERT_TZ(NOW(), 'UTC', 'Asia/Manila')
+                    ORDER BY effective_date DESC LIMIT 1
+                ) as active
+            )
+        `);
 
         // Log admin action
         await logAdminAction(adminId, 'update_academic_settings', null, `Set to ${schoolYear}, ${semester}`);
@@ -746,9 +770,13 @@ router.patch('/academic-settings', authenticateToken, async (req, res) => {
 router.get('/classes/current', authenticateToken, requireLabHead, async (req, res) => {
     try {
         // Get current settings
-        const [settings] = await pool.query(
-            'SELECT id, school_year, semester FROM academic_periods WHERE is_active = 1 LIMIT 1'
-        );
+        const [settings] = await pool.query(`
+            SELECT id, school_year, semester 
+            FROM academic_periods 
+            WHERE effective_date <= CONVERT_TZ(NOW(), 'UTC', 'Asia/Manila')
+            ORDER BY effective_date DESC 
+            LIMIT 1
+        `);
 
         if (settings.length === 0) {
             return res.status(404).json({ message: 'No current academic settings found' });
@@ -1310,7 +1338,13 @@ router.get('/identity-theft-reports', authenticateToken, requireLabHead, async (
             console.log('[DEBUG] No Identity Theft Reports found matching query.');
         }
 
-        res.json(reports);
+        const standardizedReports = reports.map(r => ({
+            ...r,
+            id_photo: standardizeImageUrl(r.id_photo),
+            certificate_of_registration: standardizeImageUrl(r.certificate_of_registration)
+        }));
+
+        res.json(standardizedReports);
     } catch (error) {
         console.error('Error fetching identity theft reports:', error);
         res.status(500).json({ error: error.message });
@@ -1520,7 +1554,11 @@ router.get('/classes/current', authenticateToken, requireLabHead, async (req, re
             FROM classes c
             JOIN academic_periods ap ON c.academic_period_id = ap.id
             LEFT JOIN users u ON c.professor_id = u.id
-            WHERE ap.is_active = 1
+            WHERE ap.id = (
+                SELECT id FROM academic_periods 
+                WHERE effective_date <= CONVERT_TZ(NOW(), 'UTC', 'Asia/Manila')
+                ORDER BY effective_date DESC LIMIT 1
+            )
             ORDER BY c.created_at DESC
         `);
 
@@ -1551,7 +1589,7 @@ router.get('/semesters/history', authenticateToken, requireLabHead, async (req, 
                 ap.created_at as createdAt,
                 (SELECT COUNT(*) FROM classes c WHERE c.academic_period_id = ap.id) as classCount
             FROM academic_periods ap
-            ORDER BY ap.created_at DESC
+            ORDER BY ap.effective_date DESC
         `);
 
         res.json(history);

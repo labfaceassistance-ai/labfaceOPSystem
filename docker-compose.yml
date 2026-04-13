@@ -101,7 +101,11 @@ services:
     # network_mode: "host" # Removed to allow container DNS resolution
     volumes:
       - ./ai-service/models:/app/models
+      - ./ai-service/models/weights:/app/gfpgan/weights
       - ./ai-service/.cache/pip:/app/.cache/pip
+      - ai_models:/root/.insightface
+      - gfpgan_weights:/usr/local/lib/python3.10/site-packages/gfpgan/weights
+      - gfpgan_weights_app:/app/gfpgan/weights
     depends_on:
       mariadb:
         condition: service_healthy
@@ -129,9 +133,6 @@ services:
       retries: 5
       start_period: 30s
 
-    ports:
-      - "3306:3306"
-
   minio:
     image: minio/minio
     environment:
@@ -147,9 +148,6 @@ services:
       timeout: 5s
       retries: 5
 
-    ports:
-      - "9000:9000"
-      - "9001:9001"
 
   createbuckets:
     image: minio/mc
@@ -157,7 +155,7 @@ services:
       minio:
         condition: service_healthy
     entrypoint: >
-      /bin/sh -c " sleep 10; /usr/bin/mc config host add myminio http://minio:9000 ${MINIO_ACCESS_KEY} ${MINIO_SECRET_KEY}; /usr/bin/mc mb myminio/labface-profiles; /usr/bin/mc mb myminio/labface-snapshots; /usr/bin/mc anonymous set public myminio/labface-profiles; /usr/bin/mc anonymous set public myminio/labface-snapshots; exit 0; "
+      /bin/sh -c " sleep 10; /usr/bin/mc config host add myminio http://minio:9000 ${MINIO_ACCESS_KEY} ${MINIO_SECRET_KEY}; /usr/bin/mc mb myminio/labface-profiles; /usr/bin/mc mb myminio/labface-snapshots; /usr/bin/mc mb myminio/labface-excuses; /usr/bin/mc anonymous set public myminio/labface-profiles; /usr/bin/mc anonymous set public myminio/labface-snapshots; /usr/bin/mc anonymous set public myminio/labface-excuses; exit 0; "
 
 volumes:
   mariadb_data:
@@ -167,5 +165,8 @@ volumes:
     external: true
     name: labface_minio_data
   ai_models:
-    external: false
-    name: labface_ai_models
+    driver: local
+  gfpgan_weights:
+    driver: local
+  gfpgan_weights_app:
+    driver: local

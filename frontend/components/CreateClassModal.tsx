@@ -64,8 +64,6 @@ export default function CreateClassModal({ isOpen, onClose, onSuccess, professor
                     headers: { Authorization: `Bearer ${token}` }
                 });
 
-                console.log('Fetched academic settings:', response.data); // Debug log
-
                 // Update form data with current settings
                 setFormData(prev => ({
                     ...prev,

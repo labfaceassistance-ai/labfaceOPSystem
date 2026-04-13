@@ -32,17 +32,11 @@ export default function AnalyticsTab({ user, classes }: AnalyticsTabProps) {
                     headers: { Authorization: `Bearer ${token}` }
                 });
 
-                // 2. Fetch Trends (Mock for now, can be real later)
-                const mockTrends = Array.from({ length: 7 }, (_, i) => {
-                    const d = new Date();
-                    d.setDate(d.getDate() - (6 - i));
-                    return {
-                        period: d.toLocaleDateString('en-US', { weekday: 'short' }),
-                        attendance_count: Math.floor(Math.random() * 50) + 20,
-                        unique_students: Math.floor(Math.random() * 40) + 15
-                    };
+                // 2. Fetch Real Trends
+                const trendsResponse = await axios.get(`${API_URL}/api/analytics/professor/${user.professorId || user.userId}/trends`, {
+                    headers: { Authorization: `Bearer ${token}` }
                 });
-                setTrends(mockTrends);
+                setTrends(trendsResponse.data);
 
                 // Set Stats from Backend
                 setStats({

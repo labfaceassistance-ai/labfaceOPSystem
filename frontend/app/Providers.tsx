@@ -2,7 +2,6 @@
 import { useEffect } from 'react';
 import { ToastProvider } from "../components/Toast";
 import { PersonalizationProvider } from "../components/Personalization";
-import NetworkStatusIndicator from "../components/NetworkStatusIndicator";
 import { registerServiceWorker } from "../lib/offline";
 
 export default function Providers({ children }: { children: React.ReactNode }) {
@@ -38,7 +37,6 @@ export default function Providers({ children }: { children: React.ReactNode }) {
     return (
         <PersonalizationProvider>
             <ToastProvider>
-                <NetworkStatusIndicator />
                 {children}
             </ToastProvider>
         </PersonalizationProvider>

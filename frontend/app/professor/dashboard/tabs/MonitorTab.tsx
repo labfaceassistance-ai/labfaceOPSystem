@@ -4,6 +4,7 @@ import axios from 'axios';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import ActiveSessionPanel from './ActiveSessionPanel';
 import { getToken } from '@/utils/auth';
+import Link from 'next/link';
 
 interface SystemStatus {
     online: boolean;
@@ -287,7 +288,14 @@ export default function MonitorTab() {
                         </h2>
                         <p className="text-slate-400 text-sm mt-1">Real-time surveillance and attendance tracking</p>
                     </div>
-                    <div className="flex items-center gap-4">
+                    <div className="flex flex-wrap items-center gap-4">
+                        <Link 
+                            href="/professor/camera-test" 
+                            className="bg-brand-500 hover:bg-brand-400 text-white px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-2 transition-colors"
+                        >
+                            <Activity className="w-4 h-4" />
+                            Run Diagnostic
+                        </Link>
                         <div className={`flex items-center gap-2 px-4 py-2 bg-slate-900 rounded-lg border ${overallSystemOnline ? 'border-emerald-500/30' : 'border-red-500/30'}`}>
                             <Wifi size={16} className={overallSystemOnline ? "text-emerald-500" : "text-red-500"} />
                             <span className={`text-xs font-mono ${overallSystemOnline ? "text-emerald-500" : "text-red-400"}`}>

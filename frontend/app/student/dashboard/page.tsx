@@ -11,6 +11,7 @@ import AttendanceTab from './tabs/AttendanceTab';
 import ClassesTab from './tabs/ClassesTab';
 import AttendanceInsights from '../../../components/AttendanceInsights';
 import { logout, getToken, getUser } from '../../../utils/auth';
+import AcademicUpdateBanner from '../../../components/AcademicUpdateBanner';
 
 interface User {
     id: number;
@@ -222,6 +223,9 @@ export default function StudentDashboard() {
             <Navbar />
 
             <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-8">
+
+                {/* Academic Update Banner */}
+                <AcademicUpdateBanner user={user} />
 
                 {/* Warnings Banner */}
                 {activeWarnings.length > 0 && (

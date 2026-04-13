@@ -30,19 +30,20 @@ class FaceEnhancer:
         self.cache_max_size = 100
         
         try:
-            from gfpgan import GFPGANer
-            from basicsr.archs.rrdbnet_arch import RRDBNet
+            from gfpgan import GFPGANer  # type: ignore
+            from basicsr.archs.rrdbnet_arch import RRDBNet  # type: ignore
             
             # Initialize GFPGAN v1.4 model
             # Check for local model first, then download
+            # Check for local model in the synchronized weights folder
             import os
-            local_model_path = os.path.join('/app/models', 'GFPGANv1.4.pth')
+            local_model_path = os.path.join('/app/models/weights', 'GFPGANv1.4.pth')
             if os.path.exists(local_model_path):
                 model_path = local_model_path
-                logger.info(f"Using local GFPGAN model: {model_path}")
+                logger.info(f"✓ Using local GFPGAN model: {model_path}")
             else:
                 model_path = 'https://github.com/TencentARC/GFPGAN/releases/download/v1.3.0/GFPGANv1.4.pth'
-                logger.info(f"Downloading GFPGAN model from: {model_path}")
+                logger.info(f"⚠️ Local model not found, downloading from: {model_path}")
             
             self.model = GFPGANer(
                 model_path=model_path,

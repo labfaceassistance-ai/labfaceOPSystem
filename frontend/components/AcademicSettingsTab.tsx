@@ -16,6 +16,7 @@ interface AcademicSettings {
         name: string;
     };
     updatedAt: string;
+    effectiveDate: string | null;
 }
 
 interface ClassInfo {
@@ -39,6 +40,7 @@ interface SemesterHistory {
     endDate: string | null;
     createdAt: string;
     classCount: number;
+    effectiveDate: string | null;
 }
 
 export default function AcademicSettingsTab() {
@@ -52,6 +54,7 @@ export default function AcademicSettingsTab() {
     const [isEditing, setIsEditing] = useState(false);
     const [editedYear, setEditedYear] = useState('');
     const [editedSemester, setEditedSemester] = useState('');
+    const [editedEffectiveDate, setEditedEffectiveDate] = useState('');
     const [searchQuery, setSearchQuery] = useState('');
 
     // Generate school year options (current year ± 5 years)
@@ -86,6 +89,12 @@ export default function AcademicSettingsTab() {
             setSettings(response.data);
             setEditedYear(response.data.schoolYear);
             setEditedSemester(response.data.semester);
+            // Format for datetime-local input (YYYY-MM-DDTHH:mm)
+            if (response.data.effectiveDate) {
+                setEditedEffectiveDate(new Date(response.data.effectiveDate).toISOString().slice(0, 16));
+            } else {
+                setEditedEffectiveDate(new Date().toISOString().slice(0, 16));
+            }
         } catch (error: any) {
             console.error('Error fetching settings:', error);
             showToast(error.response?.data?.message || 'Failed to fetch academic settings', 'error');
@@ -139,7 +148,8 @@ export default function AcademicSettingsTab() {
                 `${API_URL}/api/admin/academic-settings`,
                 {
                     schoolYear: editedYear,
-                    semester: editedSemester
+                    semester: editedSemester,
+                    effectiveDate: editedEffectiveDate
                 },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
@@ -160,6 +170,9 @@ export default function AcademicSettingsTab() {
         if (settings) {
             setEditedYear(settings.schoolYear);
             setEditedSemester(settings.semester);
+            if (settings.effectiveDate) {
+                setEditedEffectiveDate(new Date(settings.effectiveDate).toISOString().slice(0, 16));
+            }
         }
     };
 
@@ -239,6 +252,41 @@ export default function AcademicSettingsTab() {
                         <p className="text-xs text-slate-500">
                             {settings?.updatedAt && `Updated ${new Date(settings.updatedAt).toLocaleDateString()}`}
                         </p>
+                    </div>
+
+                    {/* Effective Date (New) */}
+                    <div className="space-y-2 md:col-span-2">
+                        <label className="text-sm font-medium text-slate-400">Effective Date & Time (Philippine Time)</label>
+                        {isEditing ? (
+                            <div className="flex flex-col gap-2">
+                                <input
+                                    type="datetime-local"
+                                    value={editedEffectiveDate}
+                                    onChange={(e) => setEditedEffectiveDate(e.target.value)}
+                                    className="w-full px-4 py-3 bg-slate-950 border border-slate-700 rounded-lg text-white focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500"
+                                />
+                                <p className="text-[10px] text-slate-500 uppercase tracking-widest font-semibold px-1">
+                                    Transitions will happen automatically at this time.
+                                </p>
+                            </div>
+                        ) : (
+                            <div className="w-full px-4 py-3 bg-slate-900/50 border border-slate-700 rounded-lg flex items-center gap-3">
+                                <Calendar className="w-5 h-5 text-brand-500" />
+                                <span className="text-lg text-white font-medium">
+                                    {settings?.effectiveDate 
+                                        ? new Date(settings.effectiveDate).toLocaleString('en-PH', { 
+                                            dateStyle: 'medium', 
+                                            timeStyle: 'short' 
+                                          })
+                                        : 'Not set (Immediate)'}
+                                </span>
+                                {settings?.effectiveDate && new Date(settings.effectiveDate) > new Date() && (
+                                    <span className="px-2 py-0.5 bg-brand-500/20 text-brand-400 text-[10px] font-bold rounded-full uppercase tracking-wider">
+                                        Scheduled
+                                    </span>
+                                )}
+                            </div>
+                        )}
                     </div>
                 </div>
 
@@ -373,11 +421,20 @@ export default function AcademicSettingsTab() {
                                                 </span>
                                             )}
                                         </h4>
-                                        <p className="text-xs text-slate-500 mt-1">
-                                            {sem.classCount} classes
-                                        </p>
+                                        <div className="flex flex-col gap-1 mt-1">
+                                            <p className="text-xs text-slate-500">
+                                                {sem.classCount} classes
+                                            </p>
+                                            {sem.effectiveDate && (
+                                                <p className="text-[10px] text-brand-400 font-medium flex items-center gap-1">
+                                                    <Calendar className="w-3 h-3" />
+                                                    Effective: {new Date(sem.effectiveDate).toLocaleString('en-PH', { dateStyle: 'medium', timeStyle: 'short' })}
+                                                </p>
+                                            )}
+                                        </div>
                                     </div>
                                     <div className="text-right text-xs text-slate-500">
+                                        <span className="block italic">Created</span>
                                         {new Date(sem.createdAt).toLocaleDateString()}
                                     </div>
                                 </div>

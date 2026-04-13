@@ -1,7 +1,7 @@
 import time
 
 class AttendanceManager:
-    def __init__(self, cooldown_seconds=60):
+    def __init__(self, cooldown_seconds=300):
         # Data structure:
         # { 
         #   face_id: { 

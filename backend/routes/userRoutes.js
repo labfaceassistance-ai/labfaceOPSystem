@@ -6,31 +6,9 @@ const path = require('path');
 const fs = require('fs');
 const axios = require('axios');
 const FormData = require('form-data');
-const { uploadBase64ToMinio, deleteFromMinio, PROFILE_BUCKET } = require('../utils/minioHelper');
+const { uploadBase64ToMinio, deleteFromMinio, PROFILE_BUCKET, standardizeImageUrl, SNAPSHOT_BUCKET } = require('../utils/minioHelper');
 
-// Ensure uploads directory exists
-const uploadDir = 'uploads/profiles';
-if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir, { recursive: true });
-}
-
-// Configure Multer
-const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-        const userId = req.params.id || 'unknown';
-        const userDir = path.join('uploads/profiles', userId);
-        if (!fs.existsSync(userDir)) {
-            fs.mkdirSync(userDir, { recursive: true });
-        }
-        cb(null, userDir);
-    },
-    filename: function (req, file, cb) {
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        cb(null, 'profile-' + uniqueSuffix + path.extname(file.originalname));
-    }
-});
-
-const upload = multer({ storage: storage });
+// Configure Multer (Memory Storage for MinIO)
 const memoryUpload = multer({ storage: multer.memoryStorage() });
 
 // Ensure columns exist
@@ -100,7 +78,7 @@ router.get('/profile/:id', async (req, res) => {
             courseName: user.course_name,
             yearLevel: user.year_level,
             section: user.section,
-            profilePicture: user.profile_picture,
+            profilePicture: standardizeImageUrl(user.profile_picture),
             studentId: role === 'student' ? user.user_id : undefined,
             professorId: role === 'professor' ? user.user_id : undefined,
             schoolId: user.user_id
@@ -199,7 +177,7 @@ router.post('/profile/:id/upload-photo', memoryUpload.single('profilePicture'), 
         const profilePictureUrl = await uploadBase64ToMinio(base64Image, studentNumber, 'profile');
 
         await pool.query('UPDATE users SET profile_picture = ? WHERE id = ?', [profilePictureUrl, req.params.id]);
-        res.json({ message: 'Profile picture uploaded successfully', profilePicture: profilePictureUrl });
+        res.json({ message: 'Profile picture uploaded successfully', profilePicture: standardizeImageUrl(profilePictureUrl) });
     } catch (err) {
         console.error("Upload Photo Error:", err);
         res.status(500).json({ error: err.message });
@@ -259,7 +237,11 @@ router.get('/profile/:id/face-photos', async (req, res) => {
         }
 
         const [photos] = await pool.query(query, [req.params.id]);
-        res.json(photos);
+        const standardizedPhotos = photos.map(p => ({
+            ...p,
+            photo_url: standardizeImageUrl(p.photo_url)
+        }));
+        res.json(standardizedPhotos);
     } catch (err) {
         console.error("Get Face Photos Error:", err);
         // Fallback: If error is strictly about missing column "deleted_at" and we messed up flag
@@ -548,12 +530,14 @@ router.get('/academic-settings', async (req, res) => {
                 id,
                 school_year as schoolYear,
                 semester,
+                effective_date as effectiveDate,
                 is_active as isCurrent,
                 start_date as startDate,
                 end_date as endDate,
                 created_at as updatedAt
             FROM academic_periods
-            WHERE is_active = 1
+            WHERE effective_date <= CONVERT_TZ(NOW(), 'UTC', 'Asia/Manila')
+            ORDER BY effective_date DESC
             LIMIT 1
         `);
 

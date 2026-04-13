@@ -119,21 +119,16 @@ function DashboardContent() {
     const fetchClasses = async (professorId: string, isBackgroundRefresh = false) => {
         if (!isBackgroundRefresh) {
             setLoading(true);
-            setError(null); // Clear previous errors
+            setError(null);
         }
         try {
             const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
             const response = await axios.get(`${API_URL}/api/classes/professor/${professorId}`);
             setClasses(response.data);
-            setError(null); // Clear error on success
+            setError(null);
         } catch (error: any) {
             console.error("Failed to fetch classes", error);
-            const errorMsg = error.response?.status === 500
-                ? "Server error - Unable to load class data. Please try again later."
-                : error.code === 'ECONNABORTED' || error.message?.includes('timeout')
-                    ? "Request timed out - Please check your connection and try again."
-                    : "Network error - Unable to connect to server. Please check your connection.";
-            setError(errorMsg);
+            setError("Failed to load classes. Please try again.");
         } finally {
             if (!isBackgroundRefresh) setLoading(false);
         }
@@ -183,9 +178,9 @@ function DashboardContent() {
         };
     }, [user?.professorId]);
 
-    const handleRefresh = () => {
+    const handleRefresh = (isBackground = true) => {
         if (user?.professorId) {
-            fetchClasses(user.professorId, true);
+            fetchClasses(user.professorId, isBackground);
         }
     };
 

@@ -7,11 +7,20 @@ const urlsToCache = [
     '/offline.html'
 ];
 
-// Install event - cache essential files
+// Install event - cache essential files one by one to avoid total failure
 self.addEventListener('install', (event) => {
     event.waitUntil(
         caches.open(CACHE_NAME)
-            .then((cache) => cache.addAll(urlsToCache))
+            .then((cache) => {
+                console.log('[SW] Pre-caching essential assets...');
+                return Promise.allSettled(
+                    urlsToCache.map(url => {
+                        return cache.add(url).catch(err => {
+                            console.warn(`[SW] Failed to cache: ${url}`, err);
+                        });
+                    })
+                );
+            })
     );
 });
 

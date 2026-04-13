@@ -144,6 +144,49 @@ export default function EditClassModal({ isOpen, onClose, classId, className, is
         }
     };
 
+    const formatStudentId = (value: string) => {
+        if (!value) return '';
+        const raw = value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+        
+        let result = '';
+        const definitions = [
+            { length: 4, type: 'num' },   // YYYY
+            { length: 5, type: 'num' },   // NNNNN
+            { length: 2, type: 'char' },  // AA
+            { length: 1, type: 'num' }    // N
+        ];
+
+        let currentPos = 0;
+        for (let i = 0; i < definitions.length; i++) {
+            const def = definitions[i];
+            let segment = '';
+            
+            for (let j = 0; j < def.length && currentPos < raw.length; j++) {
+                const char = raw[currentPos];
+                if (def.type === 'num' && /[0-9]/.test(char)) {
+                    segment += char;
+                    currentPos++;
+                } else if (def.type === 'char' && /[A-Z]/.test(char)) {
+                    segment += char;
+                    currentPos++;
+                } else {
+                    // Skip invalid char and continue
+                    currentPos++;
+                    j--; 
+                }
+            }
+
+            if (segment.length > 0) {
+                if (i > 0) result += '-';
+                result += segment;
+            }
+            
+            if (segment.length < def.length) break;
+        }
+
+        return result;
+    };
+
     const handleAddStudent = async (e: React.FormEvent) => {
         e.preventDefault();
         setSubmitting(true);
@@ -468,9 +511,10 @@ export default function EditClassModal({ isOpen, onClose, classId, className, is
                                                     <input
                                                         type="text"
                                                         value={newStudentNumber}
-                                                        onChange={e => setNewStudentNumber(e.target.value)}
+                                                        onChange={e => setNewStudentNumber(formatStudentId(e.target.value))}
+                                                        maxLength={15}
                                                         className="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm focus:border-brand-500 focus:outline-none"
-                                                        placeholder="Student ID"
+                                                        placeholder="YYYY-NNNNN-AA-N"
                                                         required
                                                     />
                                                     <input

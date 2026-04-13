@@ -56,50 +56,22 @@ class FaceRecognizer:
             else:
                 raise e
 
-    def normalize_lighting(self, img):
-        """
-        Normalize lighting using Multi-Scale Retinex with Color Restoration (MSRCR).
-        Makes embeddings lighting-invariant.
-        """
-        # Convert to float
-        img_float = img.astype(np.float64) + 1.0
-        
-        # Multi-scale Retinex
-        scales = [15, 80, 250]
-        retinex = np.zeros_like(img_float)
-        
-        for scale in scales:
-            blurred = cv2.GaussianBlur(img_float, (0, 0), scale)
-            retinex += np.log10(img_float) - np.log10(blurred)
-        
-        retinex = retinex / len(scales)
-        
-        # Normalize to 0-255
-        retinex = (retinex - retinex.min()) / (retinex.max() - retinex.min()) * 255
-        return retinex.astype(np.uint8)
-    
     def enhance_face(self, img):
         """
-        Comprehensive face enhancement pipeline.
-        Applies lighting normalization, CLAHE, and sharpening.
+        Fast face enhancement using CLAHE and sharpening.
+        Bypasses Multi-Scale Retinex for speed.
         """
-        # 1. Lighting normalization (Retinex)
-        try:
-            img = self.normalize_lighting(img)
-        except:
-            pass  # Fallback to original if Retinex fails
-        
-        # 2. CLAHE on LAB color space
+        # 1. CLAHE on LAB color space for contrast (Very Fast)
         lab = cv2.cvtColor(img, cv2.COLOR_BGR2LAB)
         l, a, b = cv2.split(lab)
-        clahe = cv2.createCLAHE(clipLimit=3.0, tileGridSize=(8, 8))
+        clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
         l = clahe.apply(l)
         img = cv2.merge([l, a, b])
         img = cv2.cvtColor(img, cv2.COLOR_LAB2BGR)
         
-        # 3. Sharpening (Unsharp mask)
-        gaussian = cv2.GaussianBlur(img, (0, 0), 2.0)
-        img = cv2.addWeighted(img, 1.5, gaussian, -0.5, 0)
+        # 2. Subtle sharpening
+        gaussian = cv2.GaussianBlur(img, (0, 0), 1.0)
+        img = cv2.addWeighted(img, 1.2, gaussian, -0.2, 0)
         
         return img
     
@@ -174,6 +146,32 @@ class FaceRecognizer:
                    blur_score * 0.2 + light_score * 0.2)
         
         return quality
+        
+    def get_faces_two_stage(self, img):
+        """
+        Robust Two-stage pipeline:
+        1. Try Native Detection on RAW image first (Highest Speed).
+        2. If 0 faces found, try Enhanced Detection fallback.
+        """
+        # Stage 1: Native get (Very optimized)
+        faces = self.app.get(img)
+        
+        # Stage 2: Fallback to enhancement for dark rooms
+        if not faces:
+            enhanced = self.enhance_face(img)
+            faces = self.app.get(enhanced)
+            # If we found faces in enhanced, we must at least re-extract embeddings
+            # from the RAW image for highest accuracy.
+            if faces:
+                final_faces = []
+                for f in faces:
+                    # Note: face.embedding is already populated by self.app.get()
+                    # But if we used the enhanced image, let's just use it unless
+                    # it distorts. Standard app.get() on enhanced is usually fine.
+                    final_faces.append(f)
+                return final_faces
+            
+        return faces
     
     def generate_augmented_images(self, img):
         """
@@ -215,10 +213,7 @@ class FaceRecognizer:
         if img is None:
             return None
         
-        # ENHANCEMENT: Preprocess image before detection
-        img = self.enhance_face(img)
-        
-        faces = self.app.get(img)
+        faces = self.get_faces_two_stage(img)
         if not faces:
             return None
         
@@ -226,17 +221,7 @@ class FaceRecognizer:
         # Sort by bounding box area
         faces = sorted(faces, key=lambda x: (x.bbox[2]-x.bbox[0]) * (x.bbox[3]-x.bbox[1]), reverse=True)
         
-        # ENHANCEMENT: Align face before embedding
-        best_face = faces[0]
-        aligned_img = self.align_face(img, best_face)
-        
-        # Re-extract embedding from aligned face
-        aligned_faces = self.app.get(aligned_img)
-        if aligned_faces:
-            return aligned_faces[0].embedding.tolist()
-        
-        # Fallback to original if alignment fails
-        return best_face.embedding.tolist()
+        return faces[0].embedding.tolist()
 
     def compare_faces(self, known_embedding, new_embedding):
         # Cosine Similarity

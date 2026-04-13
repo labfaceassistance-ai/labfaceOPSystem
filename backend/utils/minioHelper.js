@@ -35,6 +35,7 @@ try {
 
 const PROFILE_BUCKET = 'labface-profiles';
 const SNAPSHOT_BUCKET = 'labface-snapshots';
+const EXCUSE_BUCKET = 'labface-excuses';
 
 /**
  * Upload base64 image to MinIO
@@ -74,25 +75,29 @@ async function uploadBase64ToMinio(base64Data, userId, type) {
 
         const mimeType = matches[1];
         let buffer = Buffer.from(matches[2], 'base64');
-        console.log(`[MinIO] Original Image: ${mimeType}, Size: ${buffer.length} bytes`);
+        console.log(`[MinIO] Original Data: ${mimeType}, Size: ${buffer.length} bytes`);
 
-        // IMAGE OPTIMIZATION (Strict & Compress)
-        let ext = mimeType.split('/')[1] || 'jpg';
-        try {
-            const sharp = require('sharp');
-            // Resize to max 600x600 and Compress to JPEG quality 60
-            // This ensures consistent size (~20-40KB) and format
-            const compressedBuffer = await sharp(buffer)
-                .resize(600, 600, { fit: 'inside', withoutEnlargement: true })
-                .jpeg({ quality: 60, mozjpeg: true })
-                .toBuffer();
+        const isPdf = mimeType === 'application/pdf';
+        let ext = mimeType.split('/')[1] || (isPdf ? 'pdf' : 'jpg');
+        let contentType = isPdf ? 'application/pdf' : 'image/jpeg';
 
-            console.log(`[MinIO] Compressed Image: ${compressedBuffer.length} bytes (Saved ${((buffer.length - compressedBuffer.length) / buffer.length * 100).toFixed(1)}%)`);
-            buffer = compressedBuffer;
-            ext = 'jpg'; // Always JPEG after compression
-        } catch (sharpError) {
-            console.warn('[MinIO] Sharp optimization failed/skipped:', sharpError.message);
-            // Fallback to original buffer
+        if (!isPdf) {
+            // IMAGE OPTIMIZATION (Strict & Compress)
+            try {
+                const sharp = require('sharp');
+                // Resize to max 800x800 and Compress to JPEG quality 70
+                const compressedBuffer = await sharp(buffer)
+                    .resize(800, 800, { fit: 'inside', withoutEnlargement: true })
+                    .jpeg({ quality: 70, mozjpeg: true })
+                    .toBuffer();
+
+                console.log(`[MinIO] Compressed Image: ${compressedBuffer.length} bytes (Saved ${((buffer.length - compressedBuffer.length) / buffer.length * 100).toFixed(1)}%)`);
+                buffer = compressedBuffer;
+                ext = 'jpg';
+                contentType = 'image/jpeg';
+            } catch (sharpError) {
+                console.warn('[MinIO] Sharp optimization failed/skipped:', sharpError.message);
+            }
         }
 
         const filename = `${userId}/${type}.${ext}`;
@@ -102,12 +107,12 @@ async function uploadBase64ToMinio(base64Data, userId, type) {
             filename,
             buffer,
             buffer.length,
-            { 'Content-Type': 'image/jpeg' } // Force JPEG content type
+            { 'Content-Type': contentType }
         );
 
         console.log(`[MinIO] Upload successful: ${filename}`);
 
-        const publicUrl = `/minio/${PROFILE_BUCKET}/${filename}?v=${Date.now()}`;
+        const publicUrl = `/api/minio/${PROFILE_BUCKET}/${filename}?v=${Date.now()}`;
         return publicUrl;
     } catch (error) {
         console.error('[MinIO] Upload error:', error);
@@ -124,15 +129,41 @@ async function uploadBase64ToMinio(base64Data, userId, type) {
  */
 async function uploadBufferToMinio(buffer, filename, bucket = PROFILE_BUCKET) {
     try {
+        let contentType = 'application/octet-stream';
+        const ext = filename.split('.').pop().toLowerCase();
+        
+        if (ext === 'jpg' || ext === 'jpeg') contentType = 'image/jpeg';
+        else if (ext === 'png') contentType = 'image/png';
+        else if (ext === 'pdf') contentType = 'application/pdf';
+
+        // Check if bucket exists
+        const bucketExists = await minioClient.bucketExists(bucket);
+        if (!bucketExists) {
+            console.log(`[MinIO] Bucket ${bucket} does not exist. Creating...`);
+            await minioClient.makeBucket(bucket, 'us-east-1');
+            
+            // Set public policy
+            const policy = {
+                Version: '2012-10-17',
+                Statement: [{
+                    Effect: 'Allow',
+                    Principal: { AWS: ['*'] },
+                    Action: ['s3:GetObject'],
+                    Resource: [`arn:aws:s3:::${bucket}/*`]
+                }]
+            };
+            await minioClient.setBucketPolicy(bucket, JSON.stringify(policy));
+        }
+
         await minioClient.putObject(
             bucket,
             filename,
             buffer,
             buffer.length,
-            { 'Content-Type': 'image/jpeg' }
+            { 'Content-Type': contentType }
         );
 
-        return `/minio/${bucket}/${filename}`;
+        return `/api/minio/${bucket}/${filename}`;
     } catch (error) {
         console.error('MinIO upload error:', error);
         throw error;
@@ -179,11 +210,65 @@ async function deleteFromMinio(url) {
     }
 }
 
+/**
+ * Standardize image URL to use proxy /api/minio/ prefix
+ * @param {string} url - Original URL or path from DB
+ * @param {string} defaultBucket - Bucket if only a filename is provided
+ * @returns {string} - Fixed proxy URL
+ */
+function standardizeImageUrl(url, defaultBucket = PROFILE_BUCKET) {
+    if (!url) return url;
+
+    // 1. Handle full URLs from MinIO directly (e.g. http://minio:9000/bucket/file)
+    if (url.includes('minio:9000') || url.includes('minio:9002')) {
+        try {
+            const urlObj = new URL(url);
+            return `/api/minio${urlObj.pathname}`;
+        } catch (e) {
+            // Fallback for malformed URLs
+            return url;
+        }
+    }
+
+    // 2. Already starts with /api/minio/
+    if (url.startsWith('/api/minio/')) return url;
+
+    // 3. Absolute URL or path containing /minio/ but missing /api
+    // This catches https://labface.site/minio/bucket/... and /minio/bucket/...
+    if (url.includes('/minio/')) {
+        const parts = url.split('/minio/');
+        // Reconstruct as /api/minio/ + the remaining path
+        return '/api/minio/' + parts[parts.length - 1];
+    }
+
+    // 4. Absolute HTTP(S) URL to external source (not our minio)
+    if (url.startsWith('http')) return url;
+
+    // 5. Bare filename or relative path
+    const cleanPath = url.startsWith('/') ? url.substring(1) : url;
+    
+    // If it contains a slash, assume it's bucket/path
+    if (cleanPath.includes('/')) {
+        return `/api/minio/${cleanPath}`;
+    }
+
+    // Bare filename - assume default bucket
+    return `/api/minio/${defaultBucket}/${cleanPath}`;
+}
+
 module.exports = {
     minioClient,
     uploadBase64ToMinio,
     uploadBufferToMinio,
     deleteFromMinio,
+    standardizeImageUrl,
     PROFILE_BUCKET,
-    SNAPSHOT_BUCKET
+    SNAPSHOT_BUCKET,
+    EXCUSE_BUCKET,
+    /**
+     * Get an object from MinIO as a stream
+     */
+    getObjectStream: async (bucket, objectName) => {
+        return await minioClient.getObject(bucket, objectName);
+    }
 };

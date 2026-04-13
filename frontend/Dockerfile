@@ -6,7 +6,11 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install dependencies (including devDependencies for build)
-RUN npm config set fetch-timeout 300000 && npm config set fetch-retries 5 && npm install --legacy-peer-deps
+RUN npm config set fetch-timeout 600000 \
+    && npm config set fetch-retries 10 \
+    && npm config set fetch-retry-mintimeout 20000 \
+    && npm config set fetch-retry-maxtimeout 120000 \
+    && npm install --legacy-peer-deps
 
 # Copy the rest of the application code
 COPY . .
