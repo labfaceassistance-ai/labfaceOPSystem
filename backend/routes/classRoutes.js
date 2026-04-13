@@ -584,7 +584,7 @@ router.get('/:id', async (req, res) => {
                     ELSE 'No Account'
                 END as account_status
             FROM enrollments e 
-            LEFT JOIN users u ON e.student_id = u.id OR (e.student_id IS NULL AND REPLACE(REPLACE(u.user_id, '-', ''), ' ', '') = REPLACE(REPLACE(e.student_number, '-', ''), ' ', ''))
+            LEFT JOIN users u ON e.student_id = u.id OR (COALESCE(e.student_id, 0) = 0 AND REPLACE(REPLACE(u.user_id, '-', ''), ' ', '') = REPLACE(REPLACE(e.student_number, '-', ''), ' ', ''))
             WHERE e.class_id = ?
             ORDER BY e.student_name
         `, [req.params.id]);
@@ -611,7 +611,7 @@ router.get('/:id/students', async (req, res) => {
                 u.year_level,
                 CASE WHEN u.id IS NULL THEN 0 ELSE 1 END as is_registered
             FROM enrollments e
-            LEFT JOIN users u ON e.student_id = u.id OR (e.student_id IS NULL AND REPLACE(REPLACE(u.user_id, '-', ''), ' ', '') = REPLACE(REPLACE(e.student_number, '-', ''), ' ', ''))
+            LEFT JOIN users u ON e.student_id = u.id OR (COALESCE(e.student_id, 0) = 0 AND REPLACE(REPLACE(u.user_id, '-', ''), ' ', '') = REPLACE(REPLACE(e.student_number, '-', ''), ' ', ''))
             WHERE e.class_id = ?
             ORDER BY COALESCE(u.last_name, e.student_name)
         `, [req.params.id]);
@@ -637,7 +637,7 @@ router.get('/:id/analytics', async (req, res) => {
         const [students] = await pool.query(`
             SELECT e.student_id, e.student_name, u.first_name, u.last_name, u.profile_picture
             FROM enrollments e
-            LEFT JOIN users u ON e.student_id = u.id OR (e.student_id IS NULL AND REPLACE(REPLACE(u.user_id, '-', ''), ' ', '') = REPLACE(REPLACE(e.student_number, '-', ''), ' ', ''))
+            LEFT JOIN users u ON e.student_id = u.id OR (COALESCE(e.student_id, 0) = 0 AND REPLACE(REPLACE(u.user_id, '-', ''), ' ', '') = REPLACE(REPLACE(e.student_number, '-', ''), ' ', ''))
             WHERE e.class_id = ?
             ORDER BY e.student_name
         `, [classId]);
@@ -746,7 +746,7 @@ router.get('/:id/attendance-grid', async (req, res) => {
                 WHERE class_id = ? 
                 GROUP BY student_number 
              ) e_agg
-             LEFT JOIN users u ON e_agg.student_id = u.id OR (e_agg.student_id IS NULL AND REPLACE(REPLACE(u.user_id, '-', ''), ' ', '') = REPLACE(REPLACE(e_agg.student_number, '-', ''), ' ', ''))
+             LEFT JOIN users u ON e_agg.student_id = u.id OR (COALESCE(e_agg.student_id, 0) = 0 AND REPLACE(REPLACE(u.user_id, '-', ''), ' ', '') = REPLACE(REPLACE(e_agg.student_number, '-', ''), ' ', ''))
              ORDER BY e_agg.student_name`,
             [classId]
         );

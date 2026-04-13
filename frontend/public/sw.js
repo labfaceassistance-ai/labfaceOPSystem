@@ -36,10 +36,11 @@ self.addEventListener('fetch', (event) => {
 
                 // Clone the request
                 const fetchRequest = event.request.clone();
+                const url = new URL(event.request.url);
 
                 return fetch(fetchRequest).then((response) => {
-                    // Check if valid response
-                    if (!response || response.status !== 200 || response.type !== 'basic') {
+                    // Check if valid response AND NOT an API call
+                    if (!response || response.status !== 200 || response.type !== 'basic' || url.pathname.startsWith('/api')) {
                         return response;
                     }
 

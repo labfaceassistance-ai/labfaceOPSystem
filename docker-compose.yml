@@ -23,6 +23,8 @@ services:
         condition: service_started
       backend:
         condition: service_healthy
+      ai-service:
+        condition: service_started
     restart: unless-stopped
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:80/health" ]

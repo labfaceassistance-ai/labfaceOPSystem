@@ -79,7 +79,7 @@ router.get('/status/:userId', async (req, res) => {
         // 2. Get status from users table
         const [users] = await pool.query(
             `SELECT privacy_policy_accepted, privacy_policy_version, privacy_policy_accepted_at, consent_status, role
-            FROM users WHERE user_id = ?`,
+            FROM users WHERE id = ?`,
             [targetUserId]
         );
 

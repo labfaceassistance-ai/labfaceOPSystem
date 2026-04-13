@@ -162,7 +162,7 @@ router.get('/classes/:id', async (req, res) => {
             JOIN enrollments e ON c.id = e.class_id
             JOIN users u_student ON u_student.id = ?
             LEFT JOIN users u ON c.professor_id = u.id
-            WHERE (e.student_id = u_student.id OR (e.student_id IS NULL AND REPLACE(REPLACE(u_student.user_id, '-', ''), ' ', '') = REPLACE(REPLACE(e.student_number, '-', ''), ' ', '')))
+            WHERE (COALESCE(e.student_id, 0) = u_student.id OR (COALESCE(e.student_id, 0) = 0 AND REPLACE(REPLACE(u_student.user_id, '-', ''), ' ', '') = REPLACE(REPLACE(e.student_number, '-', ''), ' ', '')))
         `;
 
         if (!includeArchived) {
@@ -195,7 +195,7 @@ router.get('/dashboard/:id', async (req, res) => {
             FROM classes c
             JOIN enrollments e ON c.id = e.class_id
             LEFT JOIN users u ON c.professor_id = u.id
-            WHERE (e.student_id = ? OR (e.student_id IS NULL AND REPLACE(REPLACE(?, '-', ''), ' ', '') = REPLACE(REPLACE(e.student_number, '-', ''), ' ', '')))
+            WHERE (COALESCE(e.student_id, 0) = ? OR (COALESCE(e.student_id, 0) = 0 AND REPLACE(REPLACE(?, '-', ''), ' ', '') = REPLACE(REPLACE(e.student_number, '-', ''), ' ', '')))
         `, [studentId, studentStringId]);
 
 
@@ -406,7 +406,7 @@ router.get('/dashboard/:id', async (req, res) => {
                 AND s.date <= DATE(CONVERT_TZ(NOW(), '+00:00', '+08:00'))
                 AND s.monitoring_started_at IS NOT NULL
             LEFT JOIN attendance_logs al ON s.id = al.session_id AND al.student_id = ?
-            WHERE (e.student_id = ? OR (e.student_id IS NULL AND REPLACE(REPLACE(?, '-', ''), ' ', '') = REPLACE(REPLACE(e.student_number, '-', ''), ' ', '')))
+            WHERE (COALESCE(e.student_id, 0) = ? OR (COALESCE(e.student_id, 0) = 0 AND REPLACE(REPLACE(?, '-', ''), ' ', '') = REPLACE(REPLACE(e.student_number, '-', ''), ' ', '')))
             AND (c.is_archived = 0 OR c.is_archived IS NULL)
             GROUP BY c.id
         `, [studentId, studentId, studentStringId]);
@@ -472,7 +472,7 @@ router.get('/dashboard/:id', async (req, res) => {
             FROM sessions s
             JOIN enrollments e ON s.class_id = e.class_id
             JOIN classes c ON s.class_id = c.id
-            WHERE (e.student_id = ? OR (e.student_id IS NULL AND REPLACE(REPLACE(?, '-', ''), ' ', '') = REPLACE(REPLACE(e.student_number, '-', ''), ' ', '')))
+            WHERE (COALESCE(e.student_id, 0) = ? OR (COALESCE(e.student_id, 0) = 0 AND REPLACE(REPLACE(?, '-', ''), ' ', '') = REPLACE(REPLACE(e.student_number, '-', ''), ' ', '')))
             AND s.date <= DATE(CONVERT_TZ(NOW(), '+00:00', '+08:00'))
             AND s.monitoring_started_at IS NOT NULL
             AND (c.is_archived = 0 OR c.is_archived IS NULL)
@@ -739,7 +739,7 @@ router.get('/recent-activity/:id', async (req, res) => {
             JOIN enrollments e ON s.class_id = e.class_id
             JOIN classes c ON s.class_id = c.id
             CROSS JOIN (SELECT user_id FROM users WHERE id = ?) u_info
-            WHERE (e.student_id = ? OR (e.student_id IS NULL AND REPLACE(REPLACE(u_info.user_id, '-', ''), ' ', '') = REPLACE(REPLACE(e.student_number, '-', ''), ' ', '')))
+            WHERE (COALESCE(e.student_id, 0) = ? OR (COALESCE(e.student_id, 0) = 0 AND REPLACE(REPLACE(u_info.user_id, '-', ''), ' ', '') = REPLACE(REPLACE(e.student_number, '-', ''), ' ', '')))
                 AND s.date <= DATE(CONVERT_TZ(NOW(), '+00:00', '+08:00'))
                 AND (c.is_archived = 0 OR c.is_archived IS NULL)
             ORDER BY s.date DESC, s.start_time DESC

@@ -333,11 +333,11 @@ router.post('/register/student', async (req, res) => {
         }
 
         // AUTO-LINK ENROLLMENTS: connect existing class enrollments to this new user (late registration)
-        // Use fuzzy matching to handle dash/formatting differences
+        // Use fuzzy matching to handle dash/formatting differences and 0/NULL placeholders
         await connection.query(
             `UPDATE enrollments SET student_id = ? 
              WHERE REPLACE(REPLACE(student_number, '-', ''), ' ', '') = REPLACE(REPLACE(?, '-', ''), ' ', '') 
-             AND student_id IS NULL`,
+             AND (student_id IS NULL OR student_id = 0)`,
             [userId, studentId]
         );
 
