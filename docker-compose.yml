@@ -44,6 +44,7 @@ services:
     environment:
       - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
       - NODE_ENV=production
+      - BUILD_ID=${BUILD_ID}
     depends_on:
       - backend
     restart: unless-stopped
@@ -64,6 +65,7 @@ services:
       - AI_SERVICE_URL=http://ai-service:8000
       - NODE_ENV=production
       - MINIO_USE_SSL=false
+      - BUILD_ID=${BUILD_ID}
     volumes:
       - ./backend/uploads:/app/uploads
     extra_hosts:

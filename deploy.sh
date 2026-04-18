@@ -108,6 +108,7 @@ fi
 info "Step 2c: Bumping Service Worker version..."
 
 BUILD_ID=$(date +%Y%m%d-%H%M%S)
+export BUILD_ID=$BUILD_ID
 SW_FILE="frontend/public/sw.js"
 VERSION_FILE="frontend/utils/version.ts"
 
@@ -123,6 +124,11 @@ if [ -f "$SW_FILE" ]; then
     else
         warn "Version file not found at $VERSION_FILE. Skipping frontend bump."
     fi
+
+    # Write a static version.txt that the browser polls every 60s
+    # This is the zero-cost auto-cache mechanism — no backend needed
+    echo "$BUILD_ID" > "frontend/public/version.txt"
+    success "Wrote version.txt for browser auto-cache polling: $BUILD_ID"
 else
     warn "Service Worker file not found at $SW_FILE. Skipping version bump."
 fi

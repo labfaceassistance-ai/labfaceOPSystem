@@ -1,108 +1,93 @@
 "use client";
-import { useEffect, useState } from 'react';
-import { useToast } from './Toast';
-import { RefreshCw, ArrowUpCircle } from 'lucide-react';
-import { BUILD_ID } from '../utils/version';
+import { useEffect } from 'react';
 
 /**
- * UpdateManager Component
- * 
- * Handles Service Worker updates and version checking.
- * When a new version is deployed and detected by the browser, 
- * this component notifies the user and provides a way to refresh.
+ * UpdateManager — Silent Auto-Cache Polling
+ *
+ * Every 60 seconds, fetches /version.txt (written by deploy.sh on every deploy).
+ * If the version has changed since the page was first loaded, it:
+ *   1. Unregisters all Service Workers
+ *   2. Wipes all Cache API entries
+ *   3. Hard-reloads the page to pull the fresh build
+ *
+ * Zero user interaction. Zero UI. Zero server load.
  */
 export default function UpdateManager() {
-    const { showToast } = useToast();
-    const [newVersionAvailable, setNewVersionAvailable] = useState(false);
-
     useEffect(() => {
-        // Only run on client
-        if (typeof window === 'undefined' || !('serviceWorker' in navigator)) return;
+        if (typeof window === 'undefined') return;
 
-        const handleControllerChange = () => {
-            // This event fires when the new service worker takes over Control
-            console.log('[UpdateManager] New Service Worker activated. Flushing page state.');
-            // Hard reload to strip the document layer of any Next.js legacy chunk references
-            window.location.reload();
-        };
+        let baselineVersion: string | null = null;
+        let isMounted = true;
 
-        const checkUpdates = async () => {
+        const getVersion = async (): Promise<string | null> => {
             try {
-                const registration = await navigator.serviceWorker.ready;
-                
-                registration.addEventListener('updatefound', () => {
-                    const newWorker = registration.installing;
-                    if (newWorker) {
-                        newWorker.addEventListener('statechange', () => {
-                            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                                // New update is available and has been installed (but is waiting)
-                                console.log('[UpdateManager] New update found and installed');
-                                setNewVersionAvailable(true);
-                                // Optional: notify with toast that a refresh is waiting
-                            }
-                        });
-                    }
-                });
-            } catch (err) {
-                console.error('[UpdateManager] Update check failed:', err);
+                // cache: 'no-store' ensures we always hit the network, never a local cache
+                const res = await fetch('/version.txt', { cache: 'no-store' });
+                if (!res.ok) return null;
+                return (await res.text()).trim();
+            } catch {
+                return null;
             }
         };
 
-        navigator.serviceWorker.addEventListener('controllerchange', handleControllerChange);
-        checkUpdates();
+        const bustCacheAndReload = async () => {
+            console.log('[UpdateManager] 🚀 New deployment detected — flushing stale caches...');
+
+            // 1. Unregister all Service Workers
+            if ('serviceWorker' in navigator) {
+                const registrations = await navigator.serviceWorker.getRegistrations();
+                await Promise.all(registrations.map(r => r.unregister()));
+                console.log('[UpdateManager] ✅ Service Workers unregistered.');
+            }
+
+            // 2. Nuke every Cache API entry
+            if ('caches' in window) {
+                const cacheNames = await caches.keys();
+                await Promise.all(cacheNames.map(name => caches.delete(name)));
+                console.log('[UpdateManager] ✅ All caches cleared.');
+            }
+
+            // 3. Hard reload — bypasses any remaining browser memory cache
+            window.location.reload();
+        };
+
+        const startPolling = async () => {
+            // Capture the version that was live when this page session started
+            baselineVersion = await getVersion();
+            console.log(`[UpdateManager] Baseline version: ${baselineVersion}`);
+
+            // Poll every 60 seconds silently
+            const interval = setInterval(async () => {
+                if (!isMounted) return;
+
+                const latestVersion = await getVersion();
+
+                if (
+                    baselineVersion !== null &&
+                    latestVersion !== null &&
+                    latestVersion !== baselineVersion
+                ) {
+                    console.log(`[UpdateManager] Version mismatch: ${baselineVersion} → ${latestVersion}`);
+                    clearInterval(interval);
+                    await bustCacheAndReload();
+                }
+            }, 60_000); // Every 60 seconds
+
+            return interval;
+        };
+
+        let intervalHandle: ReturnType<typeof setInterval>;
+
+        startPolling().then(handle => {
+            if (handle) intervalHandle = handle;
+        });
 
         return () => {
-            navigator.serviceWorker.removeEventListener('controllerchange', handleControllerChange);
+            isMounted = false;
+            if (intervalHandle) clearInterval(intervalHandle);
         };
-    }, [showToast]);
+    }, []);
 
-    const triggerUpdate = () => {
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.getRegistration().then((reg) => {
-                if (reg?.waiting) {
-                    reg.waiting.postMessage({ type: 'SKIP_WAITING' });
-                } else {
-                    // Fallback if no worker is actively waiting but they hit update
-                    window.location.reload();
-                }
-            });
-        } else {
-            window.location.reload();
-        }
-    };
-
-    if (!newVersionAvailable) return null;
-
-    return (
-        <div className="fixed top-24 right-8 z-[9999] animate-bounce-in max-w-sm w-full sm:w-auto">
-            <div className="bg-coffee border border-white/10 rounded-3xl p-6 shadow-4xl backdrop-blur-xl">
-               <div className="flex items-start gap-4 mb-4">
-                  <div className="w-12 h-12 bg-yellow-500 text-black rounded-2xl flex items-center justify-center shrink-0 shadow-lg">
-                      <RefreshCw size={24} className="animate-spin-slow" />
-                  </div>
-                  <div>
-                      <h4 className="text-brand-cream font-black uppercase text-[10px] tracking-[0.3em] mb-1">System Update</h4>
-                      <p className="text-brand-cream/60 text-xs font-bold leading-snug">
-                          A newer version of LabFace is ready. Refresh now to experience the latest optimizations.
-                      </p>
-                  </div>
-               </div>
-               
-               <div className="flex gap-3">
-                  <button 
-                      onClick={triggerUpdate}
-                      className="flex-1 bg-yellow-500 text-black py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-white transition-all active:scale-95 flex items-center justify-center gap-2"
-                  >
-                      <ArrowUpCircle size={16} /> Update Now
-                  </button>
-                  <button 
-                      onClick={() => setNewVersionAvailable(false)}
-                      className="px-6 bg-white/5 text-brand-cream/50 py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest hover:text-brand-cream hover:bg-white/10 transition-all active:scale-95"
-                  >
-                      Later
-                  </button>
-               </div>
-            </div>
-        </div>
-    );
+    // This component renders nothing — it is purely a background service
+    return null;
 }

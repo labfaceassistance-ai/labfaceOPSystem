@@ -97,6 +97,13 @@ app.get('/api/health', (req, res) => {
   res.status(200).send('OK');
 });
 
+// Lightweight version endpoint — polled by browsers every 60s to auto-bust stale caches
+app.get('/api/version', (req, res) => {
+  const buildId = process.env.BUILD_ID || 'unknown';
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+  res.json({ version: buildId });
+});
+
 
 
 app.get('/', (req, res) => {
