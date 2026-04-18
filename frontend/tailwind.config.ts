@@ -1,6 +1,7 @@
 import type { Config } from "tailwindcss";
 
 const config: Config = {
+    darkMode: 'class',
     content: [
         "./pages/**/*.{js,ts,jsx,tsx,mdx}",
         "./components/**/*.{js,ts,jsx,tsx,mdx}",
@@ -11,31 +12,37 @@ const config: Config = {
             colors: {
                 background: "var(--background)",
                 foreground: "var(--foreground)",
+                primary: "var(--primary)",
+                secondary: "var(--secondary)",
                 brand: {
-                    950: "#020617",
-                    900: "#0f172a",
-                    800: "#1e293b",
-                    700: "#334155",
-                    600: "#475569",
-                    500: "#3b82f6",
-                    400: "#60a5fa",
-                    300: "#93c5fd",
-                    200: "#bfdbfe",
-                    100: "#dbeafe",
-                    50: "#eff6ff",
+                    950: "#2d0a0a", // Deep Maroon Background
+                    900: "#450a0a", // Dark Maroon
+                    800: "#800000", // PUP Maroon
+                    700: "#991b1b",
+                    600: "#dc2626",
+                    500: "#eab308", // PUP Gold (Primary Action)
+                    400: "#facc15",
+                    300: "#fde047",
+                    200: "#fef08a",
+                    100: "#fef9c3",
+                    50: "#fefce8",
                 },
                 maroon: {
-                    900: "#4a0404",
-                    800: "#7f1d1d",
-                    700: "#991b1b",
-                    600: "#b91c1c",
-                    500: "#dc2626",
+                    950: "#1A120B", // Deepest Coffee
+                    900: "#2D2424", // Dark Roast
+                    800: "#3C2A21", // Heritage Coffee (Primary)
+                    700: "#4B3621",
+                    600: "#5D4037",
+                    500: "#8B4513", // Saddle Brown
                 },
                 gold: {
                     500: "#eab308",
                     400: "#facc15",
                     300: "#fde047",
-                }
+                },
+            },
+            fontFamily: {
+               outfit: ['Outfit', 'sans-serif'],
             },
             animation: {
                 'fade-in': 'fadeIn 0.5s ease-out',

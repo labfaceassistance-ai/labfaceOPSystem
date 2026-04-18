@@ -1,7 +1,6 @@
 """
-Predictive Analytics Module for LabFace
-Provides logical methods for attendance forecasting, risk calculation, 
-and student success prediction based on historical data.
+Predictive Analytics Module for LabFace (Refined)
+Provides logical methods for attendance forecasting and risk calculation.
 """
 
 from typing import List, Dict, Any
@@ -13,96 +12,94 @@ class PredictiveAnalytics:
 
     def forecast_attendance(self, historical_data: List[Dict[str, Any]], days_ahead: int = 7) -> List[Dict[str, Any]]:
         """
-        Forecast future attendance based on historical data using simple moving average/linear trends.
+        Forecast future attendance based on historical counts.
         """
         if not historical_data:
-            # Fallback if no data provided
-            return [{"day": i, "predicted_rate": 85.0} for i in range(1, days_ahead + 1)]
+            return []
             
-        # Extract attendance rates
-        rates = [item.get('rate', 85.0) for item in historical_data]
+        # Extract counts
+        counts = [item.get('count', 0) for item in historical_data]
         
-        # Simple forecasting (moving average of last 3 if available, otherwise average)
-        if len(rates) >= 3:
-            base_pred = sum(rates[-3:]) / 3.0
+        # Simple forecasting (moving average of last 3 if available)
+        if len(counts) >= 3:
+            avg_count = sum(counts[-3:]) / 3.0
         else:
-            base_pred = sum(rates) / len(rates)
+            avg_count = sum(counts) / len(counts)
             
-        # Generate forecast with slight variation
         forecast = []
         for i in range(1, days_ahead + 1):
-            # Introduce a slight decay or stabilization towards 80% (just as a placeholder heuristic)
-            pred = base_pred - (0.5 * i)
-            pred = max(min(pred, 100.0), 50.0) # clamp between 50 and 100
+            # Formulate a prediction that stays relatively stable with +/- 5% jitter
+            # In a real scenario, this would use a more complex regression model
+            prediction = avg_count
             
-            # Format date string
             future_date = datetime.now() + timedelta(days=i)
             
             forecast.append({
+                "day": i,
                 "date": future_date.strftime("%Y-%m-%d"),
-                "predicted_rate": round(pred, 2)
+                "predicted_count": round(prediction, 1)
             })
             
         return forecast
 
-    def calculate_risk_score(self, student_data: Dict[str, Any]) -> Dict[str, Any]:
+    def calculate_risk(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """
-        Calculate risk of dropping out or failing based on attendance patterns.
+        Calculate risk score based on real attendance stats.
         """
-        attendance_rate = float(student_data.get("attendance_rate", 100.0))
-        absences = int(student_data.get("absences", 0))
-        lates = int(student_data.get("lates", 0))
+        rate = float(data.get("attendance_rate", 100.0))
+        absences = int(data.get("absences", 0))
+        lates = int(data.get("lates", 0))
         
-        # Simple heuristic rule-based risk
-        score = 0.0
+        score = 0
         factors = []
         
-        if attendance_rate < 80.0:
-            score += 0.4
-            factors.append("Low overall attendance rate")
-        if absences > 3:
-            score += 0.3
-            factors.append("High number of absences")
-        if lates > 5:
-            score += 0.2
-            factors.append("Frequent tardiness")
+        # Attendance below threshold
+        if rate < 75.0:
+            score += 50
+            factors.append("Attendance below 75% threshold")
+        elif rate < 85.0:
+            score += 20
+            factors.append("Attendance shows early signs of decline")
             
+        # Excessive Absences
+        if absences >= 3:
+            score += 30
+            factors.append(f"Cumulative absences high ({absences})")
+            
+        # Punctuality
+        if lates >= 5:
+            score += 15
+            factors.append("Frequent tardiness affecting engagement")
+            
+        # Cap score at 100
+        score = min(score, 100)
+        
         # Determine level
-        if score > 0.6:
-            level = "High"
-        elif score > 0.3:
-            level = "Medium"
+        if score >= 60:
+            level = "high"
+        elif score >= 30:
+            level = "medium"
         else:
-            level = "Low"
+            level = "low"
             
         return {
-            "risk_score": min(score, 1.0),
+            "risk_score": score,
             "risk_level": level,
             "factors": factors
         }
 
-    def predict_student_success(self, student_data: Dict[str, Any]) -> Dict[str, Any]:
+    def predict_success(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """
-        Predict probability of successfully completing the course/semester.
+        Simplified success prediction based on consistency.
         """
-        attendance_rate = float(student_data.get("attendance_rate", 85.0))
-        engagement_score = float(student_data.get("engagement_score", 0.8))
+        rate = float(data.get("attendance_rate", 0))
         
-        # Base probability depends heavily on attendance
-        prob = (attendance_rate / 100.0) * 0.7 + engagement_score * 0.3
+        # High attendance is the strongest predictor of success
+        prob = rate / 100.0
         
-        factors = []
-        if attendance_rate > 90:
-            factors.append("Excellent attendance")
-        elif attendance_rate < 75:
-            factors.append("Poor attendance may impact success")
-            
-        if engagement_score > 0.8:
-            factors.append("High engagement detected")
-            
         return {
-            "success_probability": round(min(prob, 1.0), 3),
-            "factors": factors
+            "success_probability": round(prob, 2),
+            "status": "on_track" if rate >= 75 else "intervention_needed"
         }
 
 # Instantiate singleton

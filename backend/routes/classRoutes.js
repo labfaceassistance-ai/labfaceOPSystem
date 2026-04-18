@@ -1,18 +1,108 @@
 const express = require('express');
 const pool = require('../config/db');
 const router = express.Router();
+const analyticsService = require('../services/analyticsService');
 const multer = require('multer');
 const xlsx = require('xlsx');
 const upload = multer({ storage: multer.memoryStorage() });
+const { standardizeImageUrl, SNAPSHOT_BUCKET } = require('../utils/minioHelper');
 
 // Helper to find header column name case-insensitively with variants
 const getHeader = (row, variants) => {
+    if (!row) return null;
     const keys = Object.keys(row);
     for (const variant of variants) {
-        const match = keys.find(k => k.toLowerCase().replace(/[^a-z0-9]/g, '') === variant.toLowerCase().replace(/[^a-z0-9]/g, ''));
-        if (match) return row[match];
+        const match = keys.find(k => {
+            const cleanKey = k.toLowerCase().replace(/[^a-z0-9]/g, '');
+            const cleanVar = variant.toLowerCase().replace(/[^a-z0-9]/g, '');
+            return cleanKey === cleanVar;
+        });
+        if (match && row[match] !== undefined && row[match] !== null && String(row[match]).trim() !== '') return row[match];
     }
     return null;
+};
+
+// Advanced helper for names (concatenates split columns)
+const STUDENT_ID_VARIANTS = ['Student Number', 'Student ID', 'student_number', 'Id Number', 'ID', 'Id', 'SN', 'USN', 'LRN', 'Reg No', 'Registration Number', 'Roll No', 'StudentCode', 'Student_No'];
+const NAME_VARIANTS = ['Name', 'Student Name', 'student_name', 'Full Name', 'Complete Name', 'StudentName'];
+
+const getStudentName = (row) => {
+    // 1. Try single Full Name column
+    const fullName = getHeader(row, NAME_VARIANTS);
+    if (fullName) return String(fullName).trim();
+
+    // 2. Try split columns (Concatenate Last, First, Middle)
+    const last = getHeader(row, ['Last Name', 'Surname', 'family_name', 'Lastname', 'FamilyName', 'Last']);
+    const first = getHeader(row, ['First Name', 'Given Name', 'first_name', 'Firstname', 'GivenName', 'First']);
+    const middle = getHeader(row, ['Middle Name', 'm_name', 'Middle Initial', 'MI', 'MNAME']);
+
+    if (last || first) {
+        return `${last || ''}, ${first || ''} ${middle || ''}`.replace(/^, /, '').trim();
+    }
+    return null;
+};
+
+// Robust sheet parser that finds the header row automatically
+const parseRosterSheet = (worksheet) => {
+    // Get raw rows as array-of-arrays first to find the "Anchor Row"
+    const rawRows = xlsx.utils.sheet_to_json(worksheet, { header: 1, blankrows: false });
+    
+    let headerRowIndex = -1;
+    let fallbackIdCol = -1;
+    
+    // Scan first 20 rows for a row that contains an ID column header
+    for (let i = 0; i < Math.min(rawRows.length, 20); i++) {
+        const row = rawRows[i];
+        if (!Array.isArray(row)) continue;
+        
+        let foundIdHeaderAt = -1;
+        const hasIdHeader = row.some((cell, colIndex) => {
+            if (typeof cell !== 'string') return false;
+            const clean = cell.toLowerCase().replace(/[^a-z0-9]/g, '');
+            const isMatch = STUDENT_ID_VARIANTS.some(v => clean === v.toLowerCase().replace(/[^a-z0-9]/g, ''));
+            if (isMatch) foundIdHeaderAt = colIndex;
+            return isMatch;
+        });
+        
+        if (hasIdHeader) {
+            headerRowIndex = i;
+            break;
+        }
+
+        // FALLBACK DETECTION: If no header text matches, check content for common ID patterns
+        // Pattern: 20XX-XXXX (approx) or 7+ digits
+        if (fallbackIdCol === -1) {
+            const idPattern = /^(\d{2,4}-\d{3,7}|\d{7,15})$/;
+            const idCol = row.findIndex(cell => idPattern.test(String(cell).trim()));
+            if (idCol !== -1) {
+                fallbackIdCol = idCol;
+                // If we found a row where a column looks like an ID, and we still haven't found a header row,
+                // we might consider the row ABOVE this as the header row even if it's named weirdly.
+                if (i > 0) headerRowIndex = i - 1;
+            }
+        }
+    }
+    
+    // If we detected a fallback column but no named header row index, try to use it
+    const options = { range: headerRowIndex === -1 ? 0 : headerRowIndex };
+    
+    let jsonData = xlsx.utils.sheet_to_json(worksheet, options);
+
+    // If still failing to find named headers in the JSON, but we have a fallbackIdCol,
+    // we manually map the column if the auto-headers are things like "__EMPTY"
+    if (jsonData.length > 0 && fallbackIdCol !== -1) {
+        const firstRow = jsonData[0];
+        const hasStandardId = STUDENT_ID_VARIANTS.some(v => getHeader(firstRow, [v]));
+        if (!hasStandardId) {
+            // Find the key name that xlsx assigned to our fallback column
+            const keys = Object.keys(firstRow);
+            // This is complex because sheet_to_json headers are determined by the range start.
+            // If we started at range 0, keys[fallbackIdCol] is likely the header name.
+            // For now, let's at least ensure getHeader will include "Id" as a result of our data mapping.
+        }
+    }
+
+    return jsonData;
 };
 
 // Ensure enrollments table exists
@@ -47,6 +137,94 @@ pool.query(`SHOW COLUMNS FROM sessions LIKE 'monitoring_ended_at'`)
         }
     })
     .catch(err => console.error('Error updating sessions schema:', err));
+
+// Ensure location column exists in classes table
+pool.query(`SHOW COLUMNS FROM classes LIKE 'location'`)
+    .then(([columns]) => {
+        if (columns.length === 0) {
+            console.log('[SCHEMA] Adding location column to classes table');
+            return pool.query(`ALTER TABLE classes ADD COLUMN location VARCHAR(150) DEFAULT 'Lab 1'`);
+        }
+    })
+    .catch(err => console.error('Error updating classes schema (location):', err));
+
+// Helper: Normalize any time string to minutes since midnight
+// Handles: "08:00", "8:00 am", "08:00 AM", "08:00:00" (HH:MM:SS from MySQL)
+const normalizeTimeToMinutes = (timeStr) => {
+    if (!timeStr) return 0;
+    const str = String(timeStr).trim().toLowerCase();
+    // Match HH:MM or HH:MM:SS, with optional am/pm
+    const match = str.match(/^(\d{1,2}):(\d{2})(?::\d{2})?\s*(am|pm)?$/);
+    if (!match) {
+        console.warn('[validateSchedule] Unrecognized time format:', timeStr);
+        return 0;
+    }
+    let hours = parseInt(match[1], 10);
+    const minutes = parseInt(match[2], 10);
+    const period = match[3];
+    if (period === 'pm' && hours !== 12) hours += 12;
+    if (period === 'am' && hours === 12) hours = 0;
+    return hours * 60 + minutes;
+};
+
+// Helper: Check schedule overlaps (format-agnostic)
+const hasOverlap = (startA, endA, startB, endB) => {
+    const sA = normalizeTimeToMinutes(startA);
+    const eA = normalizeTimeToMinutes(endA);
+    const sB = normalizeTimeToMinutes(startB);
+    const eB = normalizeTimeToMinutes(endB);
+    return (sA < eB) && (eA > sB);
+};
+
+const validateSchedule = async (professorPk, schedule, location, excludeClassId = null) => {
+    // 1. Get all active classes that could conflict (same location OR same professor)
+    // We fetch all because we need to parse schedule_json
+    const [existingClasses] = await pool.query(
+        `SELECT id, professor_id, location, schedule_json, subject_code, section 
+         FROM classes 
+         WHERE (is_archived = 0 OR is_archived IS NULL) 
+         ${excludeClassId ? 'AND id != ' + pool.escape(excludeClassId) : ''}`
+    );
+
+    for (const otherClass of existingClasses) {
+        let otherSchedule;
+        try {
+            otherSchedule = typeof otherClass.schedule_json === 'string' 
+                ? JSON.parse(otherClass.schedule_json) 
+                : otherClass.schedule_json;
+        } catch (e) { continue; }
+
+        if (!Array.isArray(otherSchedule) || !Array.isArray(schedule)) continue;
+
+        for (const newSlot of schedule) {
+            for (const otherSlot of otherSchedule) {
+                // Same day?
+                if (newSlot.day !== otherSlot.day) continue;
+
+                // Time overlap?
+                if (hasOverlap(newSlot.startTime, newSlot.endTime, otherSlot.startTime, otherSlot.endTime)) {
+                    // Scenario A: Same Room conflict
+                    if (location && otherClass.location && 
+                        location.toLowerCase().trim() === otherClass.location.toLowerCase().trim()) {
+                        return { 
+                            conflict: true, 
+                            message: `Room Conflict: ${otherClass.location} is occupied by ${otherClass.subject_code} (${otherClass.section}) during this time.` 
+                        };
+                    }
+
+                    // Scenario B: Same Professor conflict (cannot be in two places)
+                    if (professorPk === otherClass.professor_id) {
+                        return { 
+                            conflict: true, 
+                            message: `Professor Conflict: You already have another class (${otherClass.subject_code}) scheduled during this time.` 
+                        };
+                    }
+                }
+            }
+        }
+    }
+    return { conflict: false };
+};
 
 // Ensure class_cancellations table exists
 pool.query(`
@@ -180,75 +358,24 @@ module.exports = router;
 router.get('/professor/:id/stats-overview', async (req, res) => {
     try {
         const userId = req.params.id;
-        console.log(`[STATS] Request for professor: ${userId}`);
+        
+        // Resolve professor PK (id) from user_id (school ID)
+        // Correctly handle numeric IDs by looking up in user_id column first
+        const [profUsers] = await pool.query(
+            'SELECT id FROM users WHERE user_id = ? OR id = ?', 
+            [userId, isNaN(userId) ? -1 : userId]
+        );
 
-        // Resolve professor PK
-        const [profUsers] = await pool.query('SELECT id FROM users WHERE user_id = ?', [userId]);
-        if (profUsers.length === 0) return res.status(404).json({ message: 'Professor not found' });
+        if (profUsers.length === 0) {
+            console.error(`[Stats Overview] Professor not found for ID: ${userId}`);
+            return res.status(404).json({ message: 'Professor not found' });
+        }
+
         const professorPk = profUsers[0].id;
-        console.log(`[ANALYTICS] Resolved PK: ${professorPk}`);
+        console.log(`[Stats Overview] Resolved ID ${userId} to PK ${professorPk}`);
 
-        // 1. Get Active Classes
-        const [classes] = await pool.query(
-            'SELECT id FROM classes WHERE professor_id = ? AND (is_archived = 0 OR is_archived IS NULL)',
-            [professorPk]
-        );
-        console.log(`[ANALYTICS] Found ${classes.length} active classes for professor ${professorPk}`);
-
-        if (classes.length === 0) {
-            return res.json({
-                totalStudents: 0,
-                activeClasses: 0,
-                avgAttendance: 0,
-                attendanceGrowth: 0
-            });
-        }
-
-        const classIds = classes.map(c => c.id);
-
-        // 2. Get Unique Students (Deduplicated by student_number)
-        const [enrollments] = await pool.query(
-            `SELECT DISTINCT student_number FROM enrollments WHERE class_id IN (${classIds.map(() => '?').join(',')})`,
-            classIds
-        );
-        const totalUniqueStudents = enrollments.length;
-
-        // 3. Calculate Average Attendance
-        const [sessions] = await pool.query(
-            `SELECT id FROM sessions WHERE class_id IN (${classIds.map(() => '?').join(',')})`,
-            classIds
-        );
-
-        let avgAttendance = 0;
-        if (sessions.length > 0) {
-            const sessionIds = sessions.map(s => s.id);
-            const [logs] = await pool.query(
-                `SELECT status FROM attendance_logs WHERE session_id IN (${sessionIds.map(() => '?').join(',')}) AND (status = 'Present' OR status = 'Late')`,
-                sessionIds
-            );
-
-            const [classStats] = await pool.query(`
-                SELECT c.id, 
-                       (SELECT COUNT(*) FROM enrollments e WHERE e.class_id = c.id) as student_count,
-                       (SELECT COUNT(*) FROM sessions s WHERE s.class_id = c.id AND (s.monitoring_ended_at IS NOT NULL OR s.date <= CURDATE())) as session_count
-                FROM classes c
-                WHERE c.id IN (${classIds.map(() => '?').join(',')})
-            `, classIds);
-
-            const totalExpected = classStats.reduce((acc, c) => acc + (c.student_count * c.session_count), 0);
-
-            if (totalExpected > 0) {
-                avgAttendance = (logs.length / totalExpected) * 100;
-            }
-        }
-
-        res.json({
-            totalStudents: totalUniqueStudents,
-            activeClasses: classes.length,
-            avgAttendance: parseFloat(avgAttendance.toFixed(1)),
-            attendanceGrowth: 0
-        });
-
+        const stats = await analyticsService.getProfessorStats(professorPk);
+        res.json(stats);
     } catch (err) {
         console.error('Analytics Overview Error:', err);
         res.status(500).json({ error: err.message });
@@ -300,11 +427,37 @@ router.post('/', async (req, res) => {
         }
         const professorPk = profUsers[0].id;
 
-        // Insert class with academic_period_id and course_id
-        console.log('[DEBUG] Inserting class with:', { subjectCode, subjectName, professorPk, periodId, section, schedule, courseId, yearLevel });
+        // 1. Uniqueness Check (Subject + Section for this professor in this period)
+        const [duplicates] = await pool.query(
+            'SELECT id FROM classes WHERE professor_id = ? AND subject_code = ? AND section = ? AND academic_period_id = ? AND (is_archived = 0 OR is_archived IS NULL)',
+            [professorPk, subjectCode, section, periodId]
+        );
+        if (duplicates.length > 0) {
+            return res.status(400).json({ error: `You already have an active class for ${subjectCode} section ${section}.` });
+        }
+
+        // 2. Conflict Detection (Room & Professor Overlap)
+        const location = req.body.location || 'Lab 1';
+        const validation = await validateSchedule(professorPk, schedule, location);
+        if (validation.conflict) {
+            return res.status(400).json({ error: validation.message });
+        }
+
+        // 3. Insert class with academic_period_id, course_id and location
+        console.log('[DEBUG] Inserting class with:', { subjectCode, subjectName, professorPk, periodId, section, schedule, courseId, yearLevel, location });
         const [result] = await pool.query(
-            'INSERT INTO classes (subject_code, subject_name, professor_id, academic_period_id, section, schedule_json, course_id, year_level) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-            [subjectCode, subjectName, professorPk, periodId, section, JSON.stringify(schedule), courseId, yearLevel || null]
+            'INSERT INTO classes (subject_code, subject_name, professor_id, academic_period_id, section, schedule_json, course_id, year_level, location) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            [subjectCode, subjectName, professorPk, periodId, section, JSON.stringify(schedule), courseId, yearLevel || null, location]
+        );
+
+        // AUTO-REPAIR: Update any existing enrollments for this subject/section
+        await pool.query(
+            `UPDATE enrollments e
+             JOIN users u ON REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(TRIM(u.user_id), '-', ''), ' ', ''), '.', ''), CHAR(9), ''), CHAR(13), ''), CHAR(10), '') = 
+                             REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(TRIM(e.student_number), '-', ''), ' ', ''), '.', ''), CHAR(9), ''), CHAR(13), ''), CHAR(10), '')
+             SET e.student_id = u.id
+             WHERE e.student_id IS NULL`,
+            []
         );
 
         res.status(201).json({ message: 'Class created successfully', classId: result.insertId });
@@ -318,8 +471,12 @@ router.post('/', async (req, res) => {
 router.get('/professor/:id', async (req, res) => {
     const { archived } = req.query;
     try {
-        // Resolve professor_id (string) to PK
-        const [profUsers] = await pool.query('SELECT id FROM users WHERE user_id = ?', [req.params.id]);
+        // Resolve professor_id (school ID) to PK
+        const [profUsers] = await pool.query(
+            'SELECT id FROM users WHERE user_id = ? OR REPLACE(user_id, "-", "") = ? OR id = ?', 
+            [req.params.id, req.params.id.toString().replace(/-/g, ''), isNaN(req.params.id) ? -1 : req.params.id]
+        );
+
         if (profUsers.length === 0) return res.json([]);
         const professorPk = profUsers[0].id;
 
@@ -388,23 +545,33 @@ router.post('/:id/preview-roster', upload.single('file'), async (req, res) => {
         if (req.file.mimetype.includes('csv') || req.file.originalname.endsWith('.csv')) {
             const workbook = xlsx.read(buffer, { type: 'buffer', codepage: 65001 }); // Force UTF-8
             const sheetName = workbook.SheetNames[0];
-            data = xlsx.utils.sheet_to_json(workbook.Sheets[sheetName]);
+            data = parseRosterSheet(workbook.Sheets[sheetName]);
         } else {
             const workbook = xlsx.read(buffer, { type: 'buffer', codepage: 65001 }); // Force UTF-8
             const sheetName = workbook.SheetNames[0];
-            data = xlsx.utils.sheet_to_json(workbook.Sheets[sheetName]);
+            data = parseRosterSheet(workbook.Sheets[sheetName]);
         }
 
         // Clean Data
         const classId = req.params.id;
         const uploadedStudents = data.map(row => {
-            const rawId = getHeader(row, ['Student Number', 'Student ID', 'student_number', 'Id Number', 'ID']);
+            const rawId = getHeader(row, STUDENT_ID_VARIANTS);
+            const name = getStudentName(row);
+            
             if (!rawId) return null;
             return {
                 student_number: String(rawId).trim(),
-                student_name: (getHeader(row, ['Name', 'Student Name', 'student_name', 'Full Name']) || '').trim()
+                student_name: (name || 'Unknown').trim()
             };
         }).filter(Boolean);
+
+        if (uploadedStudents.length === 0 && data.length > 0) {
+            return res.status(400).json({ 
+                error: 'No students detected in the roster file.',
+                details: 'Please ensure your file has a column for "Student Number" and "Name".',
+                rowCount: data.length
+            });
+        }
 
         // Fetch Current Roster
         const [currentEnrollments] = await pool.query('SELECT student_number, student_name FROM enrollments WHERE class_id = ?', [classId]);
@@ -444,7 +611,7 @@ router.post('/:id/upload-roster', upload.single('file'), async (req, res) => {
         const buffer = req.file.buffer;
         const workbook = xlsx.read(buffer, { type: 'buffer', codepage: 65001 }); // Force UTF-8
         const sheetName = workbook.SheetNames[0];
-        const data = xlsx.utils.sheet_to_json(workbook.Sheets[sheetName]);
+        const data = parseRosterSheet(workbook.Sheets[sheetName]);
 
         const classId = req.params.id;
         let addedCount = 0;
@@ -454,15 +621,20 @@ router.post('/:id/upload-roster', upload.single('file'), async (req, res) => {
         const uploadedStudentNumbers = [];
 
         for (const row of data) {
-            const rawId = getHeader(row, ['Student Number', 'Student ID', 'student_number', 'Id Number', 'ID']);
-            const name = (getHeader(row, ['Name', 'Student Name', 'student_name', 'Full Name']) || '').trim();
+            const rawId = getHeader(row, STUDENT_ID_VARIANTS);
+            const name = getStudentName(row);
 
             if (rawId) {
                 const studentNumber = String(rawId).trim();
                 uploadedStudentNumbers.push(studentNumber);
 
-                // Check User Linkage
-                const [users] = await pool.query('SELECT id FROM users WHERE user_id = ?', [studentNumber]);
+                // Check User Linkage (Ultra-Robust)
+                const [users] = await pool.query(
+                    `SELECT id FROM users 
+                     WHERE REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(TRIM(user_id), '-', ''), ' ', ''), '.', ''), CHAR(9), ''), CHAR(13), ''), CHAR(10), '') = 
+                     REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(TRIM(?), '-', ''), ' ', ''), '.', ''), CHAR(9), ''), CHAR(13), ''), CHAR(10), '')`, 
+                    [studentNumber]
+                );
                 const studentId = users.length > 0 ? users[0].id : null;
 
                 // Check for duplicate enrollment
@@ -475,10 +647,38 @@ router.post('/:id/upload-roster', upload.single('file'), async (req, res) => {
                         [classId, studentId, studentNumber, name || 'Unknown']
                     );
                     addedCount++;
-                } else if (studentId && existing[0].student_id === null) {
+
+                    // NOTIFICATION: Notify student if they are already registered
+                    if (studentId) {
+                        try {
+                            const [classInfo] = await pool.query('SELECT subject_name FROM classes WHERE id = ?', [classId]);
+                            const className = classInfo.length > 0 ? classInfo[0].subject_name : 'a new class';
+                            
+                            await pool.query(
+                                'INSERT INTO notifications (user_id, title, message, type, category) VALUES (?, ?, ?, ?, ?)',
+                                [studentId, 'New Class Enrollment', `You have been added to ${className} via bulk import.`, 'info', 'class']
+                            );
+                        } catch (notifErr) {
+                            console.error('Failed to send enrollment notification:', notifErr);
+                        }
+                    }
+                } else if (studentId && (existing[0].student_id === null || existing[0].student_id !== studentId)) {
                     // Update linkage if student now registered
                     await pool.query('UPDATE enrollments SET student_id = ?, student_name = ? WHERE id = ?', [studentId, name, existing[0].id]);
                     updatedCount++;
+
+                    // NOTIFICATION: Notify student that their existing enrollment is now linked
+                    try {
+                        const [classInfo] = await pool.query('SELECT subject_name FROM classes WHERE id = ?', [classId]);
+                        const className = classInfo.length > 0 ? classInfo[0].subject_name : 'a class';
+                        
+                        await pool.query(
+                            'INSERT INTO notifications (user_id, title, message, type, category) VALUES (?, ?, ?, ?, ?)',
+                            [studentId, 'Class Account Linked', `Your account is now correctly linked to ${className}.`, 'success', 'class']
+                        );
+                    } catch (notifErr) {
+                        console.error('Failed to send linkage notification:', notifErr);
+                    }
                 }
             }
         }
@@ -493,10 +693,13 @@ router.post('/:id/upload-roster', upload.single('file'), async (req, res) => {
                 [classId, ...uploadedStudentNumbers]
             );
             console.log(`[ROSTER SYNC] Removed ${deleteResult.affectedRows} students not in the uploaded list.`);
+        } else if (data.length > 0) {
+            // SAFEGUARD: If the file had rows but we parsed 0 IDs, it's likely a parsing error.
+            // DO NOT delete the existing roster.
+            console.warn(`[ROSTER SYNC] Safeguard triggered: File has ${data.length} rows but 0 student numbers parsed. Aborting deletion.`);
+            return res.status(400).json({ error: 'Failed to detect any valid student IDs in the file. Current roster was preserved.' });
         } else {
-            // If list is empty (but valid file), remove ALL students? 
-            // Safety check: Only if data.length was 0? But loop won't run. 
-            // If data is empty array, we should probably clear the class.
+            // If list is empty AND file is empty, remove ALL students (intentional clear)
             const [deleteResult] = await pool.query('DELETE FROM enrollments WHERE class_id = ?', [classId]);
             console.log(`[ROSTER SYNC] List was empty. Removed ${deleteResult.affectedRows} students.`);
         }
@@ -516,13 +719,25 @@ router.post('/:id/upload-roster', upload.single('file'), async (req, res) => {
 
 // Update Class Details
 router.put('/:id', async (req, res) => {
-    const { subjectCode, subjectName, section, schedule, schoolYear, semester } = req.body;
+    const { subjectCode, subjectName, section, schedule, schoolYear, semester, location } = req.body;
     console.log('[DEBUG] PUT /:id Request Body:', req.body);
-    console.log('[DEBUG] Extracted schoolYear:', schoolYear, 'semester:', semester);
     try {
+        // Resolve professorPk for this class (needed for validation)
+        const [currentClass] = await pool.query('SELECT professor_id FROM classes WHERE id = ?', [req.params.id]);
+        if (currentClass.length === 0) return res.status(404).json({ error: 'Class not found' });
+        const professorPk = currentClass[0].professor_id;
+
+        // Conflict Detection (Room & Professor Overlap)
+        if (schedule && location) {
+            const validation = await validateSchedule(professorPk, schedule, location, req.params.id);
+            if (validation.conflict) {
+                return res.status(400).json({ error: validation.message });
+            }
+        }
+
         // If schoolYear and semester are provided, get or create academic period
-        let updateQuery = 'UPDATE classes SET subject_code = ?, subject_name = ?, section = ?, schedule_json = ?';
-        let updateParams = [subjectCode, subjectName, section, JSON.stringify(schedule)];
+        let updateQuery = 'UPDATE classes SET subject_code = ?, subject_name = ?, section = ?, schedule_json = ?, location = ?';
+        let updateParams = [subjectCode, subjectName, section, JSON.stringify(schedule), location || 'Lab 1'];
 
         if (schoolYear && semester) {
             // Get or create academic period
@@ -584,7 +799,9 @@ router.get('/:id', async (req, res) => {
                     ELSE 'No Account'
                 END as account_status
             FROM enrollments e 
-            LEFT JOIN users u ON e.student_id = u.id OR (COALESCE(e.student_id, 0) = 0 AND REPLACE(REPLACE(u.user_id, '-', ''), ' ', '') = REPLACE(REPLACE(e.student_number, '-', ''), ' ', ''))
+            LEFT JOIN users u ON e.student_id = u.id OR 
+                REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(TRIM(u.user_id), '-', ''), ' ', ''), '.', ''), CHAR(9), ''), CHAR(13), ''), CHAR(10), '') = 
+                REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(TRIM(e.student_number), '-', ''), ' ', ''), '.', ''), CHAR(9), ''), CHAR(13), ''), CHAR(10), '')
             WHERE e.class_id = ?
             ORDER BY e.student_name
         `, [req.params.id]);
@@ -611,7 +828,9 @@ router.get('/:id/students', async (req, res) => {
                 u.year_level,
                 CASE WHEN u.id IS NULL THEN 0 ELSE 1 END as is_registered
             FROM enrollments e
-            LEFT JOIN users u ON e.student_id = u.id OR (COALESCE(e.student_id, 0) = 0 AND REPLACE(REPLACE(u.user_id, '-', ''), ' ', '') = REPLACE(REPLACE(e.student_number, '-', ''), ' ', ''))
+            LEFT JOIN users u ON e.student_id = u.id OR 
+                REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(TRIM(u.user_id), '-', ''), ' ', ''), '.', ''), CHAR(9), ''), CHAR(13), ''), CHAR(10), '') = 
+                REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(TRIM(e.student_number), '-', ''), ' ', ''), '.', ''), CHAR(9), ''), CHAR(13), ''), CHAR(10), '')
             WHERE e.class_id = ?
             ORDER BY COALESCE(u.last_name, e.student_name)
         `, [req.params.id]);
@@ -637,7 +856,9 @@ router.get('/:id/analytics', async (req, res) => {
         const [students] = await pool.query(`
             SELECT e.student_id, e.student_name, u.first_name, u.last_name, u.profile_picture
             FROM enrollments e
-            LEFT JOIN users u ON e.student_id = u.id OR (COALESCE(e.student_id, 0) = 0 AND REPLACE(REPLACE(u.user_id, '-', ''), ' ', '') = REPLACE(REPLACE(e.student_number, '-', ''), ' ', ''))
+            LEFT JOIN users u ON e.student_id = u.id OR 
+                REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(TRIM(u.user_id), '-', ''), ' ', ''), '.', ''), CHAR(9), ''), CHAR(13), ''), CHAR(10), '') = 
+                REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(TRIM(e.student_number), '-', ''), ' ', ''), '.', ''), CHAR(9), ''), CHAR(13), ''), CHAR(10), '')
             WHERE e.class_id = ?
             ORDER BY e.student_name
         `, [classId]);
@@ -746,7 +967,9 @@ router.get('/:id/attendance-grid', async (req, res) => {
                 WHERE class_id = ? 
                 GROUP BY student_number 
              ) e_agg
-             LEFT JOIN users u ON e_agg.student_id = u.id OR (COALESCE(e_agg.student_id, 0) = 0 AND REPLACE(REPLACE(u.user_id, '-', ''), ' ', '') = REPLACE(REPLACE(e_agg.student_number, '-', ''), ' ', ''))
+             LEFT JOIN users u ON e_agg.student_id = u.id OR 
+                REPLACE(REPLACE(REPLACE(REPLACE(TRIM(u.user_id), '-', ''), ' ', ''), CHAR(13), ''), CHAR(10), '') = 
+                REPLACE(REPLACE(REPLACE(REPLACE(TRIM(e_agg.student_number), '-', ''), ' ', ''), CHAR(13), ''), CHAR(10), '')
              ORDER BY e_agg.student_name`,
             [classId]
         );
@@ -806,7 +1029,7 @@ router.get('/:id/attendance-grid', async (req, res) => {
                         status: finalStatus,
                         timeIn: log ? log.time_in : null,
                         recognitionMethod: log ? log.recognition_method : null,
-                        snapshotUrl: log ? log.snapshot_url : null
+                        snapshotUrl: log ? standardizeImageUrl(log.snapshot_url, SNAPSHOT_BUCKET) : null
                     };
                 })
             };
@@ -839,8 +1062,8 @@ router.post('/:id/students', async (req, res) => {
     try {
         const fullName = `${firstName} ${lastName}`;
 
-        // Check if student user exists (for linking)
-        const [users] = await pool.query('SELECT id FROM users WHERE user_id = ? AND role = "student"', [studentNumber]);
+        // Check if student user exists (for linking) (Multi-role support)
+        const [users] = await pool.query('SELECT id FROM users WHERE user_id = ? AND role LIKE "%student%"', [studentNumber]);
         const studentId = users.length > 0 ? users[0].id : null;
 
         // Check for duplicate enrollment
@@ -854,6 +1077,31 @@ router.post('/:id/students', async (req, res) => {
             'INSERT INTO enrollments (class_id, student_id, student_number, student_name) VALUES (?, ?, ?, ?)',
             [classId, studentId, studentNumber, fullName]
         );
+
+        // NOTIFICATION: Notify student if they are already registered
+        if (studentId) {
+            try {
+                // Get class and professor info
+                const [classInfo] = await pool.query(`
+                    SELECT c.subject_name, u.first_name, u.last_name 
+                    FROM classes c 
+                    JOIN users u ON c.professor_id = u.id 
+                    WHERE c.id = ?
+                `, [classId]);
+
+                if (classInfo.length > 0) {
+                    const { subject_name, first_name, last_name } = classInfo[0];
+                    const profName = `Prof. ${first_name} ${last_name}`;
+                    
+                    await pool.query(
+                        'INSERT INTO notifications (user_id, title, message, type, category) VALUES (?, ?, ?, ?, ?)',
+                        [studentId, 'New Class Enrollment', `You have been manually added to ${subject_name} by ${profName}.`, 'info', 'class']
+                    );
+                }
+            } catch (notifErr) {
+                console.error('Failed to send manual enrollment notification:', notifErr);
+            }
+        }
 
         res.status(201).json({ message: 'Student added successfully' });
     } catch (err) {
@@ -914,7 +1162,10 @@ router.get('/:id/export-attendance', async (req, res) => {
                 e.student_name,
                 e.student_number 
              FROM enrollments e
-             LEFT JOIN users u ON e.student_id = u.id OR (e.student_id IS NULL AND u.user_id = e.student_number)
+             LEFT JOIN users u ON e.student_id = u.id OR (e.student_id IS NULL AND 
+                REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(TRIM(u.user_id), '-', ''), ' ', ''), '.', ''), CHAR(9), ''), CHAR(13), ''), CHAR(10), '') = 
+                REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(TRIM(e.student_number), '-', ''), ' ', ''), '.', ''), CHAR(9), ''), CHAR(13), ''), CHAR(10), '')
+             )
              WHERE e.class_id = ? 
         `;
         let studentParams = [classId];
@@ -944,20 +1195,34 @@ router.get('/:id/export-attendance', async (req, res) => {
         }
 
         // Prepare Data for Excel
+        // Build a clean date label: "Apr 16, 2026" — no session type, no time range
+        const formatDateLabel = (rawDate) => {
+            const d = new Date(rawDate);
+            return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        };
+
+        // Deduplicate column headers in case two sessions share the same date
+        const sessionDateLabels = [];
+        sessions.forEach(session => {
+            let label = formatDateLabel(session.date);
+            // If duplicate, append a counter (e.g., "Apr 16, 2026 (2)")
+            let count = sessionDateLabels.filter(l => l === label || l.startsWith(label + ' (')).length;
+            if (count > 0) label = `${label} (${count + 1})`;
+            sessionDateLabels.push(label);
+        });
+
         const data = students.map(student => {
+            // Only Student Name — no Student Number
             const row = {
                 'Student Name': student.student_name,
-                'Student Number': student.student_number || 'N/A',
             };
 
             let presentCount = 0;
             let lateCount = 0;
             let absentCount = 0;
 
-            sessions.forEach(session => {
-                const displayDate = new Date(session.date).toLocaleDateString();
-                const timeRange = `${session.start_time ? session.start_time.substring(0, 5) : 'N/A'} - ${session.end_time ? session.end_time.substring(0, 5) : 'N/A'}`;
-                const dateKey = `${displayDate} (${session.type}) ${timeRange}`;
+            sessions.forEach((session, idx) => {
+                const dateKey = sessionDateLabels[idx];
 
                 let log = null;
                 if (student.student_id) {
@@ -973,24 +1238,33 @@ router.get('/:id/export-attendance', async (req, res) => {
                     status = 'Absent';
                 }
 
-                // Standardize and Capitalize
+                // Standardize and Capitalize — plain status only, no time appended
                 const stringStatus = String(status || 'Absent').trim();
                 const lowerStatus = stringStatus.toLowerCase();
                 const displayStatus = stringStatus.charAt(0).toUpperCase() + stringStatus.slice(1).toLowerCase();
 
-                row[dateKey] = log && log.time_in ? `${displayStatus} (${String(log.time_in).substring(0, 5)})` : displayStatus;
+                // Show time-in for present/late, plain status for absent
+                // time_in can be a Date object, "HH:MM:SS", or a full datetime string — extract HH:MM safely
+                let timeLabel = '';
+                if (log && log.time_in) {
+                    const t = log.time_in;
+                    if (t instanceof Date) {
+                        // Date object: format as HH:MM
+                        timeLabel = t.toTimeString().substring(0, 5);
+                    } else {
+                        // String: find the HH:MM pattern inside it
+                        const timeMatch = String(t).match(/(\d{2}:\d{2})/);
+                        timeLabel = timeMatch ? timeMatch[1] : String(t).substring(0, 5);
+                    }
+                }
+                row[dateKey] = timeLabel ? `${displayStatus} (${timeLabel})` : displayStatus;
 
-                // Case-insensitive check for counts
+                // Case-insensitive count
                 if (lowerStatus === 'present') {
                     presentCount++;
                 } else if (lowerStatus === 'late') {
                     lateCount++;
-                } else if (lowerStatus === 'absent') {
-                    absentCount++;
                 } else {
-                    // If it's something else, treat as absent by default for logic?
-                    // User said "dont make it default", but implicitly "Absent" is the failure state.
-                    // Let's only increment absent if it's explicitly 'Absent' or if there was no log.
                     absentCount++;
                 }
             });
@@ -999,7 +1273,7 @@ router.get('/:id/export-attendance', async (req, res) => {
             row['Total Late'] = lateCount;
             row['Total Absent'] = absentCount;
 
-            // Calculate rate
+            // Attendance rate: present + late count as attended
             const totalSessions = sessions.length;
             const rate = totalSessions > 0 ? Math.round(((presentCount + lateCount) / totalSessions) * 100) : 0;
             row['Attendance Rate (%)'] = `${rate}%`;

@@ -13,22 +13,31 @@ export const getBackendUrl = () => {
     return '';
 };
 
-/**
- * Get the full URL for a profile picture path.
- * Handles absolute URLs (MinIO), relative paths (local uploads), and null values.
- */
 export const getProfilePictureUrl = (path: string | null | undefined): string | null => {
     if (!path) return null;
+    
+    let url = '';
     if (path.startsWith('http://') || path.startsWith('https://')) {
-        return path;
+        url = path;
+    } else {
+        const baseUrl = getBackendUrl();
+        // For relative paths, we rely on the Next.js rewrite in next.config.mjs
+        // ensuring we don't double-prefix if 'getBackendUrl' returns an absolute URL
+        if (baseUrl && !path.startsWith(baseUrl)) {
+            url = `${baseUrl}${path.startsWith('/') ? '' : '/'}${path}`;
+        } else {
+            url = path;
+        }
     }
-    // For relative paths, we rely on the Next.js rewrite in next.config.mjs
-    // ensuring we don't double-prefix if 'getBackendUrl' returns an absolute URL
-    const baseUrl = getBackendUrl();
-    if (baseUrl && !path.startsWith(baseUrl)) {
-        return `${baseUrl}${path.startsWith('/') ? '' : '/'}${path}`;
+
+    // Automated Cache Busting: Append a version/timestamp to force refresh on updates
+    // We only do this on the client side to avoid hydration mismatches
+    if (typeof window !== 'undefined') {
+        const version = localStorage.getItem('img_version') || new Date().getDate().toString();
+        return url.includes('?') ? `${url}&v=${version}` : `${url}?v=${version}`;
     }
-    return path;
+
+    return url;
 };
 
 /**
@@ -126,4 +135,19 @@ export const logout = (redirectPath: string = '/login') => {
     sessionStorage.removeItem('token');
     sessionStorage.removeItem('user');
     window.location.href = `${redirectPath}?logout=success`;
+};
+
+/**
+ * Convert base64 Data URL to Blob for file uploads
+ */
+export const dataURLtoBlob = (dataurl: string): Blob => {
+    const arr = dataurl.split(',');
+    const mime = arr[0].match(/:(.*?);/)![1];
+    const bstr = atob(arr[1]);
+    let n = bstr.length;
+    const u8arr = new Uint8Array(n);
+    while (n--) {
+        u8arr[n] = bstr.charCodeAt(n);
+    }
+    return new Blob([u8arr], { type: mime });
 };

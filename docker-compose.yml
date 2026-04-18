@@ -40,9 +40,9 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
       args:
-        - NEXT_PUBLIC_API_URL=https://labface.site
+        - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
     environment:
-      - NEXT_PUBLIC_API_URL=https://labface.site
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
       - NODE_ENV=production
     depends_on:
       - backend
@@ -99,7 +99,6 @@ services:
       - MINIO_USE_SSL=false
       - BACKEND_URL=http://backend:5000
       - RTSP_URL_1=${RTSP_URL_1}
-      - RTSP_URL_2=${RTSP_URL_2}
     # network_mode: "host" # Removed to allow container DNS resolution
     volumes:
       - ./ai-service/models:/app/models
@@ -129,11 +128,11 @@ services:
       - ./backend/init.sql:/docker-entrypoint-initdb.d/init.sql
     restart: unless-stopped
     healthcheck:
-      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-u$DB_USER", "-p$DB_PASSWORD" ]
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -uroot -p$$MYSQL_ROOT_PASSWORD --silent"]
       interval: 10s
       timeout: 5s
-      retries: 5
-      start_period: 30s
+      retries: 10
+      start_period: 60s
 
   minio:
     image: minio/minio

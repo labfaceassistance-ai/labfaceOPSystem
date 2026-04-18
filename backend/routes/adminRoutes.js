@@ -12,6 +12,8 @@ const analyticsService = require('../services/analyticsService');
 const monitoringService = require('../services/monitoringService');
 const reportingService = require('../services/reportingService');
 const { standardizeImageUrl } = require('../utils/minioHelper');
+const bcrypt = require('bcryptjs');
+const { sendProfessorWelcomeEmail } = require('../utils/emailService');
 
 
 
@@ -401,6 +403,169 @@ router.post('/reject-professor/:id', authenticateToken, requireLabHead, async (r
 // ==================== USER MANAGEMENT ROUTES ====================
 
 /**
+ * Create a new professor account (Admin only)
+ * POST /api/admin/create-professor
+ */
+router.post('/create-professor', authenticateToken, requireLabHead, async (req, res) => {
+    const { professorId, firstName, middleName, lastName, email, password } = req.body;
+    const adminId = req.user.id;
+    const normalizedMiddleName = (middleName || '').trim();
+
+    if (!professorId || !firstName || !lastName || !email || !password) {
+        return res.status(400).json({ message: 'All fields are required' });
+    }
+    if (!/^\d{5}$/.test(professorId)) {
+        return res.status(400).json({ message: 'Professor ID must be exactly 5 digits' });
+    }
+
+    let connection;
+    try {
+        connection = await pool.getConnection();
+        await connection.beginTransaction();
+
+        // 1. Check if user already exists by user_id OR email (separately)
+        const [existingById] = await connection.query(
+            'SELECT * FROM users WHERE user_id = ?',
+            [professorId]
+        );
+        const [existingByEmail] = await connection.query(
+            'SELECT * FROM users WHERE email = ? AND user_id != ?',
+            [email, professorId]
+        );
+
+        // Determine target user (prefer match by ID, fallback to email)
+        const targetUser = existingById[0] || existingByEmail[0] || null;
+
+        // 2. Hash password
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        if (targetUser) {
+            const existingRoles = targetUser.role
+                ? targetUser.role.split(',').map(r => r.trim())
+                : [];
+
+            // Case A: Already a professor → reject
+            if (existingRoles.includes('professor')) {
+                await connection.rollback();
+                return res.status(400).json({
+                    message: 'This user already has a professor account.'
+                });
+            }
+
+            // Case B: Exists but NOT a professor → merge (add professor role)
+            const newRoles = [...new Set([...existingRoles, 'professor'])].join(',');
+            const userId = targetUser.id;
+
+            await connection.query(
+                `UPDATE users SET
+                    professor_password_hash = ?,
+                    role = ?,
+                    approval_status = 'approved',
+                    verified_by = ?,
+                    verified_at = NOW()
+                 WHERE id = ?`,
+                [hashedPassword, newRoles, adminId, userId]
+            );
+
+            // Notification
+            await connection.query(
+                'INSERT INTO notifications (user_id, title, message) VALUES (?, ?, ?)',
+                [userId, 'Professor Role Granted', 'An administrator has granted you professor access on LabFace.']
+            );
+
+            // Log admin action
+            await connection.query(
+                'INSERT INTO admin_actions (admin_id, action_type, target_user_id, reason) VALUES (?, ?, ?, ?)',
+                [adminId, 'grant_professor_role', userId, `Professor role added to existing user ${targetUser.first_name} ${targetUser.last_name}`]
+            );
+
+            await connection.commit();
+
+            // Send welcome email asynchronously
+            try {
+                await sendProfessorWelcomeEmail(
+                    targetUser.email,
+                    targetUser.first_name,
+                    targetUser.last_name,
+                    professorId,
+                    password
+                );
+            } catch (emailError) {
+                console.error('Failed to send welcome email (merge):', emailError);
+            }
+
+            return res.status(200).json({
+                message: `Professor role added to ${targetUser.first_name} ${targetUser.last_name} successfully`,
+                professor: {
+                    id: userId,
+                    professorId: targetUser.user_id,
+                    firstName: targetUser.first_name,
+                    lastName: targetUser.last_name,
+                    email: targetUser.email
+                }
+            });
+        }
+
+        // Case C: Brand new user → INSERT
+        const [result] = await connection.query(
+            `INSERT INTO users (
+                user_id, first_name, middle_name, last_name, email, 
+                password_hash, professor_password_hash, role, 
+                approval_status, verified_by, verified_at, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
+            [
+                professorId, firstName, normalizedMiddleName, lastName, email,
+                hashedPassword, hashedPassword, 'professor',
+                'approved', adminId
+            ]
+        );
+
+        const userId = result.insertId;
+
+        // Welcome notification
+        await connection.query(
+            'INSERT INTO notifications (user_id, title, message) VALUES (?, ?, ?)',
+            [userId, 'Welcome to LabFace', 'Your professor account has been created by an administrator.']
+        );
+
+        // Log admin action
+        await connection.query(
+            'INSERT INTO admin_actions (admin_id, action_type, target_user_id, reason) VALUES (?, ?, ?, ?)',
+            [adminId, 'create_professor', userId, `Created account for ${firstName} ${lastName}`]
+        );
+
+        await connection.commit();
+
+        // Send welcome email asynchronously
+        try {
+            await sendProfessorWelcomeEmail(email, firstName, lastName, professorId, password);
+        } catch (emailError) {
+            console.error('Failed to send welcome email:', emailError);
+        }
+
+        res.status(201).json({
+            message: 'Professor account created successfully',
+            professor: {
+                id: userId,
+                professorId,
+                firstName,
+                lastName,
+                email
+            }
+        });
+
+    } catch (error) {
+        if (connection) await connection.rollback();
+        console.error('Error creating professor account:', error);
+        res.status(500).json({ message: error.message });
+    } finally {
+        if (connection) connection.release();
+    }
+});
+
+// ==================== USER MANAGEMENT ROUTES ====================
+
+/**
  * Get all users with filters
  * GET /api/admin/users?role=student&status=approved
  */
@@ -408,26 +573,43 @@ router.get('/users', authenticateToken, requireLabHead, async (req, res) => {
     try {
         const { role, status, search } = req.query;
 
-        let query = 'SELECT id, user_id, first_name, middle_name, last_name, email, role, approval_status, created_at FROM users WHERE 1=1';
+        let query = `
+            SELECT 
+                u.id,
+                u.user_id,
+                u.first_name,
+                u.middle_name,
+                u.last_name,
+                u.email,
+                u.role,
+                u.approval_status,
+                u.created_at,
+                c.code AS course,
+                s.year_level
+            FROM users u
+            LEFT JOIN students s ON s.user_id = u.id
+            LEFT JOIN courses c ON c.id = s.course_id
+            WHERE 1=1
+        `;
         const params = [];
 
         if (role) {
-            query += ' AND role LIKE ?';
+            query += ' AND u.role LIKE ?';
             params.push(`%${role}%`);
         }
 
         if (status) {
-            query += ' AND approval_status = ?';
+            query += ' AND u.approval_status = ?';
             params.push(status);
         }
 
         if (search) {
-            query += ' AND (first_name LIKE ? OR last_name LIKE ? OR email LIKE ? OR user_id LIKE ?)';
+            query += ' AND (u.first_name LIKE ? OR u.last_name LIKE ? OR u.email LIKE ? OR u.user_id LIKE ?)';
             const searchPattern = `%${search}%`;
             params.push(searchPattern, searchPattern, searchPattern, searchPattern);
         }
 
-        query += ' ORDER BY created_at DESC LIMIT 100';
+        query += ' ORDER BY u.created_at DESC LIMIT 100';
 
         const [users] = await pool.query(query, params);
         res.json(users);
@@ -567,7 +749,7 @@ router.get('/stats', authenticateToken, requireLabHead, async (req, res) => {
         const [pendingCount] = await pool.query(`
             SELECT COUNT(*) as count 
             FROM users 
-            WHERE role = 'professor' AND approval_status = 'pending'
+            WHERE role LIKE '%professor%' AND approval_status = 'pending'
         `);
 
         // Get active sessions count (sessions that are currently running)
@@ -661,6 +843,7 @@ router.get('/academic-settings', authenticateToken, async (req, res) => {
                 school_year as schoolYear,
                 semester,
                 is_active as isCurrent,
+                effective_date as effectiveDate,
                 start_date as startDate,
                 end_date as endDate,
                 created_at as updatedAt
@@ -671,7 +854,7 @@ router.get('/academic-settings', authenticateToken, async (req, res) => {
         `);
 
         if (settings.length === 0) {
-            return res.status(404).json({ message: 'No current academic settings found' });
+            return res.json({});
         }
 
         // Get updater info if available
@@ -708,8 +891,17 @@ router.patch('/academic-settings', authenticateToken, async (req, res) => {
             return res.status(400).json({ error: 'School year and semester are required' });
         }
 
-        // Set effectiveDate to PHT if not provided
-        const finalEffectiveDate = effectiveDate || new Date().toLocaleString("en-US", {timeZone: "Asia/Manila"});
+        // Format effectiveDate for MySQL (YYYY-MM-DD HH:mm:ss)
+        // If from frontend (YYYY-MM-DDTHH:mm), replace T with space and add seconds
+        let finalEffectiveDate;
+        if (effectiveDate) {
+            finalEffectiveDate = effectiveDate.replace('T', ' ');
+            if (finalEffectiveDate.length === 16) finalEffectiveDate += ':00'; // Add seconds if missing
+        } else {
+            // Default to now (Manila Time)
+            const manilaNow = new Date().toLocaleString("en-US", { timeZone: "Asia/Manila" });
+            finalEffectiveDate = new Date(manilaNow).toISOString().slice(0, 19).replace('T', ' ');
+        }
 
         // Check if this period already exists
         const [existing] = await pool.query(
@@ -779,7 +971,7 @@ router.get('/classes/current', authenticateToken, requireLabHead, async (req, re
         `);
 
         if (settings.length === 0) {
-            return res.status(404).json({ message: 'No current academic settings found' });
+            return res.json([]);
         }
 
         const { id: periodId } = settings[0];
@@ -1449,155 +1641,6 @@ router.patch('/identity-theft-reports/:id', authenticateToken, requireLabHead, a
     }
 });
 
-// ==================== ACADEMIC SETTINGS ROUTES ====================
-
-/**
- * Get current academic settings
- * GET /api/admin/academic-settings
- */
-router.get('/academic-settings', authenticateToken, requireLabHead, async (req, res) => {
-    try {
-        const [settings] = await pool.query(`
-            SELECT 
-                id,
-                school_year as schoolYear,
-                semester,
-                is_active as isCurrent,
-                start_date as startDate,
-                end_date as endDate,
-                created_at as updatedAt
-            FROM academic_periods
-            WHERE is_active = 1
-            LIMIT 1
-        `);
-
-        if (settings.length === 0) {
-            // Return default/empty or null
-            return res.json({});
-        }
-
-        res.json(settings[0]);
-    } catch (error) {
-        console.error('Error fetching academic settings:', error);
-        res.status(500).json({ error: error.message });
-    }
-});
-
-/**
- * Update academic settings (Switch Semester/Year)
- * PATCH /api/admin/academic-settings
- */
-router.patch('/academic-settings', authenticateToken, requireLabHead, async (req, res) => {
-    const { schoolYear, semester } = req.body;
-    const adminId = req.user.id;
-
-    if (!schoolYear || !semester) {
-        return res.status(400).json({ message: 'School year and semester are required' });
-    }
-
-    const connection = await pool.getConnection();
-    try {
-        await connection.beginTransaction();
-
-        // 1. Deactivate current period
-        await connection.query('UPDATE academic_periods SET is_active = 0 WHERE is_active = 1');
-
-        // 2. Check if new period exists
-        const [existing] = await connection.query(
-            'SELECT id FROM academic_periods WHERE school_year = ? AND semester = ?',
-            [schoolYear, semester]
-        );
-
-        let newPeriodId;
-        if (existing.length > 0) {
-            // Activate existing
-            newPeriodId = existing[0].id;
-            await connection.query('UPDATE academic_periods SET is_active = 1 WHERE id = ?', [newPeriodId]);
-        } else {
-            // Create new
-            const [result] = await connection.query(
-                'INSERT INTO academic_periods (school_year, semester, is_active) VALUES (?, ?, 1)',
-                [schoolYear, semester]
-            );
-            newPeriodId = result.insertId;
-        }
-
-        // 3. Log Action
-        await logAdminAction(adminId, 'update_academic_period', null, `Changed academic period to ${schoolYear} - ${semester}`);
-
-        await connection.commit();
-        res.json({ message: 'Academic settings updated successfully', periodId: newPeriodId });
-    } catch (error) {
-        await connection.rollback();
-        console.error('Error updating academic settings:', error);
-        res.status(500).json({ error: error.message });
-    } finally {
-        connection.release();
-    }
-});
-
-/**
- * Get classes for current academic period
- * GET /api/admin/classes/current
- */
-router.get('/classes/current', authenticateToken, requireLabHead, async (req, res) => {
-    try {
-        const [classes] = await pool.query(`
-            SELECT 
-                c.id, 
-                c.subject_code as subjectCode, 
-                c.subject_name as subjectName, 
-                c.section, 
-                c.created_at as createdAt,
-                u.first_name, u.last_name,
-                (SELECT COUNT(*) FROM enrollments e WHERE e.class_id = c.id) as studentCount
-            FROM classes c
-            JOIN academic_periods ap ON c.academic_period_id = ap.id
-            LEFT JOIN users u ON c.professor_id = u.id
-            WHERE ap.id = (
-                SELECT id FROM academic_periods 
-                WHERE effective_date <= CONVERT_TZ(NOW(), 'UTC', 'Asia/Manila')
-                ORDER BY effective_date DESC LIMIT 1
-            )
-            ORDER BY c.created_at DESC
-        `);
-
-        const formattedClasses = classes.map(c => ({
-            ...c,
-            professorName: `${c.first_name} ${c.last_name}`
-        }));
-
-        res.json(formattedClasses);
-    } catch (error) {
-        console.error('Error fetching current classes:', error);
-        res.status(500).json({ error: error.message });
-    }
-});
-
-/**
- * Get semester history
- * GET /api/admin/semesters/history
- */
-router.get('/semesters/history', authenticateToken, requireLabHead, async (req, res) => {
-    try {
-        const [history] = await pool.query(`
-            SELECT 
-                ap.id,
-                ap.school_year as schoolYear,
-                ap.semester,
-                ap.is_active as isCurrent,
-                ap.created_at as createdAt,
-                (SELECT COUNT(*) FROM classes c WHERE c.academic_period_id = ap.id) as classCount
-            FROM academic_periods ap
-            ORDER BY ap.effective_date DESC
-        `);
-
-        res.json(history);
-    } catch (error) {
-        console.error('Error fetching semester history:', error);
-        res.status(500).json({ error: error.message });
-    }
-});
 
 // ==================== ANALYTICS ENDPOINTS ====================
 

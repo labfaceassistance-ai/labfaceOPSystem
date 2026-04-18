@@ -3,7 +3,7 @@ const axios = require('axios');
 /**
  * Validate that an image contains a detectable face
  * @param {string} base64Image - Base64 encoded image data
- * @returns {Promise<{valid: boolean, error?: string}>}
+ * @returns {Promise<{valid: boolean, error?: string, aiOffline?: boolean}>}
  */
 async function validateFaceInImage(base64Image) {
     try {
@@ -12,53 +12,72 @@ async function validateFaceInImage(base64Image) {
         const response = await axios.post(`${aiServiceUrl}/api/recognize`, {
             image: base64Image
         }, {
-            timeout: 10000
+            timeout: 5000  // Reduced from 10s → 5s for faster UX feedback when AI is down
         });
 
-        // If we get here without error, a face was detected
-        // The AI service returns success:false if no face is found
-        // If AI service returns success:false, it might be "No face" or "Quality issue"
+        // If we get here without error, a face was detected.
+        // The AI service returns success:false when no face is found or quality is poor.
         if (response.data.success === false) {
             const errorMsg = response.data.error || 'Unknown error';
 
-            // 1. Quality Issues (Dark/Blurry) -> BLOCK
+            // 1. Quality Issues (Dark/Blurry/Bright) → ALLOW but WARN (Bypass)
+            // Students might be in a dimly lit room but face is still recognizable to human staff.
             if (errorMsg.includes('too dark') || errorMsg.includes('too bright') || errorMsg.includes('too blurry')) {
+                console.warn(`[FaceValidation] QUALITY WARNING: ${errorMsg}. Proceeding anyway.`);
                 return {
-                    valid: false,
-                    error: response.data.message || errorMsg,
-                    code: 'QUALITY_ERROR'
+                    valid: true, 
+                    warning: response.data.message || errorMsg,
+                    code: 'QUALITY_WARNING'
                 };
             }
 
-            // 2. No Face Detected -> WARN but ALLOW (Bypass)
-            // (Unless we want to be strict here too? User asked for "notify... if too dark". 
-            // Often "no face" is a false negative. "Too dark" is usually true positive.)
-            if (errorMsg === 'No face detected') {
-                console.warn('WARNING: AI service did not detect a face. Allowing upload to proceed (Bypass Active).');
+            // 2. No Face Detected → WARN but ALLOW (Bypass)
+            // "No face" is often a false negative from angle photos; "too dark" is usually accurate.
+            if (errorMsg.toLowerCase().includes('no face')) {
+                console.warn('[FaceValidation] WARNING: AI service did not detect a face. Allowing upload to proceed (Bypass Active).');
                 return { valid: true, warning: 'No face detected (Bypassed)' };
             }
 
-            // Other errors
-            return { valid: false, error: errorMsg };
+            // 3. Service initializing (models still loading) → fail-open
+            if (errorMsg === 'Service initializing') {
+                console.warn('[FaceValidation] AI service is still initializing models. Allowing upload (Bypass Active).');
+                return { valid: true, warning: 'AI service initializing (Bypassed)', aiOffline: true };
+            }
+
+            // Other errors → fail-open (don't block the student)
+            console.warn(`[FaceValidation] AI returned error: ${errorMsg}. Allowing upload (Bypass Active).`);
+            return { valid: true, warning: errorMsg, aiOffline: false };
         }
 
-        // Face detected successfully
+        // Face detected and quality checks passed
         return { valid: true };
+
     } catch (error) {
-        // AI Service communication error
+        // AI Service communication error — classify by error code for better Docker log diagnostics
+        const code = error.code || 'UNKNOWN';
+        const aiServiceUrl = process.env.AI_SERVICE_URL || 'http://ai-service:8000';
+
+        if (code === 'ECONNREFUSED') {
+            console.warn(`[FaceValidation] AI service REFUSED connection at ${aiServiceUrl}. Is the ai-service container running?`);
+        } else if (code === 'ETIMEDOUT' || error.message?.includes('timeout')) {
+            console.warn(`[FaceValidation] AI service TIMED OUT (>${5000}ms) at ${aiServiceUrl}. Service may be overloaded or still loading models.`);
+        } else if (code === 'ENOTFOUND') {
+            console.warn(`[FaceValidation] AI service DNS FAILED for ${aiServiceUrl}. Check docker-compose service name.`);
+        } else {
+            console.warn(`[FaceValidation] AI service error [${code}]: ${error.message}`);
+        }
+
+        // Check if response body has usable data (4xx/5xx with JSON body)
         if (error.response && error.response.data) {
             const errorMsg = error.response.data.error || '';
-            // Handle raw 400/500 errors if they follow schema
             if (errorMsg.toLowerCase().includes('no face')) {
-                return { valid: true, warning: 'No face detected (Bypassed)' };
+                return { valid: true, warning: 'No face detected (Bypassed)', aiOffline: false };
             }
         }
 
-
-        // If AI service is down or other error, log but allow upload
-        // (fail open to avoid blocking legitimate uploads)
-        console.warn('Face validation service error:', error.message);
-        return { valid: true, warning: 'Face validation service unavailable' };
+        // Fail-open: don't block legitimate registrations when the AI is unavailable.
+        // The aiOffline flag lets the frontend show a bypass banner to the student.
+        return { valid: true, warning: 'Face validation service unavailable', aiOffline: true };
     }
 }
 

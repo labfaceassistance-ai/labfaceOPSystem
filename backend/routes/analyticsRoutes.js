@@ -12,8 +12,15 @@ router.get('/professor/:userId/trends', authenticateToken, requireRole(['profess
         const userId = req.params.userId;
         
         // 1. Resolve professor PK
-        const [profUsers] = await pool.query('SELECT id FROM users WHERE user_id = ?', [userId]);
-        if (profUsers.length === 0) return res.status(404).json({ message: 'Professor not found' });
+        const [profUsers] = await pool.query(
+            'SELECT id FROM users WHERE user_id = ? OR REPLACE(user_id, "-", "") = ? OR id = ?', 
+            [userId, userId.toString().replace(/-/g, ''), isNaN(userId) ? -1 : userId]
+        );
+
+        if (profUsers.length === 0) {
+            console.error(`[Analytics Trends] Professor not found for ID: ${userId}`);
+            return res.status(404).json({ message: 'Professor not found' });
+        }
         const professorPk = profUsers[0].id;
 
         // 2. Get active class IDs
@@ -76,8 +83,15 @@ router.get('/student-insights', authenticateToken, requireRole(['professor', 'ad
         const classId = req.query.classId;
 
         // 1. Resolve professor PK
-        const [profUsers] = await pool.query('SELECT id FROM users WHERE user_id = ?', [userId]);
-        if (profUsers.length === 0) return res.status(404).json({ message: 'Professor not found' });
+        const [profUsers] = await pool.query(
+            'SELECT id FROM users WHERE user_id = ? OR REPLACE(user_id, "-", "") = ? OR id = ?', 
+            [userId, userId.toString().replace(/-/g, ''), isNaN(userId) ? -1 : userId]
+        );
+
+        if (profUsers.length === 0) {
+            console.error(`[Student Insights] Professor not found for ID: ${userId}`);
+            return res.status(404).json({ message: 'Professor not found' });
+        }
         const professorPk = profUsers[0].id;
 
         // 2. Get active class IDs to filter by

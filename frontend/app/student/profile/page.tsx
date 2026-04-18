@@ -1,10 +1,12 @@
 "use client";
 import { useState, useEffect, useRef } from 'react';
-import { getToken, getUser, API_URL, createAuthAxios, getProfilePictureUrl, logout } from '../../../utils/auth';
+import { getToken, getUser, API_URL, createAuthAxios, getProfilePictureUrl, logout, dataURLtoBlob, fetchCurrentUser } from '../../../utils/auth';
 import Navbar from '../../../components/Navbar';
 import Link from 'next/link';
-import { User, Mail, MapPin, Save, Camera, Lock, Shield, ShieldCheck, Image as ImageIcon, ArrowLeft, Eye, EyeOff, CheckCircle, AlertCircle, X, Upload, RefreshCw, Check, FileText, AlertTriangle, CheckCircle2, XCircle, Download, Trash2, Undo2, Edit, MessageSquare, ExternalLink } from 'lucide-react';
+import { User, Mail, MapPin, Save, Camera, Lock, Shield, ShieldCheck, Image as ImageIcon, ArrowLeft, Eye, EyeOff, CheckCircle, AlertCircle, X, Upload, RefreshCw, Check, FileText, AlertTriangle, CheckCircle2, XCircle, Download, Trash2, Undo2, Edit, MessageSquare, ExternalLink, Sparkles } from 'lucide-react';
 import axios from 'axios';
+import FaceEnrollmentScanner from '../../../components/FaceEnrollmentScanner';
+import { useToast } from '../../../components/Toast';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
@@ -32,7 +34,7 @@ interface FacePhoto {
 }
 
 export default function StudentProfile() {
-    const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
+    const { showToast } = useToast();
     const [user, setUser] = useState<UserData | null>(null);
     const [isEditing, setIsEditing] = useState(false);
     const [formData, setFormData] = useState<UserData | null>(null);
@@ -65,6 +67,7 @@ export default function StudentProfile() {
     const [deletedPhotoIds, setDeletedPhotoIds] = useState<number[]>([]);
     const [isCapturing, setIsCapturing] = useState(false);
     const [isEditingFaceData, setIsEditingFaceData] = useState(false);
+    const [newFacePhotos, setNewFacePhotos] = useState<Record<string, string>>({});
     const [isTraining, setIsTraining] = useState(false);
     const [isVideoReady, setIsVideoReady] = useState(false);
 
@@ -1211,252 +1214,117 @@ export default function StudentProfile() {
                             )}
 
                             {/* Face Data Tab */}
-                            {activeTab === 'face' && (
-                                <div className="space-y-6 animate-fade-in">
-                                    <div className="bg-slate-900/50 border border-slate-700 p-4 rounded-lg text-slate-300 text-sm opacity-80 hover:opacity-100 transition-opacity">
-                                        <strong className="text-white">Instructions:</strong>
-                                        <ul className="list-disc pl-5 mt-1 space-y-1">
-                                            <li>Capture or upload photos for all 5 angles (Front, Left, Right, Up, Down).</li>
-                                            <li>Ensure good lighting and clear visibility.</li>
-                                            <li>Remove glasses, hats, or masks.</li>
-                                            <li>Click on a tile to select which angle to capture.</li>
-                                        </ul>
-                                    </div>
-
-                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                                        {/* Camera/Upload Section */}
-                                        {isEditingFaceData && (
-                                            <div className="space-y-4">
-                                                <div className="bg-slate-800 p-4 rounded-xl border border-slate-700 shadow-xl">
-                                                    <h3 className="font-bold text-white mb-3 flex items-center gap-2">
-                                                        <Camera size={20} className="text-brand-500" />
-                                                        Capture: {currentAngle} View
-                                                    </h3>
-
-                                                    {cameraActive ? (
-                                                        <div className="space-y-3">
-                                                            <div className="relative">
-                                                                <video
-                                                                    ref={videoRef}
-                                                                    autoPlay
-                                                                    playsInline
-                                                                    muted
-                                                                    className="w-full aspect-[4/3] object-cover rounded-lg border-2 border-brand-500 bg-black"
-                                                                />
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={toggleCamera}
-                                                                    className="absolute top-2 right-2 bg-white/20 backdrop-blur-sm p-2 rounded-full text-white hover:bg-white/40 transition-colors"
-                                                                    title="Switch Camera"
-                                                                >
-                                                                    <RefreshCw size={20} />
-                                                                </button>
-
-                                                                {/* Camera Selection Dropdown (Desktop Only) */}
-                                                                {videoDevices.length > 1 && (
-                                                                    <div className="absolute top-2 left-2 z-10 hidden md:block">
-                                                                        <select
-                                                                            value={selectedDeviceId}
-                                                                            onChange={(e) => {
-                                                                                setSelectedDeviceId(e.target.value);
-                                                                                // Restart camera if active
-                                                                                if (cameraActive) {
-                                                                                    stopCamera();
-                                                                                    // Small delay to allow cleanup
-                                                                                    setTimeout(() => {
-                                                                                        // We need to trigger startCamera, but ensuring the new ID is used
-                                                                                        // The state update is async, but inside the function we use the state directly.
-                                                                                        // However, startCamera uses selectedDeviceId from state, which might not be updated yet in this closure if we call it immediately.
-                                                                                        // Actually, better to just rely on user clicking start or handle it via effect if we wanted auto-switch.
-                                                                                        // For now, let's just stop and user can start again, OR simple hack:
-                                                                                        // But startCamera reads state. We can pass deviceId to startCamera optionally?
-                                                                                        // Let's keep it simple: simpler to just let user restart or auto-restart with a small timeout which usually picks up the new state in next render? No, that's flaky.
-                                                                                        // Best approach: useEffect dependency? No, that might trigger unwanted starts.
-                                                                                        // Let's make startCamera accept an optional deviceId override
-                                                                                    }, 100);
-                                                                                    // Actually, simply setting state here and then having an effect re-start camera if it was active?
-                                                                                    // Let's modify the onChange to just set state, and we can add a button to apply or just let them toggle.
-                                                                                    // OR: The user asked for "choose if they want to use that camera format". 
-                                                                                    // Let's try to make it live switch if possible.
-                                                                                }
-                                                                            }}
-                                                                            className="bg-black/50 text-white text-xs p-1 rounded backdrop-blur-sm border border-white/20 outline-none"
-                                                                        >
-                                                                            {videoDevices.map(device => (
-                                                                                <option key={device.deviceId} value={device.deviceId} className="bg-slate-900">
-                                                                                    {device.label || `Camera ${videoDevices.indexOf(device) + 1}`}
-                                                                                </option>
-                                                                            ))}
-                                                                        </select>
-                                                                    </div>
-                                                                )}
-                                                            </div>
-                                                            <div className="flex gap-2">
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={captureFromCamera}
-                                                                    disabled={isCapturing || !isVideoReady}
-                                                                    className={`flex-1 bg-brand-600 text-white px-4 py-3 rounded-lg font-bold hover:bg-brand-700 transition-colors flex items-center justify-center gap-2 ${(isCapturing || !isVideoReady) ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                                                >
-                                                                    <Camera size={18} />
-                                                                    {isCapturing ? 'Saving...' : !isVideoReady ? 'Loading...' : 'Capture Photo'}
-                                                                </button>
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={stopCamera}
-                                                                    className="px-4 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
-                                                                >
-                                                                    <X size={18} />
-                                                                </button>
-                                                            </div>
-                                                        </div>
-                                                    ) : (
-                                                        <div className="space-y-3">
-                                                            <div className="w-full aspect-[4/3] bg-gray-200 rounded-lg flex items-center justify-center">
-                                                                <Camera size={48} className="text-gray-400" />
-                                                            </div>
-                                                            <button
-                                                                type="button"
-                                                                onClick={startCamera}
-                                                                className="w-full bg-brand-600 text-white px-4 py-3 rounded-lg font-bold hover:bg-brand-700 transition-colors flex items-center justify-center gap-2"
-                                                            >
-                                                                <Camera size={18} />
-                                                                Start Camera
-                                                            </button>
-                                                        </div>
-                                                    )}
-
-                                                    <div className="relative mt-3">
-                                                        <div className="absolute inset-0 flex items-center">
-                                                            <div className="w-full border-t border-gray-300"></div>
-                                                        </div>
-                                                        <div className="relative flex justify-center text-sm">
-                                                            <span className="px-2 bg-gray-50 text-gray-500">OR</span>
-                                                        </div>
+                             {activeTab === 'face' && (
+                                     !isEditingFaceData ? (
+                                        <div className="space-y-8 animate-fade-in">
+                                            {/* Header HUD */}
+                                            <div className="bg-coffee p-8 rounded-[2rem] shadow-4xl border border-secondary/10 relative overflow-hidden">
+                                                <div className="absolute inset-0 bg-gradient-to-br from-secondary/5 to-transparent opacity-30"></div>
+                                                <div className="relative z-10 flex items-center justify-between">
+                                                    <div className="space-y-1">
+                                                        <h3 className="text-brand-cream font-black uppercase text-xl tracking-tighter">Identity Core</h3>
+                                                        <p className="text-secondary/60 text-[9px] font-black uppercase tracking-[0.3em]">Neural Pattern Secured • 5/5 Validated</p>
                                                     </div>
-
-                                                    <label className="cursor-pointer w-full mt-3 bg-slate-900 border border-slate-700 text-slate-300 px-4 py-3 rounded-lg font-bold hover:bg-slate-800 hover:text-white transition-all flex items-center justify-center gap-2 shadow-sm">
-                                                        <Upload size={18} />
-                                                        Upload Photo
-                                                        <input
-                                                            type="file"
-                                                            accept="image/*"
-                                                            onChange={(e) => handleFacePhotoUpload(e, currentAngle)}
-                                                            className="hidden"
-                                                        />
-                                                    </label>
+                                                    <button 
+                                                        onClick={() => setIsEditingFaceData(true)}
+                                                        className="bg-brand-cream text-coffee px-8 py-3 rounded-2xl font-black uppercase text-[9px] tracking-[0.3em] shadow-3xl hover:bg-white transition-all"
+                                                    >
+                                                        Re-Scan Biometrics
+                                                    </button>
                                                 </div>
                                             </div>
-                                        )}
 
-                                        {/* Captured Photos Grid */}
-                                        <div className="space-y-4">
-                                            <div className="flex items-center justify-between">
-                                                <h3 className="font-bold text-white">Captured Photos ({facePhotos.length}/5)</h3>
-                                                {!isEditingFaceData && (
-                                                    <button
-                                                        onClick={() => {
-                                                            setIsEditingFaceData(true);
-                                                            startCamera();
-                                                        }}
-                                                        className="text-sm bg-slate-800 text-slate-300 border border-slate-600 px-3 py-1.5 rounded-md font-medium hover:bg-slate-700 hover:text-white transition-all flex items-center gap-1 shadow-sm"
-                                                    >
-                                                        <Edit size={14} /> Edit Face Data
-                                                    </button>
-                                                )}
-                                            </div>
-                                            <div className="grid grid-cols-2 gap-3">
+                                            {/* Preview Grid */}
+                                            <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
                                                 {['Front', 'Left', 'Right', 'Up', 'Down'].map((angle) => {
                                                     const photo = facePhotos.find(p => p.angle.toLowerCase() === angle.toLowerCase());
-                                                    // If photo is in deleted list, treat it as non-existent (show empty slot)
-                                                    const isDeleted = photo && deletedPhotoIds.includes(photo.id);
-                                                    const photoUrl = (photo && !isDeleted) ? getProfilePictureUrl(photo.photo_url) : null;
-
-                                                    // DEBUG: Check why image isn't showing
-                                                    if (photo) {
-                                                        console.log(`[DEBUG] Rendering ${angle}:`, {
-                                                            id: photo.id,
-                                                            stored_url: photo.photo_url,
-                                                            final_url: photoUrl,
-                                                            api_url: API_URL
-                                                        });
-                                                    }
-
-                                                    const isSelected = currentAngle.toLowerCase() === angle.toLowerCase();
-
+                                                    const photoUrl = photo ? getProfilePictureUrl(photo.photo_url) : null;
                                                     return (
-                                                        <div
-                                                            key={angle}
-                                                            className={`relative border rounded-lg overflow-hidden cursor-pointer transition-all ${photoUrl
-                                                                ? 'border-green-500'
-                                                                : isSelected
-                                                                    ? 'border-brand-500 bg-slate-800/80 ring-1 ring-brand-500'
-                                                                    : 'border-slate-700 bg-slate-800/50 hover:bg-slate-800'
-                                                                }`}
-                                                            onClick={() => {
-                                                                if (isEditingFaceData) {
-                                                                    setCurrentAngle(angle);
-                                                                }
-                                                            }}
-                                                        >
-                                                            <div className="aspect-square relative">
-                                                                {photoUrl && photo ? (
-                                                                    <div className="w-full h-full relative group">
-                                                                        <img src={photoUrl} alt={angle} className="w-full h-full object-cover" />
-                                                                        <div className="absolute bottom-0 left-0 right-0 bg-green-500 text-white text-xs py-1 px-2 flex items-center gap-1">
-                                                                            <Check size={12} />
-                                                                            {angle}
-                                                                        </div>
-                                                                        {isEditingFaceData && (
-                                                                            <button
-                                                                                onClick={(e) => {
-                                                                                    e.stopPropagation();
-                                                                                    handleDeletePhoto(photo.id);
-                                                                                }}
-                                                                                className="absolute top-1 right-1 bg-red-600 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-sm hover:bg-red-700"
-                                                                                title="Delete Photo"
-                                                                            >
-                                                                                <X size={14} />
-                                                                            </button>
-                                                                        )}
-                                                                    </div>
+                                                        <div key={angle} className="space-y-3">
+                                                            <div className="aspect-[3/4] rounded-3xl overflow-hidden border-2 border-coffee/10 bg-white/50 relative group">
+                                                                {photoUrl ? (
+                                                                    <img src={photoUrl} alt={angle} className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500" />
                                                                 ) : (
-                                                                    <div className="w-full h-full flex flex-col items-center justify-center text-gray-400">
+                                                                    <div className="w-full h-full flex items-center justify-center text-coffee/20">
                                                                         <User size={32} />
-                                                                        <span className="text-xs mt-2 font-medium text-slate-500">{angle}</span>
                                                                     </div>
                                                                 )}
+                                                                <div className="absolute inset-x-0 bottom-0 bg-coffee/80 backdrop-blur-md py-3 text-center">
+                                                                    <span className="text-brand-cream text-[9px] font-black uppercase tracking-[0.2em]">{angle}</span>
+                                                                </div>
                                                             </div>
                                                         </div>
                                                     );
                                                 })}
                                             </div>
-                                            <div className="mt-4 flex justify-end">
-                                                {isEditingFaceData && (
-                                                    <div className="mt-4 flex justify-end gap-3">
-                                                        <button
-                                                            onClick={() => {
-                                                                setIsEditingFaceData(false);
-                                                                stopCamera();
-                                                            }}
-                                                            className="px-4 py-2 rounded-lg font-medium text-slate-300 bg-slate-800 hover:bg-slate-700 hover:text-white transition-colors border border-slate-700"
-                                                        >
-                                                            Cancel
-                                                        </button>
-                                                        <button
-                                                            disabled={facePhotos.length < 5 || isTraining}
-                                                            className={`px-6 py-2 rounded-lg font-bold text-white transition-colors flex items-center gap-2 ${facePhotos.length === 5 && !isTraining ? 'bg-brand-600 hover:bg-brand-700 shadow-md' : 'bg-gray-300 cursor-not-allowed'}`}
-                                                            onClick={handleSaveFaceData}
-                                                        >
-                                                            <Save size={18} />
-                                                            {isTraining ? 'Training Model...' : 'Save Face Data'}
-                                                        </button>
-                                                    </div>
-                                                )}
-                                            </div>
                                         </div>
-                                    </div>
-                                </div>
+                                    ) : (
+                                        <div className="animate-fade-in space-y-10">
+                                            <div className="flex items-center justify-between bg-white/50 backdrop-blur-xl p-8 rounded-[2.5rem] border border-coffee/5 shadow-2xl">
+                                                <div className="space-y-1">
+                                                    <h3 className="text-coffee font-black uppercase text-xl tracking-tighter">Biometric Resynchronization</h3>
+                                                    <p className="text-coffee/40 text-[9px] font-black uppercase tracking-[0.3em]">Initializing Smart Pose Detection...</p>
+                                                </div>
+                                                <button 
+                                                    onClick={() => setIsEditingFaceData(false)}
+                                                    className="bg-brand-cream text-coffee/40 hover:text-coffee px-8 py-3 rounded-2xl font-black uppercase text-[9px] tracking-[0.3em] transition-all"
+                                                >
+                                                    Cancel Sync
+                                                </button>
+                                            </div>
+
+                                            <FaceEnrollmentScanner 
+                                                requireAll={false}
+                                                initialCaptures={facePhotos.reduce((acc, p) => ({ ...acc, [p.angle.toLowerCase()]: getProfilePictureUrl(p.photo_url) }), {})}
+                                                onComplete={async (newCaptures) => {
+                                                    setNewFacePhotos(newCaptures);
+                                                    setIsTraining(true);
+                                                    try {
+                                                        const formData = new FormData();
+                                                        // Only send CHANGED photos (those that are newly captured in this session)
+                                                        // We can distinguish because new captures are base64, initial are URLs
+                                                        Object.entries(newCaptures).forEach(([angle, data]) => {
+                                                            if (data.startsWith('data:')) {
+                                                                const blob = dataURLtoBlob(data);
+                                                                formData.append('faceImages', blob, `${angle}.jpg`);
+                                                            }
+                                                        });
+                                                        
+                                                        // Ensure we have at least one new image
+                                                        if (formData.getAll('faceImages').length === 0) {
+                                                            showToast('No new captures to sync', 'info');
+                                                            setIsEditingFaceData(false);
+                                                            return;
+                                                        }
+
+                                                        formData.append('userId', user?.id?.toString() || ''); 
+
+                                                        const token = getToken();
+                                                        await axios.post(`${API_URL}/api/auth/update-face-data`, formData, {
+                                                            headers: { 'Content-Type': 'multipart/form-data', Authorization: `Bearer ${token}` }
+                                                        });
+
+                                                        // Refresh data
+                                                        const authAxios = createAuthAxios();
+                                                        const meRes = await authAxios.get(`${API_URL}/api/auth/me`);
+                                                        setUser(meRes.data);
+                                                        fetchFacePhotos(meRes.data.id);
+                                                        
+                                                        // Bump image version for cache busting
+                                                        localStorage.setItem('img_version', Date.now().toString());
+                                                        
+                                                        showToast('Neural Identity Synchronized', 'success');
+                                                        setIsEditingFaceData(false);
+                                                    } catch (err) {
+                                                        console.error("Sync failed:", err);
+                                                        showToast('Sync Failed', 'error');
+                                                    } finally {
+                                                        setIsTraining(false);
+                                                    }
+                                                }}
+                                            />
+                                        </div>
+                                    )
                             )}
 
                             {/* Security Tab */}

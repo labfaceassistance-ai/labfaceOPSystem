@@ -26,32 +26,32 @@ const templates = {
     },
     absence_warning: {
         student: {
-            title: '🚨 Attendance Warning',
+            title: '🚨 Attendance Warning — 2nd Absence',
             message: (className, equivalent, excusedCount) =>
-                `Critical: You have ${equivalent} absences in ${className}. ${excusedCount > 0 ? `(${excusedCount} excused)` : ''} One more = dropout warning!`,
+                `⚠️ You have ${equivalent} consecutive absences in ${className}. ${excusedCount > 0 ? `(${excusedCount} excused) ` : ''}One more absence will trigger a DROPOUT WARNING. Please inform your class professor as soon as possible.`,
             type: 'error',
             category: 'attendance'
         },
         professor: {
-            title: '🚨 Student At Risk',
+            title: '🚨 Student At Risk — 2nd Absence',
             message: (studentName, className, equivalent) =>
-                `${studentName} has ${equivalent} absences in ${className}. At risk of dropout warning.`,
+                `${studentName} now has ${equivalent} absences in ${className}. They are at risk of a dropout warning on the next absence. Please reach out to this student.`,
             type: 'warning',
             category: 'attendance'
         }
     },
     dropout_warning: {
         student: {
-            title: '🔴 DROPOUT WARNING',
+            title: '🔴 DROPOUT WARNING — 3rd Absence',
             message: (className, equivalent) =>
-                `URGENT: You have ${equivalent} absences in ${className}. Please contact your professor immediately.`,
+                `🚨 URGENT: You have ${equivalent} consecutive absences in ${className}. If you are not reported to your adviser, you may be DROPPED from this subject. Contact your professor AND adviser immediately.`,
             type: 'error',
             category: 'attendance'
         },
         professor: {
             title: '🔴 DROPOUT WARNING ISSUED',
             message: (studentName, className, equivalent) =>
-                `${studentName} has reached ${equivalent} absences in ${className}. Dropout warning issued.`,
+                `${studentName} has reached ${equivalent} absences in ${className}. A dropout warning has been issued. Please coordinate with the student's adviser as they may be dropped from the subject.`,
             type: 'error',
             category: 'attendance'
         }

@@ -198,8 +198,8 @@ export default function StudentDashboard() {
     };
 
     if (!user || loading) return (
-        <div className="min-h-screen bg-slate-950 flex items-center justify-center">
-            <div className="text-slate-400 animate-pulse">Loading dashboard...</div>
+        <div className="min-h-screen bg-primary flex items-center justify-center">
+            <div className="text-brand-cream/60 animate-pulse font-bold tracking-widest text-xs uppercase cursor-default">Loading dashboard...</div>
         </div>
     );
 
@@ -212,7 +212,7 @@ export default function StudentDashboard() {
     ];
 
     return (
-        <div className="min-h-screen bg-slate-950 font-sans">
+        <div className="min-h-screen bg-primary font-sans text-brand-cream">
             <SessionTimeout
                 sessionDuration={30 * 60 * 1000}
                 warningTime={5 * 60 * 1000}
@@ -256,7 +256,7 @@ export default function StudentDashboard() {
                 )}
 
                 {/* Tab Navigation */}
-                <div className="sticky top-20 z-40 bg-slate-950/90 backdrop-blur-md border-b border-slate-800 mb-8 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-3 transition-all duration-300">
+                <div className="sticky top-16 z-40 bg-primary/95 backdrop-blur-md border-b border-white/10 mb-8 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-3 transition-all duration-300">
                     <div className="flex gap-4 overflow-x-auto justify-start md:justify-center px-4 no-scrollbar">
                         {tabs.map((tab) => {
                             const Icon = tab.icon;
@@ -264,9 +264,9 @@ export default function StudentDashboard() {
                                 <button
                                     key={tab.id}
                                     onClick={() => handleTabChange(tab.id)}
-                                    className={`px-6 py-4 font-medium transition-colors border-b-2 flex items-center gap-2 whitespace-nowrap ${activeTab === tab.id
-                                        ? 'text-brand-500 border-brand-500'
-                                        : 'text-slate-400 border-transparent hover:text-white'
+                                    className={`px-6 py-4 font-bold transition-colors border-b-2 flex items-center gap-2 whitespace-nowrap uppercase tracking-widest text-[11px] ${activeTab === tab.id
+                                        ? 'text-yellow-500 border-yellow-500'
+                                        : 'text-brand-cream/50 border-transparent hover:text-brand-cream'
                                         }`}
                                 >
                                     <Icon className="w-4 h-4" />

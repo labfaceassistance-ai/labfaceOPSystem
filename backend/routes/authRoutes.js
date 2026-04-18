@@ -3,18 +3,46 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const pool = require('../config/db');
 const router = express.Router();
+const { authenticateToken, requireRole } = require('../middleware/auth');
 
-// Migration: Add last_verified_period_id to users table if not exists
+// Migration: Add last_verified_period_id + backfill for pre-migration registrants
 const ensureUserSchema = async () => {
     try {
+        // 1. Add column if not exists
         const [columns] = await pool.query("SHOW COLUMNS FROM users LIKE 'last_verified_period_id'");
         if (columns.length === 0) {
-            console.log('Migrating users table: Adding last_verified_period_id column...');
+            console.log('[Migration] Adding last_verified_period_id column to users...');
             await pool.query("ALTER TABLE users ADD COLUMN last_verified_period_id INT DEFAULT NULL");
-            console.log('Migration successful: last_verified_period_id added.');
+            console.log('[Migration] last_verified_period_id column added.');
+        }
+
+        // 2. Backfill: Set last_verified_period_id for approved students who have a COR
+        //    but a NULL period ID (registered before this column existed).
+        //    Uses the current active academic period as the period they belong to.
+        const [periods] = await pool.query(
+            "SELECT id FROM academic_periods WHERE effective_date <= CONVERT_TZ(NOW(), 'UTC', 'Asia/Manila') ORDER BY effective_date DESC LIMIT 1"
+        );
+
+        if (periods.length > 0) {
+            const currentPeriodId = periods[0].id;
+            const [result] = await pool.query(
+                `UPDATE users
+                 SET last_verified_period_id = ?
+                 WHERE last_verified_period_id IS NULL
+                   AND certificate_of_registration IS NOT NULL
+                   AND role LIKE '%student%'
+                   AND approval_status = 'approved'`,
+                [currentPeriodId]
+            );
+
+            if (result.affectedRows > 0) {
+                console.log(`[Migration] Backfilled last_verified_period_id for ${result.affectedRows} existing student(s) → period ID ${currentPeriodId}`);
+            }
+        } else {
+            console.warn('[Migration] No active academic period found — skipping last_verified_period_id backfill.');
         }
     } catch (err) {
-        console.error('Migration error (last_verified_period_id):', err);
+        console.error('[Migration] ensureUserSchema error:', err);
     }
 };
 ensureUserSchema();
@@ -78,6 +106,8 @@ router.post('/register/student', async (req, res) => {
 
     let connection;
     try {
+        console.log(`[Register Student] Starting registration for studentId=${studentId}, email=${email}`);
+
         // Block fraud Student IDs
         if (studentId.startsWith('0000-00000')) {
             return res.status(400).json({
@@ -90,9 +120,11 @@ router.post('/register/student', async (req, res) => {
 
         // Check if user exists by user_id
         const [existingById] = await connection.query('SELECT * FROM users WHERE user_id = ?', [studentId]);
+        console.log(`[Register Student] existingById: ${existingById.length} users found`);
 
         // Check if email is already used by a DIFFERENT user
         const [existingByEmail] = await connection.query('SELECT * FROM users WHERE email = ? AND user_id != ?', [email, studentId]);
+        console.log(`[Register Student] existingByEmail: ${existingByEmail.length} users found`);
 
         let targetUser = null;
 
@@ -122,21 +154,35 @@ router.post('/register/student', async (req, res) => {
 
         if (certificateOfRegistration) {
             const verificationService = require('../services/verificationService');
+            
+            // Generate unique request ID for debug tracing
+            const requestId = `reg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+            console.log(`[Register Student] Starting COR verification with requestId: ${requestId}`);
 
             // Verify COR using OCR
             const corVerification = await verificationService.verifyStudentDocuments(
                 { studentId, firstName, middleName, lastName, course, yearLevel },
-                certificateOfRegistration
+                certificateOfRegistration,
+                requestId
             );
 
             if (!corVerification.valid) {
+                console.log(`[Register Student] COR verification FAILED for ${studentId} (requestId: ${requestId}): ${corVerification.reason}`);
+                console.log(`[Register Student] Confidence: ${corVerification.confidence}%, Mismatches:`, JSON.stringify(corVerification.mismatches, null, 2));
                 await connection.rollback();
                 return res.status(400).json({
-                    message: 'Certificate of Registration verification failed',
+                    message: `COR verification failed - confidence too low (${corVerification.confidence}%)`,
                     reason: corVerification.reason,
-                    details: corVerification.details
+                    confidence: corVerification.confidence,
+                    mismatches: corVerification.mismatches,
+                    suggestions: corVerification.suggestions,
+                    details: corVerification.details,
+                    requestId: requestId  // Include for log correlation
                 });
             }
+
+            // Log successful COR verification with confidence
+            console.log(`[Register Student] COR verification PASSED for ${studentId} (requestId: ${requestId}) with ${corVerification.confidence}% confidence`);
 
             // Extract section from COR if not provided
             if (!section && corVerification.details.extractedSection) {
@@ -146,6 +192,18 @@ router.post('/register/student', async (req, res) => {
             // Save COR image
             try {
                 corPath = await saveBase64Image(certificateOfRegistration, studentId, 'cor');
+                
+                // Set Academic Period: Prioritize period found on COR, fallback to current system period
+                if (corVerification.corPeriodId) {
+                    req.currentPeriodId = corVerification.corPeriodId;
+                    console.log(`[Register Student] Using COR-resolved period ID: ${req.currentPeriodId}`);
+                } else {
+                    const [periods] = await connection.query(`SELECT id FROM academic_periods WHERE effective_date <= CONVERT_TZ(NOW(), 'UTC', 'Asia/Manila') ORDER BY effective_date DESC LIMIT 1`);
+                    if (periods.length > 0) {
+                        req.currentPeriodId = periods[0].id;
+                    }
+                    console.log(`[Register Student] Using system current period ID: ${req.currentPeriodId}`);
+                }
             } catch (error) {
                 console.error('Error saving COR:', error);
                 await connection.rollback();
@@ -231,10 +289,14 @@ router.post('/register/student', async (req, res) => {
 
             // Update existing user with student password and role
             await connection.query(
-                'UPDATE users SET student_password_hash = ?, role = ?, certificate_of_registration = ?, approval_status = ? WHERE id = ?',
-                [hashedPassword, newRoles, corPath || existingUser.certificate_of_registration, 'approved', userId] // Auto-approve if merging? Or keep existing status? Let's say approved for Student part if Admin?
-                // Actually, strict 'approved' might be risky. But let's assume if they have account they are trusted OR they need approval.
-                // Reverting to 'approved' based on original code for new students.
+                `UPDATE users SET 
+                    student_password_hash = ?, 
+                    role = ?, 
+                    certificate_of_registration = ?, 
+                    approval_status = ?,
+                    last_verified_period_id = COALESCE(?, last_verified_period_id)
+                WHERE id = ?`,
+                [hashedPassword, newRoles, corPath || existingUser.certificate_of_registration, 'approved', req.currentPeriodId || null, userId]
             );
 
             // Update profile picture if provided
@@ -244,8 +306,10 @@ router.post('/register/student', async (req, res) => {
         } else {
             // New user - create account
             const [result] = await connection.query(
-                'INSERT INTO users (user_id, first_name, middle_name, last_name, email, password_hash, student_password_hash, role, profile_picture, certificate_of_registration, approval_status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-                [studentId, firstName, middleName, lastName, email, hashedPassword, hashedPassword, 'student', profilePicPath, corPath, 'approved']
+                `INSERT INTO users 
+                (user_id, first_name, middle_name, last_name, email, password_hash, student_password_hash, role, profile_picture, certificate_of_registration, approval_status, last_verified_period_id) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                [studentId, firstName, middleName, lastName, email, hashedPassword, hashedPassword, 'student', profilePicPath, corPath, 'approved', req.currentPeriodId || null]
             );
             userId = result.insertId;
         }
@@ -336,8 +400,8 @@ router.post('/register/student', async (req, res) => {
         // Use fuzzy matching to handle dash/formatting differences and 0/NULL placeholders
         await connection.query(
             `UPDATE enrollments SET student_id = ? 
-             WHERE REPLACE(REPLACE(student_number, '-', ''), ' ', '') = REPLACE(REPLACE(?, '-', ''), ' ', '') 
-             AND (student_id IS NULL OR student_id = 0)`,
+             WHERE REPLACE(REPLACE(REPLACE(REPLACE(TRIM(student_number), '-', ''), ' ', ''), CHAR(13), ''), CHAR(10), '') = 
+                   REPLACE(REPLACE(REPLACE(REPLACE(TRIM(?), '-', ''), ' ', ''), CHAR(13), ''), CHAR(10), '')`,
             [userId, studentId]
         );
 
@@ -398,10 +462,10 @@ router.post('/register/student', async (req, res) => {
                         );
                     }
 
-                    // 4. Update Main User Embedding (Prefer Center, fallback to others)
-                    if (angle === 'center' && embeddingJson) {
+                    // 4. Update Main User Embedding (Prefer Front, fallback to others)
+                    if (angle === 'front' && embeddingJson) {
                         await connection.query(
-                            'UPDATE users SET facenet_embedding = ? WHERE id = ?',
+                            'UPDATE users SET face_embeddings = ? WHERE id = ?',
                             [embeddingJson, userId]
                         );
                     }
@@ -438,6 +502,33 @@ router.post('/register/student', async (req, res) => {
                 'INSERT INTO notifications (user_id, title, message) VALUES (?, ?, ?)',
                 [userId, 'Welcome to LabFace', 'Your student account has been successfully created. Welcome to the platform!']
             );
+        }
+
+        // CATCH-UP: Check for existing enrollments for this studentId
+        try {
+            const [enrollments] = await connection.query(`
+                SELECT e.id as enrollment_id, c.subject_name, u.first_name, u.last_name
+                FROM enrollments e
+                JOIN classes c ON e.class_id = c.id
+                JOIN users u ON c.professor_id = u.id
+                WHERE REPLACE(REPLACE(REPLACE(REPLACE(TRIM(e.student_number), '-', ''), ' ', ''), CHAR(13), ''), CHAR(10), '') = 
+                      REPLACE(REPLACE(REPLACE(REPLACE(TRIM(?), '-', ''), ' ', ''), CHAR(13), ''), CHAR(10), '')
+            `, [studentId]);
+
+            for (const env of enrollments) {
+                // Link the enrollment if not already linked
+                await connection.query('UPDATE enrollments SET student_id = ? WHERE id = ?', [userId, env.enrollment_id]);
+                
+                // Send "Late" notification
+                const profName = `Prof. ${env.first_name} ${env.last_name}`;
+                await connection.query(
+                    'INSERT INTO notifications (user_id, title, message, type, category) VALUES (?, ?, ?, ?, ?)',
+                    [userId, 'Class Enrollment Found', `By the way, you were already enrolled in ${env.subject_name} by ${profName}. Check your class list!`, 'success', 'class']
+                );
+            }
+        } catch (catchUpErr) {
+            console.error('Registration catch-up notification error:', catchUpErr);
+            // Non-critical: don't rollback main transaction
         }
 
         // Record Biometric and Privacy Consents
@@ -498,8 +589,8 @@ router.post('/register/student', async (req, res) => {
     }
 });
 
-// Register Professor
-router.post('/register/professor', async (req, res) => {
+// Register Professor (Restricted to Admin)
+router.post('/register/professor', authenticateToken, requireRole(['admin']), async (req, res) => {
     let { professorId, firstName, middleName, lastName, email, password, idPhoto, consentGiven, consentVersion, consentText } = req.body;
 
     // Sanitize Middle Name
@@ -706,7 +797,7 @@ router.post('/login', async (req, res) => {
     try {
         // Join with students and courses tables for student data
         const [users] = await pool.query(`
-            SELECT 
+            SELECT
                 u.*,
                 s.year_level,
                 s.section,

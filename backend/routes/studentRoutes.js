@@ -2,7 +2,7 @@ const express = require('express');
 const pool = require('../config/db');
 const { isHoliday } = require('../config/holidays');
 const router = express.Router();
-const { uploadBase64ToMinio, deleteFromMinio } = require('../utils/minioHelper');
+const { uploadBase64ToMinio, deleteFromMinio, standardizeImageUrl, SNAPSHOT_BUCKET } = require('../utils/minioHelper');
 const verificationService = require('../services/verificationService');
 
 // Helper to save base64 image (duplicated from authRoutes for safety)
@@ -26,6 +26,107 @@ pool.query(`
         FOREIGN KEY (student_id) REFERENCES users(id) ON DELETE CASCADE
     )
 `).catch(err => console.error('Error creating class_students table:', err));
+
+// ===================================================
+// CONFIRM ENROLLMENT (Lightweight — no COR required if already current)
+// ===================================================
+// Called by the Academic Update Banner "Update Now" button.
+// If the student is already on the current period → just acknowledge.
+// If they're on an old period → return requiresCOR: true so frontend redirects.
+const { authenticateToken } = require('../middleware/auth');
+
+router.post('/confirm-enrollment', authenticateToken, async (req, res) => {
+    try {
+        const userId = req.user.id;
+
+        // 1. Get current active academic period
+        const [periods] = await pool.query(
+            "SELECT id, school_year, semester FROM academic_periods WHERE effective_date <= CONVERT_TZ(NOW(), 'UTC', 'Asia/Manila') ORDER BY effective_date DESC LIMIT 1"
+        );
+        if (periods.length === 0) {
+            return res.status(400).json({ message: 'No active academic period found. Contact admin.' });
+        }
+        const currentPeriodId = periods[0].id;
+
+        // 2. Get student's current verified period
+        const [users] = await pool.query(
+            'SELECT last_verified_period_id FROM users WHERE id = ?', [userId]
+        );
+        if (users.length === 0) {
+            return res.status(404).json({ message: 'User not found.' });
+        }
+
+        const studentPeriodId = users[0].last_verified_period_id;
+
+        if (Number(studentPeriodId) === Number(currentPeriodId)) {
+            // Already fully up to date — just touch updated_at to confirm activity
+            await pool.query('UPDATE users SET updated_at = NOW() WHERE id = ?', [userId]);
+            return res.json({
+                message: 'Enrollment confirmed. You are up to date for this semester.',
+                alreadyCurrent: true
+            });
+        }
+
+        // --- NEW: AUTO-RE-VERIFY ATTEMPT ---
+        console.log(`[Auto-Confirm] User ${userId} is on old period ${studentPeriodId}. Attempting background re-verify...`);
+        
+        const [userData] = await pool.query(
+            'SELECT user_id, first_name, middle_name, last_name, certificate_of_registration FROM users WHERE id = ?', 
+            [userId]
+        );
+        const user = userData[0];
+
+        if (user && user.certificate_of_registration) {
+            try {
+                const corBase64 = await getObjectAsBase64(user.certificate_of_registration);
+                if (corBase64) {
+                    const [studentInfo] = await pool.query(
+                        'SELECT c.name as course_name, s.year_level FROM students s JOIN courses c ON s.course_id = c.id WHERE s.user_id = ?',
+                        [userId]
+                    );
+
+                    const verificationResult = await verificationService.verifyStudentDocuments({
+                        userId: userId,
+                        studentId: user.user_id,
+                        firstName: user.first_name,
+                        middleName: user.middle_name,
+                        lastName: user.last_name,
+                        course: studentInfo[0]?.course_name || '',
+                        yearLevel: studentInfo[0]?.year_level || ''
+                    }, corBase64, `confirm_${Date.now()}`);
+
+                    if (verificationResult.valid && verificationResult.corPeriodId && Number(verificationResult.corPeriodId) === Number(currentPeriodId)) {
+                        await pool.query(
+                            'UPDATE users SET last_verified_period_id = ?, updated_at = NOW() WHERE id = ?',
+                            [verificationResult.corPeriodId, userId]
+                        );
+                        console.log(`[Auto-Confirm] SUCCESS: User ${userId} auto-updated to ${verificationResult.corPeriodId}`);
+                        return res.json({
+                            message: 'Academic status automatically updated from your records!',
+                            alreadyCurrent: true,
+                            autoFixed: true
+                        });
+                    }
+                }
+            } catch (autoErr) {
+                console.error('[Auto-Confirm] Background check failed:', autoErr);
+            }
+        }
+        // --- END AUTO-RE-VERIFY ATTEMPT ---
+
+        // If auto-verify failed or no COR, return 202 to signal manual update needed
+        return res.status(202).json({
+            message: 'COR re-verification required for the current semester.',
+            alreadyCurrent: false,
+            requiresCOR: true,
+            currentPeriod: `${periods[0].school_year} - ${periods[0].semester}`
+        });
+
+    } catch (error) {
+        console.error('Confirm Enrollment Error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
 
 // Update Academic Data (COR & Course/Year)
 router.post('/update-academic-data', async (req, res) => {
@@ -104,13 +205,14 @@ router.post('/update-academic-data', async (req, res) => {
             await connection.beginTransaction();
 
             // Update Users Table
+            const finalPeriodId = verificationResult.corPeriodId || activePeriodId;
             await connection.query(
                 `UPDATE users SET 
                     certificate_of_registration = ?, 
                     last_verified_period_id = ?,
                     updated_at = NOW()
                 WHERE id = ?`,
-                [corPath, activePeriodId, user.id]
+                [corPath, finalPeriodId, user.id]
             );
 
             // Update Students Table
@@ -143,6 +245,83 @@ router.post('/update-academic-data', async (req, res) => {
     }
 });
 
+/**
+ * Background Re-verification of stored COR
+ * Automatically attempts to update academic period using existing image
+ */
+const { getObjectAsBase64 } = require('../utils/minioHelper');
+router.post('/re-verify-cor', authenticateToken, async (req, res) => {
+    const studentId = req.user.id;
+    const requestId = `auto_${Date.now()}`;
+
+    try {
+        console.log(`[Auto-Verify] Starting background re-verification for user ${studentId}`);
+
+        // 1. Get student and their current COR path
+        const [users] = await pool.query(
+            'SELECT user_id, first_name, middle_name, last_name, certificate_of_registration FROM users WHERE id = ?', 
+            [studentId]
+        );
+        if (users.length === 0) return res.status(404).json({ message: 'User not found' });
+        const user = users[0];
+
+        if (!user.certificate_of_registration) {
+            return res.status(400).json({ message: 'No COR on file for re-verification' });
+        }
+
+        // 2. Conver MinIO path to Base64
+        const corBase64 = await getObjectAsBase64(user.certificate_of_registration);
+        if (!corBase64) {
+            return res.status(500).json({ message: 'Failed to retrieve stored COR for processing' });
+        }
+
+        // 3. Run verification with current student data (extract latest course/year from students table)
+        const [studentInfo] = await pool.query(
+            'SELECT c.name as course_name, s.year_level FROM students s JOIN courses c ON s.course_id = c.id WHERE s.user_id = ?',
+            [studentId]
+        );
+        
+        const verificationResult = await verificationService.verifyStudentDocuments({
+            userId: studentId,
+            studentId: user.user_id,
+            firstName: user.first_name,
+            middleName: user.middle_name,
+            lastName: user.last_name,
+            course: studentInfo[0]?.course_name || '',
+            yearLevel: studentInfo[0]?.year_level || ''
+        }, corBase64, requestId);
+
+        if (!verificationResult.valid) {
+            console.log(`[Auto-Verify] Automatic verification failed for ${studentId}: ${verificationResult.reason}`);
+            return res.status(202).json({ 
+                message: 'Automatic verification could not confirm current status.',
+                reason: verificationResult.reason 
+            });
+        }
+
+        if (!verificationResult.corPeriodId) {
+            return res.status(202).json({ message: 'Could not resolve academic period from document.' });
+        }
+
+        // 4. Update the user's last_verified_period_id
+        await pool.query(
+            'UPDATE users SET last_verified_period_id = ?, updated_at = NOW() WHERE id = ?',
+            [verificationResult.corPeriodId, studentId]
+        );
+
+        console.log(`[Auto-Verify] SUCCESS: User ${studentId} updated to period ${verificationResult.corPeriodId}`);
+        
+        res.json({
+            message: 'Academic status automatically updated.',
+            verifiedPeriodId: verificationResult.corPeriodId
+        });
+
+    } catch (error) {
+        console.error('[Auto-Verify] Critical Error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // Get Enrolled Classes for Schedule
 router.get('/classes/:id', async (req, res) => {
     try {
@@ -162,7 +341,7 @@ router.get('/classes/:id', async (req, res) => {
             JOIN enrollments e ON c.id = e.class_id
             JOIN users u_student ON u_student.id = ?
             LEFT JOIN users u ON c.professor_id = u.id
-            WHERE (COALESCE(e.student_id, 0) = u_student.id OR (COALESCE(e.student_id, 0) = 0 AND REPLACE(REPLACE(u_student.user_id, '-', ''), ' ', '') = REPLACE(REPLACE(e.student_number, '-', ''), ' ', '')))
+            WHERE (e.student_id = u_student.id OR REPLACE(REPLACE(REPLACE(REPLACE(TRIM(u_student.user_id), '-', ''), ' ', ''), CHAR(13), ''), CHAR(10), '') = REPLACE(REPLACE(REPLACE(REPLACE(TRIM(e.student_number), '-', ''), ' ', ''), CHAR(13), ''), CHAR(10), ''))
         `;
 
         if (!includeArchived) {
@@ -189,13 +368,15 @@ router.get('/dashboard/:id', async (req, res) => {
         const user = users[0];
         const studentStringId = user.user_id;
 
-        // 2. Get Enrolled Classes with Professor Names
+        // 2. Get Enrolled Active Classes with Professor Names
+        //    Exclude archived classes — they must not appear in Next Class or attendance stats
         const [classes] = await pool.query(`
             SELECT c.*, u.first_name, u.last_name
             FROM classes c
             JOIN enrollments e ON c.id = e.class_id
             LEFT JOIN users u ON c.professor_id = u.id
-            WHERE (COALESCE(e.student_id, 0) = ? OR (COALESCE(e.student_id, 0) = 0 AND REPLACE(REPLACE(?, '-', ''), ' ', '') = REPLACE(REPLACE(e.student_number, '-', ''), ' ', '')))
+            WHERE (e.student_id = ? OR REPLACE(REPLACE(REPLACE(REPLACE(TRIM(?), '-', ''), ' ', ''), CHAR(13), ''), CHAR(10), '') = REPLACE(REPLACE(REPLACE(REPLACE(TRIM(e.student_number), '-', ''), ' ', ''), CHAR(13), ''), CHAR(10), ''))
+            AND (c.is_archived = 0 OR c.is_archived IS NULL)
         `, [studentId, studentStringId]);
 
 
@@ -406,7 +587,7 @@ router.get('/dashboard/:id', async (req, res) => {
                 AND s.date <= DATE(CONVERT_TZ(NOW(), '+00:00', '+08:00'))
                 AND s.monitoring_started_at IS NOT NULL
             LEFT JOIN attendance_logs al ON s.id = al.session_id AND al.student_id = ?
-            WHERE (COALESCE(e.student_id, 0) = ? OR (COALESCE(e.student_id, 0) = 0 AND REPLACE(REPLACE(?, '-', ''), ' ', '') = REPLACE(REPLACE(e.student_number, '-', ''), ' ', '')))
+            WHERE (e.student_id = ? OR REPLACE(REPLACE(REPLACE(REPLACE(TRIM(?), '-', ''), ' ', ''), CHAR(13), ''), CHAR(10), '') = REPLACE(REPLACE(REPLACE(REPLACE(TRIM(e.student_number), '-', ''), ' ', ''), CHAR(13), ''), CHAR(10), ''))
             AND (c.is_archived = 0 OR c.is_archived IS NULL)
             GROUP BY c.id
         `, [studentId, studentId, studentStringId]);
@@ -472,7 +653,7 @@ router.get('/dashboard/:id', async (req, res) => {
             FROM sessions s
             JOIN enrollments e ON s.class_id = e.class_id
             JOIN classes c ON s.class_id = c.id
-            WHERE (COALESCE(e.student_id, 0) = ? OR (COALESCE(e.student_id, 0) = 0 AND REPLACE(REPLACE(?, '-', ''), ' ', '') = REPLACE(REPLACE(e.student_number, '-', ''), ' ', '')))
+            WHERE (e.student_id = ? OR REPLACE(REPLACE(REPLACE(REPLACE(TRIM(?), '-', ''), ' ', ''), CHAR(13), ''), CHAR(10), '') = REPLACE(REPLACE(REPLACE(REPLACE(TRIM(e.student_number), '-', ''), ' ', ''), CHAR(13), ''), CHAR(10), ''))
             AND s.date <= DATE(CONVERT_TZ(NOW(), '+00:00', '+08:00'))
             AND s.monitoring_started_at IS NOT NULL
             AND (c.is_archived = 0 OR c.is_archived IS NULL)
@@ -529,11 +710,11 @@ router.get('/attendance-summary/:id', async (req, res) => {
     try {
         const studentId = req.params.id;
 
-        // Get user's string ID for attendance logs
-        const [users] = await pool.query('SELECT id FROM users WHERE id = ?', [studentId]);
-        if (users.length === 0) return res.status(404).json({ message: 'Student not found' });
+        // Get user's string ID first — needed in the class stats query below
+        const [u_info] = await pool.query('SELECT user_id FROM users WHERE id = ?', [studentId]);
+        if (u_info.length === 0) return res.status(404).json({ message: 'Student not found' });
+        const studentStringId = u_info[0]?.user_id;
 
-        // Get all attendance logs
         // Get Per-Class Breakdown (Same logic as dashboard to ensure consistency)
         const [classStats] = await pool.query(`
             SELECT 
@@ -548,14 +729,11 @@ router.get('/attendance-summary/:id', async (req, res) => {
                 AND s.date <= DATE(CONVERT_TZ(NOW(), '+00:00', '+08:00'))
                 AND s.monitoring_started_at IS NOT NULL
             LEFT JOIN attendance_logs al ON s.id = al.session_id AND al.student_id = ?
-            WHERE (e.student_id = ? OR (e.student_id IS NULL AND REPLACE(REPLACE(?, '-', ''), ' ', '') = REPLACE(REPLACE(e.student_number, '-', ''), ' ', '')))
+            WHERE (e.student_id = ? OR REPLACE(REPLACE(REPLACE(REPLACE(TRIM(?), '-', ''), ' ', ''), CHAR(13), ''), CHAR(10), '') = REPLACE(REPLACE(REPLACE(REPLACE(TRIM(e.student_number), '-', ''), ' ', ''), CHAR(13), ''), CHAR(10), ''))
             AND (c.is_archived = 0 OR c.is_archived IS NULL)
         `, [studentId, studentId, studentStringId]);
 
         const stats = classStats[0] || {};
-        // Fetch studentStringId fallback
-        const [u_info] = await pool.query('SELECT user_id FROM users WHERE id = ?', [studentId]);
-        const studentStringId = u_info[0]?.user_id;
 
         const total = parseInt(stats.total_sessions) || 0;
         const present = parseInt(stats.present_count) || 0;
@@ -586,6 +764,7 @@ router.get('/attendance-summary/:id', async (req, res) => {
     }
 });
 
+
 // Get Single Class Details & Attendance for Student
 router.get('/classes/:classId/details', async (req, res) => {
     try {
@@ -596,15 +775,15 @@ router.get('/classes/:classId/details', async (req, res) => {
             return res.status(400).json({ error: "Student ID required" });
         }
 
-        // 1. Get Class Details
+        // 1. Get Class Details — no archived filter; students can always view history
         const [classRows] = await pool.query(`
             SELECT c.*, u.first_name, u.last_name
             FROM classes c
             LEFT JOIN users u ON c.professor_id = u.id
-            WHERE c.id = ? AND (c.is_archived = 0 OR c.is_archived IS NULL)
+            WHERE c.id = ?
         `, [classId]);
 
-        if (classRows.length === 0) return res.status(404).json({ error: "Class not found or has been archived" });
+        if (classRows.length === 0) return res.status(404).json({ error: "Class not found" });
         const classInfo = classRows[0];
         const professorName = classInfo.first_name && classInfo.last_name
             ? `Prof. ${classInfo.last_name}`
@@ -623,7 +802,7 @@ router.get('/classes/:classId/details', async (req, res) => {
             CROSS JOIN (SELECT id, user_id FROM users WHERE id = ?) u_student
             LEFT JOIN attendance_logs al ON s.id = al.session_id AND al.student_id = u_student.id
             WHERE s.class_id = ?
-            AND (e.student_id = u_student.id OR (e.student_id IS NULL AND REPLACE(REPLACE(u_student.user_id, '-', ''), ' ', '') = REPLACE(REPLACE(e.student_number, '-', ''), ' ', '')))
+            AND (e.student_id = u_student.id OR REPLACE(REPLACE(REPLACE(REPLACE(TRIM(u_student.user_id), '-', ''), ' ', ''), CHAR(13), ''), CHAR(10), '') = REPLACE(REPLACE(REPLACE(REPLACE(TRIM(e.student_number), '-', ''), ' ', ''), CHAR(13), ''), CHAR(10), ''))
             AND s.date <= DATE(CONVERT_TZ(NOW(), '+00:00', '+08:00'))
             AND s.monitoring_started_at IS NOT NULL
         `, [studentId, classId]);
@@ -657,7 +836,7 @@ router.get('/classes/:classId/details', async (req, res) => {
             CROSS JOIN (SELECT id, user_id FROM users WHERE id = ?) u_student
             LEFT JOIN attendance_logs al ON s.id = al.session_id AND al.student_id = u_student.id
             WHERE s.class_id = ?
-            AND (e.student_id = u_student.id OR (e.student_id IS NULL AND REPLACE(REPLACE(u_student.user_id, '-', ''), ' ', '') = REPLACE(REPLACE(e.student_number, '-', ''), ' ', '')))
+            AND (e.student_id = u_student.id OR REPLACE(REPLACE(REPLACE(REPLACE(TRIM(u_student.user_id), '-', ''), ' ', ''), CHAR(13), ''), CHAR(10), '') = REPLACE(REPLACE(REPLACE(REPLACE(TRIM(e.student_number), '-', ''), ' ', ''), CHAR(13), ''), CHAR(10), ''))
             AND s.date <= DATE(CONVERT_TZ(NOW(), '+00:00', '+08:00'))
             AND s.monitoring_started_at IS NOT NULL
             ORDER BY s.date DESC, s.start_time DESC
@@ -686,7 +865,7 @@ router.get('/classes/:classId/details', async (req, res) => {
                 weekday: new Date(log.date).toLocaleDateString('en-US', { weekday: 'short' }),
                 status,
                 timeIn,
-                snapshotUrl: log.snapshot_url,
+                snapshotUrl: standardizeImageUrl(log.snapshot_url, SNAPSHOT_BUCKET),
                 recognitionMethod: log.recognition_method,
                 startTime: log.start_time,
                 type: log.type
@@ -699,7 +878,8 @@ router.get('/classes/:classId/details', async (req, res) => {
                 subjectName: classInfo.subject_name,
                 subjectCode: classInfo.subject_code,
                 professor: professorName,
-                schedule: classInfo.schedule_json
+                schedule: classInfo.schedule_json,
+                isArchived: !!classInfo.is_archived  // Let frontend show archived badge
             },
             stats: {
                 rate,
@@ -739,7 +919,7 @@ router.get('/recent-activity/:id', async (req, res) => {
             JOIN enrollments e ON s.class_id = e.class_id
             JOIN classes c ON s.class_id = c.id
             CROSS JOIN (SELECT user_id FROM users WHERE id = ?) u_info
-            WHERE (COALESCE(e.student_id, 0) = ? OR (COALESCE(e.student_id, 0) = 0 AND REPLACE(REPLACE(u_info.user_id, '-', ''), ' ', '') = REPLACE(REPLACE(e.student_number, '-', ''), ' ', '')))
+            WHERE (e.student_id = ? OR REPLACE(REPLACE(REPLACE(REPLACE(TRIM(u_info.user_id), '-', ''), ' ', ''), CHAR(13), ''), CHAR(10), '') = REPLACE(REPLACE(REPLACE(REPLACE(TRIM(e.student_number), '-', ''), ' ', ''), CHAR(13), ''), CHAR(10), ''))
                 AND s.date <= DATE(CONVERT_TZ(NOW(), '+00:00', '+08:00'))
                 AND (c.is_archived = 0 OR c.is_archived IS NULL)
             ORDER BY s.date DESC, s.start_time DESC

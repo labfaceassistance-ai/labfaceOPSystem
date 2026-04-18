@@ -1,0 +1,18 @@
+{
+  "include": [
+    "ai-service/**/*.py"
+  ],
+  "exclude": [
+    "ai-service/packages/**",
+    "ai-service/.cache/**",
+    "ai-service/models/**"
+  ],
+  "reportMissingImports": "none",
+  "reportMissingModuleSource": "none",
+  "pythonVersion": "3.13",
+  "venvPath": "C:\\Users\\John Lloyd\\Capstone\\LabFace\\ai-service",
+  "venv": ".venv",
+  "extraPaths": [
+    "./ai-service"
+  ]
+}

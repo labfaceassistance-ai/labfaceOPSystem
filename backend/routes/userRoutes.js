@@ -79,8 +79,8 @@ router.get('/profile/:id', async (req, res) => {
             yearLevel: user.year_level,
             section: user.section,
             profilePicture: standardizeImageUrl(user.profile_picture),
-            studentId: role === 'student' ? user.user_id : undefined,
-            professorId: role === 'professor' ? user.user_id : undefined,
+            studentId: role.includes('student') ? user.user_id : undefined,
+            professorId: role.includes('professor') ? user.user_id : undefined,
             schoolId: user.user_id
         });
     } catch (err) {
@@ -103,8 +103,10 @@ router.put('/profile/:id', async (req, res) => {
         // Update students table if course, yearLevel, or section provided
         if (course || yearLevel || section) {
             // Check if user is a student
-            const [users] = await pool.query('SELECT role FROM users WHERE id = ?', [req.params.id]);
-            if (users.length > 0 && users[0].role === 'student') {
+            // Check if user is a student (Multi-role support)
+            const [roleCheck] = await pool.query('SELECT role FROM users WHERE id = ?', [req.params.id]);
+            const role = roleCheck.length > 0 ? (roleCheck[0].role || "").toLowerCase() : '';
+            if (role.includes('student')) {
                 // Get course_id if course is provided
                 let courseId = null;
                 if (course) {
@@ -398,9 +400,9 @@ router.post('/profile/:id/upload-face-photo', memoryUpload.single('facePhoto'), 
         }
 
         // 3. Update Main User Embedding (Legacy/Fallback) if Front/Center
-        if ((normalizedAngle === 'center' || normalizedAngle === 'front') && embeddingJson) {
+        if ((normalizedAngle === 'front') && embeddingJson) {
             await pool.query(
-                'UPDATE users SET facenet_embedding = ? WHERE id = ?',
+                'UPDATE users SET face_embeddings = ? WHERE id = ?',
                 [embeddingJson, req.params.id]
             );
         }
@@ -419,7 +421,7 @@ router.post('/profile/:id/upload-face-photo', memoryUpload.single('facePhoto'), 
 router.post('/profile/:id/train-model', async (req, res) => {
     try {
         const userId = req.params.id;
-        console.log(`Starting full model training for user ${userId}...`);
+        console.log(`Starting model training/verification for user ${userId}...`);
 
         // 1. Get ALL active photos for the user
         const [photos] = await pool.query(
@@ -431,87 +433,39 @@ router.post('/profile/:id/train-model', async (req, res) => {
             return res.status(400).json({ message: 'No face photos available to train.' });
         }
 
-        const aiServiceUrl = process.env.AI_SERVICE_URL || 'http://ai-service:8000';
         let successCount = 0;
         let failCount = 0;
         let errors = [];
 
-        // 2. Process each photo
+        // 2. Verify embeddings exist for photos (they are generated during upload-face-photo now)
         for (const photo of photos) {
-            try {
-                const photoPath = path.join(__dirname, '..', photo.photo_url); // photo_url has /uploads/...
-
-                // Path fix for Windows/Linux consistency if needed
-                let finalPath = photoPath;
-                if (!fs.existsSync(finalPath)) {
-                    // Try removing leading slash if relative check fails
-                    finalPath = path.join(__dirname, '..', photo.photo_url.substring(1));
-                }
-
-                if (!fs.existsSync(finalPath)) {
-                    const errMsg = `File not found: ${finalPath}`;
-                    console.warn(`[Train] ${errMsg}`);
-                    errors.push(`Photo ${photo.id}: ${errMsg}`);
-                    failCount++;
-                    continue;
-                }
-
-                // Generate Embedding
-                const fileBuffer = fs.readFileSync(finalPath);
-                const form = new FormData();
-                form.append('file', fileBuffer, { filename: 'training.jpg', contentType: 'image/jpeg' });
-
-                const aiResponse = await axios.post(`${aiServiceUrl}/generate-embedding`, form, {
-                    headers: { ...form.getHeaders() }
-                });
-
-                if (aiResponse.data.embedding) {
-                    const embeddingJson = JSON.stringify(aiResponse.data.embedding);
-
-                    // Update face_photos table
+            if (photo.embedding) {
+                // Feature parity: Ensure the 'front' angle is synced to the users table
+                const angle = photo.angle.toLowerCase();
+                if (angle === 'front') {
                     await pool.query(
-                        'UPDATE face_photos SET embedding = ? WHERE id = ?',
-                        [embeddingJson, photo.id]
+                        'UPDATE users SET face_embeddings = ? WHERE id = ?',
+                        [JSON.stringify(photo.embedding), userId]
                     );
-
-                    // If this is Front/Center, update main user record too
-                    const angle = photo.angle.toLowerCase();
-                    if (angle === 'front' || angle === 'center') {
-                        await pool.query(
-                            'UPDATE users SET facenet_embedding = ? WHERE id = ?',
-                            [embeddingJson, userId]
-                        );
-                    }
-                    successCount++;
-                } else {
-                    failCount++;
                 }
-            } catch (err) {
-                const errMsg = err.response ? `AI Error ${err.response.status}: ${err.response.statusText}` : err.message;
-                console.error(`[Train] Error processing photo ${photo.id}: ${errMsg}`);
-                console.error(`[Train] AI Service URL: ${aiServiceUrl}`);
-                console.error(`[Train] Error Code: ${err.code}`);
-                console.error(`[Train] Full Error Message: ${err.message}`);
-                if (err.response) {
-                    console.error(`[Train] Response Status: ${err.response.status}`);
-                    console.error(`[Train] Response Data:`, err.response.data);
-                }
-                errors.push(`Photo ${photo.id}: ${errMsg}`);
+                successCount++;
+            } else {
+                errors.push(`Photo ${photo.id} (${photo.angle}) is missing an embedding.`);
                 failCount++;
             }
         }
 
-        console.log(`Training complete. Success: ${successCount}, Failed: ${failCount}`);
+        console.log(`Training/Verification complete. Success: ${successCount}, Failed: ${failCount}`);
 
         if (successCount === 0) {
             return res.status(500).json({
-                message: 'Failed to generate embeddings. See details below.',
+                message: 'No valid embeddings found. Please re-upload your face photos.',
                 details: errors
             });
         }
 
         res.json({
-            message: `Model trained successfully. Processed ${successCount} photos.`,
+            message: `Model trained successfully. Verified ${successCount} photos.`,
             stats: { success: successCount, failed: failCount },
             details: errors.length > 0 ? errors : undefined
         });

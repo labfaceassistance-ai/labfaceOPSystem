@@ -208,7 +208,6 @@ export default function MonitorTab() {
     const [systemStatus, setSystemStatus] = useState<SystemStatus>({ online: false });
     const [loadingStatus, setLoadingStatus] = useState(true);
     const [cam1Online, setCam1Online] = useState(false);
-    const [cam2Online, setCam2Online] = useState(false);
     const [sessionDetails, setSessionDetails] = useState<any>(null);
 
     // Fetch Session Details for Dynamic Title
@@ -313,43 +312,45 @@ export default function MonitorTab() {
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     <div className="lg:col-span-2 space-y-6">
-                        <div className="bg-slate-900/50 rounded-2xl border border-slate-800 p-1 shadow-xl">
-                            <div className="px-4 py-3 flex justify-between items-center">
-                                <h3 className="font-semibold text-white flex items-center gap-2">
-                                    CAM 01 <span className="text-slate-500 text-sm font-normal">| Entrance Door</span>
-                                    {!cam1Online && <span className="text-[10px] bg-red-900/50 text-red-400 px-1.5 py-0.5 rounded border border-red-500/20">OFFLINE</span>}
-                                </h3>
-                                <div className="text-[10px] font-mono text-slate-500">192.168.1.220:554</div>
+                        {/* Primary Entrance Terminal (Single Camera Focus) */}
+                        <div className="bg-slate-900/50 rounded-2xl border border-slate-800 p-1 shadow-2xl backdrop-blur-sm overflow-hidden">
+                            <div className="px-6 py-4 flex justify-between items-center bg-slate-900/80 border-b border-slate-800">
+                                <div className="flex items-center gap-3">
+                                    <div className={`w-3 h-3 rounded-full ${cam1Online ? 'bg-emerald-500 animate-pulse' : 'bg-red-500'}`}></div>
+                                    <h3 className="font-bold text-lg text-white">
+                                        ENTRANCE TERMINAL
+                                        <span className="ml-3 text-xs font-mono text-slate-500 tracking-tighter">CAM-01 • PRIMARY</span>
+                                    </h3>
+                                </div>
+                                <div className="text-[10px] font-mono text-slate-500 bg-black/30 px-2 py-1 rounded">
+                                    IP: 192.168.1.220:554
+                                </div>
                             </div>
-                            <div className="aspect-video w-full">
+                            <div className="aspect-video w-full bg-black relative">
                                 <VideoFeed
                                     src="/api/ai/video_feed/1"
-                                    alt="Camera 1"
-                                    label="MAIN ENTRANCE"
-                                    className="w-full h-full rounded-xl"
+                                    alt="Entrance Camera"
+                                    label="MAIN ENTRANCE MONITOR"
+                                    className="w-full h-full"
                                     onExpand={() => setExpandedCamera(1)}
                                     onStatusChange={setCam1Online}
                                 />
                             </div>
-                        </div>
-
-                        <div className="bg-slate-900/50 rounded-2xl border border-slate-800 p-1 shadow-xl">
-                            <div className="px-4 py-3 flex justify-between items-center">
-                                <h3 className="font-semibold text-white flex items-center gap-2">
-                                    CAM 02 <span className="text-slate-500 text-sm font-normal">| Exit Door</span>
-                                    {!cam2Online && <span className="text-[10px] bg-red-900/50 text-red-400 px-1.5 py-0.5 rounded border border-red-500/20">OFFLINE</span>}
-                                </h3>
-                                <div className="text-[10px] font-mono text-slate-500">192.168.1.220:554</div>
-                            </div>
-                            <div className="aspect-video w-full">
-                                <VideoFeed
-                                    src="/api/ai/video_feed/2"
-                                    alt="Camera 2"
-                                    label="EXIT CORRIDOR"
-                                    className="w-full h-full rounded-xl"
-                                    onExpand={() => setExpandedCamera(2)}
-                                    onStatusChange={setCam2Online}
-                                />
+                            <div className="px-6 py-4 bg-slate-900/50 flex items-center justify-between">
+                                <div className="flex items-center gap-4">
+                                    <div className="flex flex-col">
+                                        <span className="text-[10px] text-slate-500 uppercase font-bold tracking-widest">Signal Quality</span>
+                                        <span className="text-xs text-emerald-400 font-mono">98% STABLE</span>
+                                    </div>
+                                    <div className="w-px h-8 bg-slate-800"></div>
+                                    <div className="flex flex-col">
+                                        <span className="text-[10px] text-slate-500 uppercase font-bold tracking-widest">Protocol</span>
+                                        <span className="text-xs text-slate-300 font-mono">RTSP / FFMPEG</span>
+                                    </div>
+                                </div>
+                                <div className="text-[10px] text-slate-500 font-medium">
+                                    Security Node: <span className="text-brand-400">LN-01-ENTRANCE</span>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -431,7 +432,7 @@ export default function MonitorTab() {
                                 <VideoFeed
                                     src={`/api/ai/video_feed/${expandedCamera}`}
                                     alt={`Camera ${expandedCamera} Full View`}
-                                    label={expandedCamera === 1 ? 'ENTRANCE DOOR - FULL VIEW' : 'EXIT DOOR - FULL VIEW'}
+                                    label="ENTRANCE TERMINAL - FULL VIEW"
                                     className="h-full w-full object-contain"
                                 />
                                 <div className="absolute bottom-8 left-1/2 -translate-x-1/2 bg-black/80 text-white pl-4 pr-6 py-3 rounded-full backdrop-blur-xl border border-white/10 flex items-center gap-3 shadow-2xl">

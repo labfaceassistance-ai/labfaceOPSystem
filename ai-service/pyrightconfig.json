@@ -3,7 +3,7 @@
   "exclude": ["packages/**", ".cache/**", "models/**"],
   "reportMissingImports": "none",
   "reportMissingModuleSource": "none",
-  "pythonVersion": "3.10",
-  "venvPath": ".",
+  "pythonVersion": "3.13",
+  "venvPath": "C:\\Users\\John Lloyd\\Capstone\\LabFace\\ai-service",
   "venv": ".venv"
 }

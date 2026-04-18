@@ -7,7 +7,11 @@ const warningService = require('../services/attendanceWarningService');
 const multer = require('multer');
 const fs = require('fs');
 const path = require('path');
+const axios = require('axios');
 const { uploadBufferToMinio, EXCUSE_BUCKET, standardizeImageUrl, SNAPSHOT_BUCKET } = require('../utils/minioHelper');
+
+// AI Service URL for cache invalidation
+const AI_SERVICE_URL = process.env.AI_SERVICE_URL || 'http://ai-service:8000';
 
 // Configure Uploads (Memory Storage for MinIO)
 const upload = multer({ storage: multer.memoryStorage() });
@@ -104,7 +108,7 @@ const upload = multer({ storage: multer.memoryStorage() });
 
 // Start Session (Regular, Make-up, or Batch)
 router.post('/sessions', async (req, res) => {
-    const { classId, date, startTime, endTime, type, batchStudents, sessionName, reason, isScheduled } = req.body;
+    const { classId, date, startTime, endTime, type, batchStudents, sessionName, reason, isScheduled, forceEnd } = req.body;
 
     try {
         // Validate required fields
@@ -186,6 +190,18 @@ router.post('/sessions', async (req, res) => {
         // CASE B: Starting a Session (Now)
         // ---------------------------------------------------------
 
+        // 0. Auto-cleanup: silently end any stuck sessions older than 8 hours
+        //    These are clearly orphaned from a previous day/browser crash
+        await pool.query(
+            `UPDATE sessions
+             SET monitoring_ended_at = NOW(), end_time = NOW()
+             WHERE class_id = ?
+             AND monitoring_started_at IS NOT NULL
+             AND monitoring_ended_at IS NULL
+             AND monitoring_started_at < DATE_SUB(NOW(), INTERVAL 8 HOUR)`,
+            [classId]
+        );
+
         // 1. Check for Active Session (Prevent Double Start)
         const [activeSessions] = await pool.query(
             `SELECT id FROM sessions 
@@ -196,10 +212,27 @@ router.post('/sessions', async (req, res) => {
         );
 
         if (activeSessions.length > 0) {
-            return res.status(400).json({
-                error: 'A monitoring session is already active for this class. Please stop it before starting a new one.',
-                activeSessionId: activeSessions[0].id
-            });
+            // If forceEnd flag is set, auto-end ALL stuck sessions for this class
+            if (forceEnd) {
+                const stuckIds = activeSessions.map(s => s.id);
+                console.log(`[SessionStart] forceEnd=true — ending stuck sessions: ${stuckIds.join(', ')}`);
+                await pool.query(
+                    `UPDATE sessions SET monitoring_ended_at = NOW(), end_time = NOW()
+                     WHERE id IN (${stuckIds.map(() => '?').join(',')})`,
+                    stuckIds
+                );
+                // Invalidate AI cache after force-ending
+                try {
+                    await axios.post(`${AI_SERVICE_URL}/api/invalidate-session-cache`, {}, { timeout: 2000 });
+                } catch (e) { /* non-critical */ }
+                // Fall through to create the new session below
+            } else {
+                return res.status(400).json({
+                    error: 'A monitoring session is already active for this class. Please stop it before starting a new one.',
+                    activeSessionId: activeSessions[0].id,
+                    allActiveIds: activeSessions.map(s => s.id)
+                });
+            }
         }
 
         // 2. Check for PENDING Scheduled Session for TODAY (to Activate)
@@ -228,6 +261,14 @@ router.post('/sessions', async (req, res) => {
                  WHERE id = ?`,
                 [pendingId]
             );
+
+            // Invalidate AI service session cache to ensure immediate attendance detection
+            try {
+                await axios.post(`${AI_SERVICE_URL}/api/invalidate-session-cache`, {}, { timeout: 2000 });
+                console.log('[SessionStart] AI service cache invalidated');
+            } catch (err) {
+                console.warn('[SessionStart] Failed to invalidate AI cache:', err.message);
+            }
 
             return res.json({
                 success: true,
@@ -306,6 +347,14 @@ router.post('/sessions', async (req, res) => {
             ]
         );
 
+        // Invalidate AI service session cache to ensure immediate attendance detection
+        try {
+            await axios.post(`${AI_SERVICE_URL}/api/invalidate-session-cache`, {}, { timeout: 2000 });
+            console.log('[SessionStart] AI service cache invalidated for new session');
+        } catch (err) {
+            console.warn('[SessionStart] Failed to invalidate AI cache:', err.message);
+        }
+
         res.status(201).json({
             success: true,
             message: `${sessionType.charAt(0).toUpperCase() + sessionType.slice(1)} session started`,
@@ -331,12 +380,23 @@ router.post('/sessions/:sessionId/stop', async (req, res) => {
 
         // Update session with end_time and monitoring_ended_at
         await pool.query(
-            `UPDATE sessions 
+            `UPDATE sessions
              SET end_time = NOW(),
                  monitoring_ended_at = ?
              WHERE id = ?`,
             [now, sessionId]
         );
+
+        // Invalidate AI service cache when stopping session to ensure clean state
+        try {
+            await axios.post(`${AI_SERVICE_URL}/api/invalidate-session-cache`, {}, { timeout: 2000 });
+            console.log('[SessionStop] AI service cache and attendance state cleared');
+        } catch (err) {
+            console.warn('[SessionStop] Failed to clear AI cache:', err.message);
+        }
+
+        // Note: Absence finalization is now handled by the arrival-time thresholds during the session.
+        // We no longer track "leavers" specifically since hardware is entrance-only.
 
         res.json({
             success: true,
@@ -383,9 +443,12 @@ router.post('/log-unknown', async (req, res) => {
 router.get('/sessions/:sessionId/activity', async (req, res) => {
     try {
         const { sessionId } = req.params;
-        const limit = req.query.limit || 50;
+        const limit = parseInt(req.query.limit) || 50;
+        const sinceId = parseInt(req.query.sinceId) || 0;
+        const includeLogs = req.query.includeLogs === 'true';
 
         // Fetch recent attendance logs for this session
+        // OPTIMIZATION: Cleaned join to use primary keys and suppression for technical movement logs
         const [activity] = await pool.query(
             `SELECT 
                 al.id,
@@ -401,9 +464,11 @@ router.get('/sessions/:sessionId/activity', async (req, res) => {
             LEFT JOIN enrollments e ON al.enrollment_id = e.id
             LEFT JOIN users u ON al.student_id = u.id
             WHERE al.session_id = ?
-            ORDER BY al.created_at DESC
+            AND al.id > ?
+            ${includeLogs ? '' : "AND (al.status NOT LIKE 'Log -%' AND al.status != 'Unknown')"}
+            ORDER BY al.id DESC
             LIMIT ?`,
-            [sessionId, parseInt(limit)]
+            [sessionId, sinceId, limit]
         );
 
         const standardizedActivity = activity.map(log => ({
@@ -512,10 +577,19 @@ router.get('/sessions/:id/students', async (req, res) => {
 
         // Build query
         let query = `
-            SELECT u.id, u.student_id as user_id, u.first_name, u.last_name, 
-                   u.profile_picture, u.course, u.year_level
-            FROM users u
-            JOIN enrollments ce ON u.id = ce.student_id
+            SELECT 
+                COALESCE(u.id, 0) as id, 
+                COALESCE(u.user_id, ce.student_number) as user_id, 
+                COALESCE(u.first_name, ce.student_name) as first_name, 
+                u.last_name, 
+                u.profile_picture, 
+                u.course, 
+                u.year_level,
+                CASE WHEN u.id IS NOT NULL THEN 1 ELSE 0 END as is_registered
+            FROM enrollments ce
+            LEFT JOIN users u ON ce.student_id = u.id OR 
+                REPLACE(REPLACE(REPLACE(REPLACE(TRIM(u.user_id), '-', ''), ' ', ''), CHAR(13), ''), CHAR(10), '') = 
+                REPLACE(REPLACE(REPLACE(REPLACE(TRIM(ce.student_number), '-', ''), ' ', ''), CHAR(13), ''), CHAR(10), '')
             WHERE ce.class_id = ?
         `;
 
@@ -567,21 +641,37 @@ router.post('/mark', async (req, res) => {
 
         const session = sessions[0];
 
-        // Check if student is enrolled in the class
+        // 1. Resilient Enrollment Check (Matches by student_id or student_number)
         const [enrollment] = await pool.query(
-            'SELECT * FROM enrollments WHERE class_id = ? AND student_id = ?',
-            [session.class_id, studentId]
+            `SELECT e.* FROM enrollments e
+             LEFT JOIN users u ON u.id = ?
+              WHERE e.class_id = ? AND (
+                 e.student_id = ? OR 
+                 (u.user_id IS NOT NULL AND 
+                  REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(TRIM(e.student_number), '-', ''), ' ', ''), '.', ''), CHAR(9), ''), CHAR(13), ''), CHAR(10), '') = 
+                  REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(TRIM(u.user_id), '-', ''), ' ', ''), '.', ''), CHAR(9), ''), CHAR(13), ''), CHAR(10), ''))
+             ) LIMIT 1`,
+            [studentId, session.class_id, studentId]
         );
 
-        if (enrollment.length === 0) {
-            return res.status(403).json({ error: 'Student not enrolled in this class' });
+        if (!enrollment || enrollment.length === 0) {
+            return res.status(403).json({ error: 'Student not officially enrolled in this class' });
         }
 
-        // Check if student is allowed in this session (batch restriction)
+        const studentEnrollment = enrollment[0];
+
+        // 2. Batch Session Validation (Restriction)
         if (session.type === 'batch' && session.batch_students) {
-            const batchStudents = JSON.parse(session.batch_students);
-            // batchStudents contains Enrollment IDs. Check if this student's enrollment ID is in the list.
-            if (!batchStudents.includes(enrollment[0].id)) {
+            let batchStudents = [];
+            try {
+                batchStudents = (typeof session.batch_students === 'string') 
+                    ? JSON.parse(session.batch_students) 
+                    : session.batch_students;
+            } catch (e) {
+                console.error("Batch parse error:", e);
+            }
+
+            if (!batchStudents.includes(studentEnrollment.id)) {
                 return res.status(403).json({
                     error: 'Student not assigned to this batch session',
                     sessionType: 'batch'
@@ -589,76 +679,19 @@ router.post('/mark', async (req, res) => {
             }
         }
 
-        // Check if a "Present" or "Late" record already exists for this session
+        // Only treat Present/Late as already-attended.
+        // Allow prior Absent records to be upgraded when a valid recognition arrives.
         const [existing] = await pool.query(
-            "SELECT * FROM attendance_logs WHERE session_id = ? AND student_id = ? AND status IN ('Present', 'Late', 'Absent')",
+            "SELECT * FROM attendance_logs WHERE session_id = ? AND student_id = ? AND status IN ('Present', 'Late')",
             [sessionId, studentId]
         );
 
         // Use detectionTime from AI service if available, otherwise server time
         const now = detectionTime ? new Date(detectionTime) : new Date();
 
-        // ---------------------------------------------------------
-        // LOGIC: EXIT
-        // ---------------------------------------------------------
+        // EXIT LOGIC REMOVED: Hardware is now one-camera entrance only.
         if (direction === 'EXIT') {
-            // Update the MAIN attendance record's time_out (if it exists)
-            // Update the MAIN attendance record's time_out (if it exists)
-            if (existing.length > 0) {
-                await pool.query(
-                    'UPDATE attendance_logs SET time_out = ? WHERE id = ?',
-                    [now, existing[0].id]
-                );
-            } else {
-                // REDUNDANCY CHECK:
-                // If Cam 2 (Exit) sees them but we missed the Entry (Cam 1),
-                // we should still mark them PRESENT because they are obviously here.
-
-                // Determine status based on time (Late check)
-                let status = 'Present';
-                const actualStartTime = session.monitoring_started_at || `${session.date}T${session.start_time}`;
-                const sessionStart = new Date(actualStartTime);
-                const diffMins = (now.getTime() - sessionStart.getTime()) / 60000;
-
-                const lateThreshold = session.late_threshold_minutes || 15;
-
-                if (diffMins > 60) status = 'Absent';
-                else if (diffMins > lateThreshold) status = 'Late';
-
-                // Insert attendance log (Implicit Entry via Exit Camera)
-                const [result] = await pool.query(
-                    `INSERT INTO attendance_logs 
-                    (session_id, student_id, enrollment_id, time_in, status, snapshot_url, recognition_method) 
-                    VALUES (?, ?, ?, ?, ?, ?, ?)`,
-                    [sessionId, studentId, enrollment[0].id, now, status, snapshotUrl || null, 'CCTV (Redundant)']
-                );
-
-                // Trigger warning check in background
-                warningService.checkAndNotify(studentId, session.class_id).catch(err => console.error('Warning check failed:', err));
-
-                return res.json({
-                    success: true,
-                    message: 'Attendance marked (Recovered from Exit Cam)',
-                    type: 'ENTRY',
-                    status,
-                    logId: result.insertId,
-                    timeIn: now
-                });
-            }
-
-            // ALWAYS create a "Log" entry for the feed
-            await pool.query(
-                `INSERT INTO attendance_logs 
-                (session_id, student_id, enrollment_id, time_in, status, snapshot_url, recognition_method) 
-                VALUES (?, ?, ?, ?, ?, ?, ?)`,
-                [sessionId, studentId, enrollment[0].id, now, 'Log - Exit', snapshotUrl || null, 'CCTV']
-            );
-
-            return res.json({
-                success: true,
-                message: 'Exit recorded',
-                type: 'EXIT'
-            });
+            return res.json({ success: true, message: 'Exit event ignored (Entrance Focus Mode)' });
         }
 
         // ---------------------------------------------------------
@@ -685,32 +718,26 @@ router.post('/mark', async (req, res) => {
         // 2. If NOT marked yet, this is the FIRST Attendance
         // Determine status (Present vs Late vs Absent)
         let status = 'Present';
-        const actualStartTime = session.monitoring_started_at || `${session.date}T${session.start_time}`;
-        const sessionStart = new Date(actualStartTime);
-        const diffMins = (now.getTime() - sessionStart.getTime()) / 60000;
-
+        
+        // BASELINE LOGIC: Calculated from when the Professor STARTED the session
+        // This ensures tracking is relative to the actual operational start time.
+        const startTime = new Date(session.monitoring_started_at);
+        const diffMins = (now.getTime() - startTime.getTime()) / 60000;
         const lateThreshold = session.late_threshold_minutes || 15;
 
-        if (diffMins < -15) {
-            return res.status(400).json({
-                error: 'Too early to mark attendance',
-                message: 'You can check in 15 minutes before the session starts.'
-            });
+        // Standardized Thresholds per User Request:
+        // - Present: within 15 mins
+        // - Late: 16 to 60 mins
+        // - Absent: after 60 mins (61st min)
+        if (diffMins > 60) {
+            status = 'Absent';
+        } else if (diffMins > lateThreshold) {
+            status = 'Late';
+        } else {
+            status = 'Present';
         }
 
-        if (diffMins > 30) status = 'Absent';
-        else if (diffMins > lateThreshold) status = 'Late';
-
-        // Check for duplicate attendance within 5-minute window
-        const isDuplicate = await conflictResolver.checkDuplicateAttendance(
-            studentId, sessionId, now.getTime()
-        );
-        if (isDuplicate) {
-            return res.status(409).json({
-                success: false,
-                message: 'Duplicate attendance detected within 5-minute window'
-            });
-        }
+        // Duplicate check is handled by the initial 'existing' query above
 
         // Insert MAIN attendance log
         const [result] = await pool.query(
@@ -757,7 +784,12 @@ router.get('/session/:id/live', async (req, res) => {
                 u.course,
                 u.year_level
             FROM attendance_logs a
-            JOIN users u ON a.student_id = u.id
+            LEFT JOIN enrollments e ON a.enrollment_id = e.id
+            LEFT JOIN users u ON a.student_id = u.id OR (
+                (u.id IS NULL OR COALESCE(a.student_id, 0) = 0) AND 
+                REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(TRIM(u.user_id), '-', ''), ' ', ''), '.', ''), CHAR(9), ''), CHAR(13), ''), CHAR(10), '') = 
+                REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(TRIM(e.student_number), '-', ''), ' ', ''), '.', ''), CHAR(9), ''), CHAR(13), ''), CHAR(10), '')
+            )
             WHERE a.session_id = ?
             ORDER BY a.time_in DESC
         `, [req.params.id]);
@@ -909,6 +941,21 @@ router.put('/manual-update', async (req, res) => {
                 );
                 logId = result.insertId;
                 console.log('[DEBUG] Inserted manual Absent log with ID:', logId);
+            }
+        }
+
+        // Trigger warning check for Absent/Late status changes so consecutive
+        // absence notifications fire even when marked manually by the professor
+        const capitalizedForCheck = status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
+        if (['Absent', 'Late'].includes(capitalizedForCheck) && studentId) {
+            try {
+                const [sessionInfo] = await pool.query('SELECT class_id FROM sessions WHERE id = ?', [sessionId]);
+                if (sessionInfo.length > 0) {
+                    warningService.checkAndNotify(studentId, sessionInfo[0].class_id)
+                        .catch(err => console.error('[ManualUpdate] Warning check failed:', err.message));
+                }
+            } catch (warnErr) {
+                console.error('[ManualUpdate] Could not trigger warning check:', warnErr.message);
             }
         }
 

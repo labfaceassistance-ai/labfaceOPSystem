@@ -3,6 +3,8 @@ import { useEffect } from 'react';
 import { ToastProvider } from "../components/Toast";
 import { PersonalizationProvider } from "../components/Personalization";
 import { registerServiceWorker } from "../lib/offline";
+import UpdateManager from "../components/UpdateManager";
+import { ThemeProvider } from "../components/ThemeProvider";
 
 export default function Providers({ children }: { children: React.ReactNode }) {
     useEffect(() => {
@@ -35,10 +37,13 @@ export default function Providers({ children }: { children: React.ReactNode }) {
     }, []);
 
     return (
-        <PersonalizationProvider>
-            <ToastProvider>
-                {children}
-            </ToastProvider>
-        </PersonalizationProvider>
+        <ThemeProvider>
+            <PersonalizationProvider>
+                <ToastProvider>
+                    <UpdateManager />
+                    {children}
+                </ToastProvider>
+            </PersonalizationProvider>
+        </ThemeProvider>
     );
 }

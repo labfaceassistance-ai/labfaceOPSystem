@@ -24,9 +24,8 @@ class RecognizeRequest(BaseModel):
     image: str  # Base64 encoded image
 
 class RecognizeResponse(BaseModel):
-    success: bool
-    error: Optional[str] = None
     message: Optional[str] = None
+    landmarks: Optional[list] = None
 
 @router.post("/recognize", response_model=RecognizeResponse)
 async def recognize_face(request: Request, body: RecognizeRequest):
@@ -87,7 +86,7 @@ async def recognize_face(request: Request, body: RecognizeRequest):
         mean_brightness = np.mean(gray)
         print(f"[Quality] Face Brightness: {mean_brightness:.2f}")
 
-        if mean_brightness < 40: # Dark threshold
+        if mean_brightness < 25: # Relaxed dark threshold (was 40)
             return RecognizeResponse(
                 success=False,
                 error="Image too dark",
@@ -105,7 +104,7 @@ async def recognize_face(request: Request, body: RecognizeRequest):
         laplacian_var = cv2.Laplacian(gray, cv2.CV_64F).var()
         print(f"[Quality] Face Sharpness: {laplacian_var:.2f}")
         
-        if laplacian_var < 30: # Accurate blur threshold for 720p
+        if laplacian_var < 15: # Relaxed blur threshold (was 30)
              return RecognizeResponse(
                 success=False,
                 error="Image too blurry",
@@ -114,7 +113,8 @@ async def recognize_face(request: Request, body: RecognizeRequest):
 
         return RecognizeResponse(
             success=True,
-            message=f"Face detected successfully. Quality OK."
+            message=f"Face detected successfully. Quality OK.",
+            landmarks=face.kps.tolist() if hasattr(face, 'kps') and face.kps is not None else None
         )
         
     except Exception as e:
@@ -373,8 +373,21 @@ async def classroom_mood(data: dict):
 
 # --- ANALYTICS ROUTES ---
 @router.get("/status")
-async def get_status():
-    return {"status": "online", "gpu": False, "models_loaded": True}
+async def get_status(request: Request):
+    """
+    Returns the real readiness state of the AI service.
+    models_loaded reflects whether InsightFace has finished initializing.
+    """
+    models_loaded = (
+        hasattr(request.app.state, 'face_recognizer')
+        and request.app.state.face_recognizer is not None
+    )
+    return {
+        "status": "online" if models_loaded else "initializing",
+        "gpu": False,
+        "models_loaded": models_loaded,
+        "message": "AI models ready" if models_loaded else "AI models are still loading. Please wait."
+    }
 
 try:
     from services.predictive_analytics import predictive_analytics
@@ -383,21 +396,12 @@ except ImportError as e:
     print(f"⚠️  Predictive analytics not available: {e}")
     ANALYTICS_AVAILABLE = False
 
-@router.get("/student-insights/{student_id}")
-async def get_student_insights(student_id: int, request: Request):
-    base = {
-        "student_id": student_id,
-        "attendance_rate": 95,
-        "punctuality": "High",
-        "risk_level": "Low",
-        "engagement": "Active"
-    }
-    return base
-
+# Note: /student-insights endpoint merged into backend analytics service for accuracy
 @router.post("/predict/attendance")
 async def predict_attendance(data: dict):
     if not ANALYTICS_AVAILABLE:
-        return {"predicted_rate": 85.0, "confidence": 0.60, "fallback": True}
+        return {"forecast": [], "error": "Predictive analytics service unavailable"}
+    
     forecast = predictive_analytics.forecast_attendance(
         data.get("historical_data", []),
         data.get("days_ahead", 7)
@@ -407,7 +411,10 @@ async def predict_attendance(data: dict):
 @router.post("/predict/risk")
 async def predict_risk(data: dict):
     if not ANALYTICS_AVAILABLE:
-        return {"risk_score": 0.1, "risk_level": "Low", "factors": [], "fallback": True}
+        return {"risk_score": 0, "risk_level": "unknown", "error": "Risk analytics service unavailable"}
+        
+    risk_info = predictive_analytics.calculate_risk(data)
+    return risk_info
     result = predictive_analytics.calculate_risk_score(data)
     return result
 

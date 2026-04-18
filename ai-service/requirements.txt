@@ -28,6 +28,7 @@ minio==7.2.0
 
 # Image Processing
 Pillow==10.1.0
+rembg==2.0.75
 
 
 # Utilities

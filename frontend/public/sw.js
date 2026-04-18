@@ -1,5 +1,5 @@
 // Service Worker for Offline Support
-const CACHE_NAME = 'labface-v1';
+const CACHE_NAME = 'labface-v3';
 const urlsToCache = [
     '/',
     '/login',
@@ -9,6 +9,7 @@ const urlsToCache = [
 
 // Install event - cache essential files one by one to avoid total failure
 self.addEventListener('install', (event) => {
+    self.skipWaiting(); // Force the waiting service worker to become the active service worker
     event.waitUntil(
         caches.open(CACHE_NAME)
             .then((cache) => {
@@ -24,38 +25,42 @@ self.addEventListener('install', (event) => {
     );
 });
 
-// Fetch event - serve from cache when offline
+// Fetch event - Network-First Strategy
+// This ensures the latest content is always fetched if online, 
+// falling back to cache only when offline.
 self.addEventListener('fetch', (event) => {
+    // Only attempt to cache GET requests that are not API calls
+    const url = new URL(event.request.url);
+    if (event.request.method !== 'GET' || url.pathname.startsWith('/api') || url.pathname.startsWith('/socket.io')) {
+        return;
+    }
+
     event.respondWith(
-        caches.match(event.request)
+        fetch(event.request)
             .then((response) => {
-                // Cache hit - return response
-                if (response) {
+                // Check if we received a valid response
+                if (!response || response.status !== 200 || response.type !== 'basic') {
                     return response;
                 }
 
-                // Clone the request
-                const fetchRequest = event.request.clone();
-                const url = new URL(event.request.url);
+                // IMPORTANT: Clone the response to store it in the cache
+                const responseToCache = response.clone();
+                caches.open(CACHE_NAME).then((cache) => {
+                    cache.put(event.request, responseToCache);
+                });
 
-                return fetch(fetchRequest).then((response) => {
-                    // Check if valid response AND NOT an API call
-                    if (!response || response.status !== 200 || response.type !== 'basic' || url.pathname.startsWith('/api')) {
+                return response;
+            })
+            .catch(() => {
+                // Network failed (we are offline), try the cache
+                return caches.match(event.request).then((response) => {
+                    if (response) {
                         return response;
                     }
-
-                    // Clone the response
-                    const responseToCache = response.clone();
-
-                    caches.open(CACHE_NAME)
-                        .then((cache) => {
-                            cache.put(event.request, responseToCache);
-                        });
-
-                    return response;
-                }).catch(() => {
-                    // Offline - return offline page
-                    return caches.match('/offline.html');
+                    // If both fail, show the offline page
+                    if (event.request.mode === 'navigate') {
+                        return caches.match('/offline.html');
+                    }
                 });
             })
     );
@@ -64,16 +69,27 @@ self.addEventListener('fetch', (event) => {
 // Activate event - clean up old caches
 self.addEventListener('activate', (event) => {
     const cacheWhitelist = [CACHE_NAME];
+    
+    // Immediately take control of all open tabs
+    event.waitUntil(self.clients.claim());
 
     event.waitUntil(
         caches.keys().then((cacheNames) => {
             return Promise.all(
                 cacheNames.map((cacheName) => {
                     if (cacheWhitelist.indexOf(cacheName) === -1) {
+                        console.log(`[SW] Deleting old cache: ${cacheName}`);
                         return caches.delete(cacheName);
                     }
                 })
             );
         })
     );
+});
+
+// Listener for manual update triggers from the UI
+self.addEventListener('message', (event) => {
+    if (event.data && event.data.type === 'SKIP_WAITING') {
+        self.skipWaiting();
+    }
 });

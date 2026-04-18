@@ -316,11 +316,56 @@ const sendIdentityTheftUpdateEmail = async (email, firstName, reportId, status, 
     }
 };
 
+const sendProfessorWelcomeEmail = async (email, firstName, lastName, professorId, password) => {
+    const mailOptions = {
+        from: '"LabFace Support" <labfaceassistance@gmail.com>',
+        to: email,
+        subject: 'Welcome to LabFace - Your Professor Account is Ready',
+        html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px; background-color: #ffffff;">
+                <div style="text-align: center; padding-bottom: 20px; border-bottom: 1px solid #e0e0e0;">
+                    <h1 style="color: #0f172a; margin: 0;">LabFace</h1>
+                    <p style="color: #64748b; margin: 5px 0 0;">Smart Attendance System</p>
+                </div>
+                <div style="padding: 30px 20px;">
+                    <h2 style="color: #3b82f6; margin-top: 0;">Welcome, Professor!</h2>
+                    <p style="color: #475569; font-size: 16px; line-height: 1.5;">
+                        Dear Professor ${firstName} ${lastName},
+                    </p>
+                    <p style="color: #475569; font-size: 16px; line-height: 1.5;">
+                        An administrator has created your account on the LabFace platform. You can now login and manage your classes and attendance.
+                    </p>
+                    <div style="background-color: #f8fafc; border-left: 4px solid #3b82f6; padding: 20px; margin: 25px 0; border-radius: 0 8px 8px 0;">
+                        <p style="margin: 0 0 10px 0; color: #1e293b; font-weight: bold;">Your Login Credentials:</p>
+                        <p style="margin: 5px 0; color: #334155;"><strong>Professor ID:</strong> ${professorId}</p>
+                        <p style="margin: 5px 0; color: #334155;"><strong>Temporary Password:</strong> ${password}</p>
+                    </div>
+                    <div style="text-align: center; margin: 30px 0;">
+                        <a href="https://www.labface.site/login" style="display: inline-block; background-color: #3b82f6; color: white; padding: 12px 30px; text-decoration: none; border-radius: 8px; font-weight: bold;">
+                            Login to Dashboard
+                        </a>
+                    </div>
+                    <p style="color: #ef4444; font-size: 13px; font-style: italic;">
+                        Note: For security reasons, we recommend changing your password after your first login.
+                    </p>
+                </div>
+                <div style="text-align: center; padding-top: 20px; border-top: 1px solid #e0e0e0; color: #94a3b8; font-size: 12px;">
+                    <p>&copy; ${new Date().getFullYear()} LabFace. All rights reserved.</p>
+                    <p>Polytechnic University of the Philippines</p>
+                </div>
+            </div>
+        `
+    };
+
+    await transporter.sendMail(mailOptions);
+};
+
 module.exports = {
     sendOTP,
     sendApprovalEmail,
     sendRejectionEmail,
     sendLabHeadNotification,
     sendIdentityTheftReport,
-    sendIdentityTheftUpdateEmail
+    sendIdentityTheftUpdateEmail,
+    sendProfessorWelcomeEmail
 };

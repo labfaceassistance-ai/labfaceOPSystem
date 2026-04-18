@@ -6,6 +6,7 @@ import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { getToken, getUser, logout, API_URL, getBackendUrl, getProfilePictureUrl } from '@/utils/auth';
 import NotificationCenter from './NotificationCenter';
+import ThemeToggle from './ThemeToggle';
 
 interface UserData {
     id: number;
@@ -50,7 +51,7 @@ export default function Navbar() {
     const isHomePage = pathname === '/';
 
     return (
-        <nav className={`fixed w-full z-50 transition-all duration-300 ${scrolled || !isHomePage || isOpen ? 'bg-brand-900 shadow-lg py-2' : 'bg-transparent py-4'}`}>
+        <nav className="fixed w-full z-50 transition-all duration-300 bg-yellow-500 shadow-xl py-2">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex items-center justify-between h-16">
                     <div className="flex items-center">
@@ -63,7 +64,10 @@ export default function Navbar() {
                             <div className="relative h-10 w-10 bg-white rounded-full overflow-hidden shadow-md group-hover:scale-105 transition-transform">
                                 <Image src="/logo.png" alt="LabFace Logo" width={40} height={40} className="object-cover" />
                             </div>
-                            <span className="font-bold text-xl sm:text-2xl tracking-tight text-white">LabFace</span>
+                            <div className="font-bold text-xl sm:text-2xl tracking-tight leading-none bg-black/10 px-2 py-1 rounded-lg backdrop-blur-sm">
+                                <span className="text-primary drop-shadow-md">Lab</span>
+                                <span className="text-white drop-shadow-md">Face</span>
+                            </div>
                         </Link>
                     </div>
 
@@ -72,38 +76,42 @@ export default function Navbar() {
 
 
                             {!user && !isAuthPage && (
-                                <>
-                                    {/* Login and Get Started buttons removed */}
-                                </>
+                                <div className="flex items-center gap-4">
+                                    <ThemeToggle />
+                                </div>
                             )}
-                            {user && !isAuthPage && !isHomePage && (
+                            {user && !isAuthPage && (
                                 <div className="flex items-center gap-4 relative">
-                                    {/* Enhanced Notification Center - Hide for Admins */}
-                                    {!user.role.includes('admin') && <NotificationCenter />}
+                                    <ThemeToggle />
+                                    {!isHomePage && (
+                                        <>
+                                            {/* Enhanced Notification Center - Hide for Admins */}
+                                            {!user.role.includes('admin') && <NotificationCenter />}
+                                            <Link href={
+                                                user.role.toLowerCase().includes('admin') ? '/admin/profile' :
+                                                    user.role.toLowerCase().includes('professor') ? '/professor/profile' :
+                                                        '/student/profile'
+                                            }
+                                                className="flex items-center gap-2 group"
+                                                title="Edit Profile">
+                                                <div className="w-10 h-10 rounded-full bg-brand-700 flex items-center justify-center text-white font-bold border-2 border-brand-600 group-hover:border-brand-400 transition-all shadow-sm overflow-hidden">
+                                                    {user.profilePicture ? (
+                                                        <img
+                                                            src={getProfilePictureUrl(user.profilePicture) || ''}
+                                                            alt="Profile"
+                                                            className="w-full h-full object-cover"
+                                                        />
+                                                    ) : (
+                                                        <span>{user.firstName?.[0] || ''}{user.lastName?.[0] || ''}</span>
+                                                    )}
+                                                </div>
+                                            </Link>
 
-                                    <Link href={
-                                        user.role.toLowerCase().includes('admin') ? '/admin/profile' :
-                                            user.role.toLowerCase().includes('professor') ? '/professor/profile' :
-                                                '/student/profile'
-                                    }
-                                        className="flex items-center gap-2 group"
-                                        title="Edit Profile">
-                                        <div className="w-10 h-10 rounded-full bg-brand-700 flex items-center justify-center text-white font-bold border-2 border-brand-600 group-hover:border-brand-400 transition-all shadow-sm overflow-hidden">
-                                            {user.profilePicture ? (
-                                                <img
-                                                    src={getProfilePictureUrl(user.profilePicture) || ''}
-                                                    alt="Profile"
-                                                    className="w-full h-full object-cover"
-                                                />
-                                            ) : (
-                                                <span>{user.firstName?.[0] || ''}{user.lastName?.[0] || ''}</span>
-                                            )}
-                                        </div>
-                                    </Link>
-
-                                    <button onClick={handleLogout} className="text-red-400 hover:text-red-300 hover:bg-red-900/20 px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-2">
-                                        <LogOut size={16} /> Logout
-                                    </button>
+                                            <button onClick={handleLogout} className="text-red-700 hover:text-red-800 hover:bg-black/10 px-3 py-2 rounded-md text-sm font-bold transition-colors flex items-center gap-2">
+                                                <LogOut size={16} /> Logout
+                                            </button>
+                                        </>
+                                    )}
                                 </div>
                             )}
                         </div>
@@ -112,7 +120,7 @@ export default function Navbar() {
                         <div className="-mr-2 flex md:hidden">
                             <button
                                 onClick={() => setIsOpen(!isOpen)}
-                                className="inline-flex items-center justify-center p-2 rounded-md text-gray-300 hover:text-white hover:bg-brand-800 focus:outline-none transition-colors"
+                                className="inline-flex items-center justify-center p-2 rounded-md text-black hover:bg-yellow-600 focus:outline-none transition-colors"
                             >
                                 {isOpen ? <X size={24} /> : <Menu size={24} />}
                             </button>

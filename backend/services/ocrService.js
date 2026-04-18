@@ -14,13 +14,285 @@ class OCRService {
      * @param {string} base64Image - Base64 encoded image or PDF data
      * @returns {Promise<string>} Extracted text
      */
-    async extractTextFromImage(base64Image) {
+    /**
+     * Preprocess image for better OCR accuracy
+     * Applies: grayscale, denoise, sharpen, contrast enhancement
+     */
+    async preprocessImage(buffer) {
         try {
+            // Try to use sharp if available
+            let sharp;
+            try {
+                sharp = require('sharp');
+            } catch (e) {
+                console.warn('[OCR Preprocess] Sharp not installed, skipping preprocessing');
+                return buffer;
+            }
+            
+            // Refined preprocessing for clear documentation
+            const processed = await sharp(buffer)
+                .grayscale()                    // Convert to grayscale
+                .normalize()                    // Normalize contrast
+                .modulate({ brightness: 1.1, contrast: 1.25 }) // Slightly more contrast
+                .sharpen({                      // Gentler sharpening to avoid artifacts
+                    sigma: 0.8,
+                    m1: 0.5,
+                    m2: 1.5
+                })
+                .resize({ width: 2600, withoutEnlargement: true }) // Higher resolution
+                .toBuffer();
+            
+            console.log('[OCR Preprocess] Image processed with sharp (gentle mode)');
+            return processed;
+        } catch (err) {
+            console.warn('[OCR Preprocess] Error during preprocessing:', err.message);
+            console.warn('[OCR Preprocess] Using original image');
+            return buffer; // Return original if preprocessing fails
+        }
+    }
+
+    /**
+     * Run multiple OCR passes with different settings and return best result
+     */
+    async recognizeWithMultiplePasses(buffer, requestId = 'unknown') {
+        const logPrefix = `[OCR Debug ${requestId}]`;
+        const results = [];
+        
+        console.log(`${logPrefix} === Starting OCR multi-pass ===`);
+        
+        // Pass 1: Default settings
+        try {
+            console.log(`${logPrefix} OCR Pass 1: Default settings...`);
+            const result1 = await Tesseract.recognize(buffer, 'eng', {
+                logger: info => {
+                    if (info.status === 'recognizing text') {
+                        console.log(`${logPrefix} Pass 1 progress: ${(info.progress * 100).toFixed(1)}%`);
+                    }
+                }
+            });
+            const text1 = result1.data.text;
+            const conf1 = result1.data.confidence;
+            results.push({ text: text1, confidence: conf1, pass: 1 });
+            console.log(`${logPrefix} Pass 1 complete. Confidence: ${conf1}%`);
+            console.log(`${logPrefix} Pass 1 first 300 chars:`, text1.substring(0, 300));
+            
+            // Log student ID patterns in this pass
+            const idPatterns1 = text1.match(/20\d{2}[-\s.]?\d{4,5}/g) || [];
+            console.log(`${logPrefix} Pass 1 ID patterns:`, idPatterns1);
+        } catch (e) {
+            console.warn(`${logPrefix} Pass 1 failed:`, e.message);
+        }
+        
+        // Pass 2: Whitelist mode - focus on student ID characters only
+        try {
+            console.log(`${logPrefix} OCR Pass 2: Whitelist mode...`);
+            const result2 = await Tesseract.recognize(buffer, 'eng', {
+                logger: info => {
+                    if (info.status === 'recognizing text') {
+                        console.log(`${logPrefix} Pass 2 progress: ${(info.progress * 100).toFixed(1)}%`);
+                    }
+                },
+                tessedit_char_whitelist: '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ-'
+            });
+            const text2 = result2.data.text;
+            const conf2 = result2.data.confidence;
+            results.push({ text: text2, confidence: conf2, pass: 2 });
+            console.log(`${logPrefix} Pass 2 complete. Confidence: ${conf2}%`);
+            console.log(`${logPrefix} Pass 2 first 300 chars:`, text2.substring(0, 300));
+            
+            // Log student ID patterns in this pass
+            const idPatterns2 = text2.match(/20\d{2}[-\s.]?\d{4,5}/g) || [];
+            console.log(`${logPrefix} Pass 2 ID patterns:`, idPatterns2);
+        } catch (e) {
+            console.warn(`${logPrefix} Pass 2 failed:`, e.message);
+        }
+        
+        // Pass 4: Page Segment Mode 1 (Auto orientation/Osd)
+        try {
+            console.log(`${logPrefix} OCR Pass 4: Auto Layout (psm=1)...`);
+            const result4 = await Tesseract.recognize(buffer, 'eng', {
+                logger: info => {
+                    if (info.status === 'recognizing text') {
+                        console.log(`${logPrefix} Pass 4 progress: ${(info.progress * 100).toFixed(1)}%`);
+                    }
+                },
+                psm: 1
+            });
+            const text4 = result4.data.text;
+            const conf4 = result4.data.confidence;
+            results.push({ text: text4, confidence: conf4, pass: 4 });
+            console.log(`${logPrefix} Pass 4 complete. Confidence: ${conf4}%`);
+        } catch (e) {
+            console.warn(`${logPrefix} Pass 4 failed:`, e.message);
+        }
+        
+        // Select best result based on confidence
+        if (results.length === 0) {
+            throw new Error('All OCR passes failed');
+        }
+        
+        const bestResult = results.reduce((best, current) => 
+            current.confidence > best.confidence ? current : best
+        );
+        
+        console.log(`${logPrefix} === OCR Multi-pass complete ===`);
+        console.log(`${logPrefix} Total passes: ${results.length}`);
+        console.log(`${logPrefix} Best result: Pass ${bestResult.pass} with ${bestResult.confidence}% confidence`);
+        
+        // Combine all results for maximum text coverage
+        const combinedText = results.map(r => r.text).join(' \n ');
+        
+        return {
+            text: bestResult.text,
+            combinedText: combinedText,
+            confidence: bestResult.confidence,
+            bestPass: bestResult.pass,
+            allResults: results,
+            source: 'ocr' // Default for image-based OCR
+        };
+    }
+
+    /**
+     * Universal text normalization for OCR results.
+     * Handles Unicode dashes (em-dash, en-dash, etc.), control characters, and common OCR slips.
+     * @param {string} text - The raw text to normalize
+     * @param {Object} options - Normalization options
+     * @returns {string} Normalized text
+     */
+    universalNormalize(text, options = {}) {
+        if (!text) return '';
+        
+        const { 
+            toUpperCase = true, 
+            removeSeparators = false, 
+            preserveSpanish = true,
+            stripWhitespace = false
+        } = options;
+
+        let normalized = text.toString();
+        
+        // 1. Handle Unicode normalization (NFKD decomposes accented characters)
+        normalized = normalized.normalize("NFKD");
+        
+        if (toUpperCase) {
+            normalized = normalized.toUpperCase();
+        }
+
+        // 2. Uniform Dash Handling: Replace all Unicode dashes with a standard hyphen
+        // Covers: Hyphen-minus (U+002D), Hyphen (U+2010), Non-breaking hyphen (U+2011), 
+        // Figure dash (U+2012), En dash (U+2013), Em dash (U+2014), Horizontal bar (U+2015)
+        normalized = normalized.replace(/[\u002d\u2010\u2011\u2012\u2013\u2014\u2015]/g, '-');
+
+        // 3. Control Character Cleanup
+        // Remove non-printable characters (U+0000 to U+001F) and soft hyphens (U+00AD)
+        normalized = normalized.replace(/[\u0000-\u001F\u007F-\u009F\u00AD]/g, ' ');
+
+        // 4. Common OCR Slip Character Normalization (Only for alphanumeric contexts)
+        // We only do this if specifically requested or in non-Spanish contexts to avoid breaking names
+        if (!preserveSpanish) {
+            normalized = normalized
+                .replace(/O/g, '0')
+                .replace(/I/g, '1')
+                .replace(/Z/g, '2')
+                .replace(/S/g, '5')
+                .replace(/B/g, '8')
+                .replace(/G/g, '6')
+                .replace(/Q/g, '0')
+                .replace(/T/g, '7')
+                .replace(/D/g, '0');
+        }
+
+        // 5. Separator Handling
+        if (removeSeparators) {
+            normalized = normalized.replace(/[^A-Z0-9]/g, '');
+        } else {
+            // Standardize whitespace
+            normalized = normalized.replace(/\s+/g, stripWhitespace ? '' : ' ');
+        }
+
+        return normalized.trim();
+    }
+
+    /**
+     * Centralized normalization for Student IDs
+     * Handles Unicode dashes, non-printable characters, and common OCR errors
+     */
+    normalizeStudentId(id) {
+        return this.universalNormalize(id, {
+            removeSeparators: true,
+            preserveSpanish: false
+        });
+    }
+
+    /**
+     * OCR-aware student ID normalization.
+     * Maps ALL visually-similar characters to a single canonical form so that
+     * what the user typed and what Tesseract read are compared on equal footing.
+     *
+     * Key confusions handled:
+     *   L ↔ 4   (L looks like 4 in matrix fonts)
+     *   Q ↔ 0   (Q and O look like 0)
+     *   O ↔ 0
+     *   I ↔ 1   (I looks like 1)
+     *   B ↔ 8
+     *   S ↔ 5
+     *   G ↔ 6
+     *   Z ↔ 2
+     *   T ↔ 7
+     */
+    ocrNormalizeStudentId(id) {
+        if (!id) return '';
+        return id
+            .toUpperCase()
+            .replace(/[^A-Z0-9]/g, '')   // strip hyphens/spaces
+            // Map ambiguous chars → canonical digit/letter
+            .replace(/[OQ]/g, '0')        // O,Q → 0
+            .replace(/[IL]/g, '1')        // I,L → 1
+            .replace(/[Z]/g, '2')         // Z  → 2
+            .replace(/[S]/g, '5')         // S  → 5
+            .replace(/[G]/g, '6')         // G  → 6
+            .replace(/[T]/g, '7')         // T  → 7 (less common, keep)
+            .replace(/[B]/g, '8')         // B  → 8
+            // Map digit lookalikes → canonical digit
+            .replace(/4/g, '1')           // 4 ← treated same as L(→1) in campus codes
+            .replace(/6/g, '6');          // already canonical
+    }
+
+    /**
+     * Normalization for student names (preserves Spanish characters)
+     */
+    normalizeName(text) {
+        return this.universalNormalize(text, {
+            preserveSpanish: true,
+            stripWhitespace: false
+        });
+    }
+
+    /**
+     * Sanitizes extracted text from PDF to remove non-printable control characters
+     */
+    sanitizeExtractedText(text) {
+        if (!text) return '';
+        // Remove non-printable characters (U+0000 to U+001F) and other PDF artifacts
+        return text.replace(/[\u0000-\u001F\u007F-\u009F\u00AD]/g, ' ')
+            .replace(/\s+/g, ' ')
+            .trim();
+    }
+
+    async extractTextFromImage(base64Image, requestId = 'unknown') {
+        const logPrefix = `[OCR Debug ${requestId}]`;
+        
+        try {
+            console.log(`${logPrefix} === Starting text extraction ===`);
+            
             // Check if it's a PDF
             if (base64Image.startsWith('data:application/pdf')) {
+                console.log(`${logPrefix} File type: PDF`);
+                
                 // Remove data URL prefix and convert to buffer
                 const pdfData = base64Image.replace(/^data:application\/pdf;base64,/, '');
                 const buffer = Buffer.from(pdfData, 'base64');
+                console.log(`${logPrefix} PDF buffer size: ${buffer.length} bytes`);
 
                 // Create temporary file
                 const tempFilePath = path.join(os.tmpdir(), `cor_${Date.now()}.pdf`);
@@ -35,7 +307,7 @@ class OCRService {
                             // Extract text from all pages
                             let fullText = '';
                             if (pdfData.Pages) {
-                                pdfData.Pages.forEach(page => {
+                                pdfData.Pages.forEach((page, pageIdx) => {
                                     if (page.Texts) {
                                         page.Texts.forEach(text => {
                                             if (text.R) {
@@ -47,6 +319,7 @@ class OCRService {
                                             }
                                         });
                                     }
+                                    console.log(`${logPrefix} Page ${pageIdx + 1} text length: ${fullText.length - (fullText.lastIndexOf(' ', fullText.length - 2) + 1)} chars`);
                                 });
                             }
 
@@ -54,7 +327,7 @@ class OCRService {
                             try {
                                 fs.unlinkSync(tempFilePath);
                             } catch (e) {
-                                console.warn('Failed to delete temp file:', e);
+                                console.warn(`${logPrefix} Failed to delete temp file:`, e);
                             }
 
                             resolve(fullText);
@@ -68,7 +341,7 @@ class OCRService {
                         try {
                             fs.unlinkSync(tempFilePath);
                         } catch (e) {
-                            console.warn('Failed to delete temp file:', e);
+                            console.warn(`${logPrefix} Failed to delete temp file:`, e);
                         }
                         reject(error);
                     });
@@ -76,7 +349,13 @@ class OCRService {
                     pdfParser.loadPDF(tempFilePath);
                 });
 
-                console.log('PDF text extracted:', extractedText.substring(0, 500));
+                console.log(`${logPrefix} PDF text extraction complete. Total length: ${extractedText.length} chars`);
+                console.log(`${logPrefix} First 800 chars:`, extractedText.substring(0, 800));
+                console.log(`${logPrefix} Looking for Student ID pattern...`);
+                
+                // Log all potential ID patterns found
+                const idPatterns = extractedText.match(/20\d{2}[-\s.]?\d{4,5}/g) || [];
+                console.log(`${logPrefix} Potential ID patterns found:`, idPatterns);
 
                 if (!extractedText || extractedText.trim().length < 50) {
                     console.log('Empty text detected. Attempting to extract images from PDF (Scanned PDF Fallback)...');
@@ -106,17 +385,25 @@ class OCRService {
                         }
 
                         if (largestImageBuffer) {
-                            console.log(`Found scanned image (${largestImageSize} bytes). Running OCR...`);
+                            console.log(`${logPrefix} Found scanned image (${largestImageSize} bytes)`);
+                            
+                            // Save image for debugging
+                            const debugImagePath = path.join(os.tmpdir(), `ocr_debug_${requestId}_image.jpg`);
+                            fs.writeFileSync(debugImagePath, largestImageBuffer);
+                            console.log(`${logPrefix} Saved image to: ${debugImagePath}`);
 
-                            // Run Tesseract on the extracted image
-                            const { data: { text } } = await Tesseract.recognize(
-                                largestImageBuffer,
-                                'eng',
-                                { logger: info => console.log('Fallback OCR Progress:', info) }
-                            );
-
-                            console.log('Fallback OCR Text:', text.substring(0, 500));
-                            return text;
+                            // Preprocess image for better OCR
+                            console.log(`${logPrefix} Starting image preprocessing...`);
+                            const preprocessedBuffer = await this.preprocessImage(largestImageBuffer);
+                            
+                            // Run multiple OCR passes and get best result
+                            console.log(`${logPrefix} Running multiple OCR passes...`);
+                            const ocrResult = await this.recognizeWithMultiplePasses(preprocessedBuffer, requestId);
+                            
+                            return { 
+                                text: ocrResult.combinedText, 
+                                source: 'scanned_pdf' 
+                            };
                         } else {
                             throw new Error('No text or images found in PDF.');
                         }
@@ -126,23 +413,27 @@ class OCRService {
                     }
                 }
 
-                return extractedText;
+                return { 
+                    text: this.sanitizeExtractedText(extractedText), 
+                    source: 'digital' 
+                };
             }
 
             // Handle images with Tesseract OCR
+            console.log(`${logPrefix} File type: Image`);
+            
             const imageData = base64Image.replace(/^data:image\/\w+;base64,/, '');
             const buffer = Buffer.from(imageData, 'base64');
+            console.log(`${logPrefix} Image buffer size: ${buffer.length} bytes`);
 
-            // Run Tesseract OCR
-            const { data: { text } } = await Tesseract.recognize(
-                buffer,
-                'eng',
-                {
-                    logger: info => console.log('OCR Progress:', info)
-                }
-            );
-
-            return text;
+            // Preprocess and Recognize
+            const preprocessed = await this.preprocessImage(buffer);
+            const ocrResult = await this.recognizeWithMultiplePasses(preprocessed, requestId);
+            
+            return { 
+                text: ocrResult.combinedText, 
+                source: 'ocr' 
+            };
         } catch (error) {
             console.error('Text extraction error:', error);
             throw new Error('Failed to extract text from document: ' + error.message);
@@ -154,38 +445,89 @@ class OCRService {
      * Looks for patterns like: 2024-00322-LQ-0 (full format) or 2024-12345 (partial)
      * Handles common OCR errors: 0->O, 1->I/l, etc.
      * @param {string} text - Extracted text from COR
+     * @param {Object} studentData - Student data for guided extraction
      * @returns {string|null} Student number or null if not found
      */
-    extractStudentNumber(text) {
-        // Robust Pattern: Allow 0/O, 1/I/l, 2/Z, 5/S etc.
-        // YYYY (20xx) - NNNNN - XX - N
-        // We focus mainly on 0->O substitution as it's the most common failure
-        const robustPattern = /\b(20[0-9O]{2}[-\s.]?[0-9O]{5}[-\s.]?[A-Z]{2}[-\s.]?[0-9O])\b/i;
+    extractStudentNumber(text, studentData = null) {
+        const calculateIDSimilarity = (s1, s2) => {
+            const n1 = this.normalizeStudentId(s1);
+            const n2 = this.normalizeStudentId(s2);
+            let matches = 0;
+            const len = Math.min(n1.length, n2.length);
+            for (let i = 0; i < len; i++) {
+                if (n1[i] === n2[i]) matches++;
+            }
+            return matches / Math.max(n1.length, n2.length);
+        };
 
-        const match = text.match(robustPattern);
+        // Normalize text for ID searching (OCR slips allowed, separators preserved for regex)
+        const normalized = this.universalNormalize(text, { preserveSpanish: false });
+        const candidates = [];
+        const expectedId = studentData && studentData.studentId ? this.normalizeStudentId(studentData.studentId) : null;
 
-        if (match) {
-            let raw = match[1].toUpperCase();
+        // 1. Guided Strategy (Strategy 1)
+        if (expectedId) {
+            const yearMatch = expectedId.match(/^(\d{4})/);
+            if (yearMatch) {
+                const expectedYear = yearMatch[1];
+                const yearRegex = new RegExp(`(${expectedYear})`, 'gi');
+                let match;
+                while ((match = yearRegex.exec(normalized)) !== null) {
+                    const yearPos = match.index;
+                    const surrounding = normalized.substring(Math.max(0, yearPos - 15), Math.min(normalized.length, yearPos + 60));
+                    const numberPattern = /(\d{4,5})/g;
+                    let numMatch;
+                    while ((numMatch = numberPattern.exec(surrounding)) !== null) {
+                        const paddedNumber = numMatch[1].padStart(5, '0');
+                        const afterNumber = surrounding.substring(numMatch.index + numMatch[1].length, numMatch.index + numMatch[1].length + 15);
+                        const campusMatch = afterNumber.match(/[-\s._]?([A-Z0-9]{2})[-\s._]?([\dO0])/);
+                        
+                        let formattedCandidate = `${expectedYear}-${paddedNumber}`;
+                        let score = calculateIDSimilarity(formattedCandidate, expectedId) * 100;
 
-            // Normalize: Replace O with 0
-            raw = raw.replace(/O/g, '0');
-
-            // Remove separators to get raw chars
-            const clean = raw.replace(/[-\s.]/g, '');
-
-            // Reformat to YYYY-NNNNN-XX-N
-            if (clean.length === 12) {
-                return clean.replace(/(\d{4})(\d{5})([A-Z]{2})(\d)/, '$1-$2-$3-$4');
+                        if (campusMatch) {
+                            const campusCode = campusMatch[1].replace(/0/g, 'O').replace(/1/g, 'I');
+                            const terminalDigit = campusMatch[2].toString().replace(/[OQ]/g, '0').replace(/[IL]/g, '1');
+                            formattedCandidate = `${expectedYear}-${paddedNumber}-${campusCode}-${terminalDigit}`;
+                            score = calculateIDSimilarity(formattedCandidate, expectedId) * 100;
+                        }
+                        candidates.push({ formatted: formattedCandidate, score });
+                    }
+                }
             }
         }
 
-        // Fallback to partial match (YYYY-NNNNN)
-        const partialPattern = /\b(20\d{2}[-\s]?\d{5})\b/;
-        const partialMatch = text.match(partialPattern);
-        if (partialMatch) {
-            return partialMatch[1].replace(/\s/g, '').replace(/(\d{4})(\d{5})/, '$1-$2');
+        // 2. Generic Regex Patterns
+        // Patterns are simplified because text is already normalized for OCR slips (0, 1, 7, etc.)
+        const fullPattern = /\b(20\d{2})[-\s._]?(\d{5})[-\s._]?([A-Z0-9]{2})[-\s._]?(\d)\b/gi;
+        let p1Match;
+        while ((p1Match = fullPattern.exec(normalized)) !== null) {
+            const formatted = `${p1Match[1]}-${p1Match[2]}-${p1Match[3]}-${p1Match[4]}`.toUpperCase();
+            const score = expectedId ? calculateIDSimilarity(formatted, expectedId) * 100 : 50;
+            candidates.push({ formatted, score });
         }
 
+        const partialPattern = /\b(20\d{2})[-\s._]?(\d{4,5})\b/gi;
+        let p2Match;
+        while ((p2Match = partialPattern.exec(normalized)) !== null) {
+            const year = parseInt(p2Match[1]);
+            const nextPart = parseInt(p2Match[2].substring(0, 4));
+            if (Math.abs(year - nextPart) <= 1) continue; // Skip year ranges
+
+            const padded = p2Match[2].padStart(5, '0');
+            const formatted = `${p2Match[1]}-${padded}`;
+            const score = expectedId ? calculateIDSimilarity(formatted, expectedId) * 90 : 40; // Penalty for missing parts
+            candidates.push({ formatted, score });
+        }
+
+        if (candidates.length > 0) {
+            candidates.sort((a, b) => b.score - a.score);
+            const best = candidates[0];
+            console.log(`[COR Debug] Global best match: ${best.formatted} (score: ${best.score.toFixed(1)})`);
+            return best.formatted;
+        }
+
+        console.log('[COR Debug] No student ID pattern matched');
         return null;
     }
 
@@ -193,20 +535,25 @@ class OCRService {
      * Extract name from COR text
      * Uses reverse search - find student ID first, then extract name before it
      * @param {string} text - Extracted text from COR
+     * @param {Object} studentData - Student data for guided search
      * @returns {string|null} Name or null if not found
      */
     extractName(text, studentData = null) {
-        // Normalize: uppercase and single spaces
-        const normalized = text.replace(/\s+/g, ' ').toUpperCase();
+        // ID-Normalization for finding the anchor (OCR slips allowed)
+        const idNormalizedText = this.universalNormalize(text, { preserveSpanish: false });
+        
+        // Name-Normalization (Preserve Spanish letters, cleanup PDF artifacts)
+        const nameNormalizedText = this.normalizeName(text);
 
         // Strategy 1: Find student ID first, then look backwards for name (Standard PUP Format)
-        const robustIdPattern = /20[0-9O]{2}[-\s.]?[0-9O]{5}[-\s.]?[A-Z]{2}[-\s.]?[0-9O]/i;
-        const studentIdMatch = normalized.match(robustIdPattern);
+        // Campus code is [A-Z0-9]{2} (not [A-Z]{2}) because OCR may read LQ as 40, IT as 17, etc.
+        const robustIdPattern = /\b20\d{2}[-\s._]?\d{4,5}[-\s._]?[A-Z0-9]{2}[-\s._]?[\dOQIL]\b/i;
+        const studentIdMatch = idNormalizedText.match(robustIdPattern);
 
         if (studentIdMatch) {
             const studentIdPos = studentIdMatch.index;
             // Look at the 150 characters before the student ID (increased from 100)
-            const beforeId = normalized.substring(Math.max(0, studentIdPos - 150), studentIdPos);
+            const beforeId = nameNormalizedText.substring(Math.max(0, studentIdPos - 150), studentIdPos);
 
             // Pattern A: "LASTNAME, FIRSTNAME" (Standard)
             // Allow for some intervening text like "Student Number:" or "Student No" at the end of the string
@@ -244,7 +591,7 @@ class OCRService {
         ];
 
         for (const pattern of labelPatterns) {
-            const match = normalized.match(pattern);
+            const match = nameNormalizedText.match(pattern);
             if (match) {
                 const extracted = match[1].trim();
                 if (extracted.length > 3 && this.isValidName(extracted)) {
@@ -261,17 +608,16 @@ class OCRService {
 
             // Check if both First and Last names are present in the text
             // We search in the 'beforeId' chunk if available, otherwise in the first 1000 chars
-            let searchArea = normalized;
+            let searchArea = nameNormalizedText;
 
             // Re-find Student ID position to narrow search
-            const robustIdPattern = /20[0-9O]{2}[-\s.]?[0-9O]{5}[-\s.]?[A-Z]{2}[-\s.]?[0-9O]/i;
-            const studentIdMatch = normalized.match(robustIdPattern);
+            const studentIdMatchF = idNormalizedText.match(robustIdPattern);
 
-            if (studentIdMatch) {
-                const studentIdPos = studentIdMatch.index;
-                searchArea = normalized.substring(Math.max(0, studentIdPos - 300), studentIdPos);
+            if (studentIdMatchF) {
+                const studentIdPos = studentIdMatchF.index;
+                searchArea = nameNormalizedText.substring(Math.max(0, studentIdPos - 300), studentIdPos);
             } else {
-                searchArea = normalized.substring(0, 1500); // Fallback to start of document
+                searchArea = nameNormalizedText.substring(0, 1500); // Fallback to start of document
             }
 
             // Simple containment check
@@ -313,7 +659,9 @@ class OCRService {
         // Normalize for comparison - preserve Spanish characters (ñ, á, é, í, ó, ú, ü)
         // Also handle "Ma." abbreviation -> expand to MARIA for robust matching
         const normalize = (str) => {
-            let normalized = str.toUpperCase()
+            if (!str) return '';
+            let normalized = str.normalize("NFKD") // Decompose fancy characters
+                .toUpperCase()
                 .replace(/[^A-ZÑÁÉÍÓÚÜ\s-\.]/g, '')  // Keep letters, ñ, accented vowels, spaces, hyphens, periods
                 .replace(/\s+/g, ' ')
                 .trim();
@@ -370,12 +718,24 @@ class OCRService {
             const partWords = localNormalize(part).split(' ');
 
             // Check if ALL significant words of `part` (User) are present in `fullText` (Extracted)
-            // This allows extracted text to have extra words (e.g. middle name) without failing
-            return partWords.filter(w => w.length > 1).every(partWord =>
-                fullTextWords.some(extractedWord =>
-                    // Check exact match or inclusion
-                    extractedWord === partWord || extractedWord.includes(partWord) || partWord.includes(extractedWord)
-                )
+            return partWords.filter(w => w.length > 2).every(partWord =>
+                fullTextWords.some(extractedWord => {
+                    // 1. Exact or inclusion match
+                    if (extractedWord === partWord || extractedWord.includes(partWord) || partWord.includes(extractedWord)) return true;
+                    
+                    // 2. Fuzzy match for common OCR slips (max 1 char diff for names > 4 chars)
+                    if (partWord.length > 4) {
+                        let diffs = 0;
+                        const len = Math.min(partWord.length, extractedWord.length);
+                        for(let i=0; i<len; i++) {
+                            if(partWord[i] !== extractedWord[i]) diffs++;
+                        }
+                        // Add length difference as errors
+                        diffs += Math.abs(partWord.length - extractedWord.length);
+                        if (diffs <= 1) return true;
+                    }
+                    return false;
+                })
             );
         };
 
@@ -454,50 +814,61 @@ class OCRService {
     fuzzyMatch(course1, course2) {
         if (!course1 || !course2) return false;
 
-        const normalize = (str) => str.toLowerCase()
-            .replace(/bachelor\s+of\s+science\s+in/gi, 'bs')
-            .replace(/diploma\s+in/gi, 'dip')
-            .replace(/\s+/g, ' ')
-            .trim();
+        // Master map of course codes to their canonical full names.
+        // Both sides (user input AND COR extract) are normalized through this map
+        // so that 'BSIT' and 'Bachelor of Science in Information Technology' are equal.
+        const COURSE_MAP = {
+            'bsit': 'bachelor of science in information technology',
+            'bs it': 'bachelor of science in information technology',
+            'bs information technology': 'bachelor of science in information technology',
+            'bachelor of science in information technology': 'bachelor of science in information technology',
+            'bsoa': 'bachelor of science in office administration',
+            'bs oa': 'bachelor of science in office administration',
+            'bs office administration': 'bachelor of science in office administration',
+            'bachelor of science in office administration': 'bachelor of science in office administration',
+            'dit': 'diploma in information technology',
+            'diploma in it': 'diploma in information technology',
+            'diploma in information technology': 'diploma in information technology',
+        };
 
-        const c1 = normalize(course1);
-        const c2 = normalize(course2);
+        const expandCourse = (str) => {
+            if (!str) return '';
+            const normalized = str.toLowerCase()
+                .replace(/bachelor\s+of\s+science\s+in/gi, 'bachelor of science in')
+                .replace(/\s+/g, ' ')
+                .trim();
+            return COURSE_MAP[normalized] || normalized;
+        };
 
-        // check for simple containment first
+        const c1 = expandCourse(course1);
+        const c2 = expandCourse(course2);
+
+        // Direct match after expansion
+        if (c1 === c2) return true;
         if (c1.includes(c2) || c2.includes(c1)) return true;
 
-        // Check for acronyms
-        // Map common acronyms to their keywords
-        const acronymMap = {
-            'bsit': ['information', 'technology'],
-            'bsoa': ['office', 'administration'],
-            'dit': ['diploma', 'information', 'technology', 'dip']
-        };
-
-        const checkAcronym = (text, target) => {
-            for (const [acronym, keywords] of Object.entries(acronymMap)) {
-                if (text.includes(acronym)) {
-                    // If text has acronym, check if target has ALL keywords
-                    return keywords.every(k => target.includes(k));
-                }
-            }
-            return false;
-        };
-
-        if (checkAcronym(c1, c2)) return true;
-        if (checkAcronym(c2, c1)) return true;
+        // Word-by-word intersection check for long names
+        const words1 = c1.split(' ');
+        const words2 = c2.split(' ');
+        const intersect = words1.filter(w => w.length > 3 && words2.includes(w));
+        if (intersect.length >= 2) return true;
 
         return false;
     }
+
 
     /**
      * Verify Certificate of Registration
      * @param {string} corImage - Base64 encoded COR image
      * @param {Object} studentData - Student data to verify against
      * @param {Object} activePeriod - Current active academic period
+     * @param {string} requestId - Request ID for debug tracing
      * @returns {Promise<Object>} Verification result
      */
-    async verifyCOR(corImage, rawStudentData, activePeriod = null) {
+    async verifyCOR(corImage, rawStudentData, activePeriod = null, requestId = 'unknown') {
+        const logPrefix = `[COR Verify ${requestId}]`;
+        console.log(`${logPrefix} Starting COR verification`);
+        
         // Sanitize middle name (handle N/A, NA, etc.)
         const studentData = { ...rawStudentData };
         if (studentData.middleName) {
@@ -508,13 +879,17 @@ class OCRService {
         }
 
         try {
-            // Extract text from COR
-            const extractedText = await this.extractTextFromImage(corImage);
+            // 1. Extract Text & Detect Source
+            const { text: extractedText, source } = await this.extractTextFromImage(corImage, requestId);
+            
+            console.log(`${logPrefix} Extraction Source: ${source}`);
+            console.log(`${logPrefix} Extracted COR text length: ${extractedText.length} chars`);
+            console.log(`${logPrefix} First 500 chars:`, extractedText.substring(0, 500));
 
-            console.log('Extracted COR text:', extractedText.substring(0, 500));
-
-            // Extract student number
-            const extractedStudentNumber = this.extractStudentNumber(extractedText);
+            // Extract student number (pass studentData for better matching)
+            console.log(`${logPrefix} Extracting student number...`);
+            const extractedStudentNumber = this.extractStudentNumber(extractedText, studentData);
+            console.log(`${logPrefix} Extracted student ID: ${extractedStudentNumber}`);
 
             // Extract name
             const extractedName = this.extractName(extractedText, studentData);
@@ -533,8 +908,27 @@ class OCRService {
                 ? `${studentData.lastName}, ${studentData.firstName} ${studentData.middleName}`
                 : `${studentData.lastName}, ${studentData.firstName}`;
 
-            // Validate student number
-            const studentNumberMatch = extractedStudentNumber === studentData.studentId;
+            // Normalize both sides using standard helper
+            const normalizedExtracted = this.normalizeStudentId(extractedStudentNumber);
+            const normalizedProvided  = this.normalizeStudentId(studentData.studentId);
+
+            // OCR-aware comparison: map visually-similar chars (L↔4, Q↔0, etc.)
+            // to the same canonical form on BOTH sides before comparing.
+            const ocrExtracted = this.ocrNormalizeStudentId(extractedStudentNumber);
+            const ocrProvided  = this.ocrNormalizeStudentId(studentData.studentId);
+
+            // Debug logging
+            console.log('[COR Debug] Student ID Comparison:');
+            console.log('  Extracted from COR:', extractedStudentNumber, '-> Normalized:', normalizedExtracted, '-> OCR-canonical:', ocrExtracted);
+            console.log('  Provided by user  :', studentData.studentId,   '-> Normalized:', normalizedProvided,  '-> OCR-canonical:', ocrProvided);
+            console.log('  Exact match:', normalizedExtracted === normalizedProvided);
+            console.log('  OCR-aware match:', ocrExtracted === ocrProvided);
+
+            // Pass if either exact OR OCR-aware comparison matches
+            const studentNumberMatch = (
+                (normalizedExtracted === normalizedProvided && normalizedExtracted.length >= 8) ||
+                (ocrExtracted === ocrProvided && ocrExtracted.length >= 6)
+            );
 
             // Validate name using robust matching
             const nameMatch = this.validateNameMatch(extractedName, studentData);
@@ -551,20 +945,31 @@ class OCRService {
             // Validate Academic Period (Year & Semester)
             const academicPeriodMatch = this.fuzzyAcademicPeriodMatch(extractedAY, extractedTerm, activePeriod);
 
-            // Check if document looks like a COR
-            const hasCORIndicators = /certificate|registration|enrollment|semester|subject|program\s+description/i.test(extractedText);
+            // Check if document looks like a COR (Expanded indicators for PUP)
+            const corKeywords = [
+                'certificate', 'registration', 'enrollment', 'semester', 'subject', 'program',
+                'polytechnic', 'university', 'philippines', 'quezon', 'branch', 'campus',
+                'description', 'units', 'load', 'assessment', 'official'
+            ];
+            const hasCORIndicators = corKeywords.some(kw => new RegExp(kw, 'i').test(extractedText));
 
             // For debugging: get normalized text that extractName sees
             const normalizedText = extractedText.replace(/\s+/g, ' ').toUpperCase();
 
             const validations = {
+                source, // Track if digital or ocr
                 studentNumberMatch,
                 nameMatch,
                 hasCORIndicators,
                 courseMatch,
                 yearMatch,
                 academicPeriodMatch,
+                studentId: studentData.studentId, // Store what user entered
+                studentFirstName: studentData.firstName,
+                studentLastName: studentData.lastName,
                 extractedStudentNumber,
+                normalizedExtracted,
+                normalizedProvided,
                 extractedName,
                 extractedCourse,
                 extractedYear,
@@ -575,23 +980,26 @@ class OCRService {
                 normalizedText: normalizedText.substring(0, 500) // For debugging name extraction
             };
 
-            // Determine if valid
-            // Require Student ID + Name + COR Indicators + Academic Period Match
-            // If Course/Year extracted, check them. If not extracted, assume okay (OCR limitation).
-            const isValid = studentNumberMatch && nameMatch && hasCORIndicators &&
-                (courseMatch !== false) && (yearMatch !== false) &&
-                (academicPeriodMatch !== false);
+            // Calculate confidence score and get mismatches
+            console.log(`${logPrefix} Calculating confidence score...`);
+            const confidenceResult = this.calculateConfidenceScore(validations);
+            console.log(`${logPrefix} Confidence score: ${confidenceResult.confidence}%, Passed: ${confidenceResult.passed}`);
+            console.log(`${logPrefix} Mismatches:`, confidenceResult.mismatches.map(m => `${m.field}: ${m.found} vs ${m.expected}`));
+            console.log(`${logPrefix} Verification result: ${confidenceResult.passed ? 'PASSED' : 'FAILED'}`);
 
             return {
-                valid: isValid,
-                confidence: isValid ? 0.95 : 0.3,
-                reason: isValid ? 'COR verified successfully' : this.getFailureReason(validations),
-                details: validations
+                valid: confidenceResult.passed,
+                confidence: confidenceResult.confidence,
+                mismatches: confidenceResult.mismatches,
+                suggestions: confidenceResult.suggestions,
+                reason: confidenceResult.passed ? 'COR verified successfully' : `COR verification failed - confidence too low (${confidenceResult.confidence}%). ${this.getFailureReason(validations)}`,
+                details: {
+                    ...validations,
+                    confidenceBreakdown: confidenceResult
+                }
             };
-
         } catch (error) {
-            console.error('COR verification error:', error);
-            console.error('Error stack:', error.stack);
+            console.error(`${logPrefix} COR verification error:`, error);
             return {
                 valid: false,
                 confidence: 0,
@@ -606,33 +1014,209 @@ class OCRService {
     }
 
     /**
+     * Calculate confidence score and identify mismatches
+     * @param {Object} validations - Validation results
+     * @returns {Object} { confidence, passed, mismatches[], suggestions[] }
+     */
+    calculateConfidenceScore(validations) {
+        const source = validations.source || 'ocr'; // Default to ocr if unknown
+        
+        // Field weights (total = 100)
+        let weights = {
+            studentId: 40,
+            name: 30,
+            corIndicators: 15,
+            academicPeriod: 10,
+            courseYear: 5
+        };
+
+        // If source is digital, we can trust the extraction more
+        // We boost the weight of anchor fields (ID/Name) for Digital docs 
+        // to reward high-fidelity digital matches
+        if (source === 'digital') {
+            weights = {
+                studentId: 45,
+                name: 35,
+                corIndicators: 10,
+                academicPeriod: 5,
+                courseYear: 5
+            };
+        }
+
+        let totalScore = 0;
+        const mismatches = [];
+        const suggestions = [];
+
+        // 1. Student Number Match (40 points) - fuzzy matching supported
+        if (validations.studentNumberMatch) {
+            totalScore += weights.studentId;
+        } else if (validations.extractedStudentNumber && validations.studentId) {
+            // Fuzzy match scoring for the confidence total
+            const normalizedExtracted = validations.extractedStudentNumber.replace(/-/g, '');
+            const normalizedProvided = validations.studentId.replace(/-/g, '');
+            
+            let matchingChars = 0;
+            const len = Math.min(normalizedExtracted.length, normalizedProvided.length);
+            for (let i = 0; i < len; i++) {
+                if (normalizedExtracted[i] === normalizedProvided[i]) matchingChars++;
+            }
+            
+            const similarity = matchingChars / Math.max(normalizedExtracted.length, normalizedProvided.length);
+            let partialScore = 0;
+            if (similarity >= 0.8) {
+                partialScore = 30; // High fuzzy match
+                suggestions.push("We found a student ID very similar to yours. Please check if there's a typo in your ID input.");
+            } else if (similarity >= 0.6) {
+                partialScore = 15; // Low fuzzy match
+            }
+            
+            totalScore += partialScore;
+            mismatches.push({
+                field: 'studentId',
+                fieldLabel: 'Student ID',
+                expected: validations.studentId,
+                found: validations.extractedStudentNumber,
+                score: partialScore,
+                maxScore: weights.studentId,
+                fuzzy: true
+            });
+        } else {
+            mismatches.push({
+                field: 'studentId',
+                fieldLabel: 'Student ID',
+                expected: validations.studentId || 'unknown',
+                found: validations.extractedStudentNumber || 'not found',
+                score: 0,
+                maxScore: weights.studentId
+            });
+        }
+
+        // 2. Name Match (30 points)
+        if (validations.nameMatch) {
+            totalScore += weights.name;
+        } else {
+            mismatches.push({
+                field: 'name',
+                fieldLabel: 'Name',
+                expected: `${validations.studentLastName}, ${validations.studentFirstName}`,
+                found: validations.extractedName || 'not found',
+                score: 0,
+                maxScore: weights.name
+            });
+        }
+
+        // 3. COR Indicators (15 points)
+        if (validations.hasCORIndicators) {
+            totalScore += weights.corIndicators;
+        } else {
+            mismatches.push({
+                field: 'corIndicators',
+                fieldLabel: 'COR Document Indicators',
+                expected: 'Certificate/Registration keywords',
+                found: 'not detected',
+                score: 0,
+                maxScore: weights.corIndicators
+            });
+        }
+
+        // 4. Academic Period (10 points)
+        if (validations.academicPeriodMatch !== false) {
+            totalScore += weights.academicPeriod;
+        } else {
+            mismatches.push({
+                field: 'academicPeriod',
+                fieldLabel: 'Academic Period',
+                expected: 'Current active period',
+                found: `${validations.extractedAY || 'unknown'} ${validations.extractedTerm || ''}`,
+                score: 0,
+                maxScore: weights.academicPeriod
+            });
+        }
+
+        // 5. Course/Year (5 points combined)
+        const courseYearMatch = (validations.courseMatch !== false) && (validations.yearMatch !== false);
+        if (courseYearMatch) {
+            totalScore += weights.courseYear;
+        } else {
+            const issues = [];
+            if (validations.courseMatch === false) issues.push(`course: ${validations.extractedCourse || 'not found'}`);
+            if (validations.yearMatch === false) issues.push(`year: ${validations.extractedYear || 'not found'}`);
+            
+            mismatches.push({
+                field: 'courseYear',
+                fieldLabel: 'Course/Year',
+                expected: 'Matches profile',
+                found: issues.join(', ') || 'mismatch',
+                score: 0,
+                maxScore: weights.courseYear
+            });
+        }
+
+        // Generate suggestions based on mismatches
+        if (mismatches.some(m => m.field === 'studentId')) {
+            suggestions.push('Upload a clearer image where your Student ID is clearly visible');
+            suggestions.push('Ensure the ID numbers are not blurry or cut off');
+        }
+        if (mismatches.some(m => m.field === 'name')) {
+            suggestions.push('Make sure your full name is visible on the COR');
+            suggestions.push('Try uploading a JPG/PNG instead of PDF for better clarity');
+        }
+        if (mismatches.some(m => m.field === 'corIndicators')) {
+            suggestions.push('Ensure you uploaded a Certificate of Registration (COR), not another document');
+        }
+        if (suggestions.length === 0) {
+            suggestions.push('Try uploading a clearer, higher-resolution image');
+            suggestions.push('Ensure the entire COR is visible and well-lit');
+        }
+
+        // Source-based confidence adjustment
+        // If digital extraction matches Student ID, we give a "Trust Boost" 
+        // because digital extract doesn't hallucinate like OCR.
+        if (source === 'digital' && validations.studentNumberMatch) {
+            totalScore = Math.min(100, totalScore + 10);
+        }
+
+        return {
+            score: totalScore,
+            maxScore: 100,
+            confidence: totalScore,
+            source: source,
+            mismatches,
+            suggestions,
+            passed: totalScore >= 70
+        };
+    }
+
+    /**
      * Get human-readable failure reason
      * @param {Object} validations - Validation results
      * @returns {string} Failure reason
      */
     getFailureReason(validations) {
         if (!validations.studentNumberMatch) {
-            return `Student ID mismatch. Found: ${validations.extractedStudentNumber || 'not found'}`;
+            const extracted = validations.extractedStudentNumber || 'Not found';
+            const provided = validations.studentId || 'Unknown';
+            return `Student ID mismatch. The OCR found "${extracted}" on the document, but you entered "${provided}". Please ensure you entered your ID exactly as it appears on your COR.`;
         }
         if (!validations.nameMatch) {
             if (!validations.extractedName) {
-                return 'Name not found in COR. Please ensure your COR is clear and readable.';
+                return 'Name not detected. Please ensure your full name is clearly visible on the COR.';
             }
-            return `Name mismatch. Found: ${validations.extractedName}. (Debug: Check server logs for details)`;
+            return `Name mismatch. We found "${validations.extractedName}" on the document, but it doesn't match your profile.`;
         }
         if (!validations.hasCORIndicators) {
-            return 'Document does not appear to be a valid Certificate of Registration';
+            return 'Document not recognized. The uploaded file does not appear to be a Ceremony/Certificate of Registration.';
         }
         if (validations.extractedCourse && validations.courseMatch === false) {
-            return `Course mismatch. Found: ${validations.extractedCourse}`;
+            return `Course mismatch. Found "${validations.extractedCourse}" but you are registered for "${validations.course || 'a different course'}".`;
         }
         if (validations.extractedYear && validations.yearMatch === false) {
-            return `Year Level mismatch. Found: ${validations.extractedYear}`;
+            return `Year Level mismatch. Found "${validations.extractedYear}" but you entered "${validations.yearLevel || 'a different year'}".`;
         }
         if (validations.academicPeriodMatch === false) {
-            return `Academic Period mismatch. Your COR is for ${validations.extractedAY || 'Unknown'} ${validations.extractedTerm || ''}, but the current active period is different.`;
+            return `Academic Period mismatch. Document is for ${validations.extractedAY || 'Unknown'} ${validations.extractedTerm || ''}, which does not match the active enrollment period.`;
         }
-        return 'Verification failed. Please check that your information matches your COR.';
+        return 'Verification failed. Please ensure the document is clear and all information matches your profile.';
     }
 
     /**
@@ -763,18 +1347,70 @@ class OCRService {
     }
 
     /**
+     * Map lookalike characters to digits (O->0, S->5, Z->2, I/L->1)
+     * Specifically for year/number contexts in OCR images.
+     */
+    mapOCRDigits(text) {
+        if (!text) return '';
+        return text.toUpperCase()
+            .replace(/[OQ]/g, '0')
+            .replace(/[S]/g, '5')
+            .replace(/[Z]/g, '2')
+            .replace(/[IL]/g, '1')
+            .replace(/[G]/g, '6')
+            .replace(/[T]/g, '7')
+            .replace(/[B]/g, '8');
+    }
+
+    /**
      * Extract academic year from COR text
      * @param {string} text - Extracted text
-     * @returns {string|null} Academic year (e.g., "2526")
+     * @returns {string|null} Academic year (e.g., "2526" or "20252026")
      */
     extractAcademicYear(text) {
-        // Look for "A.Y.:" or "Academic Year:" field
-        const ayPattern = /A\.Y\.:\s*(\d{4})/i;
-        const match = text.match(ayPattern);
+        // Robust patterns for A.Y. (supports A.Y., A. Y., Academic Year, etc.)
+        // Supports 2526, 2025-2026, 2025-26, etc.
+        const ayPatterns = [
+            /A\.?\s*Y\.?\s*:?\s*([A-Z0-9\-\/]{4,10})/i, // Standard A.Y.: label
+            /Academic\s+Year\s*:?\s*([A-Z0-9\-\/]{4,10})/i,
+            /S\.Y\.\s*:?\s*([A-Z0-9\-\/]{4,10})/i,
+            /School\s+Year\s*:?\s*([A-Z0-9\-\/]{4,10})/i
+        ];
 
-        if (match) {
-            console.log('Academic year found:', match[1]);
-            return match[1];
+        for (const pattern of ayPatterns) {
+            const match = text.match(pattern);
+            if (match) {
+                let yearStr = match[1].trim();
+                // Preserve original digits but map OCR lookalikes (e.g. 2S26 -> 2526)
+                // We keep only digits for the final normalized form
+                const normalizedDigits = this.mapOCRDigits(yearStr).replace(/[^0-9]/g, ''); 
+                
+                // If we got precisely 4 digits (e.g. 2526) or 8 digits (20252026), use it
+                if (normalizedDigits.length === 4 || normalizedDigits.length === 8) {
+                    console.log('Academic year found (robust):', normalizedDigits);
+                    return normalizedDigits;
+                }
+                
+                // If we got something else, try to find the first 4-digit or 8-digit block
+                const blocks = normalizedDigits.match(/(\d{8}|\d{4})/);
+                if (blocks) {
+                    console.log('Academic year found (block):', blocks[0]);
+                    return blocks[0];
+                }
+            }
+        }
+
+        // Generic fallback search for year-like patterns (20XX-20YY or 2526) near A.Y. keyword
+        const anchorPos = text.search(/A\.?Y\.?|Academic\s+Year/i);
+        if (anchorPos !== -1) {
+            const surrounding = text.substring(anchorPos, Math.min(text.length, anchorPos + 50));
+            const yearMatch = surrounding.match(/(\d[A-Z0-9]{3,7})/i);
+            if (yearMatch) {
+                const normalized = this.mapOCRDigits(yearMatch[1]).replace(/[^0-9]/g, '');
+                if (normalized.length === 4 || normalized.length === 8) {
+                    return normalized;
+                }
+            }
         }
 
         return null;
@@ -786,14 +1422,29 @@ class OCRService {
      * @returns {string|null} Term (e.g., "First Semester", "Second Semester")
      */
     extractTerm(text) {
-        // Look for "TERM:" field
-        const termPattern = /TERM:\s*([^\n\r]+)/i;
-        const match = text.match(termPattern);
+        // Look for "TERM:" field with variable spacing/colons
+        const termPatterns = [
+            /TERM\s*:?\s*([^\n\r]+)/i,
+            /Semester\s*:?\s*([^\n\r]+)/i
+        ];
 
-        if (match) {
-            const term = match[1].trim();
-            console.log('Term found:', term);
-            return term;
+        for (const pattern of termPatterns) {
+            const match = text.match(pattern);
+            if (match) {
+                const term = match[1].trim();
+                // Clean up any trailing labels that might have been caught
+                const cleaned = term.split(/\s+(?:COURSE|YEAR|SECTION|DATE|A\.Y)/i)[0].trim();
+                console.log('Term found (robust):', cleaned);
+                return cleaned;
+            }
+        }
+
+        // Search for keywords directly if labels failed
+        const keywords = ['First Semester', '1st Semester', 'Second Semester', '2nd Semester', 'Summer', 'Midyear'];
+        for (const kw of keywords) {
+            if (new RegExp(kw, 'i').test(text)) {
+                return kw;
+            }
         }
 
         return null;

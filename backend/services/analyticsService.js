@@ -1,340 +1,305 @@
 const pool = require('../config/db');
 
 /**
- * Analytics Service
- * Provides data analytics and insights for the LabFace system
+ * Analytics Service (Refactored)
+ * Provides real-time, accurate attendance insights derived from sessions and logs.
  */
 class AnalyticsService {
     /**
-     * Get dashboard overview statistics
+     * Get aggregate stats for a professor's dashboard
      */
-    async getOverview() {
+    async getProfessorStats(professorPk) {
         try {
-            const [totalStudents] = await pool.query(
-                'SELECT COUNT(*) as count FROM users WHERE role = "student"'
+            // 1. Get active class IDs
+            const [classes] = await pool.query(
+                'SELECT id FROM classes WHERE professor_id = ? AND (is_archived = 0 OR is_archived IS NULL)',
+                [professorPk]
+            );
+            
+            if (classes.length === 0) return { totalStudents: 0, activeClasses: 0, avgAttendance: 0, attendanceGrowth: 0 };
+            const classIds = classes.map(c => c.id);
+
+            // 2. Count unique students
+            const [enrollments] = await pool.query(
+                `SELECT COUNT(DISTINCT student_number) as count FROM enrollments WHERE class_id IN (${classIds.map(() => '?').join(',')})`,
+                classIds
             );
 
-            const [totalProfessors] = await pool.query(
-                'SELECT COUNT(*) as count FROM users WHERE role = "professor"'
-            );
-
-            const today = new Date().toISOString().split('T')[0];
-            const [attendanceToday] = await pool.query(
-                'SELECT COUNT(*) as count FROM attendance_logs WHERE DATE(timestamp) = ?',
-                [today]
-            );
-
-            const [avgAttendanceRate] = await pool.query(`
+            // 3. Calculate Average Attendance Rate
+            // (Total Present/Late/Excused / Total expected appearances in past sessions)
+            const [stats] = await pool.query(`
                 SELECT 
-                    ROUND((COUNT(DISTINCT al.student_id) / COUNT(DISTINCT u.id)) * 100, 2) as rate
-                FROM users u
-                LEFT JOIN attendance_logs al ON u.id = al.student_id AND DATE(al.timestamp) = ?
-                WHERE u.role = 'student'
-            `, [today]);
+                    COUNT(al.id) as attended_count,
+                    (
+                        SELECT SUM(student_count * session_count)
+                        FROM (
+                            SELECT 
+                                (SELECT COUNT(*) FROM enrollments e WHERE e.class_id = c.id) as student_count,
+                                (SELECT COUNT(*) FROM sessions s WHERE s.class_id = c.id AND (s.monitoring_ended_at IS NOT NULL OR s.date <= CURDATE())) as session_count
+                            FROM classes c
+                            WHERE c.id IN (${classIds.map(() => '?').join(',')})
+                        ) as class_aggregates
+                    ) as total_expected
+                FROM attendance_logs al
+                JOIN sessions s ON al.session_id = s.id
+                WHERE s.class_id IN (${classIds.map(() => '?').join(',')})
+                AND (al.status = 'Present' OR al.status = 'Late' OR al.status = 'Excused')
+            `, [...classIds, ...classIds]);
 
-            const [activeSessions] = await pool.query(
-                'SELECT COUNT(DISTINCT session_id) as count FROM attendance_logs WHERE DATE(timestamp) = ?',
-                [today]
-            );
+            const totalAttended = stats[0].attended_count || 0;
+            const totalExpected = stats[0].total_expected || 0;
+            const avgAttendance = totalExpected > 0 ? (totalAttended / totalExpected) * 100 : 0;
 
-            return {
-                totalStudents: totalStudents[0].count,
-                totalProfessors: totalProfessors[0].count,
-                attendanceToday: attendanceToday[0].count,
-                avgAttendanceRate: avgAttendanceRate[0].rate || 0,
-                activeSessions: activeSessions[0].count
-            };
-        } catch (error) {
-            console.error('Error getting overview:', error);
-            throw error;
-        }
-    }
+            // 4. Calculate Growth (This week vs Last week)
+            const [currentWeek] = await pool.query(`
+                SELECT COUNT(*) as count FROM attendance_logs al
+                JOIN sessions s ON al.session_id = s.id
+                WHERE s.class_id IN (${classIds.map(() => '?').join(',')})
+                AND al.time_in >= DATE_SUB(NOW(), INTERVAL 7 DAY)
+                AND (al.status = 'Present' OR al.status = 'Late')
+            `, classIds);
 
-    /**
-     * Get attendance trends over time
-     */
-    async getAttendanceTrends(startDate, endDate, groupBy = 'day') {
-        try {
-            let dateFormat;
-            switch (groupBy) {
-                case 'hour':
-                    dateFormat = '%Y-%m-%d %H:00:00';
-                    break;
-                case 'day':
-                    dateFormat = '%Y-%m-%d';
-                    break;
-                case 'week':
-                    dateFormat = '%Y-%u';
-                    break;
-                case 'month':
-                    dateFormat = '%Y-%m';
-                    break;
-                default:
-                    dateFormat = '%Y-%m-%d';
+            const [lastWeek] = await pool.query(`
+                SELECT COUNT(*) as count FROM attendance_logs al
+                JOIN sessions s ON al.session_id = s.id
+                WHERE s.class_id IN (${classIds.map(() => '?').join(',')})
+                AND al.time_in BETWEEN DATE_SUB(NOW(), INTERVAL 14 DAY) AND DATE_SUB(NOW(), INTERVAL 7 DAY)
+                AND (al.status = 'Present' OR al.status = 'Late')
+            `, classIds);
+
+            const currCount = currentWeek[0].count;
+            const prevCount = lastWeek[0].count;
+            let growth = 0;
+            if (prevCount > 0) {
+                growth = ((currCount - prevCount) / prevCount) * 100;
+            } else if (currCount > 0) {
+                growth = 100; // First week growth
             }
 
-            const [trends] = await pool.query(`
-                SELECT 
-                    DATE_FORMAT(timestamp, ?) as period,
-                    COUNT(*) as attendance_count,
-                    COUNT(DISTINCT student_id) as unique_students
-                FROM attendance_logs
-                WHERE DATE(timestamp) BETWEEN ? AND ?
-                GROUP BY period
-                ORDER BY period ASC
-            `, [dateFormat, startDate, endDate]);
-
-            return trends;
+            return {
+                totalStudents: enrollments[0].count,
+                activeClasses: classes.length,
+                avgAttendance: Math.round(avgAttendance * 10) / 10,
+                attendanceGrowth: Math.round(growth * 10) / 10
+            };
         } catch (error) {
-            console.error('Error getting attendance trends:', error);
+            console.error('[Analytics] Professor Stats Error:', error);
             throw error;
         }
     }
 
     /**
-     * Get course statistics
+     * Get comprehensive AI insights for a specific student
      */
-    async getCourseStatistics(startDate, endDate) {
+    async getStudentInsights(studentPk) {
+        try {
+            // 1. Get Overall Rate & Streak
+            const [logs] = await pool.query(`
+                SELECT al.status, s.date, s.start_time
+                FROM attendance_logs al
+                JOIN sessions s ON al.session_id = s.id
+                WHERE al.student_id = ?
+                ORDER BY s.date DESC, s.start_time DESC
+            `, [studentPk]);
+
+            // Calculate Streak
+            let streak = 0;
+            for (const log of logs) {
+                if (log.status === 'Present' || log.status === 'Late') {
+                    streak++;
+                } else {
+                    break;
+                }
+            }
+
+            // 2. Fetch Global Rate
+            const [summary] = await pool.query(`
+                SELECT 
+                    COUNT(DISTINCT s.id) as total_past_sessions,
+                    SUM(CASE WHEN al.status IN ('Present', 'Late', 'Excused') THEN 1 ELSE 0 END) as attended_count
+                FROM enrollments e
+                JOIN sessions s ON e.class_id = s.class_id
+                LEFT JOIN attendance_logs al ON s.id = al.session_id AND al.student_id = e.student_id
+                WHERE e.student_id = ?
+                AND (s.monitoring_ended_at IS NOT NULL OR s.date < CURDATE())
+            `, [studentPk]);
+
+            const total = summary[0].total_past_sessions || 0;
+            const attended = summary[0].attended_count || 0;
+            const rate = total > 0 ? (attended / total) * 100 : 0;
+
+            // 3. Trend (Last 5 sessions vs Previous 5)
+            const last5 = logs.slice(0, 5);
+            const prev5 = logs.slice(5, 10);
+            
+            const last5Rate = last5.length > 0 ? (last5.filter(l => ['Present', 'Late', 'Excused'].includes(l.status)).length / last5.length) * 100 : 0;
+            const prev5Rate = prev5.length > 0 ? (prev5.filter(l => ['Present', 'Late', 'Excused'].includes(l.status)).length / prev5.length) * 100 : 0;
+            
+            let trend = 'stable';
+            let trendPercentage = 0;
+            if (prev5Rate > 0) {
+                trendPercentage = Math.round(last5Rate - prev5Rate);
+                if (trendPercentage > 5) trend = 'up';
+                else if (trendPercentage < -5) trend = 'down';
+            }
+
+            // 4. Calculate Risk & Classes Needed
+            const targetRate = 75;
+            let classesNeeded = 0;
+            if (rate < targetRate && total > 0) {
+                // (attended + X) / (total + X) = 0.75
+                // attended + X = 0.75 * total + 0.75 * X
+                // 0.25 * X = 0.75 * total - attended
+                // X = (0.75 * total - attended) / 0.25
+                classesNeeded = Math.ceil((0.75 * total - attended) / 0.25);
+            }
+
+            const riskLevel = rate >= 85 ? 'low' : rate >= 75 ? 'medium' : 'high';
+
+            // 5. Monthly Data
+            const [monthly] = await pool.query(`
+                SELECT 
+                    DATE_FORMAT(s.date, '%b') as month,
+                    COUNT(DISTINCT s.id) as total,
+                    SUM(CASE WHEN al.status IN ('Present', 'Late', 'Excused') THEN 1 ELSE 0 END) as attended
+                FROM enrollments e
+                JOIN sessions s ON e.class_id = s.class_id
+                LEFT JOIN attendance_logs al ON s.id = al.session_id AND al.student_id = e.student_id
+                WHERE e.student_id = ?
+                AND s.date <= CURDATE()
+                GROUP BY month
+                ORDER BY MIN(s.date) ASC
+                LIMIT 6
+            `, [studentPk]);
+
+            const monthlyData = monthly.map(m => ({
+                month: m.month,
+                attended: parseInt(m.attended),
+                total: parseInt(m.total),
+                rate: Math.round((m.attended / m.total) * 100)
+            }));
+
+            // 6. Percentile (Rank against other students in the same classes)
+            // For simplicity, we compare their overall rate with others
+            const [classPeers] = await pool.query(`
+                SELECT 
+                    e2.student_id,
+                    COUNT(DISTINCT s.id) as total,
+                    SUM(CASE WHEN al.status IN ('Present', 'Late', 'Excused') THEN 1 ELSE 0 END) as attended
+                FROM enrollments e1
+                JOIN enrollments e2 ON e1.class_id = e2.class_id
+                JOIN sessions s ON e2.class_id = s.class_id
+                LEFT JOIN attendance_logs al ON s.id = al.session_id AND al.student_id = e2.student_id
+                WHERE e1.student_id = ?
+                AND s.date < CURDATE()
+                GROUP BY e2.student_id
+            `, [studentPk]);
+
+            const peerRates = classPeers.map(p => (p.attended / p.total) * 100).sort((a,b) => a-b);
+            const myRate = (attended / total) * 100;
+            const rank = peerRates.filter(r => r < myRate).length;
+            const percentile = peerRates.length > 0 ? Math.round((rank / peerRates.length) * 100) : 100;
+
+            // 7. Recommendations
+            const recommendations = [];
+            if (riskLevel === 'high') recommendations.push("Urgent: Your attendance is below the 75% threshold. Please attend all remaining classes.");
+            if (trend === 'down') recommendations.push("Your attendance has dropped recently. Try to maintain a consistent schedule.");
+            if (streak > 0) recommendations.push(`Awesome! You're on a ${streak}-session streak. Keep it up!`);
+            if (rate > 90) recommendations.push("Excellent work! You're one of the top performers in your class.");
+            if (classesNeeded > 0) recommendations.push(`Target: Attend at least ${classesNeeded} more consecutive classes to reach safe standing.`);
+
+            return {
+                streak,
+                trend,
+                trendPercentage: Math.abs(trendPercentage),
+                riskLevel,
+                attendanceRate: Math.round(rate),
+                percentile,
+                predictions: {
+                    passLikelihood: Math.round(rate), // Simplified for now
+                    classesNeeded
+                },
+                recommendations: recommendations.length > 0 ? recommendations : ["Maintain your current attendance to stay on track."],
+                monthlyData
+            };
+        } catch (error) {
+            console.error('[Analytics] Student Insights Error:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Get Class Health for Professor Insights
+     */
+    async getClassHealth(professorPk) {
+        try {
+            const [classes] = await pool.query(`
+                SELECT 
+                    c.id, 
+                    c.subject_code,
+                    (
+                        SELECT COUNT(al.id) 
+                        FROM attendance_logs al 
+                        JOIN sessions s ON al.session_id = s.id 
+                        WHERE s.class_id = c.id AND al.time_in >= DATE_SUB(NOW(), INTERVAL 14 DAY)
+                    ) as recent_count,
+                    (
+                        SELECT COUNT(DISTINCT e.id) FROM enrollments e WHERE e.class_id = c.id
+                    ) * (
+                        SELECT COUNT(*) FROM sessions s WHERE s.class_id = c.id AND s.date >= DATE_SUB(CURDATE(), INTERVAL 14 DAY) AND s.date <= CURDATE()
+                    ) as expected_count
+                FROM classes c
+                WHERE c.professor_id = ? AND (c.is_archived = 0 OR c.is_archived IS NULL)
+            `, [professorPk]);
+
+            return classes.map(cls => {
+                const rate = cls.expected_count > 0 ? (cls.recent_count / cls.expected_count) * 100 : 0;
+                return {
+                    id: cls.id,
+                    subjectCode: cls.subject_code,
+                    health: rate >= 85 ? 'Good' : rate >= 70 ? 'Fair' : 'Critical',
+                    rate: Math.round(rate)
+                };
+            });
+        } catch (error) {
+            console.error('[Analytics] Class Health Error:', error);
+            return [];
+        }
+    }
+
+    /**
+     * Session Optimization (Best day/time)
+     */
+    async getSessionOptimization(professorPk) {
         try {
             const [stats] = await pool.query(`
                 SELECT 
-                    c.course_code,
-                    c.course_name,
-                    COUNT(DISTINCT al.student_id) as total_students,
-                    COUNT(al.id) as total_attendance,
-                    ROUND(AVG(CASE WHEN al.status = 'present' THEN 1 ELSE 0 END) * 100, 2) as attendance_rate
-                FROM courses c
-                LEFT JOIN sessions s ON c.id = s.course_id
-                LEFT JOIN attendance_logs al ON s.id = al.session_id
-                WHERE DATE(al.timestamp) BETWEEN ? AND ?
-                GROUP BY c.id, c.course_code, c.course_name
-                ORDER BY attendance_rate DESC
-            `, [startDate, endDate]);
+                    DAYNAME(s.date) as day,
+                    AVG(attended_count / student_count * 100) as avg_rate
+                FROM sessions s
+                JOIN classes c ON s.class_id = c.id
+                JOIN (
+                    SELECT session_id, COUNT(*) as attended_count 
+                    FROM attendance_logs 
+                    WHERE status IN ('Present', 'Late') 
+                    GROUP BY session_id
+                ) al ON s.id = al.session_id
+                JOIN (
+                    SELECT class_id, COUNT(*) as student_count 
+                    FROM enrollments 
+                    GROUP BY class_id
+                ) e ON c.id = e.class_id
+                WHERE c.professor_id = ?
+                GROUP BY day
+                ORDER BY avg_rate DESC
+            `, [professorPk]);
 
-            return stats;
-        } catch (error) {
-            console.error('Error getting course statistics:', error);
-            throw error;
-        }
-    }
-
-    /**
-     * Get student insights
-     */
-    async getStudentInsights(limit = 10) {
-        try {
-            // Top performers
-            const [topPerformers] = await pool.query(`
-                SELECT 
-                    u.id,
-                    u.student_id,
-                    CONCAT(u.first_name, ' ', u.last_name) as name,
-                    COUNT(al.id) as attendance_count,
-                    ROUND(
-                        (COUNT(al.id) / NULLIF(
-                            (SELECT COUNT(DISTINCT s.id) 
-                             FROM sessions s 
-                             JOIN students st ON s.course_id = st.course_id 
-                             WHERE st.user_id = u.id),
-                        0)) * 100, 
-                    2) as attendance_rate
-                FROM users u
-                JOIN students stu ON u.id = stu.user_id
-                LEFT JOIN attendance_logs al ON u.id = al.student_id
-                WHERE u.role = 'student'
-                GROUP BY u.id
-                ORDER BY attendance_rate DESC, attendance_count DESC
-                LIMIT ?
-            `, [limit]);
-
-            // At-risk students (low attendance)
-            const [atRiskStudents] = await pool.query(`
-                SELECT 
-                    u.id,
-                    u.student_id,
-                    CONCAT(u.first_name, ' ', u.last_name) as name,
-                    COUNT(al.id) as attendance_count,
-                    ROUND(
-                        (COUNT(al.id) / NULLIF(
-                            (SELECT COUNT(DISTINCT s.id) 
-                             FROM sessions s 
-                             JOIN students st ON s.course_id = st.course_id 
-                             WHERE st.user_id = u.id),
-                        0)) * 100, 
-                    2) as attendance_rate
-                FROM users u
-                JOIN students stu ON u.id = stu.user_id
-                LEFT JOIN attendance_logs al ON u.id = al.student_id
-                WHERE u.role = 'student'
-                GROUP BY u.id
-                HAVING attendance_rate < 75
-                ORDER BY attendance_rate ASC
-                LIMIT ?
-            `, [limit]);
-
-            // Perfect attendance
-            const [perfectAttendance] = await pool.query(`
-                SELECT 
-                    u.id,
-                    u.student_id,
-                    CONCAT(u.first_name, ' ', u.last_name) as name,
-                    COUNT(al.id) as attendance_count
-                FROM users u
-                JOIN students stu ON u.id = stu.user_id
-                LEFT JOIN attendance_logs al ON u.id = al.student_id
-                WHERE u.role = 'student'
-                GROUP BY u.id
-                HAVING attendance_count = (
-                    SELECT COUNT(DISTINCT s.id) 
-                    FROM sessions s 
-                    JOIN students st ON s.course_id = st.course_id 
-                    WHERE st.user_id = u.id
-                ) AND attendance_count > 0
-            `);
-
-            return {
-                topPerformers,
-                atRiskStudents,
-                perfectAttendance
-            };
-        } catch (error) {
-            console.error('Error getting student insights:', error);
-            throw error;
-        }
-    }
-
-    /**
-     * Get system health metrics
-     */
-    async getSystemHealth() {
-        try {
-            // Face recognition accuracy (last 7 days)
-            const [faceRecognition] = await pool.query(`
-                SELECT 
-                    COUNT(*) as total_attempts,
-                    SUM(CASE WHEN confidence > 0.8 THEN 1 ELSE 0 END) as successful,
-                    ROUND(AVG(confidence) * 100, 2) as avg_confidence
-                FROM attendance_logs
-                WHERE timestamp >= DATE_SUB(NOW(), INTERVAL 7 DAY)
-            `);
-
-            // Liveness detection rate
-            const [liveness] = await pool.query(`
-                SELECT 
-                    COUNT(*) as total_checks,
-                    SUM(CASE WHEN liveness_passed = 1 THEN 1 ELSE 0 END) as passed,
-                    ROUND((SUM(CASE WHEN liveness_passed = 1 THEN 1 ELSE 0 END) / COUNT(*)) * 100, 2) as pass_rate
-                FROM attendance_logs
-                WHERE timestamp >= DATE_SUB(NOW(), INTERVAL 7 DAY)
-                AND liveness_passed IS NOT NULL
-            `);
-
-            // Sync queue status
-            const [syncQueue] = await pool.query(`
-                SELECT COUNT(*) as pending_operations
-                FROM sync_conflicts
-                WHERE resolved = FALSE
-            `);
-
-            // Recent errors
-            const [errors] = await pool.query(`
-                SELECT COUNT(*) as error_count
-                FROM system_logs
-                WHERE level = 'error'
-                AND timestamp >= DATE_SUB(NOW(), INTERVAL 24 HOUR)
-            `);
-
-            return {
-                faceRecognition: {
-                    totalAttempts: faceRecognition[0]?.total_attempts || 0,
-                    successful: faceRecognition[0]?.successful || 0,
-                    avgConfidence: faceRecognition[0]?.avg_confidence || 0
-                },
-                liveness: {
-                    totalChecks: liveness[0]?.total_checks || 0,
-                    passed: liveness[0]?.passed || 0,
-                    passRate: liveness[0]?.pass_rate || 0
-                },
-                syncQueue: {
-                    pendingOperations: syncQueue[0]?.pending_operations || 0
-                },
-                errors: {
-                    last24Hours: errors[0]?.error_count || 0
-                }
-            };
-        } catch (error) {
-            console.error('Error getting system health:', error);
-            throw error;
-        }
-    }
-
-    /**
-     * Get peak usage times
-     */
-    async getPeakUsageTimes(startDate, endDate) {
-        try {
-            const [peakTimes] = await pool.query(`
-                SELECT 
-                    HOUR(timestamp) as hour,
-                    DAYOFWEEK(timestamp) as day_of_week,
-                    COUNT(*) as attendance_count
-                FROM attendance_logs
-                WHERE DATE(timestamp) BETWEEN ? AND ?
-                GROUP BY hour, day_of_week
-                ORDER BY attendance_count DESC
-                LIMIT 10
-            `, [startDate, endDate]);
-
-            return peakTimes.map(pt => ({
-                hour: pt.hour,
-                dayOfWeek: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][pt.day_of_week - 1],
-                count: pt.attendance_count
+            return stats.map(s => ({
+                day: s.day,
+                rate: Math.round(s.avg_rate)
             }));
         } catch (error) {
-            console.error('Error getting peak usage times:', error);
-            throw error;
-        }
-    }
-
-    /**
-     * Get attendance comparison (current vs previous period)
-     */
-    async getAttendanceComparison(startDate, endDate) {
-        try {
-            const start = new Date(startDate);
-            const end = new Date(endDate);
-            const daysDiff = Math.ceil((end - start) / (1000 * 60 * 60 * 24));
-
-            const prevStart = new Date(start);
-            prevStart.setDate(prevStart.getDate() - daysDiff);
-            const prevEnd = new Date(start);
-            prevEnd.setDate(prevEnd.getDate() - 1);
-
-            const [current] = await pool.query(
-                'SELECT COUNT(*) as count FROM attendance_logs WHERE DATE(timestamp) BETWEEN ? AND ?',
-                [startDate, endDate]
-            );
-
-            const [previous] = await pool.query(
-                'SELECT COUNT(*) as count FROM attendance_logs WHERE DATE(timestamp) BETWEEN ? AND ?',
-                [prevStart.toISOString().split('T')[0], prevEnd.toISOString().split('T')[0]]
-            );
-
-            const currentCount = current[0].count;
-            const previousCount = previous[0].count;
-            const change = previousCount > 0
-                ? ((currentCount - previousCount) / previousCount) * 100
-                : 0;
-
-            return {
-                current: currentCount,
-                previous: previousCount,
-                change: Math.round(change * 100) / 100,
-                trend: change > 0 ? 'up' : change < 0 ? 'down' : 'stable'
-            };
-        } catch (error) {
-            console.error('Error getting attendance comparison:', error);
-            throw error;
+            return [];
         }
     }
 }

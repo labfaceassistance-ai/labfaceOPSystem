@@ -270,5 +270,52 @@ module.exports = {
      */
     getObjectStream: async (bucket, objectName) => {
         return await minioClient.getObject(bucket, objectName);
+    },
+
+    /**
+     * Get an object from MinIO as a Buffer
+     */
+    getObjectBuffer: async (bucket, objectName) => {
+        const stream = await minioClient.getObject(bucket, objectName);
+        return new Promise((resolve, reject) => {
+            const chunks = [];
+            stream.on('data', chunk => chunks.push(chunk));
+            stream.on('error', reject);
+            stream.on('end', () => resolve(Buffer.concat(chunks)));
+        });
+    },
+
+    /**
+     * Get an object from MinIO as a Base64 string
+     */
+    getObjectAsBase64: async (url) => {
+        if (!url) return null;
+        try {
+            // Parse bucket and objectName from URL (e.g. /api/minio/labface-profiles/student123/cor.jpg)
+            let cleanUrl = url.split('?')[0];
+            if (cleanUrl.startsWith('/api/minio/')) cleanUrl = cleanUrl.substring(11);
+            else if (cleanUrl.startsWith('/minio/')) cleanUrl = cleanUrl.substring(7);
+
+            const parts = cleanUrl.split('/');
+            const bucket = parts[0];
+            const objectName = parts.slice(1).join('/');
+
+            const stream = await minioClient.getObject(bucket, objectName);
+            const chunks = [];
+            
+            return new Promise((resolve, reject) => {
+                stream.on('data', chunk => chunks.push(chunk));
+                stream.on('error', reject);
+                stream.on('end', () => {
+                    const buffer = Buffer.concat(chunks);
+                    const ext = objectName.split('.').pop().toLowerCase();
+                    const mime = ext === 'pdf' ? 'application/pdf' : 'image/jpeg';
+                    resolve(`data:${mime};base64,${buffer.toString('base64')}`);
+                });
+            });
+        } catch (error) {
+            console.error('[MinIO] Get Base64 error:', error);
+            return null;
+        }
     }
 };

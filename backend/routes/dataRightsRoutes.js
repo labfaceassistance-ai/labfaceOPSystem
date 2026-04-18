@@ -90,8 +90,8 @@ router.post('/export', authenticateToken, async (req, res) => {
         // Remove sensitive fields from export
         const user = userData[0];
         delete user.password_hash;
-        delete user.facenet_embedding;
-        delete user.facenet_embedding_encrypted;
+        delete user.face_embeddings;
+        delete user.facenet_embedding_encrypted; // Clean up old reference if exists
 
         const exportData = {
             export_info: {
@@ -298,19 +298,72 @@ router.post('/process-deletion', authenticateToken, async (req, res) => {
         }
 
         const status = action === 'approve' ? 'approved' : 'rejected';
+        
+        let connection;
+        try {
+            connection = await pool.getConnection();
+            await connection.beginTransaction();
 
-        await pool.query(`
-            UPDATE deletion_requests 
-            SET status = ?, processed_at = NOW(), processed_by = ?, notes = ?
-            WHERE id = ?
-        `, [status, adminId, notes, requestId]);
+            if (action === 'approve') {
+                // 1. Get the student/user ID from the request
+                const [requestRows] = await connection.query(
+                    'SELECT user_id FROM deletion_requests WHERE id = ?',
+                    [requestId]
+                );
 
-        res.json({
-            success: true,
-            message: `Deletion request ${status}`,
-            requestId,
-            action: status
-        });
+                if (requestRows.length > 0) {
+                    const stringUserId = requestRows[0].user_id;
+
+                    // 2. Identify numeric ID and check for existence
+                    const [userRows] = await connection.query(
+                        'SELECT id FROM users WHERE user_id = ?',
+                        [stringUserId]
+                    );
+
+                    if (userRows.length > 0) {
+                        const numericId = userRows[0].id;
+
+                        // 3. Execution Deletion
+                        // Database foreign keys (CASCADE) will handle face_photos, students, notifications, warnings, verification_logs, etc.
+                        // attendance_logs will be set to NULL (anonymized) via FK rule.
+                        await connection.query('DELETE FROM users WHERE id = ?', [numericId]);
+                        console.log(`[Data Rights] Successfully deleted user data for student ID: ${stringUserId} (Internal ID: ${numericId})`);
+                    } else {
+                        console.warn(`[Data Rights] User record for ${stringUserId} already gone or not found. Completing request anyway.`);
+                    }
+                }
+                
+                // Set status to 'completed' if approved and processed
+                await connection.query(`
+                    UPDATE deletion_requests 
+                    SET status = 'completed', processed_at = NOW(), processed_by = ?, notes = ?
+                    WHERE id = ?
+                `, [adminId, notes, requestId]);
+
+            } else {
+                // For rejection, just update the status
+                await connection.query(`
+                    UPDATE deletion_requests 
+                    SET status = ?, processed_at = NOW(), processed_by = ?, notes = ?
+                    WHERE id = ?
+                `, [status, adminId, notes, requestId]);
+            }
+
+            await connection.commit();
+
+            res.json({
+                success: true,
+                message: `Deletion request ${action === 'approve' ? 'completed' : 'rejected'}`,
+                requestId,
+                action: status
+            });
+
+        } catch (dbError) {
+            if (connection) await connection.rollback();
+            throw dbError;
+        } finally {
+            if (connection) connection.release();
+        }
 
     } catch (error) {
         console.error('Process deletion error:', error);

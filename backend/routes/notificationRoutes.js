@@ -101,17 +101,41 @@ router.delete('/:id/delete', async (req, res) => {
 
 
 
-// Create Notification
-router.post('/', async (req, res) => {
-    const { userId, title, message, type, category } = req.body;
+// Sync/Backfill Notifications (Special endpoint for existing data)
+router.post('/sync/:userId', async (req, res) => {
+    const { userId } = req.params;
     try {
-        await pool.query(
-            'INSERT INTO notifications (user_id, title, message, type, category) VALUES (?, ?, ?, ?, ?)',
-            [userId, title, message, type || 'info', category || 'system']
-        );
-        res.status(201).json({ message: 'Notification created' });
+        // 1. Get all classes the student is enrolled in
+        const [enrollments] = await pool.query(`
+            SELECT c.id as class_id, c.subject_name 
+            FROM enrollments e
+            JOIN classes c ON e.class_id = c.id
+            WHERE e.student_id = ?
+        `, [userId]);
+
+        let createdCount = 0;
+
+        for (const env of enrollments) {
+            // 2. Check if a notification already exists for this specific enrollment
+            // We search for the class name in the message to avoid duplicates
+            const [existing] = await pool.query(
+                `SELECT id FROM notifications WHERE user_id = ? AND category = 'class' AND message LIKE ?`,
+                [userId, `%${env.subject_name}%`]
+            );
+
+            if (existing.length === 0) {
+                // 3. Create a backfill notification
+                await pool.query(
+                    'INSERT INTO notifications (user_id, title, message, type, category) VALUES (?, ?, ?, ?, ?)',
+                    [userId, 'Class Enrollment Found', `You are currently enrolled in ${env.subject_name}.`, 'success', 'class']
+                );
+                createdCount++;
+            }
+        }
+
+        res.json({ message: `Sync complete. Created ${createdCount} missing notifications.`, count: createdCount });
     } catch (err) {
-        console.error("Error creating notification:", err);
+        console.error("Error syncing notifications:", err);
         res.status(500).json({ error: err.message });
     }
 });

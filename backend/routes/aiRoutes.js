@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const aiService = require('../services/aiService');
+const analyticsService = require('../services/analyticsService');
 const { authenticateToken, requireRole } = require('../middleware/auth');
 
 /**
@@ -47,13 +48,13 @@ router.post('/predict/success', authenticateToken, async (req, res) => {
  */
 router.post('/predict/attendance', authenticateToken, requireRole(['admin', 'professor']), async (req, res) => {
     try {
-        const { courseId, daysAhead = 7 } = req.body;
+        const { classId, daysAhead = 7 } = req.body;
 
-        if (!courseId) {
-            return res.status(400).json({ error: 'courseId is required' });
+        if (!classId) {
+            return res.status(400).json({ error: 'classId is required' });
         }
 
-        const forecast = await aiService.forecastAttendance(courseId, daysAhead);
+        const forecast = await aiService.forecastAttendance(classId, daysAhead);
         res.json(forecast);
     } catch (error) {
         console.error('Error forecasting attendance:', error);
@@ -158,7 +159,7 @@ router.post('/emotion/classroom-mood', authenticateToken, requireRole(['admin', 
 
 /**
  * GET /api/ai/student-insights/:studentId
- * Get comprehensive AI insights for a student
+ * Get comprehensive AI insights for a student (Refactored to be real and helpful)
  */
 router.get('/student-insights/:studentId', authenticateToken, async (req, res) => {
     try {
@@ -171,19 +172,36 @@ router.get('/student-insights/:studentId', authenticateToken, async (req, res) =
             return res.status(403).json({ error: 'Unauthorized' });
         }
 
-        // Get all AI insights
-        const [prediction, risk] = await Promise.all([
-            aiService.predictStudentSuccess(studentId),
-            aiService.calculateRiskScore(studentId)
-        ]);
-
-        res.json({
-            success_prediction: prediction,
-            risk_assessment: risk
-        });
+        // Get meaningful insights from the analytics service
+        const insights = await analyticsService.getStudentInsights(studentId);
+        
+        res.json(insights);
     } catch (error) {
         console.error('Error getting student insights:', error);
         res.status(500).json({ error: 'Failed to get student insights' });
+    }
+});
+
+/**
+ * GET /api/ai/professor-insights
+ * Get meaningful AI insights for a professor
+ */
+router.get('/professor-insights', authenticateToken, requireRole(['professor', 'admin']), async (req, res) => {
+    try {
+        const profPk = req.user.id;
+        
+        const [health, optimization] = await Promise.all([
+            analyticsService.getClassHealth(profPk),
+            analyticsService.getSessionOptimization(profPk)
+        ]);
+
+        res.json({
+            classHealth: health,
+            optimization: optimization
+        });
+    } catch (error) {
+        console.error('Error getting professor insights:', error);
+        res.status(500).json({ error: 'Failed to get professor insights' });
     }
 });
 // ==========================================

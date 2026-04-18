@@ -16,12 +16,12 @@ export default function HomeTab({ user, dashboardData, error }: HomeTabProps) {
     return (
         <>
             {/* Welcome Header */}
-            <div className="bg-slate-900/50 rounded-2xl shadow-sm border border-slate-800 backdrop-blur-sm p-8 mb-8 flex flex-col md:flex-row items-center justify-between">
+            <div className="bg-white/5 rounded-2xl shadow-sm border border-white/10 backdrop-blur-sm p-8 mb-8 flex flex-col md:flex-row items-center justify-between">
                 <div className="text-center md:text-left">
                     <h1 className="text-3xl font-bold text-white">Welcome back, {user.firstName}!</h1>
-                    <p className="text-slate-400 mt-2">Here's what's happening with your classes today.</p>
+                    <p className="text-brand-cream/60 mt-2 font-medium tracking-wide">Here's what's happening with your classes today.</p>
                 </div>
-                <div className="mt-4 md:mt-0 flex items-center gap-4 bg-brand-500/10 px-6 py-3 rounded-xl border border-brand-500/20">
+                <div className="mt-4 md:mt-0 flex items-center gap-4 bg-yellow-500/10 px-6 py-3 rounded-xl border border-yellow-500/20">
                     <div className="text-right">
                         <div className="text-sm font-bold text-white">{new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</div>
                         <div className="flex items-center justify-end gap-1.5 mt-1">
@@ -37,28 +37,28 @@ export default function HomeTab({ user, dashboardData, error }: HomeTabProps) {
                                     return (
                                         <>
                                             <PartyPopper size={14} className="text-purple-400" />
-                                            <span className="text-xs font-semibold text-purple-400">Holiday</span>
+                                            <span className="text-xs font-bold text-purple-400 uppercase tracking-wider">Holiday</span>
                                         </>
                                     );
                                 } else if (dayOfWeek === 0 || dayOfWeek === 6) {
                                     return (
                                         <>
-                                            <Coffee size={14} className="text-amber-400" />
-                                            <span className="text-xs font-semibold text-amber-400">Weekend</span>
+                                            <Coffee size={14} className="text-yellow-400" />
+                                            <span className="text-xs font-bold text-yellow-400 uppercase tracking-wider">Weekend</span>
                                         </>
                                     );
                                 } else {
                                     return (
                                         <>
-                                            <Briefcase size={14} className="text-brand-400" />
-                                            <span className="text-xs font-semibold text-brand-400">Weekday</span>
+                                            <Briefcase size={14} className="text-yellow-500" />
+                                            <span className="text-xs font-bold text-yellow-500 uppercase tracking-wider">Weekday</span>
                                         </>
                                     );
                                 }
                             })()}
                         </div>
                     </div>
-                    <Calendar className="text-brand-400" size={24} />
+                    <Calendar className="text-yellow-500" size={24} />
                 </div>
             </div>
 
@@ -68,19 +68,19 @@ export default function HomeTab({ user, dashboardData, error }: HomeTabProps) {
                     {/* Quick Stats */}
                     <div className="grid grid-cols-2 gap-4">
                         {/* Attendance Rate - Hero Stat */}
-                        <div className="col-span-2 bg-gradient-to-br from-slate-900 to-slate-800 p-6 rounded-2xl shadow-lg border border-slate-700 relative overflow-hidden group">
+                        <div className="col-span-2 bg-gradient-to-br from-white/10 to-white/5 p-6 rounded-2xl shadow-lg border border-white/10 relative overflow-hidden group">
                             <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 group-hover:bg-emerald-500/20 transition-colors"></div>
                             <div className="relative z-10 flex items-center justify-between">
                                 <div>
                                     <div className="text-4xl font-bold text-white mb-1">{dashboardData?.stats?.attendanceRate || 0}%</div>
-                                    <div className="text-sm text-slate-400 font-medium">Attendance Rate</div>
+                                    <div className="text-[11px] text-brand-cream/60 font-bold uppercase tracking-widest">Attendance Rate</div>
                                 </div>
                                 <div className="w-12 h-12 bg-emerald-500/10 rounded-xl flex items-center justify-center text-emerald-400 border border-emerald-500/20 group-hover:scale-110 transition-transform">
                                     <TrendingUp size={24} />
                                 </div>
                             </div>
                             {/* Progress Bar */}
-                            <div className="mt-4 h-2 w-full bg-slate-700/50 rounded-full overflow-hidden">
+                            <div className="mt-4 h-2 w-full bg-black/20 rounded-full overflow-hidden">
                                 <div
                                     className="h-full bg-emerald-500 rounded-full transition-all duration-1000 ease-out"
                                     style={{ width: `${dashboardData?.stats?.attendanceRate || 0}%` }}
@@ -89,33 +89,33 @@ export default function HomeTab({ user, dashboardData, error }: HomeTabProps) {
                         </div>
 
                         {/* Status Grid */}
-                        <div className="bg-slate-900/50 p-4 rounded-2xl shadow-sm border border-slate-800 backdrop-blur-sm hover:border-emerald-500/30 transition-colors group">
+                        <div className="bg-white/5 p-4 rounded-2xl shadow-sm border border-white/5 backdrop-blur-sm hover:border-emerald-500/30 transition-colors group">
                             <div className="flex items-start justify-between mb-2">
-                                <div className="text-xs text-slate-400">Present</div>
+                                <div className="text-[10px] font-bold text-brand-cream/50 uppercase tracking-widest">Present</div>
                                 <UserIcon size={16} className="text-emerald-400/70 group-hover:text-emerald-400 transition-colors" />
                             </div>
                             <div className="text-2xl font-bold text-white">{dashboardData?.stats?.present || 0}</div>
                         </div>
 
-                        <div className="bg-slate-900/50 p-4 rounded-2xl shadow-sm border border-slate-800 backdrop-blur-sm hover:border-orange-500/30 transition-colors group">
+                        <div className="bg-white/5 p-4 rounded-2xl shadow-sm border border-white/5 backdrop-blur-sm hover:border-orange-500/30 transition-colors group">
                             <div className="flex items-start justify-between mb-2">
-                                <div className="text-xs text-slate-400">Late</div>
+                                <div className="text-[10px] font-bold text-brand-cream/50 uppercase tracking-widest">Late</div>
                                 <Clock size={16} className="text-orange-400/70 group-hover:text-orange-400 transition-colors" />
                             </div>
                             <div className="text-2xl font-bold text-white">{dashboardData?.stats?.late || 0}</div>
                         </div>
 
-                        <div className="bg-slate-900/50 p-4 rounded-2xl shadow-sm border border-slate-800 backdrop-blur-sm hover:border-blue-500/30 transition-colors group">
+                        <div className="bg-white/5 p-4 rounded-2xl shadow-sm border border-white/5 backdrop-blur-sm hover:border-blue-500/30 transition-colors group">
                             <div className="flex items-start justify-between mb-2">
-                                <div className="text-xs text-slate-400">Excused</div>
+                                <div className="text-[10px] font-bold text-brand-cream/50 uppercase tracking-widest">Excused</div>
                                 <AlertCircle size={16} className="text-blue-400/70 group-hover:text-blue-400 transition-colors" />
                             </div>
                             <div className="text-2xl font-bold text-white">{dashboardData?.stats?.excused || 0}</div>
                         </div>
 
-                        <div className="bg-slate-900/50 p-4 rounded-2xl shadow-sm border border-slate-800 backdrop-blur-sm hover:border-red-500/30 transition-colors group">
+                        <div className="bg-white/5 p-4 rounded-2xl shadow-sm border border-white/5 backdrop-blur-sm hover:border-red-500/30 transition-colors group">
                             <div className="flex items-start justify-between mb-2">
-                                <div className="text-xs text-slate-400">Absences</div>
+                                <div className="text-[10px] font-bold text-brand-cream/50 uppercase tracking-widest">Absences</div>
                                 <XCircle size={16} className="text-red-400/70 group-hover:text-red-400 transition-colors" />
                             </div>
                             <div className="text-2xl font-bold text-white">{dashboardData?.stats?.absences || 0}</div>
@@ -126,36 +126,36 @@ export default function HomeTab({ user, dashboardData, error }: HomeTabProps) {
                 {/* Right Column - Schedule & Recent Activity */}
                 <div className="lg:col-span-2 space-y-8">
                     {/* Next Class */}
-                    <div className="bg-brand-900 rounded-2xl shadow-lg p-8 text-white relative overflow-hidden">
-                        <div className="absolute top-0 right-0 w-64 h-64 bg-brand-800 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 opacity-50"></div>
+                    <div className="bg-background rounded-2xl shadow-lg p-8 text-primary relative overflow-hidden border border-background">
+                        <div className="absolute top-0 right-0 w-64 h-64 bg-white/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 opacity-50"></div>
                         <div className="relative z-10">
-                            <div className="flex items-center gap-2 text-brand-300 mb-4 text-sm font-bold uppercase tracking-wider">
+                            <div className="flex items-center gap-2 text-primary/70 mb-4 text-[10px] font-black uppercase tracking-[0.3em]">
                                 <Clock size={16} /> Next Class
                             </div>
                             {dashboardData?.nextClass ? (
                                 <>
                                     <div className="flex justify-between items-start mb-2">
-                                        <h2 className="text-3xl font-bold">{dashboardData.nextClass.subject}</h2>
+                                        <h2 className="text-3xl font-black text-primary tracking-tight">{dashboardData.nextClass.subject}</h2>
                                         {dashboardData.nextClass.type && dashboardData.nextClass.type.toLowerCase().includes('makeup') && (
-                                            <span className="bg-amber-500/20 text-amber-300 border border-amber-500/30 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
+                                            <span className="bg-amber-500/20 text-amber-700 border border-amber-500/30 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-[0.2em]">
                                                 Make-up Class
                                             </span>
                                         )}
                                     </div>
-                                    <p className="text-brand-200 text-lg mb-6">{dashboardData.nextClass.professor} • {dashboardData.nextClass.room}</p>
+                                    <p className="text-primary/70 font-bold text-sm mb-6 uppercase tracking-wider">{dashboardData.nextClass.professor} • {dashboardData.nextClass.room}</p>
 
                                     <div className="flex flex-wrap items-center gap-3">
-                                        <div className="bg-white/10 backdrop-blur-md px-4 py-2 rounded-lg border border-white/20">
-                                            <span className="block text-xs text-brand-300">Date</span>
-                                            <span className="font-bold">{dashboardData.nextClass.date || 'Today'}</span>
+                                        <div className="bg-primary/5 backdrop-blur-md px-4 py-2 rounded-lg border border-primary/10">
+                                            <span className="block text-[9px] font-black uppercase tracking-widest text-primary/50">Date</span>
+                                            <span className="font-black text-primary mt-0.5 block tracking-wide">{dashboardData.nextClass.date || 'Today'}</span>
                                         </div>
-                                        <div className="bg-white/10 backdrop-blur-md px-4 py-2 rounded-lg border border-white/20">
-                                            <span className="block text-xs text-brand-300">Time</span>
-                                            <span className="font-bold">{dashboardData.nextClass.time}</span>
+                                        <div className="bg-primary/5 backdrop-blur-md px-4 py-2 rounded-lg border border-primary/10">
+                                            <span className="block text-[9px] font-black uppercase tracking-widest text-primary/50">Time</span>
+                                            <span className="font-black text-primary mt-0.5 block tracking-wide">{dashboardData.nextClass.time}</span>
                                         </div>
-                                        <div className={`bg-white/10 backdrop-blur-md px-4 py-2 rounded-lg border border-white/20 ${dashboardData.nextClass.status === 'Cancelled' ? 'bg-red-500/20 border-red-500/30' : ''}`}>
-                                            <span className="block text-xs text-brand-300">Status</span>
-                                            <span className={`font-bold ${dashboardData.nextClass.status === 'Cancelled' ? 'text-red-300' : 'text-green-400'}`}>
+                                        <div className={`bg-primary/5 backdrop-blur-md px-4 py-2 rounded-lg border border-primary/10 ${dashboardData.nextClass.status === 'Cancelled' ? 'bg-red-500/10 border-red-500/20' : ''}`}>
+                                            <span className="block text-[9px] font-black uppercase tracking-widest text-primary/50">Status</span>
+                                            <span className={`font-black mt-0.5 block tracking-wide ${dashboardData.nextClass.status === 'Cancelled' ? 'text-red-600' : 'text-emerald-700'}`}>
                                                 {dashboardData.nextClass.status}
                                             </span>
                                         </div>
@@ -163,27 +163,25 @@ export default function HomeTab({ user, dashboardData, error }: HomeTabProps) {
 
                                     {dashboardData.nextClass.reason && (
                                         <div className="mt-4 bg-red-500/10 border border-red-500/20 rounded-lg p-3">
-                                            <p className="text-xs text-red-300 uppercase font-bold mb-1">Cancellation Reason</p>
-                                            <p className="text-white text-sm">{dashboardData.nextClass.reason}</p>
+                                            <p className="text-[9px] text-red-600 uppercase font-black tracking-widest mb-1">Cancellation Reason</p>
+                                            <p className="text-primary font-medium text-xs">{dashboardData.nextClass.reason}</p>
                                         </div>
                                     )}
                                 </>
                             ) : (
-                                <div className="text-brand-200">
-                                    <h2 className="text-2xl font-bold mb-2">No classes scheduled</h2>
-                                    <p>You have no upcoming classes for today.</p>
+                                <div className="text-primary/70">
+                                    <h2 className="text-2xl font-black mb-2 tracking-tight">No classes scheduled</h2>
+                                    <p className="text-sm font-medium">You have no upcoming classes for today.</p>
                                 </div>
                             )}
                         </div>
                     </div>
 
-                    {/* Active Classes List (Restoring the breakdown or recent activity) */}
-                    {/* The original had 'Classes Attendance Breakdown' and 'Recent Attendance' */}
-                    {/* I will restore 'Classes Attendance Breakdown' */}
+                    {/* Active Classes List */}
                     {dashboardData?.classesSummary && dashboardData.classesSummary.length > 0 && (
-                        <div className="bg-slate-900/50 rounded-2xl shadow-sm border border-slate-800 backdrop-blur-sm p-6">
-                            <h3 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
-                                <TrendingUp size={20} className="text-brand-400" /> Overall Attendance
+                        <div className="bg-white/5 rounded-2xl shadow-sm border border-white/10 backdrop-blur-sm p-6">
+                            <h3 className="text-lg font-black tracking-tight text-white mb-6 flex items-center gap-2">
+                                <TrendingUp size={20} className="text-yellow-500" /> Overall Attendance
                             </h3>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 {(() => {
@@ -208,13 +206,13 @@ export default function HomeTab({ user, dashboardData, error }: HomeTabProps) {
                                                 key={cls.id}
                                                 className="block h-full group relative z-10 cursor-pointer"
                                             >
-                                                <div className="p-5 bg-slate-800/40 hover:bg-slate-800 border border-slate-700 hover:border-brand-500/50 rounded-xl transition-all relative overflow-hidden h-full">
+                                                <div className="p-5 bg-black/10 hover:bg-black/20 border border-white/5 hover:border-yellow-500/50 rounded-xl transition-all relative overflow-hidden h-full shadow-inner">
 
                                                     {/* Badge for Highest/Lowest */}
                                                     {(isHighest || isLowest) && (
-                                                        <div className={`absolute top-0 right-0 px-2 py-1 text-[10px] font-bold uppercase rounded-bl-lg border-b border-l ${isHighest
-                                                            ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
-                                                            : 'bg-red-500/20 text-red-400 border-red-500/30'
+                                                        <div className={`absolute top-0 right-0 px-2 py-1 text-[8px] font-black uppercase rounded-bl-lg border-b border-l tracking-widest ${isHighest
+                                                            ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                                                            : 'bg-red-500/10 text-red-400 border-red-500/20'
                                                             }`}>
                                                             {isHighest ? 'Highest Rate' : 'Lowest Rate'}
                                                         </div>
@@ -223,17 +221,17 @@ export default function HomeTab({ user, dashboardData, error }: HomeTabProps) {
                                                     <div className="flex justify-between items-start mb-4">
                                                         <div>
                                                             <div className="flex items-center gap-2 mb-1">
-                                                                <span className="bg-slate-700/50 text-slate-300 text-[10px] font-bold px-2 py-0.5 rounded border border-slate-600">
+                                                                <span className="bg-black/30 text-brand-cream/80 text-[9px] font-black tracking-widest uppercase px-2 py-0.5 rounded border border-white/10">
                                                                     {cls.subjectCode}
                                                                 </span>
-                                                                <ChevronLeft size={14} className="rotate-180 text-slate-500 group-hover:text-brand-400 transition-colors opacity-0 group-hover:opacity-100" />
+                                                                <ChevronLeft size={14} className="rotate-180 text-brand-cream/30 group-hover:text-yellow-500 transition-colors opacity-0 group-hover:opacity-100" />
                                                             </div>
-                                                            <h4 className="font-bold text-white group-hover:text-brand-300 transition-colors text-sm md:text-base pr-8">
+                                                            <h4 className="font-bold text-white group-hover:text-yellow-400 transition-colors text-sm md:text-base pr-8">
                                                                 {cls.subjectName}
                                                             </h4>
                                                         </div>
                                                         <div className="text-right pt-6">
-                                                            <div className={`text-2xl font-bold ${cls.attendanceRate >= 90 ? 'text-emerald-400' :
+                                                            <div className={`text-2xl font-black ${cls.attendanceRate >= 90 ? 'text-emerald-400' :
                                                                 cls.attendanceRate >= 75 ? 'text-amber-400' :
                                                                     'text-red-400'
                                                                 }`}>
@@ -243,7 +241,7 @@ export default function HomeTab({ user, dashboardData, error }: HomeTabProps) {
                                                     </div>
 
                                                     {/* Progress Bar */}
-                                                    <div className="h-2 w-full bg-slate-700/50 rounded-full overflow-hidden mb-4">
+                                                    <div className="h-2 w-full bg-black/30 rounded-full overflow-hidden mb-4">
                                                         <div
                                                             className={`h-full rounded-full transition-all duration-500 ${cls.attendanceRate >= 90 ? 'bg-gradient-to-r from-emerald-500 to-emerald-400' :
                                                                 cls.attendanceRate >= 75 ? 'bg-gradient-to-r from-amber-500 to-amber-400' :
@@ -254,21 +252,21 @@ export default function HomeTab({ user, dashboardData, error }: HomeTabProps) {
                                                     </div>
 
                                                     <div className="grid grid-cols-4 gap-2 text-center text-xs">
-                                                        <div className="bg-slate-900/50 rounded py-1.5 border border-slate-700/50">
+                                                        <div className="bg-black/20 rounded py-1.5 border border-white/5">
                                                             <span className="block text-emerald-400 font-bold">{cls.present}</span>
-                                                            <span className="text-slate-500 text-[10px]">Pres</span>
+                                                            <span className="text-brand-cream/40 text-[9px] font-bold uppercase tracking-widest">Pres</span>
                                                         </div>
-                                                        <div className="bg-slate-900/50 rounded py-1.5 border border-slate-700/50">
+                                                        <div className="bg-black/20 rounded py-1.5 border border-white/5">
                                                             <span className="block text-orange-400 font-bold">{cls.late}</span>
-                                                            <span className="text-slate-500 text-[10px]">Late</span>
+                                                            <span className="text-brand-cream/40 text-[9px] font-bold uppercase tracking-widest">Late</span>
                                                         </div>
-                                                        <div className="bg-slate-900/50 rounded py-1.5 border border-slate-700/50">
+                                                        <div className="bg-black/20 rounded py-1.5 border border-white/5">
                                                             <span className="block text-blue-400 font-bold">{cls.excused}</span>
-                                                            <span className="text-slate-500 text-[10px]">Exc</span>
+                                                            <span className="text-brand-cream/40 text-[9px] font-bold uppercase tracking-widest">Exc</span>
                                                         </div>
-                                                        <div className="bg-slate-900/50 rounded py-1.5 border border-slate-700/50">
+                                                        <div className="bg-black/20 rounded py-1.5 border border-white/5">
                                                             <span className="block text-red-400 font-bold">{cls.absent}</span>
-                                                            <span className="text-slate-500 text-[10px]">Abs</span>
+                                                            <span className="text-brand-cream/40 text-[9px] font-bold uppercase tracking-widest">Abs</span>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -281,9 +279,9 @@ export default function HomeTab({ user, dashboardData, error }: HomeTabProps) {
                     )}
 
                     {/* Recent Activity */}
-                    <div className="bg-slate-900/50 rounded-2xl shadow-sm border border-slate-800 backdrop-blur-sm p-6">
-                        <h3 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
-                            <BookOpen size={20} className="text-brand-400" /> Recent Attendance
+                    <div className="bg-white/5 rounded-2xl shadow-sm border border-white/10 backdrop-blur-sm p-6">
+                        <h3 className="text-lg font-black tracking-tight text-white mb-6 flex items-center gap-2">
+                            <BookOpen size={20} className="text-yellow-500" /> Recent Attendance
                         </h3>
                         {/* ... recent activity list ... */}
                         <div className="space-y-4">
@@ -295,23 +293,23 @@ export default function HomeTab({ user, dashboardData, error }: HomeTabProps) {
                                 </div>
                             ) : dashboardData?.recentActivities && dashboardData.recentActivities.length > 0 ? (
                                 dashboardData.recentActivities.map((item: any, i: number) => (
-                                    <div key={i} className="flex items-center justify-between p-4 hover:bg-slate-800/50 rounded-xl transition-colors border border-slate-800">
+                                    <div key={i} className="flex items-center justify-between p-4 hover:bg-white/5 rounded-xl transition-colors border border-white/5 shadow-sm">
                                         <div className="flex items-center gap-4">
-                                            <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-slate-300 font-bold">
+                                            <div className="w-10 h-10 rounded-full bg-black/20 flex items-center justify-center text-brand-cream/80 font-black border border-white/5">
                                                 {item.subject[0]}
                                             </div>
                                             <div>
-                                                <div className="font-bold text-white">{item.subject}</div>
-                                                <div className="text-xs text-slate-400">{item.date}</div>
+                                                <div className="font-bold text-white text-sm tracking-wide">{item.subject}</div>
+                                                <div className="text-[10px] font-bold uppercase tracking-widest text-brand-cream/50 mt-0.5">{item.date}</div>
                                             </div>
                                         </div>
-                                        <span className={`px-4 py-1.5 rounded-full text-xs font-bold ${item.color}`}>
+                                        <span className={`px-4 py-1.5 rounded-full text-[10px] font-black tracking-widest uppercase ${item.color}`}>
                                             {item.status}
                                         </span>
                                     </div>
                                 ))
                             ) : (
-                                <div className="text-center py-8 text-slate-400">
+                                <div className="text-center py-8 text-brand-cream/50 font-medium text-sm">
                                     No recent attendance records found.
                                 </div>
                             )}

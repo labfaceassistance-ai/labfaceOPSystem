@@ -56,9 +56,8 @@ TEST_MODE = os.getenv("TEST_MODE", "false").lower() == "true"  # Enable test pat
 print(f"🔧 DEBUG: TEST_MODE env var = '{os.getenv('TEST_MODE', 'NOT_SET')}'")
 print(f"🔧 DEBUG: TEST_MODE enabled = {TEST_MODE}")
 RTSP_URL_1 = os.getenv("RTSP_URL_1", "")
-RTSP_URL_2 = os.getenv("RTSP_URL_2", "")
-if not RTSP_URL_1 or not RTSP_URL_2:
-    print("⚠️  WARNING: RTSP_URL_1 / RTSP_URL_2 not set in environment. Cameras will not connect.")
+if not RTSP_URL_1:
+    print("⚠️  WARNING: RTSP_URL_1 not set in environment. Camera will not connect.")
 
 BACKEND_URL = os.getenv("BACKEND_URL", "http://backend:5000")
 DB_HOST = os.getenv("DB_HOST", "mariadb")
@@ -67,17 +66,23 @@ DB_PASSWORD = os.getenv("DB_PASSWORD", "root")
 DB_NAME = os.getenv("DB_NAME", "labface")
 
 # Recognition threshold (higher = more lenient, better for distance/angles)
-# Increased to 0.55 for far-distance recognition
-FACE_THRESHOLD = float(os.getenv("FACE_RECOGNITION_THRESHOLD", "0.55"))
+# Lowered to 0.65 for faster/more tolerant recognition per user request
+FACE_THRESHOLD = float(os.getenv("FACE_RECOGNITION_THRESHOLD", "0.65"))
+
+# Global cache for active sessions (student_id -> {session, timestamp})
+session_cache = {}
+SESSION_CACHE_TTL = 2 # seconds - Reduced from 10s for faster session detection
 
 should_run = True
 
 # Thread-safe(ish) shared state for Capture vs AI loops
 latest_frames = {}           # { camera_id: np.array_frame }
 latest_bytes = {}            # { camera_id: bytes_jpeg }
+new_frame_events = {1: asyncio.Event()}
 current_detections = {}      # { camera_id: [ {bbox, label, color} ] }
 camera_status = {}           # { camera_id: bool }
 unknown_log_cooldowns = {}   # { camera_id: timestamp }
+last_detection_time = {}     # { camera_id: timestamp }
 
 # Database connection pool
 async def init_db_pool():
@@ -163,13 +168,11 @@ async def startup_event():
             print("⚠️  WARNING: AI models failed to load, but continuing with video streaming...")
             # Don't return - allow capture workers to start even without models
 
-        # 3. Start Separate Loops
-        # Capture Loops (One per camera)
-        print("🚀 Starting capture workers...")
+        # Capture Loop (CAM 01 Entrance ONLY)
+        print("🚀 Starting capture worker (CAM 01)...")
         asyncio.create_task(capture_worker(RTSP_URL_1, 1))
-        asyncio.create_task(capture_worker(RTSP_URL_2, 2))
         
-        # AI Processing Loop (Single unified loop or per cam - unified is better for resource control)
+        # AI Processing Loop (Single unified loop for CAM 01)
         asyncio.create_task(ai_worker())
         
         print("✓ Capture and AI Workers started")
@@ -255,22 +258,17 @@ async def capture_worker(rtsp_url, camera_id):
         # AI will still use latest_frames at its own pace
         now = time.time()
         last_time = getattr(capture_worker, f'_last_time_{camera_id}', 0)
-        if now - last_time < 0.066: # ~15 FPS cap for encoding
-            # Still update latest_frames for AI to have freshest data
-            try:
-                latest_frames[camera_id] = cv2.resize(frame, (1280, 720))
-            except Exception as e:
-                logger.warning(f"[CAM {camera_id}] Frame resize (FPS cap) failed: {e}")
-                latest_frames[camera_id] = frame
-            await asyncio.sleep(0.01)
+        
+        # INCREASED AGGRESSION: If we have frames queued up, skip them
+        if now - last_time < 0.05: # Target ~20 FPS for smoother motion
+            await asyncio.sleep(0.005)
             continue
         
         setattr(capture_worker, f'_last_time_{camera_id}', now)
 
-        # Resize for display/AI consistency 
-        # Upgraded to 720p (1280x720) for better far-distance detail
+        # Optimized Resolution for Live Dashboards (Saves ~40% bandwidth)
         try:
-            processed_frame = cv2.resize(frame, (1280, 720))
+            processed_frame = cv2.resize(frame, (640, 360))
         except Exception as e:
             logger.warning(f"[CAM {camera_id}] Frame resize failed: {e}")
             processed_frame = frame
@@ -288,22 +286,42 @@ async def capture_worker(rtsp_url, camera_id):
             try:
                 x, y, w, h = det['bbox']
                 color = det['color']
-                label = det['label']
-                cv2.rectangle(display_frame, (x, y), (x+w, y+h), color, 2)
-                cv2.rectangle(display_frame, (x, y-30), (x+w, y), color, -1)
-                cv2.putText(display_frame, label, (x+5, y-5), 
-                           cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
+                label = det.get('label', 'Detected')
+                
+                # Draw Face Box
+                cv2.rectangle(display_frame, (x, y), (x + w, y + h), color, 2)
+                
+                # HUD TAG: Compute Health Tips
+                g_code, g_text = get_face_guidance(processed_frame, (x, y, w, h))
+                if g_code and g_code != "OPTIMAL":
+                    # Draw a warning bar above the box
+                    tip_y = max(20, y - 40)
+                    cv2.rectangle(display_frame, (x, tip_y - 20), (x + w, tip_y), (0, 165, 255), -1) # Orange bar
+                    cv2.putText(display_frame, g_text, (x + 5, tip_y - 5),
+                               cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255, 255, 255), 1, cv2.LINE_AA)
+
+                # Name Tag
+                cv2.rectangle(display_frame, (x, y - 25), (x + w, y), color, -1)
+                cv2.putText(display_frame, label, (x + 5, y - 7),
+                           cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
             except Exception as e:
                 logger.warning(f"[CAM {camera_id}] Detection draw error: {e}")
 
         # Encode (Heavyish op, but better than AI)
-        # Lower quality from 65 to 55 for better streaming performance
-        ret, buffer = cv2.imencode('.jpg', display_frame, [int(cv2.IMWRITE_JPEG_QUALITY), 55])
+        # Low quality (35) to ensure "Butter Smooth" streaming over Cloudflare tunnels
+        ret, buffer = await loop.run_in_executor(None, lambda: cv2.imencode('.jpg', display_frame, [int(cv2.IMWRITE_JPEG_QUALITY), 35]))
         if ret:
             latest_bytes[camera_id] = buffer.tobytes()
+            # Signal anyone waiting for this frame
+            new_frame_events[camera_id].set()
+            new_frame_events[camera_id].clear()
+        
+        # Clear detected faces older than 1 second to prevent "ghost" boxes
+        if camera_id in last_detection_time and now - last_detection_time[camera_id] > 1.0:
+            current_detections[camera_id] = []
 
         # Yield to event loop slightly to allow other tasks
-        await asyncio.sleep(0.005) # ~200fps theoretical max, regulated by cap.read speed
+        await asyncio.sleep(0.001) 
 
 
 async def ai_worker():
@@ -324,28 +342,24 @@ async def ai_worker():
         # Refresh students cache occasionally
         await refresh_student_cache_if_needed()
         
-        # Process Camera 1 then Camera 2
-        for camera_id in [1, 2]:
-            frame = latest_frames.get(camera_id)
-            if frame is None:
-                continue
+        # Process Camera 1 (Entrance)
+        camera_id = 1
+        frame = latest_frames.get(camera_id)
+        if frame is not None:
                 
             try:
                 # Basic Single-scale detection
                 faces = await loop.run_in_executor(None, face_recognizer.app.get, frame)
                 
-                if len(faces) > 0:
-                    print(f"[AI CAM {camera_id}] 🔍 Detected {len(faces)} faces")
-                
-                new_detections = []
+                # SEQUENTIAL PROCESSING: Handles multiple faces safely without deadlocking the AI model
+                face_results = []
                 for face in faces:
-                    # Direct recognition
-                    detection_data = await process_face(face, camera_id, frame)
-                    if detection_data:
-                        new_detections.append(detection_data)
+                    res = await process_face(face, camera_id, frame)
+                    if res:
+                        face_results.append(res)
                 
                 # Update shared state for overlay
-                current_detections[camera_id] = new_detections
+                current_detections[camera_id] = face_results
                 
             except Exception as e:
                 print(f"AI Worker Error Cam {camera_id}: {e}")
@@ -444,16 +458,90 @@ def get_adaptive_threshold(frame, face):
 def get_human_confidence(sim, threshold):
     """
     Translate raw cosine similarity into a human-readable 0-100 percentage.
-    Provides better UX rather than showing 45% for a highly confident match.
     """
-    if sim < 0.2:
-        return sim * 100
-    elif sim >= threshold:
-        # Map [threshold, 1.0] -> [85.0, 99.9]
-        return 85.0 + ((sim - threshold) / (1.0 - threshold)) * 14.9
-    else:
-        # Map [0.2, threshold] -> [20.0, 85.0]
-        return 20.0 + ((sim - 0.2) / (threshold - 0.2)) * 65.0
+    if sim >= 0.70: return min(99.9, 95 + (sim-0.70)*10)
+    if sim >= threshold: return min(95.0, 75 + (sim-threshold)*50)
+    return max(0, sim * 100)
+
+def get_face_guidance(frame, bbox):
+    """
+    Returns (code, message) for real-time HUD tips.
+    """
+    x, y, w, h = bbox
+    face_crop = frame[max(0, y):min(frame.shape[0], y+h), max(0, x):min(frame.shape[1], x+w)]
+    
+    if face_crop.size == 0:
+        return None, None
+        
+    brightness = np.mean(face_crop)
+    face_area = w * h
+    
+    if brightness < 60:
+        return "TOO_DARK", "TOO DARK - NEED LIGHT"
+    if brightness > 230:
+        return "TOO_BRIGHT", "TOO BRIGHT - AVOID GLARE"
+    if face_area < 8000:
+        return "TOO_FAR", "TOO FAR - STEP CLOSER"
+    
+    return "OPTIMAL", "OPTIMAL QUALITY"
+
+def calculate_ensemble_confidence(face_embedding, student_embeddings, threshold):
+    """
+    Looks at all 5 angles of a student to 'Boost' confidence.
+    If multiple stored photos match reasonably well, it's a very strong identity proof.
+    """
+    best_sim = 0.0
+    matches_above_floor = 0
+    floor_threshold = threshold - 0.1  # More lenient for alternate angles
+    
+    for db_emb in student_embeddings:
+        sim = face_recognizer.compare_faces(face_embedding, db_emb)
+        if sim > best_sim:
+            best_sim = sim
+        if sim > floor_threshold:
+            matches_above_floor += 1
+            
+    # ENSEMBLE BOOSTING: 
+    # If we have matches across multiple stored angles, we boost the best_sim
+    # 2 angles = +2% boost, 3+ angles = +4% boost
+    boost = 0.0
+    if matches_above_floor >= 3:
+        boost = 0.04
+    elif matches_above_floor >= 2:
+        boost = 0.02
+        
+    final_score = min(0.99, best_sim + boost)
+    return final_score, best_sim, matches_above_floor
+
+def get_hud_guidance(frame, face):
+    """
+    Analyzes quality and returns actionable advice for 100% accuracy.
+    """
+    guidance = []
+    bbox = face.bbox.astype(int)
+    
+    # 1. Size Check
+    face_w = bbox[2] - bbox[0]
+    if face_w < 100:
+        guidance.append({"code": "TOO_FAR", "text": "Step closer to the camera"})
+        
+    # 2. Lighting Check
+    face_crop = frame[max(0, bbox[1]):min(frame.shape[0], bbox[3]),
+                      max(0, bbox[0]):min(frame.shape[1], bbox[2])]
+    if face_crop.size > 0:
+        gray = cv2.cvtColor(face_crop, cv2.COLOR_BGR2GRAY)
+        brightness = np.mean(gray)
+        if brightness < 60:
+            guidance.append({"code": "TOO_DARK", "text": "Find a brighter area"})
+        elif brightness > 220:
+            guidance.append({"code": "TOO_BRIGHT", "text": "Avoid direct glare"})
+            
+        # 3. Sharpness Check
+        laplacian_var = cv2.Laplacian(gray, cv2.CV_64F).var()
+        if laplacian_var < 50:
+            guidance.append({"code": "BLURRY", "text": "Hold steady / Clean lens"})
+            
+    return guidance
 
 students_cache = []
 last_cache_update = 0
@@ -534,33 +622,20 @@ async def process_face(face, camera_id, frame):
     embedding = face.embedding.tolist()
     bbox = face.bbox.astype(int)
     
-    # ADAPTIVE THRESHOLD: Calculate based on lighting and distance
-    adaptive_threshold = get_adaptive_threshold(frame, face)
-    
-    # QUALITY SCORE: Calculate for this detection
-    quality_score = face_recognizer.calculate_quality_score(frame, face)
-    
     best_match = None
     best_score = 0.0
     
-    # Results
-    # Identify - Debugging Enabled
+    # ADAPTIVE THRESHOLD: Calculate based on lighting and distance
+    adaptive_threshold = get_adaptive_threshold(frame, face)
+    
+    # Identify - Ensemble Boosting Logic
     for student in students_cache:
-        # Compare against ALL embeddings for this student
-        for known_emb in student['embeddings']:
-            try:
-                score = face_recognizer.compare_faces(known_emb, embedding)
-                # Debug print for close matches
-                if score > 0.3:
-                    print(f"Debug: Match score {score:.4f} for {student['first_name']} (threshold: {adaptive_threshold:.2f}, quality: {quality_score:.2f})")
-                
-                # Use adaptive threshold instead of fixed FACE_THRESHOLD
-                if score > adaptive_threshold and score > best_score:
-                    best_score = score
-                    best_match = student
-            except Exception as e:
-                logger.warning(f"[FaceMatch] Embedding comparison failed for {student.get('first_name', '?')}: {e}")
-                continue
+        # Multi-angle check
+        final_sim, best_raw, match_count = calculate_ensemble_confidence(embedding, student['embeddings'], adaptive_threshold)
+        
+        if final_sim > adaptive_threshold and final_sim > best_score:
+            best_score = final_sim
+            best_match = student
             
     # Result Data
     x, y, w, h = bbox[0], bbox[1], bbox[2]-bbox[0], bbox[3]-bbox[1]
@@ -572,18 +647,22 @@ async def process_face(face, camera_id, frame):
         name = f"{best_match['first_name']} ({int(human_conf)}%)"
         color = (0, 255, 0) # Green
         
-        # Update Attendance Manager
-        direction = attendance_manager.update(best_match['id'], (x,y,w,h), camera_id)
+        # Update Attendance Manager - Passing confidence score
+        direction = attendance_manager.update(best_match['id'], (x,y,w,h), camera_id, confidence=best_score)
         if direction:
-            print(f"Event: {best_match['first_name']} -> {direction}")
-            await handle_attendance_event(best_match['id'], direction, camera_id, frame, (x,y,w,h))
+            logger.info(f"[AI CAM {camera_id}] ATTENDANCE EVENT: {best_match['first_name']} -> {direction}")
+            # Background the event to avoid blocking the main AI loop for other faces in the frame
+            asyncio.create_task(handle_attendance_event(best_match['id'], direction, camera_id, frame, (x,y,w,h)))
+            # IMMEDIATELY mark event in manager to reset history and start cooldown
+            attendance_manager.mark_event(best_match['id'])
+            logger.info(f"[AI CAM {camera_id}] Attendance event backgrounded for {best_match['first_name']}")
             
     else:
         # --- UNKNOWN ---
         name = "Unknown"
         color = (0, 0, 255) # Red
-        # Logic for Unknown
-        await handle_unknown_event(camera_id, frame, (x,y,w,h))
+        # Logic for Unknown - Backgrounded
+        asyncio.create_task(handle_unknown_event(camera_id, frame, (x,y,w,h)))
 
     return {
         'bbox': (x, y, w, h),
@@ -594,10 +673,10 @@ async def process_face(face, camera_id, frame):
 async def handle_attendance_event(student_id, action, camera_id, frame, bbox):
     try:
         # Get active session
-        print(f"[Attendance] Looking for active session for student {student_id}")
+        logger.info(f"[Attendance] Event triggered: student={student_id}, action={action}, cam={camera_id}")
         session = await get_active_session_for_student(student_id)
         if not session:
-            print(f"[Attendance] No active session found for student {student_id}")
+            logger.error(f"[Attendance] FAILED: No active session for student {student_id}. Check: 1) Session started 2) Student enrolled 3) Cache TTL")
             return
 
         print(f"[Attendance] Found session {session['id']} for student {student_id}, marking {action}")
@@ -643,44 +722,100 @@ async def handle_unknown_event(camera_id, frame, bbox):
 # --- DB & MINIO UTILS ---
 
 async def get_active_session_for_student(student_id):
+    global session_cache
+    now = time.time()
+    
+    # 1. Check Cache
+    if student_id in session_cache:
+        cached_data, ts = session_cache[student_id]
+        cache_age = now - ts
+        if cache_age < SESSION_CACHE_TTL:
+            if cached_data:
+                logger.info(f"[SessionCache] HIT for student {student_id} (age: {cache_age:.1f}s, session: {cached_data['id']})")
+            else:
+                logger.info(f"[SessionCache] HIT for student {student_id} (age: {cache_age:.1f}s, NO SESSION)")
+            return cached_data
+        else:
+            logger.info(f"[SessionCache] EXPIRED for student {student_id} (age: {cache_age:.1f}s)")
+
+    # 2. Database Lookup
     if not db_pool: return None
-    async with db_pool.acquire() as conn:
-        async with conn.cursor(aiomysql.DictCursor) as cursor:
-            await cursor.execute("""
-                SELECT 
-                    s.id, s.class_id, s.type, s.batch_students,
-                    c.subject_code, c.subject_name, c.section,
-                    ap.school_year, ap.semester
-                FROM sessions s
-                JOIN enrollments e ON s.class_id = e.class_id
-                JOIN classes c ON s.class_id = c.id
-                LEFT JOIN academic_periods ap ON c.academic_period_id = ap.id
-                WHERE e.student_id = %s
-                AND s.monitoring_started_at IS NOT NULL
-                AND s.monitoring_ended_at IS NULL
-                ORDER BY s.start_time DESC LIMIT 1
-            """, (student_id,))
-            session = await cursor.fetchone()
-            
-            # For batch sessions, verify student is in the batch
-            if session and session['type'] == 'batch' and session['batch_students']:
-                try:
-                    batch = json.loads(session['batch_students'])
-                    # batch_students contains enrollment IDs, not student IDs
-                    # Get the enrollment ID for this student in this class
-                    await cursor.execute("""
-                        SELECT id FROM enrollments 
-                        WHERE student_id = %s AND class_id = %s
-                    """, (student_id, session['class_id']))
-                    enrollment = await cursor.fetchone()
-                    if not enrollment or enrollment['id'] not in batch:
-                        print(f"[Batch Check] Student {student_id} not in batch for session {session['id']}")
-                        return None
-                    print(f"[Batch Check] Student {student_id} verified in batch for session {session['id']}")
-                except Exception as e:
-                    print(f"[Batch Check] Error validating batch: {e}")
-                    pass
-            return session
+    try:
+        async with db_pool.acquire() as conn:
+            async with conn.cursor(aiomysql.DictCursor) as cursor:
+                # Flexible Check: Match by Student ID OR Student Number (Resilient Left Join)
+                await cursor.execute("""
+                    SELECT 
+                        s.id, s.class_id, s.type, s.batch_students,
+                        c.subject_code, c.subject_name, c.section,
+                        ap.school_year, ap.semester
+                    FROM sessions s
+                    JOIN enrollments e ON s.class_id = e.class_id
+                    JOIN classes c ON s.class_id = c.id
+                    LEFT JOIN academic_periods ap ON c.academic_period_id = ap.id
+                    LEFT JOIN users u ON u.id = %s
+                    WHERE (e.student_id = %s OR 
+                        (u.user_id IS NOT NULL AND 
+                         REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(TRIM(e.student_number), '-', ''), ' ', ''), '.', ''), CHAR(9), ''), CHAR(13), ''), CHAR(10), '') = 
+                         REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(TRIM(u.user_id), '-', ''), ' ', ''), '.', ''), CHAR(9), ''), CHAR(13), ''), CHAR(10), ''))
+                    )
+                    # Time-Graceful Check: Match by ID/Number and Started in the last 5 hours (Even if Ended)
+                    AND s.monitoring_started_at >= DATE_SUB(NOW(), INTERVAL 5 HOUR)
+                    ORDER BY s.monitoring_started_at DESC LIMIT 1
+                """, (student_id, student_id))
+                session = await cursor.fetchone()
+                
+                if session:
+                    # For batch sessions, verify student is in the batch
+                    if session['type'] == 'batch' and session['batch_students']:
+                        try:
+                            batch = json.loads(session['batch_students'])
+                            await cursor.execute("""
+                                SELECT e.id
+                                FROM enrollments e
+                                LEFT JOIN users u ON u.id = %s
+                                WHERE e.class_id = %s
+                                AND (
+                                    e.student_id = %s OR
+                                    (
+                                        u.user_id IS NOT NULL AND
+                                        REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(TRIM(e.student_number), '-', ''), ' ', ''), '.', ''), CHAR(9), ''), CHAR(13), ''), CHAR(10), '') =
+                                        REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(TRIM(u.user_id), '-', ''), ' ', ''), '.', ''), CHAR(9), ''), CHAR(13), ''), CHAR(10), '')
+                                    )
+                                )
+                                LIMIT 1
+                            """, (student_id, session['class_id'], student_id))
+                            enrollment = await cursor.fetchone()
+                            if not enrollment or enrollment['id'] not in batch:
+                                logger.info(
+                                    "[Attendance] Batch membership mismatch for student %s in session %s "
+                                    "(resolved_enrollment_id=%s, batch_size=%s)",
+                                    student_id,
+                                    session['id'],
+                                    enrollment['id'] if enrollment else None,
+                                    len(batch)
+                                )
+                                session = None # Not in batch
+                        except Exception as e:
+                            logger.warning(
+                                "[Attendance] Failed batch membership check for student %s in session %s: %s",
+                                student_id,
+                                session.get('id'),
+                                e
+                            )
+                            session = None
+                            
+                # 3. Update Cache
+                session_cache[student_id] = (session, now)
+                
+                if session:
+                    logger.info(f"[Attendance] Cache Updated: Found session {session['id']} for student {student_id}")
+                else:
+                    logger.warning(f"[Attendance] No active session found for student {student_id} - they may not be enrolled in any active class")
+                return session
+    except Exception as e:
+        logger.error(f"Error in get_active_session_for_student: {e}")
+        return None
 
 
 async def get_any_active_session():
@@ -794,28 +929,54 @@ async def get_debug_state():
         "latest_bytes_sizes": {k: len(v) for k, v in latest_bytes.items()},
         "latest_frames_keys": list(latest_frames.keys()),
         "test_mode": TEST_MODE,
-        "uptime": time.time()
+        "uptime": time.time(),
+        "session_cache_size": len(session_cache),
+        "session_cache_ttl": SESSION_CACHE_TTL,
+        "students_cache_size": len(students_cache)
     }
 
+@app.post("/api/invalidate-session-cache")
+async def invalidate_session_cache():
+    """
+    Clear the session cache and reset attendance manager state.
+    Call this when starting/stopping a session to ensure immediate attendance detection.
+    """
+    global session_cache, attendance_manager
+
+    # Clear session cache
+    session_cache.clear()
+    logger.info("[SessionCache] INVALIDATED - All session cache entries cleared")
+
+    # Reset attendance manager to clear cooldowns and tracking state
+    if attendance_manager:
+        attendance_manager.reset()
+        logger.info("[AttendanceManager] RESET - All face tracking and cooldowns cleared")
+
+    return {"success": True, "message": "Session cache and attendance state cleared"}
+
 async def generate_frames(camera_id):
-    placeholder = np.zeros((720, 1280, 3), dtype=np.uint8)
-    cv2.putText(placeholder, "Loading Feed...", (400, 360), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2)
-    _, p_bytes = cv2.imencode('.jpg', placeholder)
+    placeholder = np.zeros((480, 854, 3), dtype=np.uint8)
+    cv2.putText(placeholder, "Loading Feed...", (300, 240), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2)
+    _, p_bytes = cv2.imencode('.jpg', placeholder, [int(cv2.IMWRITE_JPEG_QUALITY), 30])
     p_frame = b'--frame\r\nContent-Type: image/jpeg\r\n\r\n' + p_bytes.tobytes() + b'\r\n'
     
     print(f"[Stream] Starting feed for CAM {camera_id}")
     
     last_log = 0
     while True:
-        if camera_id in latest_bytes:
-            frame_bytes = latest_bytes[camera_id]
-            if time.time() - last_log > 10:
-                print(f"[Stream] CAM {camera_id} - Sending frame, size: {len(frame_bytes)} bytes")
-                last_log = time.time()
-                
-            yield (b'--frame\r\nContent-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
-            await asyncio.sleep(0.066) # ~15 FPS matches capture cap
-        else:
+        # Wait for a NEW frame to be ready (Event-driven delivery)
+        try:
+            await asyncio.wait_for(new_frame_events[camera_id].wait(), timeout=2.0)
+            frame_bytes = latest_bytes.get(camera_id)
+            
+            if frame_bytes:
+                yield (b'--frame\r\nContent-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
+            
+            # Small throttle to prevent CPU thrashing on 100+ FPS cams
+            await asyncio.sleep(0.04) # Max ~25 FPS delivery
+            
+        except asyncio.TimeoutError:
+            # Send placeholder if camera goes quiet
             yield p_frame
             await asyncio.sleep(0.5)
 
@@ -890,28 +1051,35 @@ async def test_frame(request: TestFrameRequest):
                 except:
                     pass
             
-            best_match = None
-            max_sim = 0.0
-            
-            # Compare against cache
-            for student in students_cache:
-                for db_emb in student['embeddings']:
-                    sim = face_recognizer.compare_faces(embedding, db_emb)
-                    if sim > max_sim:
-                        max_sim = sim
-                        best_match = student
-            
             # Use the same adaptive threshold logic as the CCTV background worker
             threshold = get_adaptive_threshold(img, face)
-            is_match = bool(best_match and max_sim > threshold)
             
+            # Identify - Ensemble Boosting Logic for Diagnostic Tool
+            best_match = None
+            max_sim = 0.0
+            best_raw = 0.0
+            match_count = 0
+            
+            for student in students_cache:
+                final_sim, raw_sim, m_count = calculate_ensemble_confidence(embedding, student['embeddings'], threshold)
+                if final_sim > threshold and final_sim > max_sim:
+                    max_sim = final_sim
+                    best_raw = raw_sim
+                    match_count = m_count
+                    best_match = student
+
+            is_match = bool(best_match and max_sim > threshold)
             human_conf = get_human_confidence(max_sim, threshold)
+            guidance = get_hud_guidance(img, face)
             
             res_item = {
                 "bbox": bbox,
                 "match": is_match,
                 "confidence": float(round(human_conf, 1)),
+                "raw_similarity": float(round(best_raw, 4)),
+                "ensemble_count": match_count,
                 "threshold_used": float(threshold),
+                "guidance": guidance,
                 "thumbnail": thumbnail_b64,
                 "timestamp": datetime.now().isoformat()
             }

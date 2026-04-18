@@ -5,9 +5,8 @@ class AttendanceManager:
         # Data structure:
         # { 
         #   face_id: { 
-        #     'cam1': { 'history': [], 'last_active': ts, 'state': 'INIT' }, 
-        #     'cam2': { 'history': [], 'last_active': ts, 'state': 'INIT' },
-        #     'exit_intent_ts': 0,
+        #     'history': [], 
+        #     'last_active': ts, 
         #     'last_event': 0 
         #   } 
         # }
@@ -15,16 +14,17 @@ class AttendanceManager:
         self.cooldown = cooldown_seconds
         
         # Tracking Config
-        self.HISTORY_LEN = 10
-        self.EXIT_INTENT_TTL = 30  # Seconds Camera 2 intent is valid
-        self.MOVING_AWAY_THRESHOLD = 0.9  # Ratio check (current_area / initial_area)
+        self.HISTORY_LEN = 8
+        self.MIN_FRAMES_FOR_TREND = 3 # Reduced for faster response
+        self.TREND_THRESHOLD = 0.08  # Lowered from 0.2 for much faster motion detection
+        self.CONFIRMATION_FRAMES = 3 # How many frames to confirm a stationary person
 
-    def update(self, face_id, bbox, camera_id):
+    def update(self, face_id, bbox, camera_id=1, confidence=0):
         """
         Update tracker with new face bounding box.
-        bbox: (x, y, w, h)
-        camera_id: 1 (Entry/Exit Door) or 2 (Exit Corridor)
-        Returns: 'ENTRY', 'EXIT', or None
+        Logic: 
+        1. Persistence: If seen for X frames (stationary), log ENTRY.
+        2. Trends: If movement detected, log ENTRY/EXIT.
         """
         now = time.time()
         x, y, w, h = bbox
@@ -33,83 +33,73 @@ class AttendanceManager:
         
         if face_id not in self.faces:
             self.faces[face_id] = {
-                'cam1': {'history': [], 'last_active': 0},
-                'cam2': {'history': [], 'last_active': 0},
-                'exit_intent_ts': 0,
-                'last_event': 0
+                'history': [],
+                'last_active': 0,
+                'last_event': 0,
+                'match_count': 0
             }
         
         data = self.faces[face_id]
-        cam_data = data[f'cam{camera_id}']
-        cam_data['last_active'] = now
-        cam_data['history'].append({'ts': now, 'area': area, 'cx': center_x})
+        data['last_active'] = now
+        data['history'].append({'ts': now, 'area': area, 'cx': center_x})
+        data['match_count'] += 1
         
         # Limit history
-        if len(cam_data['history']) > self.HISTORY_LEN:
-            cam_data['history'].pop(0)
+        if len(data['history']) > self.HISTORY_LEN:
+            data['history'].pop(0)
             
-        # Check Cooldown (global for this student)
-        if now - data['last_event'] < self.cooldown:
+        # Check Cooldown
+        time_since_last = now - data['last_event']
+        if time_since_last < self.cooldown:
+            remaining = self.cooldown - time_since_last
+            print(f"[Attendance] COOLDOWN ACTIVE for {face_id}: {remaining:.0f}s remaining (cooldown={self.cooldown}s)")
             return None
 
-        # LOGIC: CAMERA 2 - EXIT INTENT
-        # Detect if person is in center and approaching (area getting bigger)
-        if camera_id == 2:
-            if len(cam_data['history']) >= 3:
-                # Check Approach: Start Area < End Area
-                start_area = cam_data['history'][0]['area']
-                end_area = cam_data['history'][-1]['area']
-                
-                # Check Center Alignment (assuming 1280 width, center is 640. Range 400-880)
-                is_centered = 400 < center_x < 880
-                
-                if end_area > start_area * 1.05 and is_centered:
-                    # Valid Exit Intent
-                    data['exit_intent_ts'] = now
-                    print(f"[DEBUG] Exit Intent Detected for {face_id} on Cam 2")
-                    return None # Just marking intent, not an event yet
+        # --- OPTION 1: PERSISTENCE (Instant Log for stationary students) ---
+        # If we have seen them enough times (even if they haven't moved), log them.
+        if data['match_count'] >= self.CONFIRMATION_FRAMES:
+            print(f"[Attendance] Logic: PERSISTENCE Match for {face_id} after {data['match_count']} frames")
+            return "ENTRY"
 
-        # LOGIC: CAMERA 1 - ENTRY vs EXIT CONFIRMATION
-        if camera_id == 1:
-            if len(cam_data['history']) >= 3:
-                start_area = cam_data['history'][0]['area']
-                end_area = cam_data['history'][-1]['area']
-                
-                # CHECK 1: EXIT CONFIRMATION
-                # Requirement: Had recent Exit Intent from Cam 2 AND Moving Away on Cam 1 (Area shrinking)
-                has_exit_intent = (now - data['exit_intent_ts']) < self.EXIT_INTENT_TTL
-                is_moving_away = end_area < start_area * 0.95
-                
-                if has_exit_intent and is_moving_away:
-                    # Confirmed Exit!
-                    print(f"[DEBUG] EXIT CONFIRMED for {face_id}")
-                    return "EXIT"
-                
-                # CHECK 2: ENTRY
-                # Requirement: First appearance OR Moving Closer/Stable without Exit Intent
-                # For robustness, we mostly treat "Not Exit" as Entry if they are clearly visible
-                if not has_exit_intent:
-                    # Simple Entry: Just being detected on Cam 1 without recent exit intent
-                    # We accept this immediately to be responsive
-                    print(f"[DEBUG] ENTRY Detected for {face_id}")
-                    return "ENTRY"
-                    
+        # --- OPTION 2: MOVEMENT TRENDS ---
+        if len(data['history']) < self.MIN_FRAMES_FOR_TREND:
+            return None
+
+        # Calculate Area Trend
+        start_avg_area = sum(f['area'] for f in data['history'][:2]) / 2 # Use 2 instead of 3
+        end_avg_area = sum(f['area'] for f in data['history'][-2:]) / 2
+        
+        # Catch zero area division
+        if start_avg_area == 0: return None
+        area_delta_ratio = (end_avg_area - start_avg_area) / start_avg_area
+
+        # ENTRY: Person walking TOWARDS camera (Area gets BIGGER)
+        if area_delta_ratio > self.TREND_THRESHOLD:
+            print(f"[Attendance] Logic: DIRECTIONAL ENTRY for {face_id} (Trend: +{area_delta_ratio:.2f})")
+            return "ENTRY"
+
+        # EXIT: Person walking AWAY from camera (Area gets SMALLER)
+        if area_delta_ratio < -self.TREND_THRESHOLD:
+            print(f"[Attendance] Logic: DIRECTIONAL EXIT for {face_id} (Trend: {area_delta_ratio:.2f})")
+            return "EXIT"
+
         return None
 
     def mark_event(self, face_id):
         if face_id in self.faces:
             self.faces[face_id]['last_event'] = time.time()
-            # clear history for both cameras to prevent double trigger
-            self.faces[face_id]['cam1']['history'] = []
-            self.faces[face_id]['cam2']['history'] = []
+            self.faces[face_id]['history'] = []
 
     def cleanup(self):
         now = time.time()
         to_remove = []
         for fid, data in self.faces.items():
-            # If inactive on both cameras for 5 mins
-            last_active = max(data['cam1']['last_active'], data['cam2']['last_active'])
-            if now - last_active > 300:
+            if now - data['last_active'] > 300:
                 to_remove.append(fid)
         for fid in to_remove:
             del self.faces[fid]
+
+    def reset(self):
+        """Reset all tracking state. Call this when a new session starts."""
+        self.faces.clear()
+        print("[AttendanceManager] STATE RESET - All face tracking data cleared")

@@ -104,6 +104,29 @@ else
     success "AI model weights found (pre-downloaded)."
 fi
 
+# ── STEP 2c: Service Worker Versioning ─────────────────────────────────────────
+info "Step 2c: Bumping Service Worker version..."
+
+BUILD_ID=$(date +%Y%m%d-%H%M%S)
+SW_FILE="frontend/public/sw.js"
+VERSION_FILE="frontend/utils/version.ts"
+
+if [ -f "$SW_FILE" ]; then
+    # Use sed to replace the CACHE_NAME version with a timestamp-based version
+    # Matches patterns like labface-v1, labface-v2, etc.
+    sed -i "s/const CACHE_NAME = 'labface-v[0-9]\.[^']*'/const CACHE_NAME = 'labface-v2\.$BUILD_ID'/g" "$SW_FILE"
+    
+    # Also update the frontend version file for cache busting
+    if [ -f "$VERSION_FILE" ]; then
+        echo "export const BUILD_ID = '$BUILD_ID';" > "$VERSION_FILE"
+        success "Service Worker and Frontend bumped to version: v1.$BUILD_ID"
+    else
+        warn "Version file not found at $VERSION_FILE. Skipping frontend bump."
+    fi
+else
+    warn "Service Worker file not found at $SW_FILE. Skipping version bump."
+fi
+
 # ── STEP 3: Docker Volumes (Persistent Data) ──────────────────────────────────
 info "Step 3: Ensuring persistent data volumes exist..."
 
@@ -115,6 +138,26 @@ for VOLUME in labface_mariadb_data labface_minio_data; do
         success "Volume already exists: $VOLUME"
     fi
 done
+
+# ── STEP 3b: Remove stale containers from old deployments ─────────────────────
+# Old containers (e.g. from a previous project name without "-prod-") hold
+# Aria/InnoDB file locks on the shared MariaDB volume, preventing the new
+# container from ever acquiring them. Stop and remove them first.
+info "Step 3b: Cleaning up stale containers from old deployments..."
+
+STALE=$(docker ps -aq --filter name=labface --filter status=running | xargs -I{} docker inspect {} \
+    --format '{{.Name}} {{index .Config.Labels "com.docker.compose.project"}}' 2>/dev/null \
+    | grep -v "labface-prod" | awk '{print $1}' | tr -d '/')
+
+if [ -n "$STALE" ]; then
+    for CONTAINER in $STALE; do
+        warn "Stopping stale container: $CONTAINER"
+        docker stop "$CONTAINER" &>/dev/null && docker rm "$CONTAINER" &>/dev/null || true
+    done
+    success "Stale containers removed."
+else
+    success "No stale containers found."
+fi
 
 # ── STEP 4: AI Service Base Image (One-Time, Cached) ──────────────────────────
 info "Step 4: Checking AI Service base image..."
