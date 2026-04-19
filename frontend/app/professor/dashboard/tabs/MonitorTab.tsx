@@ -86,14 +86,14 @@ const VideoFeed = ({ src, alt, className, onExpand, label, onStatusChange }: Vid
     const currentSrc = `${src}${src.includes('?') ? '&' : '?'}retry=${retryKey}`;
 
     return (
-        <div className={`relative bg-black group overflow-hidden rounded-xl border border-slate-800 shadow-2xl ${className}`}>
+        <div className={`relative bg-black group overflow-hidden rounded-xl border border-white/5 shadow-2xl ${className}`}>
             {!error ? (
                 <>
                     {isLoading && (
-                        <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900/80 z-20 backdrop-blur-md text-center p-6">
+                        <div className="absolute inset-0 flex flex-col items-center justify-center bg-maroon-950/80 z-20 backdrop-blur-md text-center p-6">
                             <div className="relative mb-6">
-                                <div className="absolute inset-0 rounded-full bg-brand-500/20 animate-ping blur-xl"></div>
-                                <div className="relative animate-spin text-brand-400">
+                                <div className="absolute inset-0 rounded-full bg-brand-gold/20 animate-ping blur-xl"></div>
+                                <div className="relative animate-spin text-brand-gold">
                                     <RefreshCw size={48} strokeWidth={1.5} />
                                 </div>
                             </div>
@@ -101,7 +101,7 @@ const VideoFeed = ({ src, alt, className, onExpand, label, onStatusChange }: Vid
                                 <span className="block text-lg font-bold tracking-[0.2em] uppercase text-white drop-shadow-md">
                                     Initializing Feed
                                 </span>
-                                <span className="block text-[10px] font-mono tracking-widest uppercase text-slate-400">
+                                <span className="block text-[10px] font-mono tracking-widest uppercase text-secondary/60">
                                     Establishing Secure Connection...
                                 </span>
                             </div>
@@ -124,15 +124,15 @@ const VideoFeed = ({ src, alt, className, onExpand, label, onStatusChange }: Vid
                     {/* Manual Refresh Button */}
                     <button
                         onClick={handleRefresh}
-                        className="absolute bottom-4 right-4 p-2 bg-slate-900/80 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-slate-800"
+                        className="absolute bottom-4 right-4 p-2 bg-maroon-900/80 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-maroon-800"
                         title="Reset Feed"
                     >
                         <RefreshCw size={16} />
                     </button>
                 </>
             ) : (
-                <div className="w-full h-full flex flex-col items-center justify-center text-slate-500 bg-slate-900/50 absolute inset-0 backdrop-blur-sm">
-                    <div className="animate-spin mb-2 text-slate-400">
+                <div className="w-full h-full flex flex-col items-center justify-center text-secondary/50 bg-maroon-900/50 absolute inset-0 backdrop-blur-sm">
+                    <div className="animate-spin mb-2 text-secondary/60">
                         <RefreshCw size={32} />
                     </div>
                     <span className="text-sm font-mono tracking-widest uppercase">Signal Lost • Reconnecting</span>
@@ -143,7 +143,7 @@ const VideoFeed = ({ src, alt, className, onExpand, label, onStatusChange }: Vid
                 <div className="flex justify-between items-start">
                     <div className="flex items-center gap-2">
                         <div className={`h-2 w-2 rounded-full ${!error ? 'bg-emerald-500 animate-pulse' : 'bg-red-500'}`}></div>
-                        <span className={`text-xs px-2 py-1 rounded backdrop-blur-md border font-mono ${!error ? 'bg-black/40 text-slate-200 border-white/10' : 'bg-red-900/60 text-red-100 border-red-500/30'}`}>
+                        <span className={`text-xs px-2 py-1 rounded backdrop-blur-md border font-mono ${!error ? 'bg-black/40 text-brand-cream border-white/10' : 'bg-red-900/60 text-red-100 border-red-500/30'}`}>
                             {error ? 'OFFLINE' : (label || 'LIVE FEED')}
                         </span>
                     </div>
@@ -160,7 +160,7 @@ const VideoFeed = ({ src, alt, className, onExpand, label, onStatusChange }: Vid
 
                 {!error && (
                     <div className="flex justify-between items-end opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                        <div className="text-[10px] text-slate-400 font-mono bg-black/60 px-2 py-1 rounded backdrop-blur-md border border-white/5">
+                        <div className="text-[10px] text-secondary/60 font-mono bg-black/60 px-2 py-1 rounded backdrop-blur-md border border-white/5">
                             FHD • 30 FPS • NET: STABLE
                         </div>
                     </div>
@@ -270,14 +270,14 @@ export default function MonitorTab() {
                 <div className="flex items-center justify-between">
                     <div>
                         <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-                            <div className="p-1.5 bg-brand-500/10 rounded-lg">
-                                <Camera className="w-6 h-6 text-brand-500" />
+                            <div className="p-1.5 bg-brand-gold/10 rounded-lg">
+                                <Camera className="w-6 h-6 text-brand-gold" />
                             </div>
                             {currentSessionId ? (
                                 <span className="flex items-center gap-2">
-                                    <span className="text-brand-500">Live:</span>
+                                    <span className="text-brand-gold">Live:</span>
                                     {sessionDetails?.subject_name || 'Class Monitor'}
-                                    <span className="text-xs font-normal text-slate-500 bg-slate-800 px-2 py-0.5 rounded border border-slate-700 ml-2">
+                                    <span className="text-xs font-normal text-secondary/60 bg-maroon-900 px-2 py-0.5 rounded border border-white/5 ml-2">
                                         {sessionDetails?.section || 'Active'}
                                     </span>
                                 </span>
@@ -285,7 +285,7 @@ export default function MonitorTab() {
                                 'Security Monitoring'
                             )}
                         </h2>
-                        <p className="text-slate-400 text-sm mt-1">Real-time surveillance and attendance tracking</p>
+                        <p className="text-secondary/70 text-sm mt-1">Real-time surveillance and attendance tracking</p>
                     </div>
                     <div className="flex flex-wrap items-center gap-4">
                         <Link 
@@ -313,16 +313,16 @@ export default function MonitorTab() {
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     <div className="lg:col-span-2 space-y-6">
                         {/* Primary Entrance Terminal (Single Camera Focus) */}
-                        <div className="bg-slate-900/50 rounded-2xl border border-slate-800 p-1 shadow-2xl backdrop-blur-sm overflow-hidden">
-                            <div className="px-6 py-4 flex justify-between items-center bg-slate-900/80 border-b border-slate-800">
+                        <div className="bg-maroon-950 rounded-2xl border border-white/5 p-1 shadow-2xl backdrop-blur-sm overflow-hidden">
+                            <div className="px-6 py-4 flex justify-between items-center bg-black/20 border-b border-white/5">
                                 <div className="flex items-center gap-3">
                                     <div className={`w-3 h-3 rounded-full ${cam1Online ? 'bg-emerald-500 animate-pulse' : 'bg-red-500'}`}></div>
                                     <h3 className="font-bold text-lg text-white">
                                         ENTRANCE TERMINAL
-                                        <span className="ml-3 text-xs font-mono text-slate-500 tracking-tighter">CAM-01 • PRIMARY</span>
+                                        <span className="ml-3 text-xs font-mono text-secondary/50 tracking-tighter">CAM-01 • PRIMARY</span>
                                     </h3>
                                 </div>
-                                <div className="text-[10px] font-mono text-slate-500 bg-black/30 px-2 py-1 rounded">
+                                <div className="text-[10px] font-mono text-secondary/40 bg-black/30 px-2 py-1 rounded">
                                     IP: 192.168.1.220:554
                                 </div>
                             </div>
@@ -336,38 +336,38 @@ export default function MonitorTab() {
                                     onStatusChange={setCam1Online}
                                 />
                             </div>
-                            <div className="px-6 py-4 bg-slate-900/50 flex items-center justify-between">
+                            <div className="px-6 py-4 bg-black/10 flex items-center justify-between transition-colors">
                                 <div className="flex items-center gap-4">
                                     <div className="flex flex-col">
-                                        <span className="text-[10px] text-slate-500 uppercase font-bold tracking-widest">Signal Quality</span>
+                                        <span className="text-[10px] text-secondary/50 uppercase font-bold tracking-widest">Signal Quality</span>
                                         <span className="text-xs text-emerald-400 font-mono">98% STABLE</span>
                                     </div>
-                                    <div className="w-px h-8 bg-slate-800"></div>
+                                    <div className="w-px h-8 bg-white/5"></div>
                                     <div className="flex flex-col">
-                                        <span className="text-[10px] text-slate-500 uppercase font-bold tracking-widest">Protocol</span>
-                                        <span className="text-xs text-slate-300 font-mono">RTSP / FFMPEG</span>
+                                        <span className="text-[10px] text-secondary/50 uppercase font-bold tracking-widest">Protocol</span>
+                                        <span className="text-xs text-secondary/80 font-mono">RTSP / FFMPEG</span>
                                     </div>
                                 </div>
-                                <div className="text-[10px] text-slate-500 font-medium">
-                                    Security Node: <span className="text-brand-400">LN-01-ENTRANCE</span>
+                                <div className="text-[10px] text-secondary/50 font-medium">
+                                    Security Node: <span className="text-brand-gold">LN-01-ENTRANCE</span>
                                 </div>
                             </div>
                         </div>
                     </div>
 
                     <div className="space-y-6">
-                        <div className="bg-slate-900 rounded-2xl border border-slate-800 p-6">
-                            <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-6">System Status</h3>
+                        <div className="bg-maroon-950 rounded-2xl border border-white/5 p-6 shadow-2xl">
+                            <h3 className="text-sm font-bold text-secondary/60 uppercase tracking-wider mb-6">System Status</h3>
 
                             <div className="space-y-4">
-                                <div className={`flex items-center justify-between p-3 bg-slate-950 rounded-xl border ${overallSystemOnline ? 'border-slate-800/50' : 'border-red-900/30'}`}>
+                                <div className={`flex items-center justify-between p-3 bg-black/20 rounded-xl border ${overallSystemOnline ? 'border-brand-gold/10' : 'border-red-900/30'}`}>
                                     <div className="flex items-center gap-3">
                                         <div className={`p-2 rounded-lg ${overallSystemOnline ? 'bg-emerald-500/10 text-emerald-500' : 'bg-red-500/10 text-red-500'}`}>
                                             <Server size={18} />
                                         </div>
                                         <div>
-                                            <div className="text-sm font-semibold text-slate-200">AI Engine</div>
-                                            <div className={`text-xs ${overallSystemOnline ? 'text-slate-500' : 'text-red-400'}`}>
+                                            <div className="text-sm font-semibold text-brand-cream">AI Engine</div>
+                                            <div className={`text-xs ${overallSystemOnline ? 'text-secondary/50' : 'text-red-400'}`}>
                                                 {loadingStatus ? 'Checking...' : (overallSystemOnline ? 'Operational' : 'Unreachable')}
                                             </div>
                                         </div>
@@ -379,19 +379,19 @@ export default function MonitorTab() {
                                     )}
                                 </div>
 
-                                <div className="flex items-center justify-between p-3 bg-slate-950 rounded-xl border border-slate-800/50">
+                                <div className="flex items-center justify-between p-3 bg-black/20 rounded-xl border border-white/5">
                                     <div className="flex items-center gap-3">
-                                        <div className={`p-2 rounded-lg ${overallSystemOnline ? 'bg-purple-500/10 text-purple-500' : 'bg-slate-800 text-slate-600'}`}>
+                                        <div className={`p-2 rounded-lg ${overallSystemOnline ? 'bg-purple-500/10 text-purple-500' : 'bg-white/5 text-secondary/30'}`}>
                                             <ShieldCheck size={18} />
                                         </div>
                                         <div>
-                                            <div className="text-sm font-semibold text-slate-200">Recognition</div>
-                                            <div className="text-xs text-slate-500">
+                                            <div className="text-sm font-semibold text-brand-cream">Recognition</div>
+                                            <div className="text-xs text-secondary/50">
                                                 {overallSystemOnline ? 'Active Mode' : 'Inactive'}
                                             </div>
                                         </div>
                                     </div>
-                                    <span className={`text-xs font-mono ${overallSystemOnline ? 'text-purple-400' : 'text-slate-600'}`}>
+                                    <span className={`text-xs font-mono ${overallSystemOnline ? 'text-purple-400' : 'text-secondary/30'}`}>
                                         {overallSystemOnline ? 'ON' : 'OFF'}
                                     </span>
                                 </div>
@@ -428,7 +428,7 @@ export default function MonitorTab() {
                         </div>
 
                         <div className="flex-1 relative flex items-center justify-center p-4 md:p-10">
-                            <div className="w-full h-full flex items-center justify-center bg-slate-900 rounded-2xl border border-slate-800 overflow-hidden shadow-2xl relative">
+                            <div className="w-full h-full flex items-center justify-center bg-maroon-950 rounded-2xl border border-white/10 overflow-hidden shadow-2xl relative">
                                 <VideoFeed
                                     src={`/api/ai/video_feed/${expandedCamera}`}
                                     alt={`Camera ${expandedCamera} Full View`}

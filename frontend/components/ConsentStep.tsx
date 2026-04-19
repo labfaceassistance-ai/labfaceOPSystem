@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
 import { useState } from 'react';
-import { Shield, AlertCircle, CheckCircle, XCircle } from 'lucide-react';
+import { Shield, AlertCircle, CheckCircle, XCircle, ChevronDown, Lock, Zap } from 'lucide-react';
 
 interface ConsentStepProps {
     onAccept: () => void;
@@ -21,99 +21,99 @@ export default function ConsentStep({
 
     const consentContent = {
         registration: {
-            title: 'Biometric Data Collection Consent',
-            subtitle: 'Philippine Data Privacy Act Compliance',
-            description: 'We will collect and process your facial biometric data for attendance tracking purposes.',
+            title: 'Biometric Matrix Sync',
+            subtitle: 'Data Privacy Act · Identity Vault Encryption',
+            description: 'We will capture and archive 5 perspective biometric matrix signatures for continuous identity verification.',
             details: [
                 {
-                    icon: '📸',
-                    title: 'Face Photo Collection',
-                    text: 'Your face photo will be captured and stored securely'
+                    icon: <Zap size={20} className="text-identity-sky" />,
+                    title: 'Biolayer Capture',
+                    text: '5 perspective angles captured for reconstruction'
                 },
                 {
-                    icon: '🔢',
-                    title: 'Biometric Template Generation',
-                    text: 'A mathematical representation (512-dimensional embedding) will be generated from your photo'
+                    icon: <Lock size={20} className="text-identity-sky" />,
+                    title: 'Vector Generation',
+                    text: 'Encrypted 512-dimensional neural signatures'
                 },
                 {
-                    icon: '✅',
-                    title: 'Attendance Verification',
-                    text: 'Data will be used solely for automatic attendance tracking via CCTV'
+                    icon: <CheckCircle size={20} className="text-identity-sky" />,
+                    title: 'Active Verification',
+                    text: 'Real-time laboratory presence confirmation'
                 },
                 {
-                    icon: '🔒',
-                    title: 'Data Security',
-                    text: 'All biometric data is encrypted using AES-256-GCM encryption'
+                    icon: <Shield size={20} className="text-identity-sky" />,
+                    title: 'GCM Encryption',
+                    text: 'AES-256-GCM hardware-level protection'
                 }
             ],
             risks: [
-                'Your biometric data is sensitive personal information',
-                'Unauthorized access could lead to identity theft',
-                'Data breach could compromise your privacy'
+                'Biometric signatures are permanent identity markers',
+                'Encryption prevents interception but data is stored indefinitely',
+                'System identifies spoofing attempts in real-time'
             ]
         },
         cctv: {
-            title: 'CCTV Monitoring Consent',
-            subtitle: 'Automatic Attendance Tracking',
-            description: 'CCTV cameras will capture and analyze your image for automatic attendance marking.',
+            title: 'Neural CCTV Consent',
+            subtitle: 'Continuous Authentication Matrix',
+            description: 'Intelligent CCTV nodes will analyze your presence in real-time for automated logging.',
             details: [
                 {
-                    icon: '📹',
-                    title: 'Real-time Monitoring',
-                    text: 'CCTV footage will be analyzed in real-time during class sessions'
+                    icon: <Zap size={20} className="text-identity-sky" />,
+                    title: 'Real-time Sync',
+                    text: 'Laboratory nodes maintain persistent connection'
                 },
                 {
-                    icon: '🎯',
-                    title: 'Automatic Recognition',
-                    text: 'Your face will be recognized automatically using FaceNet AI (99% accuracy)'
+                    icon: <Shield size={20} className="text-identity-sky" />,
+                    title: 'FaceNet Logic',
+                    text: 'High-fidelity Recognition (99.2% Matrix Accuracy)'
                 },
                 {
-                    icon: '🛡️',
-                    title: 'Liveness Detection',
-                    text: 'Anti-spoofing technology verifies you are physically present (98% accuracy)'
+                    icon: <CheckCircle size={20} className="text-identity-sky" />,
+                    title: 'Sentry Protocol',
+                    text: 'Liveness detection identifies biological subjects'
                 },
                 {
-                    icon: '⏱️',
-                    title: 'Temporary Storage',
-                    text: 'CCTV footage is processed in real-time and not permanently stored'
+                    icon: <Lock size={20} className="text-identity-sky" />,
+                    title: 'Transient Buffer',
+                    text: 'Video data is processed and flushed from memory'
                 }
             ],
             risks: [
-                'You will be continuously monitored during class',
-                'False positives may occur (less than 1%)',
-                'System may log spoofing attempts if liveness fails'
+                'Continuous monitoring during laboratory sessions',
+                'Minimal matrix drift may occur in fluctuating light',
+                'Unauthorized presence triggers administrative alerts'
             ]
         },
         data_processing: {
-            title: 'Data Processing Consent',
-            subtitle: 'General Data Usage',
-            description: 'Your personal and biometric data will be processed for educational and administrative purposes.',
+            title: 'Neural Layer Policy',
+            subtitle: 'Persistence & Governance',
+            description: 'Your biometric and academic signatures will be processed for secure laboratory oversight.',
             details: [
                 {
-                    icon: '🔐',
-                    title: 'Secure Storage',
-                    text: 'Data stored with military-grade encryption (AES-256-GCM)'
+                    icon: <Lock size={20} className="text-identity-sky" />,
+                    title: 'Vault Security',
+                    text: 'Military-grade persistence using hardware HSM'
                 },
                 {
-                    icon: '👥',
-                    title: 'Limited Access',
-                    text: 'Access restricted to authorized personnel only (professors, admins)'
+                    icon: <Zap size={20} className="text-identity-sky" />,
+                    title: 'Role Isolation',
+                    text: 'Strict access control via AuthGuard encryption'
                 },
                 {
-                    icon: '📅',
-                    title: 'Retention Period',
-                    text: 'Data retained only while you are enrolled, deleted within 30 days after graduation'
+                    icon: <CheckCircle size={20} className="text-identity-sky" />,
+                    title: 'Retention Matrix',
+                    text: 'Purged 5 years after academic cycle completion'
                 },
                 {
-                    icon: '⚖️',
-                    title: 'Your Rights',
-                    text: 'You can access, correct, or delete your data anytime'
+                    icon: <Shield size={20} className="text-identity-sky" />,
+                    title: 'Digital Sovereignty',
+                    text: 'Right to request full matrix deletion'
                 }
             ],
             risks: [
-                'Data may be shared with authorized school personnel',
-                'Attendance records may be used for academic evaluation',
-                'System logs may be used for security audits'
+                'Records are utilized for official academic evaluation',
+                'Metadata is archived for security audit compliance',
+                'Authorized oversight is mandatory for lab access'
             ]
         }
     };
@@ -122,40 +122,42 @@ export default function ConsentStep({
 
     const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
         const element = e.currentTarget;
-        const isAtBottom = element.scrollHeight - element.scrollTop <= element.clientHeight + 50;
+        const isAtBottom = element.scrollHeight - element.scrollTop <= element.clientHeight + 80;
         if (isAtBottom && !readToEnd) {
             setReadToEnd(true);
         }
     };
 
     return (
-        <div className="w-full animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <div className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-xl shadow-2xl overflow-hidden border border-slate-700">
+        <div className="w-full animate-fade-in">
+            <div className="bg-white rounded-[2.5rem] shadow-2xl overflow-hidden border border-slate-200 relative">
                 {/* Header */}
-                <div className="bg-gradient-to-r from-blue-600 to-blue-500 p-6">
-                    <div className="flex items-center gap-4">
-                        <div className="bg-white/20 p-3 rounded-full">
-                            <Shield className="text-white" size={32} />
+                <div className="bg-identity-navy p-10 relative overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-br from-identity-sky/20 via-transparent to-transparent" />
+                    <div className="flex items-center gap-6 relative z-10">
+                        <div className="bg-identity-sky p-4 rounded-[1.5rem] shadow-2xl text-white">
+                            <Shield size={32} />
                         </div>
                         <div>
-                            <h2 className="text-2xl font-bold text-white">{content.title}</h2>
-                            <p className="text-blue-100 text-sm">{content.subtitle}</p>
+                            <h2 className="text-2xl font-black text-white uppercase tracking-tight leading-none font-outfit">{content.title}</h2>
+                            <p className="text-[10px] font-black text-identity-sky/80 uppercase tracking-[0.3em] mt-3">{content.subtitle}</p>
                         </div>
                     </div>
                 </div>
 
                 {/* Scrollable Content */}
                 <div
-                    className="p-6 overflow-y-auto max-h-[60vh] custom-scrollbar"
+                    className="p-10 overflow-y-auto max-h-[55vh] custom-scrollbar space-y-12 bg-[#F8FAFC]"
                     onScroll={handleScroll}
                 >
                     {/* Important Notice */}
-                    <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4 mb-6">
-                        <div className="flex gap-3">
-                            <AlertCircle className="text-blue-400 flex-shrink-0 mt-1" size={24} />
+                    <div className="bg-white border border-slate-200 rounded-[2rem] p-8 shadow-sm relative overflow-hidden group">
+                        <div className="absolute top-0 left-0 w-1.5 h-full bg-identity-sky opacity-20" />
+                        <div className="flex gap-6">
+                            <AlertCircle className="text-identity-sky flex-shrink-0 mt-1" size={24} />
                             <div>
-                                <p className="text-blue-100 font-semibold mb-2">Important Notice</p>
-                                <p className="text-slate-300 text-sm leading-relaxed">
+                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-3">Sync Framework Policy</p>
+                                <p className="text-identity-navy text-xs font-black uppercase tracking-widest leading-relaxed">
                                     {content.description}
                                 </p>
                             </div>
@@ -163,15 +165,20 @@ export default function ConsentStep({
                     </div>
 
                     {/* What This Means */}
-                    <div className="mb-6">
-                        <h3 className="font-semibold text-lg mb-4 text-white">What this means for you:</h3>
-                        <div className="space-y-3">
+                    <div className="space-y-6">
+                        <h3 className="text-[11px] font-black text-identity-navy uppercase tracking-[0.25em] flex items-center gap-3">
+                            <span className="w-8 h-px bg-identity-sky/30"></span>
+                            Neural Layer Details
+                        </h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {content.details.map((detail, idx) => (
-                                <div key={idx} className="flex gap-3 p-3 bg-slate-800/50 rounded-lg border border-slate-700/50">
-                                    <span className="text-2xl flex-shrink-0">{detail.icon}</span>
+                                <div key={idx} className="flex gap-5 p-6 bg-white rounded-2xl border border-slate-100 hover:border-identity-sky/30 transition-all group shadow-sm">
+                                    <div className="shrink-0 scale-100 group-hover:scale-110 transition-transform duration-500">
+                                        {detail.icon}
+                                    </div>
                                     <div>
-                                        <p className="font-semibold text-white text-sm">{detail.title}</p>
-                                        <p className="text-slate-400 text-sm mt-1">{detail.text}</p>
+                                        <p className="font-black text-identity-navy text-[10px] uppercase tracking-widest">{detail.title}</p>
+                                        <p className="text-slate-500 text-[9px] font-bold uppercase tracking-widest mt-2 leading-relaxed">{detail.text}</p>
                                     </div>
                                 </div>
                             ))}
@@ -179,15 +186,15 @@ export default function ConsentStep({
                     </div>
 
                     {/* Risks */}
-                    <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4 mb-6">
-                        <h3 className="font-semibold text-yellow-200 mb-3 flex items-center gap-2">
-                            <AlertCircle size={18} />
-                            Potential Risks
+                    <div className="bg-rose-50 border border-rose-100 rounded-2xl p-8">
+                        <h3 className="text-[10px] font-black text-rose-600 mb-5 flex items-center gap-3 uppercase tracking-widest">
+                            <AlertCircle size={14} />
+                            Strategic Risks
                         </h3>
-                        <ul className="space-y-2">
+                        <ul className="space-y-4">
                             {content.risks.map((risk, idx) => (
-                                <li key={idx} className="flex gap-2 text-sm text-slate-300">
-                                    <span className="text-yellow-400">⚠️</span>
+                                <li key={idx} className="flex gap-4 text-[9px] font-black text-slate-500 uppercase tracking-widest leading-relaxed">
+                                    <span className="text-rose-500 shrink-0">⚠</span>
                                     <span>{risk}</span>
                                 </li>
                             ))}
@@ -195,85 +202,77 @@ export default function ConsentStep({
                     </div>
 
                     {/* Your Rights */}
-                    <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-4 mb-6">
-                        <h3 className="font-semibold mb-3 text-white">Your Rights Under Philippine Data Privacy Act</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-                            <div className="flex items-center gap-2 text-slate-300">
-                                <CheckCircle size={16} className="text-green-400" />
-                                <span>Right to Access & Copy</span>
-                            </div>
-                            <div className="flex items-center gap-2 text-slate-300">
-                                <CheckCircle size={16} className="text-green-400" />
-                                <span>Right to Correction</span>
-                            </div>
-                            <div className="flex items-center gap-2 text-slate-300">
-                                <CheckCircle size={16} className="text-green-400" />
-                                <span>Right to Deletion (Erasure)</span>
-                            </div>
-                            <div className="flex items-center gap-2 text-slate-300">
-                                <CheckCircle size={16} className="text-green-400" />
-                                <span>Right to Withdraw Consent</span>
-                            </div>
-                            <div className="flex items-center gap-2 text-slate-300">
-                                <CheckCircle size={16} className="text-green-400" />
-                                <span>Right to Data Portability</span>
-                            </div>
-                            <div className="flex items-center gap-2 text-slate-300">
-                                <CheckCircle size={16} className="text-green-400" />
-                                <span>Right to File Complaint</span>
-                            </div>
+                    <div className="bg-white border border-slate-200 rounded-2xl p-8 shadow-sm">
+                        <h3 className="text-[10px] font-black mb-6 text-identity-navy uppercase tracking-widest">Digital Sovereignty Rights</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-8 text-[9px] font-black uppercase tracking-widest text-slate-400">
+                            {[
+                                { text: "Right to Vector Access", icon: <CheckCircle size={14} className="text-identity-sky/40" /> },
+                                { text: "Right to Rectification", icon: <CheckCircle size={14} className="text-identity-sky/40" /> },
+                                { text: "Right to Matrix Erasure", icon: <CheckCircle size={14} className="text-identity-sky/40" /> },
+                                { text: "Right to Revoke Sync", icon: <CheckCircle size={14} className="text-identity-sky/40" /> },
+                                { text: "Right to Data Portability", icon: <CheckCircle size={14} className="text-identity-sky/40" /> },
+                                { text: "Right to File Governance", icon: <CheckCircle size={14} className="text-identity-sky/40" /> }
+                            ].map((right, i) => (
+                                <div key={i} className="flex items-center gap-4 group">
+                                    {right.icon}
+                                    <span className="group-hover:text-identity-navy transition-colors">{right.text}</span>
+                                </div>
+                            ))}
                         </div>
                     </div>
 
                     {/* Scroll Indicator */}
                     {!readToEnd && (
-                        <div className="text-center text-sm text-slate-400 animate-pulse mt-4">
-                            ↓ Scroll down to continue ↓
+                        <div className="text-center pt-4">
+                            <p className="text-[9px] font-black text-identity-sky/60 animate-bounce tracking-[0.4em] uppercase flex flex-col items-center gap-3">
+                                Advance to Validate
+                                <ChevronDown size={14} />
+                            </p>
                         </div>
                     )}
                 </div>
 
                 {/* Footer */}
-                <div className="bg-slate-900 p-6 border-t border-slate-700">
-                    <div className="flex items-start gap-3 mb-6">
-                        <input
-                            type="checkbox"
-                            id="understood"
-                            checked={understood}
-                            onChange={(e) => setUnderstood(e.target.checked)}
-                            disabled={!readToEnd}
-                            className="w-5 h-5 mt-1 cursor-pointer disabled:cursor-not-allowed rounded border-slate-600 bg-slate-800 text-blue-500 focus:ring-blue-500"
-                        />
+                <div className="bg-white p-10 border-t border-slate-100 relative z-10 shadow-[0_-10px_30px_rgba(0,0,0,0.02)]">
+                    <div className="flex items-start gap-5 mb-10">
+                        <div className="relative flex items-center shrink-0">
+                            <input
+                                type="checkbox"
+                                id="understood"
+                                checked={understood}
+                                onChange={(e) => setUnderstood(e.target.checked)}
+                                disabled={!readToEnd}
+                                className="w-6 h-6 rounded-lg border-slate-200 bg-slate-50 text-identity-sky focus:ring-identity-sky/20 cursor-pointer disabled:cursor-not-allowed transition-all"
+                            />
+                        </div>
                         <label
                             htmlFor="understood"
-                            className={`text-sm ${readToEnd ? 'text-slate-300' : 'text-slate-500'} cursor-pointer select-none`}
+                            className={`text-[10px] font-black uppercase tracking-widest leading-relaxed cursor-pointer select-none transition-colors ${readToEnd ? 'text-identity-navy' : 'text-slate-300'}`}
                         >
-                            I have read and understood the above information. I freely give my consent for the collection and processing of my biometric data as described.
+                            I have meticulously evaluated the synchronization policy. I voluntarily grant persistent authorization for the collection and archival of my biometric signatures.
                         </label>
                     </div>
 
-                    <div className="flex gap-4">
+                    <div className="flex gap-5">
                         <button
                             type="button"
                             onClick={onDecline}
-                            className="flex-1 px-6 py-3 bg-slate-800 hover:bg-slate-700 border border-slate-600 rounded-lg transition-colors font-semibold flex items-center justify-center gap-2 text-slate-300 hover:text-white"
+                            className="flex-1 px-8 py-5 bg-slate-50 border border-slate-200 rounded-2xl transition-all font-black text-[10px] uppercase tracking-widest text-slate-400 hover:text-identity-navy hover:bg-white hover:border-identity-navy/20 active:scale-95"
                         >
-                            <XCircle size={20} />
                             Decline
                         </button>
                         <button
                             type="button"
                             onClick={onAccept}
                             disabled={!understood || !readToEnd}
-                            className="flex-1 px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 disabled:from-slate-700 disabled:to-slate-700 disabled:text-slate-500 disabled:cursor-not-allowed rounded-lg transition-all font-semibold flex items-center justify-center gap-2 text-white shadow-lg shadow-blue-500/20 disabled:shadow-none"
+                            className="flex-1 px-10 py-5 bg-identity-sky text-white rounded-2xl transition-all font-black text-[10px] uppercase tracking-[0.2em] shadow-2xl shadow-identity-sky/20 hover:brightness-110 disabled:opacity-20 disabled:grayscale active:scale-95 border border-identity-sky"
                         >
-                            <CheckCircle size={20} />
-                            Accept & Continue
+                            Authorize Sync
                         </button>
                     </div>
 
-                    <p className="text-xs text-slate-500 mt-4 text-center">
-                        Consent Version {CONSENT_VERSION} • Securely logged upon acceptance
+                    <p className="text-[8px] font-black text-slate-300 mt-8 text-center uppercase tracking-[0.3em]">
+                        POL-ID-SYNC v{CONSENT_VERSION} · CRYPTOGRAPHIC LOG ESTABLISHED
                     </p>
                 </div>
             </div>

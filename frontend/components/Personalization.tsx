@@ -104,19 +104,19 @@ export function ThemeSwitcher() {
     ];
 
     return (
-        <div className="flex gap-2 p-1 bg-slate-800 rounded-lg">
+        <div className="flex gap-2 p-1.5 bg-black/40 rounded-xl border border-white/5 shadow-inner">
             {themes.map(({ value, icon: Icon, label }) => (
                 <button
                     key={value}
                     onClick={() => updatePreference('theme', value)}
-                    className={`flex items-center gap-2 px-3 py-2 rounded-md transition-all ${preferences.theme === value
-                            ? 'bg-brand-500 text-white'
-                            : 'text-slate-400 hover:text-white hover:bg-slate-700'
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all text-[10px] font-black uppercase tracking-widest ${preferences.theme === value
+                            ? 'bg-brand-gold text-black shadow-lg shadow-brand-gold/10'
+                            : 'text-secondary/40 hover:text-white hover:bg-white/5'
                         }`}
                     title={label}
                 >
-                    <Icon size={18} />
-                    <span className="text-sm">{label}</span>
+                    <Icon size={16} />
+                    <span>{label}</span>
                 </button>
             ))}
         </div>
@@ -131,10 +131,10 @@ export function LanguageSwitcher() {
         <select
             value={preferences.language}
             onChange={(e) => updatePreference('language', e.target.value as Language)}
-            className="px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white"
+            className="px-4 py-2 bg-black/40 border border-white/5 rounded-xl text-white text-[10px] font-black uppercase tracking-widest outline-none focus:border-brand-gold/50 transition-all shadow-inner"
         >
-            <option value="en">English</option>
-            <option value="fil">Filipino</option>
+            <option value="en" className="bg-maroon-950">English</option>
+            <option value="fil" className="bg-maroon-950">Filipino</option>
         </select>
     );
 }
@@ -144,39 +144,39 @@ export function PreferencesPanel() {
     const { preferences, updatePreference, resetPreferences } = usePersonalization();
 
     return (
-        <div className="bg-slate-900 border border-slate-800 rounded-lg p-6 space-y-6">
-            <h3 className="text-xl font-bold text-white">Preferences</h3>
+        <div className="bg-maroon-950 border border-white/10 rounded-2xl p-8 space-y-10 shadow-2xl">
+            <h3 className="text-xl font-black text-white uppercase tracking-tight">Preferences</h3>
 
             {/* Theme */}
-            <div>
-                <label className="block text-sm font-medium text-slate-400 mb-2">Theme</label>
+            <div className="space-y-3">
+                <label className="block text-[10px] font-black text-secondary/40 uppercase tracking-widest">Visual Theme</label>
                 <ThemeSwitcher />
             </div>
 
             {/* Language */}
-            <div>
-                <label className="block text-sm font-medium text-slate-400 mb-2">Language</label>
+            <div className="space-y-3">
+                <label className="block text-[10px] font-black text-secondary/40 uppercase tracking-widest">System Language</label>
                 <LanguageSwitcher />
             </div>
 
             {/* Dashboard Layout */}
-            <div>
-                <label className="block text-sm font-medium text-slate-400 mb-2">Dashboard Layout</label>
-                <div className="flex gap-2">
+            <div className="space-y-3">
+                <label className="block text-[10px] font-black text-secondary/40 uppercase tracking-widest">Dashboard Layout</label>
+                <div className="flex gap-3">
                     <button
                         onClick={() => updatePreference('dashboardLayout', 'compact')}
-                        className={`flex-1 px-4 py-2 rounded-lg transition-all ${preferences.dashboardLayout === 'compact'
-                                ? 'bg-brand-500 text-white'
-                                : 'bg-slate-800 text-slate-400 hover:text-white'
+                        className={`flex-1 px-6 py-3 rounded-xl transition-all text-[10px] font-black uppercase tracking-widest border shadow-inner ${preferences.dashboardLayout === 'compact'
+                                ? 'bg-brand-gold text-black border-brand-gold'
+                                : 'bg-black/40 text-secondary/40 border-white/5 hover:text-white hover:bg-white/5'
                             }`}
                     >
                         Compact
                     </button>
                     <button
                         onClick={() => updatePreference('dashboardLayout', 'detailed')}
-                        className={`flex-1 px-4 py-2 rounded-lg transition-all ${preferences.dashboardLayout === 'detailed'
-                                ? 'bg-brand-500 text-white'
-                                : 'bg-slate-800 text-slate-400 hover:text-white'
+                        className={`flex-1 px-6 py-3 rounded-xl transition-all text-[10px] font-black uppercase tracking-widest border shadow-inner ${preferences.dashboardLayout === 'detailed'
+                                ? 'bg-brand-gold text-black border-brand-gold'
+                                : 'bg-black/40 text-secondary/40 border-white/5 hover:text-white hover:bg-white/5'
                             }`}
                     >
                         Detailed
@@ -185,50 +185,60 @@ export function PreferencesPanel() {
             </div>
 
             {/* Notifications */}
-            <div>
-                <label className="block text-sm font-medium text-slate-400 mb-3">Notifications</label>
-                <div className="space-y-3">
-                    <label className="flex items-center gap-3">
-                        <input
-                            type="checkbox"
-                            checked={preferences.emailNotifications}
-                            onChange={(e) => updatePreference('emailNotifications', e.target.checked)}
-                            className="w-5 h-5 text-brand-600 bg-slate-800 border-slate-700 rounded"
-                        />
-                        <span className="text-white">Email Notifications</span>
+            <div className="space-y-4">
+                <label className="block text-[10px] font-black text-secondary/40 uppercase tracking-widest">Alert Channels</label>
+                <div className="space-y-4">
+                    <label className="flex items-center gap-3 cursor-pointer group">
+                        <div className="relative flex items-center">
+                            <input
+                                type="checkbox"
+                                checked={preferences.emailNotifications}
+                                onChange={(e) => updatePreference('emailNotifications', e.target.checked)}
+                                className="peer w-6 h-6 opacity-0 absolute cursor-pointer"
+                            />
+                            <div className="w-6 h-6 bg-black/40 border border-white/10 rounded-lg flex items-center justify-center peer-checked:bg-brand-gold peer-checked:border-brand-gold transition-all shadow-inner">
+                                <div className="w-2 h-2 bg-black rounded-sm opacity-0 peer-checked:opacity-100 transition-opacity"></div>
+                            </div>
+                        </div>
+                        <span className="text-[10px] font-black text-white uppercase tracking-widest group-hover:text-brand-gold transition-colors">Email Alerts</span>
                     </label>
-                    <label className="flex items-center gap-3">
-                        <input
-                            type="checkbox"
-                            checked={preferences.pushNotifications}
-                            onChange={(e) => updatePreference('pushNotifications', e.target.checked)}
-                            className="w-5 h-5 text-brand-600 bg-slate-800 border-slate-700 rounded"
-                        />
-                        <span className="text-white">Push Notifications</span>
+                    <label className="flex items-center gap-3 cursor-pointer group">
+                        <div className="relative flex items-center">
+                            <input
+                                type="checkbox"
+                                checked={preferences.pushNotifications}
+                                onChange={(e) => updatePreference('pushNotifications', e.target.checked)}
+                                className="peer w-6 h-6 opacity-0 absolute cursor-pointer"
+                            />
+                            <div className="w-6 h-6 bg-black/40 border border-white/10 rounded-lg flex items-center justify-center peer-checked:bg-brand-gold peer-checked:border-brand-gold transition-all shadow-inner">
+                                <div className="w-2 h-2 bg-black rounded-sm opacity-0 peer-checked:opacity-100 transition-opacity"></div>
+                            </div>
+                        </div>
+                        <span className="text-[10px] font-black text-white uppercase tracking-widest group-hover:text-brand-gold transition-colors">Neural Push Notifications</span>
                     </label>
                 </div>
             </div>
 
             {/* Notification Frequency */}
-            <div>
-                <label className="block text-sm font-medium text-slate-400 mb-2">Notification Frequency</label>
+            <div className="space-y-3">
+                <label className="block text-[10px] font-black text-secondary/40 uppercase tracking-widest">Update Frequency</label>
                 <select
                     value={preferences.notificationFrequency}
                     onChange={(e) => updatePreference('notificationFrequency', e.target.value as any)}
-                    className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white"
+                    className="w-full px-4 py-2 bg-black/40 border border-white/5 rounded-xl text-white text-[10px] font-black uppercase tracking-widest outline-none focus:border-brand-gold/50 transition-all shadow-inner"
                 >
-                    <option value="all">All Notifications</option>
-                    <option value="important">Important Only</option>
-                    <option value="none">None</option>
+                    <option value="all" className="bg-maroon-950">Intensive (All)</option>
+                    <option value="important" className="bg-maroon-950">Selective (Important)</option>
+                    <option value="none" className="bg-maroon-950">Muted (None)</option>
                 </select>
             </div>
 
             {/* Reset */}
             <button
                 onClick={resetPreferences}
-                className="w-full px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
+                className="w-full px-6 py-4 bg-white/5 border border-rose-500/20 text-rose-500/60 hover:text-rose-500 hover:bg-rose-500/10 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all shadow-inner active:scale-95"
             >
-                Reset to Defaults
+                Reset Persistence Layer
             </button>
         </div>
     );

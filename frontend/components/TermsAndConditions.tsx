@@ -11,26 +11,26 @@ export default function TermsAndConditions({ isOpen, onClose, onAccept }: TermsA
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <div className="bg-slate-900 rounded-2xl shadow-2xl border border-slate-800 max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-in fade-in duration-300">
+            <div className="bg-maroon-950 rounded-2xl shadow-3xl border border-white/10 max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col animate-scale-up">
                 {/* Header */}
-                <div className="p-6 border-b border-slate-800 flex items-center justify-between">
+                <div className="p-8 bg-black/40 border-b border-white/10 flex items-center justify-between">
                     <div>
-                        <h2 className="text-2xl font-bold text-white">Terms and Conditions</h2>
-                        <p className="text-sm text-slate-400 mt-1">LabFace System - PUP Lopez Campus</p>
+                        <h2 className="text-2xl font-black text-white uppercase tracking-tight">Terms and Conditions</h2>
+                        <p className="text-[10px] font-bold text-secondary/40 uppercase tracking-widest mt-1">LabFace System - PUP Lopez Campus</p>
                     </div>
                     <button
                         onClick={onClose}
-                        className="text-slate-400 hover:text-white transition-colors p-2 hover:bg-slate-800 rounded-lg"
+                        className="text-secondary/40 hover:text-white transition-colors p-3 hover:bg-white/5 rounded-xl border border-white/5 shadow-inner"
                     >
                         <X size={24} />
                     </button>
                 </div>
 
                 {/* Scrollable Content */}
-                <div className="flex-1 overflow-y-auto p-6 space-y-6 text-slate-300">
-                    <div className="bg-brand-500/10 border border-brand-500/20 rounded-lg p-4">
-                        <p className="text-sm text-brand-400 font-medium">
+                <div className="flex-1 overflow-y-auto p-8 space-y-10 text-secondary/60">
+                    <div className="bg-brand-gold/5 border border-brand-gold/10 rounded-2xl p-6 shadow-inner">
+                        <p className="text-[10px] font-black text-brand-gold uppercase tracking-widest leading-relaxed">
                             Please read these Terms and Conditions carefully before using the LabFace System.
                         </p>
                     </div>
@@ -203,15 +203,15 @@ export default function TermsAndConditions({ isOpen, onClose, onAccept }: TermsA
                     </section>
 
                     <section>
-                        <h3 className="text-lg font-bold text-white mb-3">14. Contact Information</h3>
-                        <p className="text-sm leading-relaxed mb-2">
+                        <h3 className="text-lg font-black text-brand-gold mb-4 uppercase tracking-widest">14. Contact Information</h3>
+                        <p className="text-[10px] font-bold uppercase tracking-widest leading-relaxed mb-4">
                             For questions or concerns regarding these Terms and Conditions:
                         </p>
-                        <div className="bg-slate-800 rounded-lg p-4">
-                            <p className="text-sm text-white font-medium">LabFace System Support</p>
-                            <p className="text-sm text-slate-400">Email: support@labface.site</p>
-                            <p className="text-sm text-slate-400">Polytechnic University of the Philippines - Lopez Campus</p>
-                            <p className="text-sm text-slate-400">Computer Laboratory</p>
+                        <div className="bg-black/40 border border-white/5 rounded-2xl p-6 shadow-inner">
+                            <p className="text-[10px] font-black text-white uppercase tracking-widest mb-2">LabFace System Support</p>
+                            <p className="text-[10px] font-bold text-secondary/40 uppercase tracking-widest">Email: support@labface.site</p>
+                            <p className="text-[10px] font-bold text-secondary/40 uppercase tracking-widest">Polytechnic University of the Philippines - Lopez Campus</p>
+                            <p className="text-[10px] font-bold text-secondary/40 uppercase tracking-widest">Computer Laboratory</p>
                         </div>
                     </section>
 
@@ -228,10 +228,10 @@ export default function TermsAndConditions({ isOpen, onClose, onAccept }: TermsA
                 </div>
 
                 {/* Footer Actions */}
-                <div className="p-6 border-t border-slate-800 flex gap-3 justify-end">
+                <div className="p-8 bg-black/40 border-t border-white/10 flex gap-4 justify-end">
                     <button
                         onClick={onClose}
-                        className="px-6 py-2 rounded-lg font-medium text-slate-300 hover:text-white hover:bg-slate-800 transition-colors"
+                        className="px-8 py-3 rounded-xl text-[10px] font-black text-secondary/40 uppercase tracking-widest hover:text-white hover:bg-white/5 transition-all border border-white/5 shadow-inner"
                     >
                         Cancel
                     </button>
@@ -240,7 +240,7 @@ export default function TermsAndConditions({ isOpen, onClose, onAccept }: TermsA
                             onAccept();
                             onClose();
                         }}
-                        className="px-6 py-2 rounded-lg font-medium bg-brand-500 hover:bg-brand-600 text-white transition-colors shadow-lg shadow-brand-500/20"
+                        className="px-8 py-3 rounded-xl text-[10px] font-black bg-brand-gold hover:bg-brand-gold/90 text-black uppercase tracking-widest transition-all shadow-lg shadow-brand-gold/20 active:scale-95"
                     >
                         I Accept
                     </button>

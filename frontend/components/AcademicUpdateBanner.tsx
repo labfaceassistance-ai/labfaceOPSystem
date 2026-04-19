@@ -45,36 +45,37 @@ export default function AcademicUpdateBanner({ user }: AcademicUpdateBannerProps
     if (!isVisible || !academicSettings || loading) return null;
 
     return (
-        <div className="mb-6 relative group">
-            <div className="absolute -inset-0.5 bg-gradient-to-r from-brand-500 to-orange-500 rounded-2xl blur opacity-30 group-hover:opacity-50 transition duration-1000"></div>
-            <div className="relative bg-slate-900 border border-slate-800 rounded-2xl p-5 flex flex-col md:flex-row items-center justify-between gap-4">
-                <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-full bg-brand-500/10 flex items-center justify-center text-brand-500 shrink-0">
-                        <AlertTriangle className="w-6 h-6" />
+        <div className="mb-8 relative group">
+            <div className="absolute -inset-1 bg-gradient-to-r from-identity-sky/10 via-identity-sky/20 to-identity-sky/10 rounded-3xl blur-xl opacity-20 group-hover:opacity-40 transition duration-1000"></div>
+            <div className="relative bg-identity-navy border border-white/10 rounded-[2.5rem] p-8 flex flex-col md:flex-row items-center justify-between gap-8 shadow-3xl overflow-hidden">
+                <div className="absolute inset-0 bg-blueprint opacity-[0.05] pointer-events-none"></div>
+                <div className="flex items-center gap-6 relative z-10">
+                    <div className="w-16 h-16 rounded-2xl bg-identity-sky/10 flex items-center justify-center text-identity-sky shrink-0 border border-identity-sky/20 shadow-inner">
+                        <AlertTriangle className="w-8 h-8" />
                     </div>
                     <div>
-                        <h4 className="text-white font-bold text-lg">Academic Update Required</h4>
-                        <p className="text-slate-400 text-sm">
-                            The system has transitioned to <span className="text-brand-400 font-semibold">{academicSettings.schoolYear} - {academicSettings.semester}</span>. 
-                            Please update your Information to maintain active status.
+                        <h4 className="text-white font-black text-2xl uppercase tracking-tighter font-outfit">Academic Update Required</h4>
+                        <p className="text-[10px] font-black text-white/40 uppercase tracking-[0.3em] leading-relaxed mt-2">
+                            The system has transitioned into <span className="text-identity-sky font-black underline underline-offset-4">{academicSettings.schoolYear} - {academicSettings.semester}</span>. 
+                            <br />Please synchronize your identity record.
                         </p>
                     </div>
                 </div>
                 
-                <div className="flex items-center gap-3 w-full md:w-auto">
+                <div className="flex items-center gap-4 w-full md:w-auto relative z-10">
                     <button
                         onClick={() => router.push('/student/profile?tab=academic')}
-                        className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-2.5 bg-brand-600 hover:bg-brand-500 text-white font-semibold rounded-xl transition-all shadow-lg shadow-brand-600/20 active:scale-95"
+                        className="flex-1 md:flex-none flex items-center justify-center gap-4 px-10 py-4 bg-identity-sky hover:bg-white hover:text-identity-navy font-black text-[10px] uppercase tracking-[0.4em] rounded-2xl transition-all shadow-xl shadow-identity-sky/20 active:scale-95 text-white"
                     >
-                        Update Now
+                        Synchronize
                         <ArrowRight className="w-4 h-4" />
                     </button>
                     <button 
                         onClick={() => setIsVisible(false)}
-                        className="p-2.5 text-slate-500 hover:text-white hover:bg-slate-800 rounded-xl transition-colors"
+                        className="p-4 text-white/30 hover:text-white hover:bg-white/5 rounded-2xl transition-all shadow-inner border border-white/5"
                         title="Dismiss for now"
                     >
-                        <X className="w-5 h-5" />
+                        <X className="w-6 h-6" />
                     </button>
                 </div>
             </div>

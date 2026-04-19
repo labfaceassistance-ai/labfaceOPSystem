@@ -251,56 +251,56 @@ export default function CreateClassModal({ isOpen, onClose, onSuccess, professor
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in">
-            <div className="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl max-w-lg w-full p-6 relative animate-scale-up max-h-[90vh] overflow-y-auto">
+            <div className="bg-maroon-950 border border-white/10 rounded-2xl shadow-3xl max-w-lg w-full p-6 relative animate-scale-up max-h-[90vh] overflow-y-auto">
                 <button
                     onClick={onClose}
-                    className="absolute top-4 right-4 text-slate-400 hover:text-slate-200 transition-colors"
+                    className="absolute top-4 right-4 text-secondary/40 hover:text-white transition-colors"
                 >
                     <X size={24} />
                 </button>
 
-                <h3 className="text-2xl font-bold text-white mb-6">Create New Class</h3>
+                <h3 className="text-2xl font-black text-white mb-6 uppercase tracking-tight">Create New Class</h3>
 
                 {error && (
-                    <div className="bg-red-500/10 border border-red-500/20 text-red-400 p-3 rounded-lg mb-6 text-sm backdrop-blur-sm">
+                    <div className="bg-red-500/10 border border-red-500/20 text-red-400 p-3 rounded-lg mb-6 text-[10px] font-black uppercase tracking-widest backdrop-blur-sm">
                         {error}
                     </div>
                 )}
 
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-1">Subject Code</label>
+                        <label className="block text-[10px] font-black uppercase tracking-widest text-secondary/40 mb-1 ml-1">Subject Code</label>
                         <input
                             name="subjectCode"
                             value={formData.subjectCode}
                             onChange={handleInputChange}
                             placeholder="COMP 20133"
                             required
-                            className="input-field w-full p-2 border border-slate-700 rounded-lg bg-slate-800 text-white placeholder-slate-500"
+                            className="w-full px-4 py-2.5 bg-black/40 border border-white/5 rounded-xl text-xs font-bold text-white uppercase tracking-widest focus:outline-none focus:border-brand-gold/50 focus:ring-1 focus:ring-brand-gold/20 placeholder-secondary/20 transition-all shadow-inner"
                         />
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-1">Subject Name</label>
+                        <label className="block text-[10px] font-black uppercase tracking-widest text-secondary/40 mb-1 ml-1">Subject Name</label>
                         <input
                             name="subjectName"
                             value={formData.subjectName}
                             onChange={handleInputChange}
                             placeholder="Data Structures and Algorithms"
                             required
-                            className="input-field w-full p-2 border border-slate-700 rounded-lg bg-slate-800 text-white placeholder-slate-500"
+                            className="w-full px-4 py-2.5 bg-black/40 border border-white/5 rounded-xl text-xs font-bold text-white uppercase tracking-widest focus:outline-none focus:border-brand-gold/50 focus:ring-1 focus:ring-brand-gold/20 placeholder-secondary/20 transition-all shadow-inner"
                         />
                     </div>
 
                     {/* NEW: Course and Year Level */}
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-1">Course</label>
+                            <label className="block text-[10px] font-black uppercase tracking-widest text-secondary/40 mb-1 ml-1">Course</label>
                             <select
                                 name="course"
                                 value={formData.course}
                                 onChange={handleInputChange}
-                                className="input-field w-full p-2 border border-slate-700 rounded-lg bg-slate-800 text-white"
+                                className="w-full px-4 py-2.5 bg-black/40 border border-white/5 rounded-xl text-xs font-bold text-white uppercase tracking-widest focus:outline-none focus:border-brand-gold/50 focus:ring-1 focus:ring-brand-gold/20 transition-all shadow-inner"
                             >
                                 <option value="BSIT">BSIT</option>
                                 <option value="DIT">DIT</option>
@@ -308,14 +308,14 @@ export default function CreateClassModal({ isOpen, onClose, onSuccess, professor
                             </select>
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-1">
-                                Year Level {formData.course === 'DIT' && <span className="text-xs text-amber-400">(Max: 3rd)</span>}
+                            <label className="block text-[10px] font-black uppercase tracking-widest text-secondary/40 mb-1 ml-1">
+                                Year Level {formData.course === 'DIT' && <span className="text-[10px] text-brand-gold">(MAX: 3RD)</span>}
                             </label>
                             <select
                                 name="yearLevel"
                                 value={formData.yearLevel}
                                 onChange={handleInputChange}
-                                className="input-field w-full p-2 border border-slate-700 rounded-lg bg-slate-800 text-white"
+                                className="w-full px-4 py-2.5 bg-black/40 border border-white/5 rounded-xl text-xs font-bold text-white uppercase tracking-widest focus:outline-none focus:border-brand-gold/50 focus:ring-1 focus:ring-brand-gold/20 transition-all shadow-inner"
                             >
                                 <option value="1">1st Year</option>
                                 <option value="2">2nd Year</option>
@@ -326,70 +326,71 @@ export default function CreateClassModal({ isOpen, onClose, onSuccess, professor
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-1">Section</label>
+                        <label className="block text-[10px] font-black uppercase tracking-widest text-secondary/40 mb-1 ml-1">Section</label>
                         <input
                             name="section"
                             value={formData.section}
                             readOnly
                             placeholder="Auto-generated"
-                            className="input-field w-full p-2 border border-slate-700 rounded-lg bg-slate-800/50 text-slate-400 cursor-not-allowed"
+                            className="w-full px-4 py-2.5 bg-black/20 border border-white/5 rounded-xl text-xs font-bold text-secondary/40 uppercase tracking-widest cursor-not-allowed shadow-inner"
                         />
-                        <p className="text-xs text-slate-500 mt-1 italic">Automatically derived from Course and Year Level.</p>
+                        <p className="text-[10px] text-secondary/20 mt-1 italic font-bold uppercase tracking-widest">Automatically derived from Course and Year Level.</p>
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-1">School Year</label>
-                            <div className="w-full p-2 border border-slate-700 rounded-lg bg-slate-900/50 text-white flex items-center">
-                                <span className="font-semibold text-brand-400">{formData.schoolYear}</span>
+                            <label className="block text-[10px] font-black uppercase tracking-widest text-secondary/40 mb-1 ml-1">School Year</label>
+                            <div className="w-full px-4 py-2 bg-black/20 border border-white/5 rounded-xl text-xs font-black text-brand-gold uppercase tracking-widest shadow-inner flex items-center">
+                                <span>{formData.schoolYear}</span>
                             </div>
-                            <p className="text-xs text-slate-500 mt-1">Set by admin</p>
+                            <p className="text-[10px] text-secondary/20 mt-1 font-bold uppercase tracking-widest">Set by admin</p>
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-1">Semester</label>
-                            <div className="w-full p-2 border border-slate-700 rounded-lg bg-slate-900/50 text-white flex items-center">
-                                <span className="font-semibold text-brand-400">{formData.semester}</span>
+                            <label className="block text-[10px] font-black uppercase tracking-widest text-secondary/40 mb-1 ml-1">Semester</label>
+                            <div className="w-full px-4 py-2 bg-black/20 border border-white/5 rounded-xl text-xs font-black text-brand-gold uppercase tracking-widest shadow-inner flex items-center">
+                                <span>{formData.semester}</span>
                             </div>
-                            <p className="text-xs text-slate-500 mt-1">Set by admin</p>
+                            <p className="text-[10px] text-secondary/20 mt-1 font-bold uppercase tracking-widest">Set by admin</p>
                         </div>
                     </div>
 
                     {/* ENHANCED: Required Roster Upload with File Preview */}
-                    <div className="p-4 bg-brand-500/10 border border-brand-500/20 rounded-lg">
-                        <label className="block text-sm font-bold text-brand-300 mb-2 flex items-center justify-between">
+                    <div className="p-4 bg-brand-gold/10 border border-brand-gold/20 rounded-xl shadow-inner">
+                        <label className="block text-[10px] font-black text-brand-gold mb-2 flex items-center justify-between uppercase tracking-widest">
                             <span>Upload Class Roster <span className="text-red-400">*</span></span>
                             <button
                                 type="button"
                                 onClick={downloadTemplate}
-                                className="text-xs text-brand-400 hover:text-brand-300 flex items-center gap-1 underline"
+                                className="text-[10px] text-brand-gold hover:text-white flex items-center gap-1 underline transition-colors"
                             >
                                 <Download size={14} /> Download Template
                             </button>
                         </label>
 
                         {rosterFile ? (
-                            <div className="flex items-center justify-between p-3 bg-slate-800 rounded-lg border border-slate-700">
+                            <div className="flex items-center justify-between p-3 bg-black/40 rounded-xl border border-white/5 shadow-inner transition-all">
                                 <div className="flex items-center gap-2 flex-1 min-w-0">
-                                    <Upload size={16} className="text-brand-400 flex-shrink-0" />
-                                    <span className="text-sm text-slate-300 truncate">{rosterFile.name}</span>
+                                    <Upload size={16} className="text-brand-gold flex-shrink-0" />
+                                    <span className="text-[10px] font-black text-white uppercase tracking-widest truncate">{rosterFile.name}</span>
                                 </div>
-                                <button
-                                    type="button"
-                                    onClick={removeFile}
-                                    className="text-red-400 hover:text-red-300 ml-2 flex-shrink-0"
-                                    title="Remove file"
-                                >
-                                    <X size={18} />
-
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={handlePreviewFile}
-                                    className="text-brand-400 hover:text-brand-300 ml-2 flex-shrink-0"
-                                    title="Preview Students"
-                                >
-                                    <Eye size={18} />
-                                </button>
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={handlePreviewFile}
+                                        className="text-brand-gold hover:text-white p-2 rounded-lg hover:bg-white/5 transition-all"
+                                        title="Preview Students"
+                                    >
+                                        <Eye size={18} />
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={removeFile}
+                                        className="text-red-400 hover:text-red-300 p-2 rounded-lg hover:bg-white/5 transition-all"
+                                        title="Remove file"
+                                    >
+                                        <X size={18} />
+                                    </button>
+                                </div>
                             </div>
                         ) : (
                             <input
@@ -397,29 +398,29 @@ export default function CreateClassModal({ isOpen, onClose, onSuccess, professor
                                 type="file"
                                 accept=".xlsx, .xls, .csv"
                                 onChange={handleFileChange}
-                                className="block w-full text-sm text-slate-300 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-brand-500 file:text-white hover:file:bg-brand-400 cursor-pointer"
+                                className="block w-full text-[10px] font-black uppercase tracking-widest text-secondary/40 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-[10px] file:font-black file:uppercase file:tracking-widest file:bg-brand-gold file:text-black hover:file:bg-brand-gold/90 cursor-pointer transition-all"
                             />
                         )}
 
-                        <p className="text-xs text-slate-400 mt-2">
+                        <p className="text-[10px] text-secondary/40 mt-2 font-bold uppercase tracking-widest leading-relaxed">
                             Upload a spreadsheet with columns "Student Number" and "Name". Students without accounts will be enrolled but marked as "No Account".
                         </p>
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-2 flex items-center justify-between">
+                        <label className="block text-[10px] font-black uppercase tracking-widest text-secondary/40 mb-2 flex items-center justify-between ml-1">
                             <span>Class Schedule</span>
-                            <button type="button" onClick={addSchedule} className="text-brand-400 text-xs font-bold hover:underline flex items-center gap-1">
+                            <button type="button" onClick={addSchedule} className="text-brand-gold text-[10px] font-black uppercase tracking-widest hover:text-white transition-colors flex items-center gap-1">
                                 <Plus size={14} /> Add Day
                             </button>
                         </label>
                         <div className="space-y-3">
                             {schedules.map((schedule, index) => (
-                                <div key={index} className="flex gap-2 items-center bg-slate-800 p-2 rounded-lg border border-slate-700">
+                                <div key={index} className="flex gap-2 items-center bg-black/40 p-2 rounded-xl border border-white/5 shadow-inner">
                                     <select
                                         value={schedule.day}
                                         onChange={(e) => handleScheduleChange(index, 'day', e.target.value)}
-                                        className="p-2 border border-slate-700 rounded text-sm bg-slate-900 text-white"
+                                        className="p-2 border border-white/5 rounded-lg text-xs font-bold bg-black/40 text-white uppercase tracking-widest focus:outline-none focus:border-brand-gold/50"
                                     >
                                         {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map(day => (
                                             <option key={day} value={day}>{day}</option>
@@ -429,19 +430,19 @@ export default function CreateClassModal({ isOpen, onClose, onSuccess, professor
                                         type="time"
                                         value={schedule.startTime}
                                         onChange={(e) => handleScheduleChange(index, 'startTime', e.target.value)}
-                                        className="p-2 border border-slate-700 rounded text-sm bg-slate-900 text-white"
+                                        className="flex-1 p-2 border border-white/5 rounded-lg text-xs font-black bg-black/40 text-white uppercase tracking-widest focus:outline-none focus:border-brand-gold/50"
                                         style={{ colorScheme: 'dark' }}
                                     />
-                                    <span className="text-slate-400">-</span>
+                                    <span className="text-secondary/40">-</span>
                                     <input
                                         type="time"
                                         value={schedule.endTime}
                                         onChange={(e) => handleScheduleChange(index, 'endTime', e.target.value)}
-                                        className="p-2 border border-slate-700 rounded text-sm bg-slate-900 text-white"
+                                        className="flex-1 p-2 border border-white/5 rounded-lg text-xs font-black bg-black/40 text-white uppercase tracking-widest focus:outline-none focus:border-brand-gold/50"
                                         style={{ colorScheme: 'dark' }}
                                     />
                                     {schedules.length > 1 && (
-                                        <button type="button" onClick={() => removeSchedule(index)} className="text-red-400 hover:text-red-600">
+                                        <button type="button" onClick={() => removeSchedule(index)} className="text-red-400 hover:text-red-600 transition-colors p-1">
                                             <Trash size={16} />
                                         </button>
                                     )}
@@ -451,10 +452,10 @@ export default function CreateClassModal({ isOpen, onClose, onSuccess, professor
                     </div>
 
                     <div className="pt-4 flex justify-end gap-3">
-                        <button type="button" onClick={onClose} className="px-4 py-2 text-slate-400 hover:bg-slate-800 rounded-lg font-medium">
+                        <button type="button" onClick={onClose} className="px-6 py-2.5 text-secondary/40 hover:text-white hover:bg-white/5 rounded-xl font-black uppercase tracking-widest transition-all">
                             Cancel
                         </button>
-                        <button type="submit" disabled={loading} className="px-6 py-2 bg-brand-500 text-white rounded-lg font-bold hover:bg-brand-400 transition-colors shadow-lg disabled:opacity-50 disabled:cursor-not-allowed">
+                        <button type="submit" disabled={loading} className="px-8 py-2.5 bg-brand-gold text-black rounded-xl font-black uppercase tracking-widest hover:bg-brand-gold/90 transition-all shadow-lg shadow-brand-gold/10 disabled:opacity-50 disabled:cursor-not-allowed">
                             {loading ? 'Creating...' : 'Create Class'}
                         </button>
                     </div>
@@ -465,32 +466,32 @@ export default function CreateClassModal({ isOpen, onClose, onSuccess, professor
             {/* Preview Modal */}
             {
                 showPreview && (
-                    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
-                        <div className="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl max-w-2xl w-full p-6 relative animate-scale-up max-h-[80vh] flex flex-col">
+                    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/90 backdrop-blur-xl animate-fade-in">
+                        <div className="bg-maroon-950 border border-white/10 rounded-2xl shadow-3xl max-w-2xl w-full p-6 relative animate-scale-up max-h-[80vh] flex flex-col">
                             <button
                                 onClick={() => setShowPreview(false)}
-                                className="absolute top-4 right-4 text-slate-400 hover:text-slate-200 transition-colors"
+                                className="absolute top-4 right-4 text-secondary/40 hover:text-white transition-colors"
                             >
                                 <X size={24} />
                             </button>
-                            <h3 className="text-xl font-bold text-white mb-4">Class Roster Preview</h3>
-                            <div className="overflow-auto flex-1 border border-slate-700 rounded-lg">
-                                <table className="w-full text-left text-sm text-slate-300">
-                                    <thead className="bg-slate-800 text-slate-200 sticky top-0">
+                            <h3 className="text-xl font-black text-white mb-4 uppercase tracking-tight">Class Roster Preview</h3>
+                            <div className="overflow-auto flex-1 border border-white/5 rounded-xl bg-black/40 shadow-inner">
+                                <table className="w-full text-left text-[10px] font-bold text-white uppercase tracking-widest">
+                                    <thead className="bg-black/60 text-brand-gold font-black sticky top-0 border-b border-white/5">
                                         <tr>
                                             {previewData.length > 0 && Object.keys(previewData[0]).map((key) => (
-                                                <th key={key} className="p-3 font-semibold border-b border-slate-700 whitespace-nowrap">
+                                                <th key={key} className="p-3 border-r border-white/5 last:border-0">
                                                     {key}
                                                 </th>
                                             ))}
                                         </tr>
                                     </thead>
-                                    <tbody className="divide-y divide-slate-800">
+                                    <tbody className="divide-y divide-white/5">
                                         {previewData.length > 0 ? (
                                             previewData.map((row, i) => (
-                                                <tr key={i} className="hover:bg-slate-800/50">
+                                                <tr key={i} className="hover:bg-white/5 transition-colors">
                                                     {Object.values(row).map((val: any, j) => (
-                                                        <td key={j} className="p-3 whitespace-nowrap">
+                                                        <td key={j} className="p-3 border-r border-white/5 last:border-0 whitespace-nowrap text-secondary/60">
                                                             {val}
                                                         </td>
                                                     ))}
@@ -498,7 +499,7 @@ export default function CreateClassModal({ isOpen, onClose, onSuccess, professor
                                             ))
                                         ) : (
                                             <tr>
-                                                <td colSpan={100} className="p-8 text-center text-slate-500">
+                                                <td colSpan={100} className="p-8 text-center text-secondary/20">
                                                     No data found in file.
                                                 </td>
                                             </tr>
@@ -510,7 +511,7 @@ export default function CreateClassModal({ isOpen, onClose, onSuccess, professor
                                 <button
                                     type="button"
                                     onClick={() => setShowPreview(false)}
-                                    className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg font-medium transition-colors"
+                                    className="px-6 py-2.5 bg-black/40 hover:bg-white/5 text-white border border-white/5 rounded-xl font-black uppercase tracking-widest transition-all shadow-inner"
                                 >
                                     Close Preview
                                 </button>

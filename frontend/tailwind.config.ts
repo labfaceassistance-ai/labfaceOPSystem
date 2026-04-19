@@ -40,6 +40,17 @@ const config: Config = {
                     400: "#facc15",
                     300: "#fde047",
                 },
+                identity: {
+                    navy: "#041C3C",
+                    sky: "#5CB4E4",
+                    "sky-light": "#A5D8F3",
+                    "navy-light": "#0A2D5C",
+                },
+                glass: {
+                    white: "rgba(255, 255, 255, 0.6)",
+                    border: "rgba(255, 255, 255, 0.4)",
+                    cyan: "rgba(92, 180, 228, 0.2)",
+                }
             },
             fontFamily: {
                outfit: ['Outfit', 'sans-serif'],

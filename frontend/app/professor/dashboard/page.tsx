@@ -205,8 +205,9 @@ function DashboardContent() {
     }, []);
 
     if (!user || loading) return (
-        <div className="min-h-screen bg-slate-950 flex items-center justify-center">
-            <div className="text-slate-400 animate-pulse">Loading dashboard...</div>
+        <div className="min-h-screen bg-maroon-950 flex flex-col items-center justify-center gap-4">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-gold"></div>
+            <div className="text-secondary/40 text-[10px] font-black uppercase tracking-widest animate-pulse">Establishing secure connection...</div>
         </div>
     );
 
@@ -220,7 +221,7 @@ function DashboardContent() {
     ];
 
     return (
-        <div className="min-h-screen bg-slate-950 font-sans">
+        <div className="min-h-screen bg-maroon-950 font-sans selection:bg-brand-gold/20 selection:text-brand-gold">
             <SessionTimeout
                 sessionDuration={30 * 60 * 1000}
                 warningTime={5 * 60 * 1000}
@@ -231,20 +232,20 @@ function DashboardContent() {
             <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-8">
 
                 {/* Tab Navigation */}
-                <div className="sticky top-20 z-40 bg-slate-950/90 backdrop-blur-md border-b border-slate-800 mb-8 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-3 transition-all duration-300">
-                    <div className="flex gap-4 overflow-x-auto justify-start md:justify-center px-4 no-scrollbar">
+                <div className="sticky top-20 z-40 bg-maroon-950/90 backdrop-blur-xl border-b border-white/5 mb-8 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-0 transition-all duration-300">
+                    <div className="flex gap-2 overflow-x-auto justify-start md:justify-center px-4 no-scrollbar">
                         {tabs.map((tab) => {
                             const Icon = tab.icon;
                             return (
                                 <button
                                     key={tab.id}
                                     onClick={() => handleTabChange(tab.id)}
-                                    className={`px-6 py-4 font-medium transition-colors border-b-2 flex items-center gap-2 whitespace-nowrap ${activeTab === tab.id
-                                        ? 'text-brand-500 border-brand-500'
-                                        : 'text-slate-400 border-transparent hover:text-white'
+                                    className={`px-8 py-5 text-[10px] font-black uppercase tracking-[0.2em] transition-all border-b-2 flex items-center gap-3 whitespace-nowrap group ${activeTab === tab.id
+                                        ? 'text-brand-gold border-brand-gold bg-brand-gold/5'
+                                        : 'text-secondary/40 border-transparent hover:text-white hover:bg-white/5'
                                         }`}
                                 >
-                                    <Icon className="w-4 h-4" />
+                                    <Icon className={`w-4 h-4 transition-transform group-hover:scale-110 ${activeTab === tab.id ? 'text-brand-gold' : 'text-secondary/20'}`} />
                                     {tab.label}
                                 </button>
                             );
@@ -253,7 +254,7 @@ function DashboardContent() {
                 </div>
 
                 {/* Tab Content */}
-                <div key={activeTab} className="tab-content-fade">
+                <div key={activeTab} className="tab-content-fade min-h-[60vh]">
                     {activeTab === 'home' && <HomeTab user={user} classes={classes} error={error} />}
                     {activeTab === 'classes' && <ClassesTab user={user} classes={classes} loading={loading} onRefresh={handleRefresh} onTabChange={handleTabChange} />}
                     {activeTab === 'schedule' && <ScheduleTab user={user} classes={classes} />}
@@ -268,8 +269,9 @@ function DashboardContent() {
 export default function ProfessorDashboard() {
     return (
         <Suspense fallback={
-            <div className="min-h-screen bg-slate-950 flex items-center justify-center">
-                <div className="text-slate-400 animate-pulse">Loading dashboard...</div>
+            <div className="min-h-screen bg-maroon-950 flex flex-col items-center justify-center gap-4">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-gold"></div>
+                <div className="text-secondary/40 text-[10px] font-black uppercase tracking-widest animate-pulse">Initializing Interface...</div>
             </div>
         }>
             <DashboardContent />

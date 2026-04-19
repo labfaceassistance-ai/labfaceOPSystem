@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { X, Calendar, Clock, Play, Users, Search, Save, Trash2, ChevronDown } from 'lucide-react';
+import { X, Calendar, Clock, Play, Users, Search, Save, Trash2, ChevronDown, AlertCircle } from 'lucide-react';
 import axios from 'axios';
 import ConfirmModal from './ConfirmModal';
 
@@ -447,29 +447,29 @@ export default function SessionModal({ isOpen, onClose, classId, className, onSu
     if (!isOpen || !classId) return null;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in">
-            <div className={`bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 relative animate-scale-up ${isRedirecting ? 'opacity-90 pointer-events-none' : ''}`}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in text-white uppercase tracking-widest">
+            <div className={`bg-maroon-950 border border-white/10 rounded-2xl shadow-3xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-8 relative animate-scale-up ${isRedirecting ? 'opacity-90 pointer-events-none' : ''}`}>
                 <button
                     onClick={onClose}
                     disabled={isRedirecting}
-                    className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors z-10 disabled:opacity-30"
+                    className="absolute top-6 right-6 text-secondary/40 hover:text-white transition-colors z-10 disabled:opacity-30"
                 >
                     <X size={24} />
                 </button>
 
-                <h3 className="text-2xl font-bold text-gray-900 mb-2">Start Session</h3>
-                <p className="text-sm text-gray-500 mb-6">
-                    Start a new attendance session for <span className="font-bold text-brand-600">{className}</span>
+                <h3 className="text-2xl font-black text-white mb-2 uppercase tracking-tight">Start Session</h3>
+                <p className="text-[10px] font-bold text-secondary/40 mb-8 uppercase tracking-widest">
+                    Start a new attendance session for <span className="text-brand-gold">{className}</span>
                 </p>
 
                 {/* Session Type Tabs */}
-                <div className="grid grid-cols-3 gap-2 mb-6">
+                <div className="grid grid-cols-3 gap-3 mb-8">
                     <button
                         onClick={() => setType('regular')}
                         disabled={isRedirecting}
-                        className={`p-3 rounded-lg text-sm font-bold border-2 transition-all ${type === 'regular'
-                            ? 'bg-brand-50 border-brand-500 text-brand-700'
-                            : 'border-gray-200 text-gray-600 hover:bg-gray-50'
+                        className={`p-4 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all shadow-inner ${type === 'regular'
+                            ? 'bg-brand-gold/10 border-brand-gold text-brand-gold shadow-brand-gold/5'
+                            : 'bg-black/20 border-white/5 text-secondary/40 hover:text-white hover:bg-white/5'
                             }`}
                     >
                         Regular Class
@@ -477,9 +477,9 @@ export default function SessionModal({ isOpen, onClose, classId, className, onSu
                     <button
                         onClick={() => setType('makeup')}
                         disabled={isRedirecting}
-                        className={`p-3 rounded-lg text-sm font-bold border-2 transition-all ${type === 'makeup'
-                            ? 'bg-amber-50 border-amber-500 text-amber-700'
-                            : 'border-gray-200 text-gray-600 hover:bg-gray-50'
+                        className={`p-4 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all shadow-inner ${type === 'makeup'
+                            ? 'bg-brand-gold/10 border-brand-gold text-brand-gold shadow-brand-gold/5'
+                            : 'bg-black/20 border-white/5 text-secondary/40 hover:text-white hover:bg-white/5'
                             }`}
                     >
                         Make-up Class
@@ -487,9 +487,9 @@ export default function SessionModal({ isOpen, onClose, classId, className, onSu
                     <button
                         onClick={() => setType('batch')}
                         disabled={isRedirecting}
-                        className={`p-3 rounded-lg text-sm font-bold border-2 transition-all ${type === 'batch'
-                            ? 'bg-purple-50 border-purple-500 text-purple-700'
-                            : 'border-gray-200 text-gray-600 hover:bg-gray-50'
+                        className={`p-4 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all shadow-inner ${type === 'batch'
+                            ? 'bg-brand-gold/10 border-brand-gold text-brand-gold shadow-brand-gold/5'
+                            : 'bg-black/20 border-white/5 text-secondary/40 hover:text-white hover:bg-white/5'
                             }`}
                     >
                         By Batch
@@ -498,37 +498,44 @@ export default function SessionModal({ isOpen, onClose, classId, className, onSu
 
                 {/* Regular Session */}
                 {type === 'regular' && (
-                    <div className={`border p-4 rounded-lg mb-6 ${!isRegularAllowed() ? 'bg-red-50 border-red-200' : 'bg-blue-50 border-blue-200'}`}>
-                        <p className={`text-sm ${!isRegularAllowed() ? 'text-red-800' : 'text-blue-800'}`}>
-                            <strong>Regular Session:</strong> Start a live class immediately.
-                            {!isRegularAllowed() && !fetchingStatus && (
-                                <span className="block mt-2 font-bold flex items-center gap-2">
-                                    <X size={16} /> Not scheduled for today. Please use "Make-up Class" tab if needed.
-                                </span>
-                            )}
-                            {fetchingStatus && (
-                                <span className="block mt-2 text-gray-500">Checking schedule...</span>
-                            )}
-                            {todayStatus?.isMakeupScheduled && (
-                                <span className="block mt-2 font-bold text-emerald-600 flex items-center gap-2">
-                                    <Calendar size={16} /> Make-up Class Scheduled for Today. You can start.
-                                </span>
-                            )}
-                        </p>
+                    <div className={`p-6 rounded-2xl mb-8 border shadow-inner animate-in fade-in duration-300 ${!isRegularAllowed() ? 'bg-red-500/5 border-red-500/20' : 'bg-black/40 border-white/5'}`}>
+                        <div className="flex gap-4 items-start">
+                            <div className={`mt-1 p-2 rounded-lg ${!isRegularAllowed() ? 'bg-red-500/10 text-red-400' : 'bg-brand-gold/10 text-brand-gold'}`}>
+                                <Play size={20} />
+                            </div>
+                            <div className="flex-1">
+                                <p className={`text-[10px] font-black uppercase tracking-widest leading-relaxed ${!isRegularAllowed() ? 'text-red-400' : 'text-white'}`}>
+                                    <strong>Regular Session:</strong> Start a live class session immediately.
+                                </p>
+                                {!isRegularAllowed() && !fetchingStatus && (
+                                    <div className="mt-4 p-3 bg-red-500/10 border border-red-500/10 rounded-xl text-[10px] font-black uppercase tracking-widest text-red-400 flex items-center gap-2 shadow-inner">
+                                        <AlertCircle size={14} /> Not scheduled for today.
+                                    </div>
+                                )}
+                                {fetchingStatus && (
+                                    <div className="mt-4 text-[10px] font-black uppercase tracking-widest text-secondary/20 animate-pulse">Checking schedule...</div>
+                                )}
+                                {todayStatus?.isMakeupScheduled && (
+                                    <div className="mt-4 p-3 bg-emerald-500/5 border border-emerald-500/10 rounded-xl text-[10px] font-black uppercase tracking-widest text-emerald-400 flex items-center gap-2 shadow-inner">
+                                        <Calendar size={14} /> Make-up Class Scheduled for Today.
+                                    </div>
+                                )}
+                            </div>
+                        </div>
 
-                        <div className="mt-4">
-                            <label className="block text-xs font-bold text-gray-700 mb-2 uppercase">Late Threshold (Minutes)</label>
-                            <div className="relative">
-                                <Clock className="absolute left-3 top-3 text-gray-400" size={16} />
+                        <div className="mt-8">
+                            <label className="block text-[10px] font-black text-secondary/40 mb-3 uppercase tracking-widest ml-1">Late Threshold (Minutes)</label>
+                            <div className="relative group">
+                                <Clock className="absolute left-4 top-3.5 text-secondary/20 group-focus-within:text-brand-gold transition-colors" size={18} />
                                 <input
                                     type="number"
                                     min="1"
                                     max="60"
                                     value={lateThreshold}
                                     onChange={(e) => setLateThreshold(parseInt(e.target.value) || 15)}
-                                    className="w-full pl-10 p-2.5 border border-gray-300 rounded-lg text-sm font-bold text-brand-600"
+                                    className="w-full pl-12 pr-4 py-3 bg-black/40 border border-white/5 rounded-xl text-sm font-black text-brand-gold uppercase tracking-widest focus:border-brand-gold/50 focus:outline-none transition-all shadow-inner"
                                 />
-                                <p className="text-xs text-gray-400 mt-1">Students arriving after {lateThreshold} minutes will be marked Late.</p>
+                                <p className="text-[10px] text-secondary/20 mt-2 font-bold uppercase tracking-widest ml-1">Students arriving after {lateThreshold}m will be marked Late.</p>
                             </div>
                         </div>
                     </div>
@@ -536,15 +543,15 @@ export default function SessionModal({ isOpen, onClose, classId, className, onSu
 
                 {/* Make-up Session */}
                 {type === 'makeup' && (
-                    <div className="space-y-4 mb-6">
-                        <div className="bg-amber-50 border border-amber-200 p-4 rounded-lg">
-                            <p className="text-sm text-amber-800">
-                                <strong>Make-up Class:</strong> Schedule a session for a different date/time. All enrolled students can attend.
+                    <div className="space-y-6 mb-8 animate-in fade-in duration-300">
+                        <div className="bg-brand-gold/10 border border-brand-gold/20 p-5 rounded-2xl shadow-inner">
+                            <p className="text-[10px] font-black text-brand-gold uppercase tracking-widest leading-relaxed">
+                                <strong>Make-up Class:</strong> Schedule a session for a different date/time. All enrolled students are naturally notified.
                             </p>
                         </div>
 
                         {/* Make it by batch toggle */}
-                        <div className="flex items-center gap-3 p-3 bg-purple-50 border border-purple-200 rounded-lg">
+                        <div className="flex items-center gap-3 p-4 bg-black/20 border border-white/5 rounded-2xl shadow-inner group hover:border-brand-gold/20 transition-all">
                             <input
                                 type="checkbox"
                                 id="makeupByBatch"
@@ -556,89 +563,89 @@ export default function SessionModal({ isOpen, onClose, classId, className, onSu
                                         setSelectedStudents([]);
                                     }
                                 }}
-                                className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
+                                className="w-5 h-5 bg-black/40 border-white/10 rounded text-brand-gold focus:ring-brand-gold transition-all"
                             />
-                            <label htmlFor="makeupByBatch" className="text-sm font-bold text-purple-700 cursor-pointer">
-                                Make it by batch?
+                            <label htmlFor="makeupByBatch" className="text-[10px] font-black text-white hover:text-brand-gold cursor-pointer uppercase tracking-widest">
+                                Split into multiple batches?
                             </label>
                         </div>
 
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-xs font-bold text-gray-700 mb-2 uppercase">Date</label>
+                                <label className="block text-[10px] font-black text-secondary/40 mb-2 uppercase tracking-widest ml-1">Date</label>
                                 <div className="relative">
-                                    <Calendar className="absolute left-3 top-3 text-gray-400" size={16} />
+                                    <Calendar className="absolute left-4 top-3.5 text-secondary/20" size={18} />
                                     <input
                                         type="date"
                                         value={customDate}
                                         onChange={(e) => setCustomDate(e.target.value)}
-                                        className="w-full pl-10 p-2.5 border border-gray-300 rounded-lg text-sm font-bold text-brand-600"
+                                        className="w-full pl-12 pr-4 py-3 bg-black/40 border border-white/5 rounded-xl text-sm font-black text-brand-gold uppercase tracking-widest focus:border-brand-gold/50 focus:outline-none shadow-inner"
                                     />
                                 </div>
                             </div>
                             <div>
-                                <label className="block text-xs font-bold text-gray-700 mb-2 uppercase">Start Time</label>
+                                <label className="block text-[10px] font-black text-secondary/40 mb-2 uppercase tracking-widest ml-1">Start Time</label>
                                 <div className="relative">
-                                    <Clock className="absolute left-3 top-3 text-gray-400" size={16} />
+                                    <Clock className="absolute left-4 top-3.5 text-secondary/20" size={18} />
                                     <input
                                         type="time"
                                         value={customTime}
                                         onChange={(e) => setCustomTime(e.target.value)}
-                                        className="w-full pl-10 p-2.5 border border-gray-300 rounded-lg text-sm font-bold text-brand-600"
+                                        className="w-full pl-12 pr-4 py-3 bg-black/40 border border-white/5 rounded-xl text-sm font-black text-brand-gold uppercase tracking-widest focus:border-brand-gold/50 focus:outline-none shadow-inner"
                                     />
                                 </div>
                             </div>
                             <div className="col-span-2">
-                                <label className="block text-xs font-bold text-gray-700 mb-2 uppercase">End Time</label>
+                                <label className="block text-[10px] font-black text-secondary/40 mb-2 uppercase tracking-widest ml-1">End Time</label>
                                 <div className="relative">
-                                    <Clock className="absolute left-3 top-3 text-gray-400" size={16} />
+                                    <Clock className="absolute left-4 top-3.5 text-secondary/20" size={18} />
                                     <input
                                         type="time"
                                         value={customEndTime}
                                         onChange={(e) => setCustomEndTime(e.target.value)}
-                                        className="w-full pl-10 p-2.5 border border-gray-300 rounded-lg text-sm font-bold text-brand-600"
+                                        className="w-full pl-12 pr-4 py-3 bg-black/40 border border-white/5 rounded-xl text-sm font-black text-brand-gold uppercase tracking-widest focus:border-brand-gold/50 focus:outline-none shadow-inner"
                                     />
                                 </div>
                             </div>
                         </div>
                         <div>
-                            <label className="block text-xs font-bold text-gray-700 mb-2 uppercase">Reason (Optional)</label>
+                            <label className="block text-[10px] font-black text-secondary/40 mb-2 uppercase tracking-widest ml-1">Reason (Optional)</label>
                             <textarea
                                 value={reason}
                                 onChange={(e) => setReason(e.target.value)}
                                 placeholder="e.g., Missed class due to holiday"
-                                className="w-full p-2.5 border border-gray-300 rounded-lg text-sm resize-none"
+                                className="w-full p-4 bg-black/40 border border-white/5 rounded-xl text-[10px] font-black uppercase tracking-widest text-white placeholder-secondary/20 resize-none focus:border-brand-gold/50 focus:outline-none shadow-inner"
                                 rows={2}
                             />
                         </div>
 
                         <div>
-                            <label className="block text-xs font-bold text-gray-700 mb-2 uppercase">Late Threshold (Minutes)</label>
+                            <label className="block text-[10px] font-black text-secondary/40 mb-3 uppercase tracking-widest ml-1">Late Threshold (Minutes)</label>
                             <div className="relative">
-                                <Clock className="absolute left-3 top-3 text-gray-400" size={16} />
+                                <Clock className="absolute left-4 top-3.5 text-secondary/20" size={18} />
                                 <input
                                     type="number"
                                     min="1"
                                     max="60"
                                     value={lateThreshold}
                                     onChange={(e) => setLateThreshold(parseInt(e.target.value) || 15)}
-                                    className="w-full pl-10 p-2.5 border border-gray-300 rounded-lg text-sm font-bold text-brand-600"
+                                    className="w-full pl-12 pr-4 py-3 bg-black/40 border border-white/5 rounded-xl text-sm font-black text-brand-gold uppercase tracking-widest focus:border-brand-gold/50 focus:outline-none shadow-inner"
                                 />
-                                <p className="text-xs text-gray-400 mt-1">Students arriving after {lateThreshold} minutes will be marked Late.</p>
+                                <p className="text-[10px] text-secondary/20 mt-2 font-bold uppercase tracking-widest ml-1">Students arriving after {lateThreshold}m will be marked Late.</p>
                             </div>
                         </div>
 
                         {/* Batch Selection UI (shown when makeupByBatch is enabled) */}
                         {makeupByBatch && (
-                            <div className="space-y-4 border-t-2 border-purple-200 pt-4">
+                            <div className="space-y-6 border-t border-white/10 pt-8 mt-8">
                                 <div className="flex justify-between items-center">
-                                    <h4 className="font-bold text-gray-800">
+                                    <h4 className="text-sm font-black text-white uppercase tracking-tight">
                                         {viewMode === 'schedule' ? 'Schedule Batches' : 'Create New Batch'}
                                     </h4>
                                     <button
                                         type="button"
                                         onClick={() => setViewMode(viewMode === 'schedule' ? 'create_batch' : 'schedule')}
-                                        className="text-sm text-brand-600 font-bold hover:underline"
+                                        className="text-[10px] font-black text-brand-gold hover:text-white uppercase tracking-widest transition-all"
                                     >
                                         {viewMode === 'schedule' ? '+ Create New Batch' : '← Back to Schedule'}
                                     </button>
@@ -646,62 +653,62 @@ export default function SessionModal({ isOpen, onClose, classId, className, onSu
 
                                 {viewMode === 'create_batch' ? (
                                     // CREATE BATCH VIEW
-                                    <div className="space-y-4 animate-fade-in">
+                                    <div className="space-y-6 animate-fade-in bg-black/20 p-6 rounded-2xl border border-white/5 shadow-inner">
                                         <div>
-                                            <label className="block text-xs font-bold text-gray-700 mb-2 uppercase">Batch Name</label>
+                                            <label className="block text-[10px] font-black text-secondary/40 mb-2 uppercase tracking-widest ml-1">Batch Name</label>
                                             <input
                                                 type="text"
                                                 value={newGroupName}
                                                 onChange={(e) => setNewGroupName(e.target.value)}
                                                 placeholder="e.g., Batch 1"
-                                                className="w-full p-2.5 border border-gray-300 rounded-lg text-sm font-bold text-brand-600"
+                                                className="w-full px-4 py-3 bg-black/40 border border-white/5 rounded-xl text-sm font-black text-brand-gold uppercase tracking-widest focus:border-brand-gold/50 focus:outline-none shadow-inner"
                                             />
                                         </div>
 
                                         <div>
-                                            <div className="flex items-center justify-between mb-2">
-                                                <label className="text-xs font-bold text-gray-700 uppercase flex items-center gap-2">
+                                            <div className="flex items-center justify-between mb-3 ml-1">
+                                                <label className="text-[10px] font-black text-secondary/40 uppercase tracking-widest flex items-center gap-2">
                                                     <Users size={16} />
-                                                    Select Students ({selectedStudents.length} / {students.length})
+                                                    Select Students ({selectedStudents.length}/{students.length})
                                                 </label>
-                                                <div className="flex gap-2">
-                                                    <button type="button" onClick={selectAll} className="text-xs text-brand-600 font-bold">Select All</button>
-                                                    <span className="text-gray-300">|</span>
-                                                    <button type="button" onClick={deselectAll} className="text-xs text-gray-600 font-bold">Deselect All</button>
+                                                <div className="flex gap-3">
+                                                    <button type="button" onClick={selectAll} className="text-[10px] font-black text-brand-gold uppercase tracking-widest">All</button>
+                                                    <span className="text-secondary/20">|</span>
+                                                    <button type="button" onClick={deselectAll} className="text-[10px] font-black text-secondary/40 uppercase tracking-widest">None</button>
                                                 </div>
                                             </div>
 
-                                            <div className="relative mb-2">
-                                                <Search className="absolute left-3 top-3 text-gray-400" size={16} />
+                                            <div className="relative mb-3">
+                                                <Search className="absolute left-4 top-3.5 text-secondary/20" size={16} />
                                                 <input
                                                     type="text"
                                                     value={searchQuery}
                                                     onChange={(e) => setSearchQuery(e.target.value)}
                                                     placeholder="Search students..."
-                                                    className="w-full pl-10 p-2.5 border border-gray-300 rounded-lg text-sm font-bold text-brand-600"
+                                                    className="w-full pl-12 pr-4 py-3 bg-black/40 border border-white/5 rounded-xl text-[10px] font-black text-white uppercase tracking-widest focus:border-brand-gold/50 focus:outline-none shadow-inner"
                                                 />
                                             </div>
 
-                                            <div className="border border-gray-300 rounded-lg max-h-48 overflow-y-auto">
+                                            <div className="bg-black/40 border border-white/5 rounded-xl max-h-48 overflow-y-auto shadow-inner">
                                                 {loadingStudents ? (
-                                                    <div className="p-8 text-center text-gray-500">Loading...</div>
+                                                    <div className="p-12 text-center text-[10px] font-black text-secondary/20 uppercase tracking-widest animate-pulse">Loading roster...</div>
                                                 ) : filteredStudents.length === 0 ? (
-                                                    <div className="p-8 text-center text-gray-500">No students found</div>
+                                                    <div className="p-12 text-center text-[10px] font-black text-secondary/20 uppercase tracking-widest">No students found</div>
                                                 ) : (
                                                     filteredStudents.map((student) => (
-                                                        <label key={student.enrollment_id} className="flex items-center gap-3 p-2 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-0 border-l-4 border-l-transparent hover:border-l-brand-500">
+                                                        <label key={student.enrollment_id} className="flex items-center gap-4 px-4 py-3 hover:bg-white/5 cursor-pointer border-b border-white/5 last:border-0 transition-colors">
                                                             <input
                                                                 type="checkbox"
                                                                 checked={selectedStudents.includes(student.enrollment_id)}
                                                                 onChange={() => toggleStudent(student.enrollment_id)}
-                                                                className="w-4 h-4 text-brand-600 rounded focus:ring-brand-500"
+                                                                className="w-5 h-5 bg-black/60 border-white/10 rounded text-brand-gold focus:ring-brand-gold"
                                                             />
-                                                            <div className="flex-1">
-                                                                <div className="flex items-center gap-2">
-                                                                    <div className="font-medium text-gray-900 text-sm">{student.last_name}, {student.first_name}</div>
-                                                                    {!student.is_registered && <span className="px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 text-[10px] font-bold uppercase border border-slate-700">NO ACCOUNT</span>}
+                                                            <div className="flex-1 min-w-0">
+                                                                <div className="flex items-center gap-3">
+                                                                    <div className="text-[10px] font-black text-white uppercase tracking-widest truncate">{student.last_name}, {student.first_name}</div>
+                                                                    {!student.is_registered && <span className="px-2 py-0.5 rounded-lg bg-black/60 text-secondary/20 text-[8px] font-black uppercase border border-white/5">NO ACCOUNT</span>}
                                                                 </div>
-                                                                <div className="text-xs text-gray-500">{student.user_id}</div>
+                                                                <div className="text-[8px] font-black text-secondary/40 font-mono mt-0.5 uppercase tracking-widest">{student.user_id}</div>
                                                             </div>
                                                         </label>
                                                     ))
@@ -713,21 +720,21 @@ export default function SessionModal({ isOpen, onClose, classId, className, onSu
                                             type="button"
                                             onClick={handleSaveGroup}
                                             disabled={!newGroupName || selectedStudents.length === 0 || isSavingGroup}
-                                            className="w-full bg-brand-600 text-white font-bold py-2 rounded-lg hover:bg-brand-700 disabled:opacity-50 flex items-center justify-center gap-2"
+                                            className="w-full bg-brand-gold text-black font-black uppercase tracking-widest py-3 rounded-xl hover:bg-brand-gold/90 disabled:opacity-50 transition-all flex items-center justify-center gap-2 shadow-lg shadow-brand-gold/10"
                                         >
-                                            <Save size={16} /> {isSavingGroup ? 'Saving Batch...' : 'Save Batch'}
+                                            <Save size={18} /> {isSavingGroup ? 'Saving Batch...' : 'Save Batch'}
                                         </button>
                                     </div>
                                 ) : (
                                     // SCHEDULE VIEW - Show saved batches
-                                    <div className="space-y-3">
+                                    <div className="space-y-3 animate-fade-in">
                                         {groups.length === 0 ? (
-                                            <div className="text-center text-gray-500 py-8 border border-dashed border-gray-300 rounded-lg">
-                                                No batches created yet. Click "+ Create New Batch" to get started.
+                                            <div className="text-center text-secondary/20 font-black uppercase tracking-widest py-12 border-2 border-dashed border-white/5 rounded-2xl bg-black/20">
+                                                No batches created yet.
                                             </div>
                                         ) : (
                                             groups.map((group) => (
-                                                <div key={group.id} className="flex items-center gap-2 p-3 bg-white border border-gray-200 rounded-lg">
+                                                <div key={group.id} className="flex items-center gap-4 p-4 bg-black/40 border border-white/5 rounded-xl hover:border-brand-gold/20 transition-all shadow-inner group">
                                                     <input
                                                         type="checkbox"
                                                         checked={scheduledBatches.some(b => b.groupId === group.id)}
@@ -745,18 +752,18 @@ export default function SessionModal({ isOpen, onClose, classId, className, onSu
                                                                 setScheduledBatches(scheduledBatches.filter(b => b.groupId !== group.id));
                                                             }
                                                         }}
-                                                        className="w-4 h-4 text-purple-600 rounded"
+                                                        className="w-5 h-5 bg-black/60 border-white/10 rounded text-brand-gold focus:ring-brand-gold"
                                                     />
                                                     <div className="flex-1">
-                                                        <div className="font-bold text-sm text-gray-800">{group.name}</div>
-                                                        <div className="text-xs text-gray-500">{group.student_count} students</div>
+                                                        <div className="text-[10px] font-black text-white uppercase tracking-widest">{group.name}</div>
+                                                        <div className="text-[8px] font-black text-secondary/40 uppercase tracking-widest mt-0.5">{group.student_count} students enrolled</div>
                                                     </div>
                                                     <button
                                                         type="button"
                                                         onClick={() => handleDeleteGroup(group.id)}
-                                                        className="text-red-500 hover:text-red-700"
+                                                        className="text-secondary/20 hover:text-red-400 p-2 rounded-lg hover:bg-red-500/5 transition-all"
                                                     >
-                                                        <Trash2 size={16} />
+                                                        <Trash2 size={18} />
                                                     </button>
                                                 </div>
                                             ))
@@ -770,30 +777,34 @@ export default function SessionModal({ isOpen, onClose, classId, className, onSu
 
                 {/* Batch Session */}
                 {type === 'batch' && (
-                    <div className="space-y-4 mb-6">
+                    <div className="space-y-6 mb-8 animate-in fade-in duration-300">
                         {/* Schedule Warning */}
-                        <div className={`border p-4 rounded-lg mb-4 ${!isRegularAllowed() ? 'bg-red-50 border-red-200' : 'bg-blue-50 border-blue-200'}`}>
-                            <p className={`text-sm ${!isRegularAllowed() ? 'text-red-800' : 'text-blue-800'}`}>
-                                <strong>Batch Session:</strong> Schedule groups for specific times.
-                                {!isRegularAllowed() && !fetchingStatus && (
-                                    <span className="block mt-2 font-bold flex items-center gap-2">
-                                        <X size={16} /> Not scheduled for today. Please use "Make-up Class" tab for off-schedule sessions.
-                                    </span>
-                                )}
-                                {fetchingStatus && (
-                                    <span className="block mt-2 text-gray-500">Checking schedule...</span>
-                                )}
-                            </p>
+                        <div className={`p-6 rounded-2xl mb-6 border shadow-inner ${!isRegularAllowed() ? 'bg-red-500/5 border-red-500/20' : 'bg-black/40 border-white/5'}`}>
+                            <div className="flex gap-4 items-start">
+                                <div className={`mt-1 p-2 rounded-lg ${!isRegularAllowed() ? 'bg-red-500/10 text-red-400' : 'bg-brand-gold/10 text-brand-gold'}`}>
+                                    <Users size={20} />
+                                </div>
+                                <div className="flex-1">
+                                    <p className={`text-[10px] font-black uppercase tracking-widest leading-relaxed ${!isRegularAllowed() ? 'text-red-400' : 'text-white'}`}>
+                                        <strong>Batch Session:</strong> Schedule groups for specific times within the current session.
+                                    </p>
+                                    {!isRegularAllowed() && !fetchingStatus && (
+                                        <div className="mt-4 p-3 bg-red-500/10 border border-red-500/10 rounded-xl text-[10px] font-black uppercase tracking-widest text-red-400 flex items-center gap-2 shadow-inner">
+                                            <AlertCircle size={14} /> Not scheduled for today.
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
                         </div>
 
                         {/* View Switcher */}
-                        <div className="flex justify-between items-center mb-4">
-                            <h4 className="font-bold text-gray-800">
+                        <div className="flex justify-between items-center mb-6">
+                            <h4 className="text-sm font-black text-white uppercase tracking-tight">
                                 {viewMode === 'schedule' ? 'Schedule Batches' : 'Create New Batch'}
                             </h4>
                             <button
                                 onClick={() => setViewMode(viewMode === 'schedule' ? 'create_batch' : 'schedule')}
-                                className="text-sm text-brand-600 font-bold hover:underline"
+                                className="text-[10px] font-black text-brand-gold hover:text-white uppercase tracking-widest transition-all"
                             >
                                 {viewMode === 'schedule' ? '+ Create New Batch' : '← Back to Schedule'}
                             </button>
@@ -801,62 +812,62 @@ export default function SessionModal({ isOpen, onClose, classId, className, onSu
 
                         {viewMode === 'create_batch' ? (
                             // --- CREATE BATCH VIEW ---
-                            <div className="space-y-4 animate-fade-in">
+                            <div className="space-y-6 animate-fade-in bg-black/20 p-6 rounded-2xl border border-white/5 shadow-inner">
                                 <div>
-                                    <label className="block text-xs font-bold text-gray-700 mb-2 uppercase">Batch Name</label>
+                                    <label className="block text-[10px] font-black text-secondary/40 mb-2 uppercase tracking-widest ml-1">Batch Name</label>
                                     <input
                                         type="text"
                                         value={newGroupName}
                                         onChange={(e) => setNewGroupName(e.target.value)}
                                         placeholder="e.g., Batch 1"
-                                        className="w-full p-2.5 border border-gray-300 rounded-lg text-sm font-bold text-brand-600"
+                                        className="w-full px-4 py-3 bg-black/40 border border-white/5 rounded-xl text-sm font-black text-brand-gold uppercase tracking-widest focus:border-brand-gold/50 focus:outline-none shadow-inner"
                                     />
                                 </div>
 
                                 <div>
-                                    <div className="flex items-center justify-between mb-2">
-                                        <label className="text-xs font-bold text-gray-700 uppercase flex items-center gap-2">
+                                    <div className="flex items-center justify-between mb-3 ml-1">
+                                        <label className="text-[10px] font-black text-secondary/40 uppercase tracking-widest flex items-center gap-2">
                                             <Users size={16} />
-                                            Select Students ({selectedStudents.length} / {students.length})
+                                            Select Students ({selectedStudents.length}/{students.length})
                                         </label>
-                                        <div className="flex gap-2">
-                                            <button type="button" onClick={selectAll} className="text-xs text-brand-600 font-bold">Select All</button>
-                                            <span className="text-gray-300">|</span>
-                                            <button type="button" onClick={deselectAll} className="text-xs text-gray-600 font-bold">Deselect All</button>
+                                        <div className="flex gap-4">
+                                            <button type="button" onClick={selectAll} className="text-[10px] font-black text-brand-gold uppercase tracking-widest">All</button>
+                                            <span className="text-secondary/20">|</span>
+                                            <button type="button" onClick={deselectAll} className="text-[10px] font-black text-secondary/40 uppercase tracking-widest">None</button>
                                         </div>
                                     </div>
 
-                                    <div className="relative mb-2">
-                                        <Search className="absolute left-3 top-3 text-gray-400" size={16} />
+                                    <div className="relative mb-3">
+                                        <Search className="absolute left-4 top-3.5 text-secondary/20" size={16} />
                                         <input
                                             type="text"
                                             value={searchQuery}
                                             onChange={(e) => setSearchQuery(e.target.value)}
                                             placeholder="Search students..."
-                                            className="w-full pl-10 p-2.5 border border-gray-300 rounded-lg text-sm font-bold text-brand-600"
+                                            className="w-full pl-12 pr-4 py-3 bg-black/40 border border-white/5 rounded-xl text-[10px] font-black text-white uppercase tracking-widest focus:border-brand-gold/50 focus:outline-none shadow-inner"
                                         />
                                     </div>
 
-                                    <div className="border border-gray-300 rounded-lg max-h-48 overflow-y-auto">
+                                    <div className="bg-black/40 border border-white/5 rounded-xl max-h-48 overflow-y-auto shadow-inner">
                                         {loadingStudents ? (
-                                            <div className="p-8 text-center text-gray-500">Loading...</div>
+                                            <div className="p-12 text-center text-[10px] font-black text-secondary/20 uppercase tracking-widest animate-pulse">Loading roster...</div>
                                         ) : filteredStudents.length === 0 ? (
-                                            <div className="p-8 text-center text-gray-500">No students found</div>
+                                            <div className="p-12 text-center text-[10px] font-black text-secondary/20 uppercase tracking-widest">No students found</div>
                                         ) : (
                                             filteredStudents.map((student) => (
-                                                <label key={student.enrollment_id} className="flex items-center gap-3 p-2 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-0 border-l-4 border-l-transparent hover:border-l-brand-500">
+                                                <label key={student.enrollment_id} className="flex items-center gap-4 px-4 py-3 hover:bg-white/5 cursor-pointer border-b border-white/5 last:border-0 transition-colors">
                                                     <input
                                                         type="checkbox"
                                                         checked={selectedStudents.includes(student.enrollment_id)}
                                                         onChange={() => toggleStudent(student.enrollment_id)}
-                                                        className="w-4 h-4 text-brand-600 rounded focus:ring-brand-500"
+                                                        className="w-5 h-5 bg-black/60 border-white/10 rounded text-brand-gold focus:ring-brand-gold"
                                                     />
-                                                    <div className="flex-1">
-                                                        <div className="flex items-center gap-2">
-                                                            <div className="font-medium text-gray-900 text-sm">{student.last_name}, {student.first_name}</div>
-                                                            {!student.is_registered && <span className="px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 text-[10px] font-bold uppercase border border-slate-700">NO ACCOUNT</span>}
+                                                    <div className="flex-1 min-w-0">
+                                                        <div className="flex items-center gap-3">
+                                                            <div className="text-[10px] font-black text-white uppercase tracking-widest truncate">{student.last_name}, {student.first_name}</div>
+                                                            {!student.is_registered && <span className="px-2 py-0.5 rounded-lg bg-black/60 text-secondary/20 text-[8px] font-black uppercase border border-white/5">NO ACCOUNT</span>}
                                                         </div>
-                                                        <div className="text-xs text-gray-500">{student.user_id}</div>
+                                                        <div className="text-[8px] font-black text-secondary/40 font-mono mt-0.5 uppercase tracking-widest">{student.user_id}</div>
                                                     </div>
                                                 </label>
                                             ))
@@ -867,92 +878,97 @@ export default function SessionModal({ isOpen, onClose, classId, className, onSu
                                 <button
                                     onClick={handleSaveGroup}
                                     disabled={!newGroupName || selectedStudents.length === 0 || isSavingGroup}
-                                    className="w-full bg-purple-600 text-white font-bold py-2 rounded-lg hover:bg-purple-700 disabled:opacity-50 flex items-center justify-center gap-2"
+                                    className="w-full bg-brand-gold text-black font-black uppercase tracking-widest py-3 rounded-xl hover:bg-brand-gold/90 disabled:opacity-50 transition-all flex items-center justify-center gap-2 shadow-lg shadow-brand-gold/10"
                                 >
-                                    <Save size={16} /> {isSavingGroup ? 'Saving Batch...' : 'Save Batch'}
+                                    <Save size={18} /> {isSavingGroup ? 'Saving Batch...' : 'Save Batch'}
                                 </button>
                             </div>
                         ) : (
                             // --- SCHEDULE VIEW ---
-                            <div className="space-y-4 animate-fade-in">
-                                <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
+                            <div className="space-y-6 animate-fade-in">
+                                <div className="bg-black/20 p-6 rounded-2xl border border-white/5 shadow-inner">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                                         <div className="col-span-2">
-                                            <label className="block text-xs font-bold text-gray-700 mb-1 uppercase">Select Batch</label>
+                                            <label className="block text-[10px] font-black text-secondary/40 mb-2 uppercase tracking-widest ml-1">Select Batch</label>
                                             <div className="flex gap-2">
                                                 <div className="relative flex-1">
                                                     <select
                                                         value={selectedScheduleGroupId}
                                                         onChange={(e) => setSelectedScheduleGroupId(e.target.value)}
-                                                        className="w-full p-2 border border-gray-300 rounded-lg text-sm appearance-none bg-white font-bold text-brand-600"
+                                                        className="w-full px-4 py-3 bg-black/40 border border-white/5 rounded-xl text-[10px] font-black text-brand-gold uppercase tracking-widest appearance-none focus:outline-none focus:border-brand-gold/50 shadow-inner"
                                                     >
                                                         <option value="">Select a batch...</option>
                                                         {groups.map(g => (
-                                                            <option key={g.id} value={g.id}>{g.name} ({g.enrollmentIds.length} students)</option>
+                                                            <option key={g.id} value={g.id} className="bg-maroon-950">{g.name} ({g.enrollmentIds.length} students)</option>
                                                         ))}
                                                     </select>
-                                                    <ChevronDown className="absolute right-3 top-3 text-gray-400 pointer-events-none" size={14} />
+                                                    <ChevronDown className="absolute right-4 top-3.5 text-secondary/40 pointer-events-none" size={16} />
                                                 </div>
                                                 {selectedScheduleGroupId && (
                                                     <button
                                                         onClick={() => handleDeleteGroup(Number(selectedScheduleGroupId))}
-                                                        className="p-2 text-red-500 hover:bg-red-50 rounded border border-transparent hover:border-red-200" title="Delete Batch"
+                                                        className="p-3 bg-black/40 text-red-400 hover:text-white border border-white/5 hover:border-red-500/20 rounded-xl transition-all shadow-inner" title="Delete Batch"
                                                     >
-                                                        <Trash2 size={18} />
+                                                        <Trash2 size={20} />
                                                     </button>
                                                 )}
                                             </div>
                                         </div>
                                         <div>
-                                            <label className="block text-xs font-bold text-gray-700 mb-1 uppercase">Start Time</label>
-                                            <input type="time" value={customTime} onChange={(e) => setCustomTime(e.target.value)} className="w-full p-2 border border-gray-300 rounded-lg text-sm font-bold text-brand-600" />
+                                            <label className="block text-[10px] font-black text-secondary/40 mb-2 uppercase tracking-widest ml-1">Start Time</label>
+                                            <input type="time" value={customTime} onChange={(e) => setCustomTime(e.target.value)} className="w-full px-4 py-3 bg-black/40 border border-white/5 rounded-xl text-sm font-black text-brand-gold uppercase tracking-widest focus:outline-none shadow-inner" style={{ colorScheme: 'dark' }} />
                                         </div>
                                         <div>
-                                            <label className="block text-xs font-bold text-gray-700 mb-1 uppercase">End Time</label>
-                                            <input type="time" value={customEndTime} onChange={(e) => setCustomEndTime(e.target.value)} className="w-full p-2 border border-gray-300 rounded-lg text-sm font-bold text-brand-600" />
+                                            <label className="block text-[10px] font-black text-secondary/40 mb-2 uppercase tracking-widest ml-1">End Time</label>
+                                            <input type="time" value={customEndTime} onChange={(e) => setCustomEndTime(e.target.value)} className="w-full px-4 py-3 bg-black/40 border border-white/5 rounded-xl text-sm font-black text-brand-gold uppercase tracking-widest focus:outline-none shadow-inner" style={{ colorScheme: 'dark' }} />
                                         </div>
                                     </div>
-                                    <div className="mt-3 mb-3">
-                                        <label className="block text-xs font-bold text-gray-700 mb-1 uppercase">Late Threshold (Minutes)</label>
+                                    <div className="mb-6">
+                                        <label className="block text-[10px] font-black text-secondary/40 mb-2 uppercase tracking-widest ml-1">Late Threshold (Minutes)</label>
                                         <div className="relative">
-                                            <Clock className="absolute left-3 top-3 text-gray-400" size={16} />
+                                            <Clock className="absolute left-4 top-3.5 text-secondary/20" size={18} />
                                             <input
                                                 type="number"
                                                 min="1"
                                                 max="60"
                                                 value={lateThreshold}
                                                 onChange={(e) => setLateThreshold(parseInt(e.target.value) || 15)}
-                                                className="w-full pl-10 p-2 border border-gray-300 rounded-lg text-sm font-bold text-brand-600"
+                                                className="w-full pl-12 pr-4 py-3 bg-black/40 border border-white/5 rounded-xl text-sm font-black text-brand-gold uppercase tracking-widest focus:outline-none shadow-inner"
                                             />
                                         </div>
                                     </div>
                                     <button
                                         onClick={handleAddToSchedule}
                                         disabled={!selectedScheduleGroupId}
-                                        className="w-full bg-purple-600 text-white font-bold py-2 rounded-lg hover:bg-purple-700 disabled:opacity-50 text-sm"
+                                        className="w-full bg-black/40 hover:bg-white/5 text-brand-gold border border-white/5 px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-inner flex items-center justify-center gap-2"
                                     >
                                         + Add Batch to Schedule
                                     </button>
                                 </div>
 
                                 {/* Scheduled List */}
-                                <div className="space-y-2">
-                                    <label className="block text-xs font-bold text-gray-700 uppercase">Scheduled Batches</label>
+                                <div className="space-y-4">
+                                    <label className="block text-[10px] font-black text-secondary/40 uppercase tracking-widest ml-1">Scheduled Batches</label>
                                     {scheduledBatches.length === 0 ? (
-                                        <div className="text-gray-400 text-sm italic text-center py-4 border-2 border-dashed border-gray-200 rounded-lg">
-                                            No batches scheduled yet. Add one above.
+                                        <div className="text-secondary/20 text-[10px] font-black uppercase tracking-widest py-10 text-center border-2 border-dashed border-white/5 rounded-2xl bg-black/20 shadow-inner">
+                                            No batches scheduled.
                                         </div>
                                     ) : (
                                         scheduledBatches.map((batch, idx) => (
-                                            <div key={idx} className="flex items-center justify-between bg-white p-3 rounded-lg border border-gray-200 shadow-sm">
-                                                <div>
-                                                    <div className="font-bold text-gray-800">{batch.groupName}</div>
-                                                    <div className="text-xs text-gray-500 flex items-center gap-1">
-                                                        <Clock size={12} /> {batch.startTime} - {batch.endTime}
+                                            <div key={idx} className="flex items-center justify-between bg-black/40 p-5 rounded-xl border border-white/5 shadow-inner animate-slide-in">
+                                                <div className="flex items-center gap-4">
+                                                    <div className="w-10 h-10 bg-brand-gold/10 rounded-lg flex items-center justify-center border border-brand-gold/20">
+                                                        <Users size={20} className="text-brand-gold" />
+                                                    </div>
+                                                    <div>
+                                                        <div className="text-[10px] font-black text-white uppercase tracking-widest">{batch.groupName}</div>
+                                                        <div className="text-[8px] font-black text-secondary/40 uppercase tracking-widest flex items-center gap-1 mt-0.5">
+                                                            <Clock size={12} className="text-brand-gold" /> {batch.startTime} - {batch.endTime}
+                                                        </div>
                                                     </div>
                                                 </div>
-                                                <button onClick={() => handleRemoveFromSchedule(idx)} className="text-gray-400 hover:text-red-500 p-1">
-                                                    <X size={16} />
+                                                <button onClick={() => handleRemoveFromSchedule(idx)} className="text-secondary/20 hover:text-red-400 p-2 rounded-lg hover:bg-red-500/5 transition-all">
+                                                    <X size={20} />
                                                 </button>
                                             </div>
                                         ))
@@ -973,19 +989,14 @@ export default function SessionModal({ isOpen, onClose, classId, className, onSu
                         (type === 'batch' && (scheduledBatches.length === 0 || !isBatchStartAllowed())) ||
                         (type === 'regular' && !isRegularAllowed())
                     }
-                    className={`w-full text-white font-bold py-3 rounded-xl transition-colors shadow-lg flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed ${type === 'batch'
-                        ? 'bg-purple-600 hover:bg-purple-700 shadow-purple-600/20'
-                        : type === 'makeup'
-                            ? 'bg-amber-600 hover:bg-amber-700 shadow-amber-600/20'
-                            : 'bg-brand-600 hover:bg-brand-700 shadow-brand-600/20'
-                        }`}
+                    className="w-full bg-brand-gold text-black font-black uppercase tracking-widest py-4 rounded-xl transition-all shadow-lg shadow-brand-gold/10 flex items-center justify-center gap-3 disabled:opacity-30 disabled:cursor-not-allowed group relative overflow-hidden active:scale-95"
                 >
                     {loading || isRedirecting ? (
-                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                        <div className="animate-spin rounded-full h-6 w-6 border-2 border-black/30 border-t-black"></div>
                     ) : (
                         <>
-                            {getButtonText() === 'Schedule & Notify' ? <Calendar size={20} /> : <Play size={20} />}
-                            {getButtonText()}
+                            {getButtonText() === 'Schedule & Notify' ? <Calendar size={20} className="group-hover:scale-110 transition-transform" /> : <Play size={20} className="group-hover:scale-110 transition-transform" />}
+                            <span className="text-sm">{getButtonText()}</span>
                         </>
                     )}
                 </button>

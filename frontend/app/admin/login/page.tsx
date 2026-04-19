@@ -80,66 +80,78 @@ function AdminLoginForm() {
 
     if (isCheckingAuth) {
         return (
-            <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center">
+            <div className="min-h-screen bg-maroon-950 flex flex-col items-center justify-center relative overflow-hidden">
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(196,164,132,0.05)_0%,transparent_70%)] pointer-events-none" />
                 <div className="relative">
-                    <div className="w-16 h-16 border-4 border-brand-500/30 border-t-brand-500 rounded-full animate-spin mx-auto"></div>
+                    <div className="w-24 h-24 border-[3px] border-brand-gold/10 border-t-brand-gold rounded-full animate-spin mx-auto shadow-2xl shadow-brand-gold/20"></div>
                 </div>
-                <p className="mt-6 text-white text-lg font-semibold">Verifying session...</p>
-                <p className="mt-2 text-slate-400 text-sm italic">Synchronizing portal access...</p>
+                <p className="mt-10 text-white text-xl font-black uppercase tracking-[0.4em] animate-pulse">Neural Link Sync...</p>
+                <p className="mt-4 text-brand-gold/40 text-[10px] font-black uppercase tracking-[0.3em] italic">Accessing LabFace Central Matrix</p>
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center p-4">
-            <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:50px_50px] pointer-events-none"></div>
-
-            <div className="relative max-w-md w-full">
-                <div className="flex justify-center mb-8">
-                    <div className="bg-brand-600/10 border border-brand-600/30 rounded-full p-4">
-                        <Shield className="w-12 h-12 text-brand-500" />
+        <div className="min-h-screen bg-maroon-950 flex items-center justify-center p-6 relative overflow-hidden font-sans">
+            {/* Background Texture */}
+            <div className="absolute inset-0 bg-[linear-gradient(rgba(196,164,132,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(196,164,132,0.03)_1px,transparent_1px)] bg-[size:60px_60px] pointer-events-none"></div>
+            <div className="absolute inset-x-0 top-0 h-64 bg-gradient-to-b from-brand-gold/10 to-transparent pointer-events-none opacity-30" />
+            
+            <div className="relative max-w-lg w-full animate-in zoom-in-95 duration-500">
+                <div className="flex justify-center mb-12">
+                    <div className="bg-black/40 border border-brand-gold/30 rounded-[32px] p-6 shadow-3xl group transition-all hover:scale-105 hover:border-brand-gold relative">
+                        <div className="absolute inset-0 bg-brand-gold/10 blur-2xl rounded-full opacity-50 group-hover:opacity-100 transition-opacity" />
+                        <Shield className="w-16 h-16 text-brand-gold relative z-10" />
                     </div>
                 </div>
 
-                <div className="bg-slate-900/80 backdrop-blur-xl p-8 rounded-2xl border border-slate-800 shadow-2xl">
-                    <div className="text-center mb-8">
-                        <h1 className="text-2xl font-bold text-white mb-2">Admin Portal</h1>
-                        <p className="text-slate-400">Secure access for Laboratory Administrators</p>
+                <div className="bg-black/40 backdrop-blur-2xl p-12 rounded-[48px] border border-white/10 shadow-3xl relative overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-br from-brand-gold/5 via-transparent to-transparent pointer-events-none" />
+                    
+                    <div className="text-center mb-12 relative z-10">
+                        <h1 className="text-4xl font-black text-white mb-3 uppercase tracking-tighter">Command Vault</h1>
+                        <p className="text-secondary/40 text-[10px] font-black uppercase tracking-[0.4em]">ADMINISTRATOR_ACCESS_ONLY</p>
                     </div>
 
-                    <form onSubmit={handleLogin} className="space-y-5">
-                        <div>
-                            <label className="block text-slate-300 text-sm font-medium mb-2">Email Address</label>
-                            <div className="relative">
-                                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
+                    <form onSubmit={handleLogin} className="space-y-6 relative z-10">
+                        <div className="space-y-3">
+                            <label className="block text-secondary/30 text-[9px] font-black uppercase tracking-[0.3em] ml-2 flex items-center gap-2">
+                                <div className="w-1 h-1 bg-brand-gold rounded-full" />
+                                Credentials Alpha
+                            </label>
+                            <div className="relative group">
+                                <Mail className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-secondary/20 group-focus-within:text-brand-gold transition-colors" />
                                 <input
                                     type="email"
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
-                                    className="w-full bg-slate-800/50 border border-slate-700 text-white pl-11 pr-4 py-3 rounded-lg focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition-all"
-                                    placeholder="admin@email.com"
+                                    className="w-full bg-black/60 border border-white/5 text-white pl-16 pr-6 py-5 rounded-2xl focus:outline-none focus:border-brand-gold transition-all shadow-inner font-black uppercase tracking-widest text-xs placeholder:text-secondary/10"
+                                    placeholder="ADMIN@LABFACE.OPS"
                                     required
                                     autoComplete="email"
                                 />
                             </div>
                         </div>
 
-                        <div>
-                            <label className="block text-slate-300 text-sm font-medium mb-2">Password</label>
-                            <div className="relative">
-                                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
+                        <div className="space-y-3">
+                            <label className="block text-secondary/30 text-[9px] font-black uppercase tracking-[0.3em] ml-2 flex items-center gap-2">
+                                <div className="w-1 h-1 bg-brand-gold rounded-full" />
+                                Secure Passkey
+                            </label>
+                            <div className="relative group">
+                                <Lock className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-secondary/20 group-focus-within:text-brand-gold transition-colors" />
                                 <input
                                     type={showPassword ? "text" : "password"}
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
-                                    className="w-full bg-slate-800/50 border border-slate-700 text-white pl-11 pr-11 py-3 rounded-lg focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition-all"
+                                    className="w-full bg-black/60 border border-white/5 text-white pl-16 pr-16 py-5 rounded-2xl focus:outline-none focus:border-brand-gold transition-all shadow-inner font-black uppercase tracking-widest text-xs placeholder:text-secondary/10"
                                     placeholder="••••••••"
                                     required
                                     autoComplete="current-password"
                                 />
                                 <button
                                     type="button"
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
+                                    className="absolute right-6 top-1/2 -translate-y-1/2 text-secondary/20 hover:text-brand-gold transition-colors"
                                     onClick={() => setShowPassword(!showPassword)}
                                 >
                                     {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
@@ -150,33 +162,36 @@ function AdminLoginForm() {
                         <button
                             type="submit"
                             disabled={loading}
-                            className="w-full bg-brand-600 hover:bg-brand-700 disabled:bg-slate-700 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-lg transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2"
+                            className="w-full bg-brand-gold hover:bg-black hover:text-brand-gold disabled:bg-black/60 disabled:text-secondary/20 disabled:border-white/5 text-black font-black uppercase tracking-[0.3em] text-[11px] py-6 rounded-2xl transition-all duration-300 transform border border-brand-gold shadow-2xl active:scale-95 flex items-center justify-center gap-4 group"
                         >
                             {loading ? (
                                 <>
-                                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                                    <span>Authenticating...</span>
+                                    <div className="w-5 h-5 border-[3px] border-black/20 border-t-black rounded-full animate-spin"></div>
+                                    <span>Verifying...</span>
                                 </>
                             ) : (
                                 <>
-                                    <Shield className="w-5 h-5" />
-                                    <span>Login as Admin</span>
+                                    <Shield className="w-6 h-6 group-hover:rotate-12 transition-transform" />
+                                    <span>Initialize Command</span>
                                 </>
                             )}
                         </button>
                     </form>
 
-                    <div className="mt-8 pt-6 border-t border-slate-800">
-                        <p className="text-slate-500 text-xs text-center leading-relaxed">
-                            This page is for authorized personnel only.<br />
-                            All login attempts are monitored and logged.
+                    <div className="mt-12 pt-10 border-t border-white/5 relative z-10 text-center">
+                        <p className="text-secondary/20 text-[9px] font-black uppercase tracking-[0.3em] leading-relaxed italic">
+                            Classified Access · Level 9 Encryption Active<br />
+                            All Neural Interfaces Are Logged
                         </p>
                     </div>
+                    <div className="absolute bottom-0 inset-x-0 h-1 bg-gradient-to-r from-transparent via-brand-gold/20 to-transparent opacity-50" />
                 </div>
 
-                <p className="text-center text-slate-600 text-xs mt-6">
-                    LabFace Laboratory Management System
-                </p>
+                <div className="mt-8 flex items-center justify-center gap-4 opacity-40 hover:opacity-100 transition-opacity">
+                    <div className="h-[1px] w-12 bg-gradient-to-r from-transparent to-brand-gold/30" />
+                    <p className="text-brand-gold font-black text-[9px] uppercase tracking-[0.5em]">LabFace Ops System</p>
+                    <div className="h-[1px] w-12 bg-gradient-to-l from-transparent to-brand-gold/30" />
+                </div>
             </div>
         </div>
     );
@@ -185,9 +200,9 @@ function AdminLoginForm() {
 export default function AdminLogin() {
     return (
         <Suspense fallback={
-            <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center">
-                <div className="w-16 h-16 border-4 border-brand-500/30 border-t-brand-500 rounded-full animate-spin mx-auto"></div>
-                <p className="mt-6 text-white text-lg font-semibold">Loading Portal...</p>
+            <div className="min-h-screen bg-maroon-950 flex flex-col items-center justify-center relative overflow-hidden">
+                <div className="w-24 h-24 border-[3px] border-brand-gold/10 border-t-brand-gold rounded-full animate-spin mx-auto shadow-2xl shadow-brand-gold/20"></div>
+                <p className="mt-10 text-white text-xl font-black uppercase tracking-[0.4em] animate-pulse">Loading Portal Matrix...</p>
             </div>
         }>
             <AdminLoginForm />

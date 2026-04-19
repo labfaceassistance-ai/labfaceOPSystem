@@ -1,10 +1,10 @@
 /**
- * Enhanced Notification Center
+ * Enhanced Notification Center - Identity Blue Migration
  * Categorized, snooze-able notifications with quick actions
  */
 
 import { useState, useEffect } from 'react';
-import { Bell, CheckCircle, AlertCircle, Info, Clock, X, Trash2, Check } from 'lucide-react';
+import { Bell, CheckCircle, AlertCircle, Info, Clock, X, Trash2, Check, ShieldAlert } from 'lucide-react';
 import axios from 'axios';
 import { getToken, getUser } from '../utils/auth';
 
@@ -14,8 +14,8 @@ interface Notification {
     category: 'attendance' | 'class' | 'system' | 'security';
     title: string;
     message: string;
-    timestamp: string;
-    read: boolean;
+    is_read: boolean;
+    created_at: string;
     snoozedUntil?: string;
     actionUrl?: string;
 }
@@ -29,7 +29,7 @@ export default function NotificationCenter() {
 
     useEffect(() => {
         fetchNotifications();
-        const interval = setInterval(fetchNotifications, 30000); // Poll every 30s
+        const interval = setInterval(fetchNotifications, 30000); 
         return () => clearInterval(interval);
     }, []);
 
@@ -72,8 +72,6 @@ export default function NotificationCenter() {
         }
     };
 
-
-
     const markAllAsRead = async () => {
         try {
             const user = getUser();
@@ -103,21 +101,16 @@ export default function NotificationCenter() {
                 }
             });
             setNotifications(prev => prev.filter(n => n.id !== id));
-            // No need to fetch, already updated UI locally
         } catch (error) {
             console.error('Failed to delete notification:', error);
         }
     };
-
-
-
 
     const snoozeNotification = async (id: string, hours: number) => {
         const snoozedUntil = new Date(Date.now() + hours * 60 * 60 * 1000).toISOString();
         setNotifications(prev =>
             prev.map(n => n.id === id ? { ...n, snoozedUntil } : n)
         );
-        // In production, save to backend
     };
 
     const filteredNotifications = notifications.filter((n: any) => {
@@ -131,30 +124,30 @@ export default function NotificationCenter() {
         switch (type) {
             case 'success': return CheckCircle;
             case 'error': return AlertCircle;
-            case 'warning': return AlertCircle;
+            case 'warning': return ShieldAlert;
             default: return Info;
         }
     };
 
     const getTypeColor = (type: string) => {
         switch (type) {
-            case 'success': return 'text-green-500 bg-green-500/10';
-            case 'error': return 'text-red-500 bg-red-500/10';
-            case 'warning': return 'text-yellow-500 bg-yellow-500/10';
-            default: return 'text-blue-500 bg-blue-500/10';
+            case 'success': return 'text-emerald-500 bg-emerald-50 border-emerald-100';
+            case 'error': return 'text-rose-500 bg-rose-50 border-rose-100';
+            case 'warning': return 'text-amber-500 bg-amber-50 border-amber-100';
+            default: return 'text-identity-sky bg-identity-sky/5 border-identity-sky/10';
         }
     };
 
     return (
-        <>
+        <div className="relative">
             {/* Bell Icon */}
             <button
                 onClick={() => setIsOpen(!isOpen)}
-                className="relative p-2 text-slate-400 hover:text-white transition-colors"
+                className="relative p-3 text-identity-navy/40 hover:text-identity-navy transition-all hover:bg-slate-50 rounded-2xl shadow-inner active:scale-95 border border-transparent hover:border-slate-100"
             >
-                <Bell size={24} />
+                <Bell size={24} className={unreadCount > 0 ? 'text-identity-sky' : ''} />
                 {unreadCount > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                    <span className="absolute top-2 right-2 bg-rose-500 text-white text-[8px] font-black rounded-lg w-5 h-5 flex items-center justify-center shadow-lg border-2 border-white uppercase tracking-tighter animate-pulse">
                         {unreadCount > 9 ? '9+' : unreadCount}
                     </span>
                 )}
@@ -162,142 +155,150 @@ export default function NotificationCenter() {
 
             {/* Notification Panel */}
             {isOpen && (
-                <div className="absolute right-0 top-16 w-96 bg-slate-900 rounded-lg shadow-2xl border border-slate-800 z-50 max-h-[600px] flex flex-col">
-                    {/* Header */}
-                    <div className="p-4 border-b border-slate-800">
-                        <div className="flex items-center justify-between mb-3">
-                            <h3 className="text-lg font-bold text-white">Notifications</h3>
-                            <button
-                                onClick={() => setIsOpen(false)}
-                                className="text-slate-400 hover:text-white transition-colors"
+                <>
+                    <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)}></div>
+                    <div className="absolute right-0 top-16 w-[26rem] bg-white rounded-[2.5rem] shadow-3xl border border-slate-200 z-50 max-h-[35rem] flex flex-col overflow-hidden animate-in slide-in-from-top-4 fade-in duration-300">
+                        {/* Header */}
+                        <div className="p-8 bg-slate-50/50 border-b border-slate-100">
+                            <div className="flex items-center justify-between mb-6">
+                                <div>
+                                    <h3 className="text-2xl font-black text-identity-navy uppercase tracking-tighter font-outfit leading-none">Notifications</h3>
+                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mt-2">Operational Updates</p>
+                                </div>
+                                <button
+                                    onClick={() => setIsOpen(false)}
+                                    className="p-3 text-slate-400 hover:text-identity-navy transition-colors hover:bg-white rounded-2xl shadow-sm border border-slate-100"
+                                >
+                                    <X size={20} />
+                                </button>
+                            </div>
+
+                            {/* Filters */}
+                            <div className="flex gap-3 mb-6">
+                                <button
+                                    onClick={() => setFilter('all')}
+                                    className={`flex-1 px-4 py-3 rounded-2xl text-[9px] font-black uppercase tracking-widest transition-all shadow-sm border ${filter === 'all'
+                                        ? 'bg-identity-navy text-white border-identity-navy'
+                                        : 'bg-white text-slate-400 border-slate-200 hover:text-identity-navy'
+                                        }`}
+                                >
+                                    All
+                                </button>
+                                <button
+                                    onClick={() => setFilter('unread')}
+                                    className={`flex-1 px-4 py-3 rounded-2xl text-[9px] font-black uppercase tracking-widest transition-all shadow-sm border ${filter === 'unread'
+                                        ? 'bg-identity-navy text-white border-identity-navy'
+                                        : 'bg-white text-slate-400 border-slate-200 hover:text-identity-navy'
+                                        }`}
+                                >
+                                    Unread ({unreadCount})
+                                </button>
+                            </div>
+
+                            {/* Category Filter */}
+                            <select
+                                value={categoryFilter}
+                                onChange={(e) => setCategoryFilter(e.target.value)}
+                                className="w-full px-5 py-4 bg-white border border-slate-200 rounded-2xl text-identity-sky font-black text-[10px] uppercase tracking-widest focus:outline-none focus:border-identity-sky/50 shadow-inner appearance-none cursor-pointer"
                             >
-                                <X size={20} />
-                            </button>
+                                <option value="all">All Categories</option>
+                                <option value="attendance">Attendance Nodes</option>
+                                <option value="class">Academic Matrix</option>
+                                <option value="system">Core System</option>
+                                <option value="security">Identity Security</option>
+                            </select>
+
+                            {unreadCount > 0 && (
+                                <button
+                                    onClick={markAllAsRead}
+                                    className="w-full mt-4 px-4 py-3 bg-white hover:bg-slate-50 text-identity-navy rounded-2xl text-[9px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 border border-slate-100 shadow-sm"
+                                >
+                                    <Check size={16} className="text-emerald-500" />
+                                    Synchronize All
+                                </button>
+                            )}
                         </div>
 
-                        {/* Filters */}
-                        <div className="flex gap-2 mb-2">
-                            <button
-                                onClick={() => setFilter('all')}
-                                className={`px-3 py-1 rounded-lg text-sm transition-colors ${filter === 'all'
-                                    ? 'bg-brand-500 text-white'
-                                    : 'bg-slate-800 text-slate-400 hover:text-white'
-                                    }`}
-                            >
-                                All
-                            </button>
-                            <button
-                                onClick={() => setFilter('unread')}
-                                className={`px-3 py-1 rounded-lg text-sm transition-colors ${filter === 'unread'
-                                    ? 'bg-brand-500 text-white'
-                                    : 'bg-slate-800 text-slate-400 hover:text-white'
-                                    }`}
-                            >
-                                Unread ({unreadCount})
-                            </button>
-                        </div>
+                        {/* Notifications List */}
+                        <div className="flex-1 overflow-y-auto p-4 space-y-3">
+                            {filteredNotifications.length > 0 ? (
+                                filteredNotifications.map((notif: any) => {
+                                    const Icon = getIcon(notif.type);
+                                    const colorClass = getTypeColor(notif.type);
 
-                        {/* Category Filter */}
-                        <select
-                            value={categoryFilter}
-                            onChange={(e) => setCategoryFilter(e.target.value)}
-                            className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white text-sm"
-                        >
-                            <option value="all">All Categories</option>
-                            <option value="attendance">Attendance</option>
-                            <option value="class">Classes</option>
-                            <option value="system">System</option>
-                            <option value="security">Security</option>
-                        </select>
-
-                        {unreadCount > 0 && (
-                            <button
-                                onClick={markAllAsRead}
-                                className="w-full mt-2 px-3 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg text-sm transition-colors flex items-center justify-center gap-2"
-                            >
-                                <Check size={16} />
-                                Mark All as Read
-                            </button>
-                        )}
-                    </div>
-
-                    {/* Notifications List */}
-                    <div className="flex-1 overflow-y-auto">
-                        {filteredNotifications.length > 0 ? (
-                            filteredNotifications.map((notif: any) => {
-                                const Icon = getIcon(notif.type);
-                                const colorClass = getTypeColor(notif.type);
-
-                                return (
-                                    <div
-                                        key={notif.id}
-                                        className={`p-4 border-b border-slate-800 hover:bg-slate-800/50 transition-colors ${!notif.is_read ? 'bg-slate-800/30' : ''
+                                    return (
+                                        <div
+                                            key={notif.id}
+                                            className={`p-6 rounded-[2rem] border transition-all group ${!notif.is_read 
+                                                ? 'bg-slate-50/50 border-slate-100' 
+                                                : 'bg-white border-transparent'
                                             }`}
-                                    >
-                                        <div className="flex gap-4 items-start">
-                                            <div className={`w-10 h-10 rounded-lg ${colorClass} flex-shrink-0 flex items-center justify-center`}>
-                                                <Icon size={20} />
-                                            </div>
-                                            <div className="flex-1 min-w-0">
-
-                                                <div className="flex items-start justify-between gap-2 mb-1">
-                                                    <h4 className="text-white font-medium text-sm">{notif.title}</h4>
-                                                    {!notif.is_read && (
-                                                        <div className="w-2 h-2 bg-brand-500 rounded-full flex-shrink-0 mt-1"></div>
-                                                    )}
+                                        >
+                                            <div className="flex gap-5 items-start">
+                                                <div className={`w-14 h-14 rounded-2xl ${colorClass} flex-shrink-0 flex items-center justify-center shadow-inner border`}>
+                                                    <Icon size={28} />
                                                 </div>
-                                                <p className="text-slate-400 text-sm mb-2">{notif.message}</p>
-                                                <div className="flex items-center justify-between">
-                                                    <span className="text-xs text-slate-500">
-                                                        {notif.created_at ? new Date(notif.created_at).toLocaleString('en-US', {
-                                                            month: 'short',
-                                                            day: 'numeric',
-                                                            year: 'numeric',
-                                                            hour: '2-digit',
-                                                            minute: '2-digit'
-                                                        }) : 'No date'}
-                                                    </span>
-                                                    <div className="flex gap-2">
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="flex items-start justify-between gap-3 mb-2">
+                                                        <h4 className="text-identity-navy font-black text-[11px] uppercase tracking-widest group-hover:text-identity-sky transition-colors line-clamp-1">{notif.title}</h4>
                                                         {!notif.is_read && (
-                                                            <button
-                                                                onClick={() => markAsRead(notif.id)}
-                                                                className="text-xs text-brand-400 hover:text-brand-300"
-                                                            >
-                                                                Mark Read
-                                                            </button>
+                                                            <div className="w-2.5 h-2.5 bg-identity-sky rounded-full flex-shrink-0 mt-1 shadow-lg shadow-identity-sky/20 animate-pulse"></div>
                                                         )}
-                                                        <button
-                                                            onClick={() => snoozeNotification(notif.id, 1)}
-                                                            className="text-xs text-slate-400 hover:text-white flex items-center gap-1"
-                                                        >
-                                                            <Clock size={12} />
-                                                            Snooze
-                                                        </button>
-                                                        <button
-                                                            onClick={() => deleteNotification(notif.id)}
-                                                            className="text-xs text-red-400 hover:text-red-300 flex items-center gap-1"
-                                                        >
-                                                            <Trash2 size={12} />
-                                                            Delete
-                                                        </button>
+                                                    </div>
+                                                    <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest leading-relaxed mb-5 line-clamp-3">{notif.message}</p>
+                                                    
+                                                    <div className="flex items-center justify-between border-t border-slate-100 pt-4">
+                                                        <span className="text-[8px] font-black text-slate-300 uppercase tracking-widest">
+                                                            {notif.created_at ? new Date(notif.created_at).toLocaleString('en-US', {
+                                                                month: 'short',
+                                                                day: 'numeric',
+                                                                hour: '2-digit',
+                                                                minute: '2-digit'
+                                                            }) : 'Timestamp Null'}
+                                                        </span>
+                                                        <div className="flex gap-4">
+                                                            {!notif.is_read && (
+                                                                <button
+                                                                    onClick={() => markAsRead(notif.id)}
+                                                                    className="text-[9px] font-black text-emerald-500 hover:text-emerald-600 uppercase tracking-widest transition-colors flex items-center gap-1"
+                                                                >
+                                                                    <Check size={12} /> Sync
+                                                                </button>
+                                                            )}
+                                                            <button
+                                                                onClick={() => snoozeNotification(notif.id, 1)}
+                                                                className="text-[9px] font-black text-slate-300 hover:text-identity-navy flex items-center gap-1.5 uppercase tracking-widest transition-colors"
+                                                            >
+                                                                <Clock size={12} />
+                                                                Delay
+                                                            </button>
+                                                            <button
+                                                                onClick={() => deleteNotification(notif.id)}
+                                                                className="text-[9px] font-black text-rose-500 hover:text-rose-600 flex items-center gap-1.5 uppercase tracking-widest transition-colors"
+                                                            >
+                                                                <Trash2 size={12} />
+                                                                Purge
+                                                            </button>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
                                         </div>
+                                    );
+                                })
+                            ) : (
+                                <div className="py-24 text-center">
+                                    <div className="w-20 h-20 bg-slate-50 rounded-[2rem] flex items-center justify-center mx-auto mb-6 text-slate-200">
+                                        <Bell size={40} />
                                     </div>
-                                );
-                            })
-                        ) : (
-
-                            <div className="p-8 text-center">
-                                <Bell className="mx-auto text-slate-600 mb-4" size={48} />
-                                <p className="text-slate-400">No notifications</p>
-                                <p className="text-sm text-slate-500 mt-1">You're all caught up!</p>
-                            </div>
-                        )}
+                                    <p className="text-[11px] font-black text-identity-navy uppercase tracking-[0.4em]">Node Logs Empty</p>
+                                    <p className="text-[8px] font-black text-slate-300 uppercase tracking-[0.3em] mt-3">All parameters synchronized.</p>
+                                </div>
+                            )}
+                        </div>
                     </div>
-                </div>
+                </>
             )}
-        </>
+        </div>
     );
 }

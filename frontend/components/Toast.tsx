@@ -72,18 +72,26 @@ function ToastItem({ message, type = 'info', onClose, duration = 3000 }: ToastIt
         return () => clearTimeout(timer);
     }, [duration, onClose]);
 
+    const styles = {
+        success: 'bg-emerald-500/10 border-emerald-500/30 text-emerald-500 shadow-emerald-500/5',
+        error: 'bg-rose-500/10 border-rose-500/30 text-rose-500 shadow-rose-500/5',
+        info: 'bg-brand-gold/10 border-brand-gold/30 text-brand-gold shadow-brand-gold/5'
+    };
+
     return (
-        <div className={`flex items-center gap-3 px-4 py-3 rounded-lg shadow-lg border border-opacity-20 backdrop-blur-md animate-in slide-in-from-top-2 fade-in duration-300 ${type === 'success' ? 'bg-green-500/10 border-green-500 text-green-500' :
-            type === 'error' ? 'bg-red-500/10 border-red-500 text-red-500' :
-                'bg-blue-500/10 border-blue-500 text-blue-500'
-            }`}>
-            {type === 'success' && <CheckCircle className="w-5 h-5" />}
-            {type === 'error' && <XCircle className="w-5 h-5" />}
-            {type === 'info' && <AlertCircle className="w-5 h-5" />}
+        <div className={`flex items-center gap-4 px-6 py-4 rounded-2xl shadow-2xl border backdrop-blur-xl animate-in slide-in-from-right-4 fade-in duration-300 pointer-events-auto ${styles[type]}`}>
+            <div className={`p-1.5 rounded-lg border border-current border-opacity-20`}>
+                {type === 'success' && <CheckCircle className="w-5 h-5" />}
+                {type === 'error' && <XCircle className="w-5 h-5" />}
+                {type === 'info' && <AlertCircle className="w-5 h-5" />}
+            </div>
 
-            <p className="font-medium text-sm">{message}</p>
+            <p className="font-black text-[10px] uppercase tracking-[0.2em] leading-relaxed">{message}</p>
 
-            <button onClick={onClose} className="p-1 hover:bg-white/10 rounded-full transition-colors">
+            <button 
+                onClick={onClose} 
+                className="p-1.5 hover:bg-white/10 rounded-xl transition-all active:scale-95 ml-2"
+            >
                 <X className="w-4 h-4" />
             </button>
         </div>

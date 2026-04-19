@@ -51,7 +51,7 @@ export default function Navbar() {
     const isHomePage = pathname === '/';
 
     return (
-        <nav className="fixed w-full z-50 transition-all duration-300 bg-yellow-500 shadow-xl py-2">
+        <nav className="fixed w-full z-50 transition-all duration-300 identity-glass border-b border-identity-sky/10 shadow-lg py-2">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex items-center justify-between h-16">
                     <div className="flex items-center">
@@ -61,12 +61,12 @@ export default function Navbar() {
                                     user.role.includes('student') ? '/student/dashboard' :
                                         '/'
                         ) : '/'} className="flex items-center gap-3 group">
-                            <div className="relative h-10 w-10 bg-white rounded-full overflow-hidden shadow-md group-hover:scale-105 transition-transform">
+                            <div className="relative h-10 w-10 bg-white rounded-full overflow-hidden shadow-xl group-hover:scale-105 transition-transform border border-brand-gold/20">
                                 <Image src="/logo.png" alt="LabFace Logo" width={40} height={40} className="object-cover" />
                             </div>
-                            <div className="font-bold text-xl sm:text-2xl tracking-tight leading-none bg-black/10 px-2 py-1 rounded-lg backdrop-blur-sm">
-                                <span className="text-primary drop-shadow-md">Lab</span>
-                                <span className="text-white drop-shadow-md">Face</span>
+                            <div className={`font-bold text-xl sm:text-2xl tracking-tight leading-none ${isHomePage ? '' : 'bg-black/5 px-2 py-1 rounded-lg backdrop-blur-sm border border-black/5'}`}>
+                                <span className="text-identity-navy drop-shadow-sm">Lab</span>
+                                <span className="text-identity-sky drop-shadow-sm">Face</span>
                             </div>
                         </Link>
                     </div>
@@ -75,14 +75,14 @@ export default function Navbar() {
                         <div className="ml-10 flex items-baseline space-x-4">
 
 
-                            {!user && !isAuthPage && (
+                            {!user && !isAuthPage && !isHomePage && (
                                 <div className="flex items-center gap-4">
                                     <ThemeToggle />
                                 </div>
                             )}
                             {user && !isAuthPage && (
                                 <div className="flex items-center gap-4 relative">
-                                    <ThemeToggle />
+                                    {!isHomePage && <ThemeToggle />}
                                     {!isHomePage && (
                                         <>
                                             {/* Enhanced Notification Center - Hide for Admins */}
@@ -94,7 +94,7 @@ export default function Navbar() {
                                             }
                                                 className="flex items-center gap-2 group"
                                                 title="Edit Profile">
-                                                <div className="w-10 h-10 rounded-full bg-brand-700 flex items-center justify-center text-white font-bold border-2 border-brand-600 group-hover:border-brand-400 transition-all shadow-sm overflow-hidden">
+                                                <div className="w-10 h-10 rounded-full bg-identity-navy flex items-center justify-center text-white font-bold border-2 border-slate-200 group-hover:border-identity-sky transition-all shadow-lg overflow-hidden">
                                                     {user.profilePicture ? (
                                                         <img
                                                             src={getProfilePictureUrl(user.profilePicture) || ''}
@@ -102,12 +102,12 @@ export default function Navbar() {
                                                             className="w-full h-full object-cover"
                                                         />
                                                     ) : (
-                                                        <span>{user.firstName?.[0] || ''}{user.lastName?.[0] || ''}</span>
+                                                        <span className="text-[10px] font-black uppercase tracking-widest">{user.firstName?.[0] || ''}{user.lastName?.[0] || ''}</span>
                                                     )}
                                                 </div>
                                             </Link>
 
-                                            <button onClick={handleLogout} className="text-red-700 hover:text-red-800 hover:bg-black/10 px-3 py-2 rounded-md text-sm font-bold transition-colors flex items-center gap-2">
+                                            <button onClick={handleLogout} className="text-red-400 hover:text-red-300 hover:bg-white/5 px-3 py-2 rounded-md text-sm font-bold transition-colors flex items-center gap-2">
                                                 <LogOut size={16} /> Logout
                                             </button>
                                         </>
@@ -120,7 +120,7 @@ export default function Navbar() {
                         <div className="-mr-2 flex md:hidden">
                             <button
                                 onClick={() => setIsOpen(!isOpen)}
-                                className="inline-flex items-center justify-center p-2 rounded-md text-black hover:bg-yellow-600 focus:outline-none transition-colors"
+                                className="inline-flex items-center justify-center p-2 rounded-md text-brand-gold hover:bg-white/10 focus:outline-none transition-colors"
                             >
                                 {isOpen ? <X size={24} /> : <Menu size={24} />}
                             </button>
@@ -131,17 +131,17 @@ export default function Navbar() {
 
             {/* Mobile Menu */}
             {isOpen && (
-                <div className="md:hidden absolute top-full left-0 w-full bg-brand-900 border-b border-brand-800 shadow-xl">
-                    <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+                <div className="md:hidden absolute top-full left-0 w-full identity-glass border-b border-black/10 shadow-2xl animate-in slide-in-from-top-4 duration-200">
+                    <div className="px-4 pt-4 pb-6 space-y-2">
                         {!user && !isAuthPage && (
                             <>
-                                <Link href="/login" className="block text-gray-300 hover:text-white hover:bg-brand-800 px-3 py-2 rounded-md text-base font-medium">Login</Link>
+                                <Link href="/login" onClick={() => setIsOpen(false)} className="block text-identity-navy/40 hover:text-identity-navy hover:bg-black/5 px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all">Login</Link>
                                 <button
                                     onClick={() => {
                                         setIsOpen(false);
                                         setIsRegisterModalOpen(true);
                                     }}
-                                    className="block w-full text-left text-brand-400 hover:text-brand-300 hover:bg-brand-800 px-3 py-2 rounded-md text-base font-medium"
+                                    className="block w-full text-left text-identity-sky hover:bg-identity-sky/5 px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border border-identity-sky/20"
                                 >
                                     Register
                                 </button>
@@ -149,31 +149,31 @@ export default function Navbar() {
                         )}
                         {user && isHomePage && (
                             <>
-                                <div className="px-3 py-2 text-gray-400 text-sm">Signed in as {user.firstName} {user.lastName}</div>
-                                <Link href={user.role === 'professor' ? '/professor/dashboard' : '/student/dashboard'} className="block text-white hover:bg-brand-800 px-3 py-2 rounded-md text-base font-medium flex items-center gap-2">
-                                    <LayoutDashboard size={18} /> Go to Dashboard
+                                <div className="px-4 py-2 text-[8px] font-black text-secondary/20 uppercase tracking-widest">Signed in as {user.firstName} {user.lastName}</div>
+                                <Link href={user.role === 'professor' ? '/professor/dashboard' : '/student/dashboard'} onClick={() => setIsOpen(false)} className="block text-white hover:bg-white/5 px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-3 transition-all">
+                                    <LayoutDashboard size={18} className="text-brand-gold" /> Go to Dashboard
                                 </Link>
-                                <button onClick={handleLogout} className="block w-full text-left text-red-400 hover:bg-brand-800 px-3 py-2 rounded-md text-base font-medium flex items-center gap-2">
+                                <button onClick={() => { handleLogout(); setIsOpen(false); }} className="block w-full text-left text-red-400 hover:bg-red-400/5 px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-3 transition-all">
                                     <LogOut size={18} /> Logout
                                 </button>
                             </>
                         )}
                         {user && !isAuthPage && !isHomePage && (
                             <>
-                                <div className="px-3 py-2 text-gray-400 text-sm">Signed in as {user.firstName} {user.lastName}</div>
+                                <div className="px-4 py-2 text-[8px] font-black text-secondary/20 uppercase tracking-widest">Signed in as {user.firstName} {user.lastName}</div>
                                 <Link href={
                                     user.role === 'professor' ? '/professor/profile' :
                                         user.role === 'student' ? '/student/profile' :
                                             '/admin/profile'
-                                } className="block text-white hover:bg-brand-800 px-3 py-2 rounded-md text-base font-medium flex items-center gap-2">
-                                    <User size={18} /> Profile
+                                } onClick={() => setIsOpen(false)} className="block text-white hover:bg-white/5 px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-3 transition-all">
+                                    <User size={18} className="text-brand-gold" /> Profile
                                 </Link>
                                 {(!user.role.includes('admin')) && (
-                                    <Link href="/notifications" className="block text-white hover:bg-brand-800 px-3 py-2 rounded-md text-base font-medium flex items-center gap-2">
-                                        <Bell size={18} /> Notifications
+                                    <Link href="/notifications" onClick={() => setIsOpen(false)} className="block text-white hover:bg-white/5 px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-3 transition-all">
+                                        <Bell size={18} className="text-brand-gold" /> Notifications
                                     </Link>
                                 )}
-                                <button onClick={handleLogout} className="block w-full text-left text-red-400 hover:bg-brand-800 px-3 py-2 rounded-md text-base font-medium flex items-center gap-2">
+                                <button onClick={() => { handleLogout(); setIsOpen(false); }} className="block w-full text-left text-red-500 hover:bg-red-500/5 px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-3 transition-all">
                                     <LogOut size={18} /> Logout
                                 </button>
                             </>
@@ -184,52 +184,51 @@ export default function Navbar() {
 
             {/* Registration Choice Modal */}
             {isRegisterModalOpen && (
-                <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in">
-                    <div className="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl max-w-md w-full p-8 relative animate-scale-up">
-                        <button
-                            onClick={() => setIsRegisterModalOpen(false)}
-                            className="absolute top-4 right-4 text-slate-400 hover:text-slate-200 transition-colors"
-                        >
-                            <X size={24} />
-                        </button>
-
-                        <div className="text-center mb-8">
-                            <h3 className="text-2xl font-bold text-white">Create Account</h3>
-                            <p className="text-slate-400 mt-2">Choose your registration type</p>
+                <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-in fade-in duration-300">
+                    <div className="identity-glass rounded-2xl shadow-3xl max-w-md w-full overflow-hidden animate-scale-up">
+                        <div className="p-6 bg-black/5 border-b border-black/5 flex justify-between items-center">
+                            <h3 className="text-xl font-black text-identity-navy uppercase tracking-tight">Create Account</h3>
+                            <button
+                                onClick={() => setIsRegisterModalOpen(false)}
+                                className="text-secondary/40 hover:text-white transition-colors"
+                            >
+                                <X size={24} />
+                            </button>
                         </div>
 
-                        <div className="space-y-4">
+                        <div className="p-8 space-y-4">
+                            <p className="text-[10px] font-black text-secondary/40 uppercase tracking-widest mb-6 text-center">Choose your registration type</p>
                             <Link
                                 href="/register/student"
                                 onClick={() => setIsRegisterModalOpen(false)}
-                                className="flex items-center p-4 border-2 border-slate-800 rounded-xl hover:border-brand-500 hover:bg-brand-500/10 transition-all group"
+                                className="flex items-center p-5 bg-black/40 border border-white/5 rounded-2xl hover:border-brand-gold/50 transition-all group shadow-inner"
                             >
-                                <div className="w-12 h-12 bg-brand-500/10 text-brand-400 rounded-full flex items-center justify-center mr-4 group-hover:bg-brand-500 group-hover:text-white transition-colors border border-brand-500/20">
-                                    <GraduationCap size={24} />
+                                <div className="w-14 h-14 bg-brand-gold/10 text-brand-gold rounded-2xl flex items-center justify-center mr-5 group-hover:bg-brand-gold group-hover:text-black transition-all border border-brand-gold/20 shadow-inner">
+                                    <GraduationCap size={28} />
                                 </div>
                                 <div className="text-left">
-                                    <div className="font-bold text-white">Student</div>
-                                    <div className="text-sm text-slate-400">Register with your student number</div>
+                                    <div className="font-black text-white uppercase tracking-tight">Student</div>
+                                    <div className="text-[8px] font-bold text-secondary/40 uppercase tracking-widest mt-1">Register with your student number</div>
                                 </div>
-                                <div className="ml-auto text-slate-500 group-hover:text-brand-400">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6" /></svg>
+                                <div className="ml-auto text-secondary/20 group-hover:text-brand-gold group-hover:translate-x-1 transition-all">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6" /></svg>
                                 </div>
                             </Link>
 
                             <Link
                                 href="/register/professor"
                                 onClick={() => setIsRegisterModalOpen(false)}
-                                className="flex items-center p-4 border-2 border-slate-800 rounded-xl hover:border-brand-500 hover:bg-brand-500/10 transition-all group"
+                                className="flex items-center p-5 bg-black/40 border border-white/5 rounded-2xl hover:border-brand-gold/50 transition-all group shadow-inner"
                             >
-                                <div className="w-12 h-12 bg-brand-500/10 text-brand-400 rounded-full flex items-center justify-center mr-4 group-hover:bg-brand-500 group-hover:text-white transition-colors border border-brand-500/20">
-                                    <School size={24} />
+                                <div className="w-14 h-14 bg-brand-gold/10 text-brand-gold rounded-2xl flex items-center justify-center mr-5 group-hover:bg-brand-gold group-hover:text-black transition-all border border-brand-gold/20 shadow-inner">
+                                    <School size={28} />
                                 </div>
                                 <div className="text-left">
-                                    <div className="font-bold text-white">Professor</div>
-                                    <div className="text-sm text-slate-400">Register with your faculty ID</div>
+                                    <div className="font-black text-white uppercase tracking-tight">Professor</div>
+                                    <div className="text-[8px] font-bold text-secondary/40 uppercase tracking-widest mt-1">Register with your faculty ID</div>
                                 </div>
-                                <div className="ml-auto text-slate-500 group-hover:text-brand-400">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6" /></svg>
+                                <div className="ml-auto text-secondary/20 group-hover:text-brand-gold group-hover:translate-x-1 transition-all">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6" /></svg>
                                 </div>
                             </Link>
                         </div>

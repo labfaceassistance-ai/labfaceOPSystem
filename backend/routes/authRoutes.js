@@ -1512,4 +1512,85 @@ router.post('/report-identity-theft', async (req, res) => {
     }
 });
 
+// Update Face Data for existing student
+router.post('/update-face-data', authenticateToken, async (req, res) => {
+    const { userId, facePhotos } = req.body;
+    
+    if (!userId || !facePhotos || typeof facePhotos !== 'object') {
+        return res.status(400).json({ message: 'Missing userId or facePhotos object' });
+    }
+
+    let connection;
+    try {
+        connection = await pool.getConnection();
+        await connection.beginTransaction();
+
+        // 1. Validate user
+        const [users] = await connection.query('SELECT user_id, id FROM users WHERE id = ?', [userId]);
+        if (users.length === 0) {
+            await connection.rollback();
+            return res.status(404).json({ message: 'User not found' });
+        }
+        const internalId = users[0].id;
+        const studentNumber = users[0].user_id;
+
+        // 2. Validate face photos
+        const { validateFacePhotos } = require('../utils/faceValidation');
+        const validation = await validateFacePhotos(facePhotos);
+
+        if (!validation.valid) {
+            await connection.rollback();
+            return res.status(400).json({ message: validation.error });
+        }
+
+        // 3. Process angles
+        for (const [angle, base64Data] of Object.entries(facePhotos)) {
+            if (!base64Data) continue;
+            const normalizedAngle = angle.toLowerCase();
+            const photoPath = await saveBase64Image(base64Data, studentNumber, `face-${normalizedAngle}`);
+
+            let embeddingJson = null;
+            try {
+                const buffer = Buffer.from(base64Data.replace(/^data:image\/\w+;base64,/, ""), 'base64');
+                const form = new FormData();
+                form.append('file', buffer, { filename: 'face.jpg', contentType: 'image/jpeg' });
+                const aiServiceUrl = process.env.AI_SERVICE_URL || 'http://ai-service:8000';
+                
+                const aiResponse = await axios.post(`${aiServiceUrl}/api/generate-ensemble-embeddings`, form, {
+                    headers: { ...form.getHeaders() }
+                });
+
+                if (aiResponse.data.embeddings && aiResponse.data.embeddings.length > 0) {
+                    embeddingJson = JSON.stringify(aiResponse.data.embeddings);
+                }
+            } catch (aiErr) {
+                console.warn(`AI Error for ${normalizedAngle}:`, aiErr.message);
+            }
+
+            const [existing] = await connection.query('SELECT id, photo_url FROM face_photos WHERE user_id = ? AND angle = ?', [internalId, normalizedAngle]);
+            if (existing.length > 0) {
+                if (existing[0].photo_url && existing[0].photo_url !== photoPath) {
+                    await deleteFromMinio(existing[0].photo_url).catch(() => {});
+                }
+                await connection.query('UPDATE face_photos SET photo_url = ?, embedding = ?, deleted_at = NULL WHERE id = ?', [photoPath, embeddingJson, existing[0].id]);
+            } else {
+                await connection.query('INSERT INTO face_photos (user_id, photo_url, angle, embedding) VALUES (?, ?, ?, ?)', [internalId, photoPath, normalizedAngle, embeddingJson]);
+            }
+
+            if (normalizedAngle === 'front' && embeddingJson) {
+                await connection.query('UPDATE users SET face_embeddings = ? WHERE id = ?', [embeddingJson, internalId]);
+            }
+        }
+
+        await connection.query('INSERT INTO notifications (user_id, title, message, type, category) VALUES (?, ?, ?, ?, ?)', [internalId, 'Identity Matrix Synchronized', 'Biometric signature updated and re-trained.', 'success', 'security']);
+        await connection.commit();
+        res.status(200).json({ success: true });
+    } catch (err) {
+        if (connection) await connection.rollback();
+        res.status(500).json({ error: err.message });
+    } finally {
+        if (connection) connection.release();
+    }
+});
+
 module.exports = router;

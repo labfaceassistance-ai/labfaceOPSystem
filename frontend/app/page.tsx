@@ -4,11 +4,37 @@ import Navbar from '../components/Navbar';
 import { Shield, Clock, BarChart3, CheckCircle, ArrowRight, Lock, Users, Zap, MapPin, Monitor, Calendar, ScanFace, FileText, ChevronRight, ShieldCheck, GraduationCap, School } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { getToken, getUser } from '../utils/auth';
+import { useRouter } from 'next/navigation';
 
 export default function Home() {
    const [isLoggedIn, setIsLoggedIn] = useState(false);
    const [userRole, setUserRole] = useState<string | null>(null);
    const [academicSettings, setAcademicSettings] = useState<{ schoolYear: string; semester: string } | null>(null);
+   const [isDayTime, setIsDayTime] = useState(true);
+   const router = useRouter();
+
+   // NEW: Biometric Identity Node Component
+   const IdentityNode = ({ className = "", size = 120 }) => (
+      <div className={`identity-node ${className}`} style={{ width: size, height: size }}>
+         <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
+            <g>
+               {/* Simplified Facial Wireframe - Bolder for background presence */}
+               <path d="M100,30 Q60,30 50,80 T100,170 T150,80 Q140,30 100,30 Z" fill="none" stroke="currentColor" className="text-identity-sky" strokeWidth="2" />
+               <line x1="100" y1="30" x2="100" y2="170" stroke="currentColor" className="text-identity-navy" strokeWidth="1" />
+               <line x1="60" y1="80" x2="140" y2="80" stroke="currentColor" className="text-identity-navy" strokeWidth="1" />
+               <line x1="55" y1="110" x2="145" y2="110" stroke="currentColor" className="text-identity-navy" strokeWidth="1" />
+               <circle cx="75" cy="80" r="3" fill="currentColor" className="text-identity-sky" />
+               <circle cx="125" cy="80" r="3" fill="currentColor" className="text-identity-sky" />
+               <circle cx="100" cy="110" r="3" fill="currentColor" className="text-identity-sky" />
+               <circle cx="100" cy="30" r="2" fill="currentColor" className="text-identity-navy" />
+               <circle cx="100" cy="170" r="2" fill="currentColor" className="text-identity-navy" />
+               {/* Connecting nodes */}
+               <line x1="75" y1="80" x2="100" y2="110" stroke="currentColor" className="text-identity-sky" strokeWidth="1" strokeDasharray="3 2" />
+               <line x1="125" y1="80" x2="100" y2="110" stroke="currentColor" className="text-identity-sky" strokeWidth="1" strokeDasharray="3 2" />
+            </g>
+         </svg>
+      </div>
+   );
 
    useEffect(() => {
       const token = getToken();
@@ -30,6 +56,10 @@ export default function Home() {
          }
       };
       fetchSettings();
+
+      // ✅ Determine if it is currently daytime (6 AM to 6 PM)
+      const hour = new Date().getHours();
+      setIsDayTime(hour >= 6 && hour < 18);
    }, []);
 
    const getDashboardPath = () => {
@@ -40,181 +70,243 @@ export default function Home() {
    };
 
    return (
-      <main className="min-h-screen bg-background text-foreground transition-colors duration-500 overflow-x-hidden">
+      <main className="min-h-screen bg-[#F8FAFC] text-slate-900 transition-colors duration-500 overflow-x-hidden relative selection:bg-identity-sky/30">
+         {/* System Identity Nodes: Solid Background Underlay (Level 0) */}
+         <div className="fixed inset-0 pointer-events-none z-0 opacity-[0.15] overflow-hidden">
+            {/* Scattered Identity Nodes */}
+            <IdentityNode className="top-[15%] left-[0%]" size={180} />
+            <IdentityNode className="top-[45%] right-[-2%]" size={240} />
+            <IdentityNode className="bottom-[15%] left-[5%]" size={200} />
+            <IdentityNode className="top-[25%] right-[15%]" size={130} />
+            <IdentityNode className="bottom-[40%] left-[20%]" size={160} />
+            <IdentityNode className="top-[60%] left-[2%]" size={110} />
+         </div>
+
          <Navbar />
 
          {/* Hero Section: Blueprint Style */}
-         <section className="relative pt-32 pb-32 lg:pt-48 lg:pb-56 flex flex-col items-center">
-            {/* Visual Background Pattern */}
-            <div className="absolute inset-0 z-0 opacity-[0.03] dark:opacity-[0.07] pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/hexellence.png')]"></div>
+         <section className="relative pt-32 pb-32 lg:pt-48 lg:pb-56 flex flex-col items-center z-10">
+            {/* Visual Background Pattern - Enhanced Blueprint Grid */}
+            <div className="absolute inset-0 z-0 opacity-10 pointer-events-none bg-blueprint"></div>
+            <div className="absolute inset-0 z-0 opacity-[0.05] pointer-events-none bg-blueprint-fine"></div>
 
             <div className="relative z-10 max-w-7xl mx-auto px-6 text-center animate-fade-in">
-               {/* Top Badge */}
-               <div className="inline-flex items-center gap-3 py-2 px-6 rounded-full bg-primary/5 dark:bg-white/5 border border-primary/10 dark:border-white/10 mb-12">
-                  <span className="w-2 h-2 rounded-full bg-yellow-500 animate-pulse shadow-[0_0_10px_rgba(234,179,8,1)]"></span>
-                  <span className="text-[9px] font-black uppercase tracking-[0.4em] text-primary/80 dark:text-brand-cream/80">PUP Lopez • Computer Laboratory</span>
+               {/* Top Badge: Location & Status */}
+               <div className="inline-flex items-center gap-3 py-2.5 px-6 rounded-full bg-identity-navy/[0.03] border border-identity-sky/30 shadow-[0_0_15px_rgba(92,180,228,0.1)] mb-12 backdrop-blur-sm">
+                  <span className="w-2 h-2 rounded-full bg-identity-sky animate-pulse shadow-[0_0_10px_rgba(92,180,228,1)]"></span>
+                  <span className="text-[10px] font-black uppercase tracking-[0.3em] text-identity-navy/90">PUP Lopez • Computer Laboratory</span>
                </div>
 
-               <h1 className="text-8xl md:text-[11rem] font-black tracking-tighter mb-4 leading-none font-outfit">
-                  <span className="text-primary dark:text-[#f7df9a]">Lab</span>
-                  <span className="text-gold-gradient">Face</span>
+               <h1 className="text-5xl sm:text-7xl md:text-[11rem] font-black tracking-tight mb-4 leading-none font-outfit relative z-20">
+                  <span className="text-identity-navy">Lab</span>
+                  <span className="text-identity-sky">Face</span>
                </h1>
 
-               <h2 className="text-3xl md:text-5xl font-black text-white uppercase tracking-tight mb-8 font-outfit">
-                  Next-Gen Biometric Attendance
+               <h2 className="text-[10px] md:text-xl font-bold text-identity-navy/60 uppercase tracking-[0.2em] mb-8 font-outfit max-w-4xl mx-auto leading-relaxed text-center px-4">
+                  Digital Face‑Based Attendance Monitoring System for <br className="hidden md:block" />
+                  PUP Lopez Campus Computer Laboratory 1
                </h2>
 
-               <p className="max-w-xl mx-auto text-xs md:text-sm text-white font-bold leading-relaxed mb-16 uppercase tracking-widest">
-                  Revolutionizing the academic experience at the Polytechnic University of the <br className="hidden md:block" />
-                  Philippines with <span className="text-white">real-time AI monitoring</span> and seamless digital logging.
+               <p className="max-w-xl mx-auto text-xs md:text-sm text-slate-700 font-bold leading-relaxed mb-16 uppercase tracking-widest text-center">
+                  Secure, real-time facial recognition for the <br className="hidden md:block" />
+                  Polytechnic University of the Philippines.
                </p>
 
-               <div className="flex flex-col sm:flex-row justify-center gap-4 w-full max-w-md mx-auto">
+               <div className="flex flex-col sm:flex-row justify-center gap-4 w-full max-w-sm sm:max-w-md mx-auto">
                   <Link href={isLoggedIn ? getDashboardPath() : "/login"}
-                     className="flex-1 px-10 py-7 bg-[#23170c] dark:bg-[#f7df9a] text-white dark:text-black rounded-2xl font-black uppercase text-[10px] tracking-[0.3em] shadow-xl hover:scale-105 active:scale-95 transition-all text-center">
-                     {isLoggedIn ? 'Access Dashboard' : 'Initialize Session'}
+                     className="flex-1 px-10 py-6 bg-identity-navy text-white rounded-2xl font-black uppercase text-[10px] tracking-[0.3em] shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center text-center">
+                     {isLoggedIn ? 'Dashboard' : 'Login'}
                   </Link>
                   <button
                      onClick={() => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })}
-                     className="flex-1 px-10 py-6 bg-primary/5 dark:bg-white/5 border border-primary/20 dark:border-white/10 text-primary dark:text-brand-cream rounded-2xl font-black uppercase text-[10px] tracking-[0.3em] hover:bg-primary/10 dark:hover:bg-white/10 transition-all flex items-center justify-center gap-3">
-                     Scan Features <ChevronRight size={14} className="rotate-90" />
+                     className="flex-1 px-10 py-6 identity-glass bg-identity-sky border border-identity-sky/20 text-identity-navy rounded-2xl font-black uppercase text-[10px] tracking-[0.3em] hover:bg-identity-sky/5 transition-all flex items-center justify-center gap-3">
+                     See Features <ChevronRight size={14} className="rotate-90" />
                   </button>
                </div>
             </div>
          </section>
 
-         {/* Intelligent Face Detection Section (Image 2 Style) */}
-         <section id="features" className="py-12 lg:py-20 max-w-[1131px] mx-auto px-10 flex items-center justify-center">
-            <div className="relative rounded-[2.0rem] overflow-hidden bg-background border border-primary/10 dark:border-white/10 shadow-3xl group backdrop-blur-sm">
-               {/* Background Image Wrapper (Right 60%) */}
-               <div className="absolute inset-y-0 right-0 w-[55%] z-0">
-                  <img
-                     src="/pup-pylon-night.jpg"
-                     alt="PUP Lopez Campus Night"
-                     className="w-full h-full object-cover object-center opacity-80 group-hover:scale-105 transition-transform duration-[20s]"
-                  />
-                  {/* Stronger gradient to blend left side, natively adaptive to theme colors via background css variable */}
-                  <div className="absolute inset-0 bg-gradient-to-r from-background via-background/90 to-transparent"></div>
+         {/* Intelligent Face Detection Section */}
+         <section id="features" className="relative py-12 lg:py-20 max-w-6xl mx-auto px-6 flex items-center justify-center z-[1]">
+            <div className="relative w-full rounded-[2.0rem] overflow-hidden identity-glass border border-identity-sky/10 shadow-3xl group flex flex-col lg:flex-row items-stretch min-h-[420px]">
+
+               {/* Left Side: Technical Info (Solid Half) */}
+               <div className="lg:w-1/2 p-10 lg:p-14 lg:pt-16 flex flex-col justify-center relative bg-slate-50 z-10 border-r border-slate-100">
+                  {/* Cyber Brackets */}
+                  <div className="corner-bracket-tl"></div>
+                  <div className="corner-bracket-br"></div>
+
+                  <div className="inline-flex items-center gap-2 py-1.5 px-4 rounded-full bg-identity-sky/10 text-identity-sky text-[8px] font-black uppercase tracking-[0.2em] mb-6 w-fit border border-identity-sky/20">
+                     <span className="w-1.5 h-1.5 rounded-full bg-identity-sky animate-pulse"></span>
+                     Scanning Enabled
+                  </div>
+
+                  <h3 className="text-3xl md:text-5xl font-black text-identity-navy mb-4 leading-tight font-outfit uppercase">
+                     Automated Face <br /> Recognition
+                  </h3>
+
+                  <p className="text-slate-800 text-[10px] md:text-xs font-bold leading-relaxed mb-10 uppercase tracking-widest max-w-sm">
+                     Fast and secure attendance for the PUP Lopez Computer Laboratory. Record your entry instantly with AI technology.
+                  </p>
+
+                  <div className="grid grid-cols-2 gap-4 md:gap-6 pt-8 border-t border-slate-200">
+                     <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-identity-sky/10 text-identity-sky rounded-xl flex items-center justify-center shrink-0">
+                           <ScanFace size={20} />
+                        </div>
+                        <div className="text-identity-navy">
+                           <p className="text-[12px] font-black uppercase tracking-widest">Easy Face</p>
+                           <p className="text-[9px] font-bold opacity-60 uppercase tracking-widest">Scan</p>
+                        </div>
+                     </div>
+                     <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-identity-sky/10 text-identity-sky rounded-xl flex items-center justify-center shrink-0">
+                           <FileText size={20} />
+                        </div>
+                        <div className="text-identity-navy">
+                           <p className="text-[12px] font-black uppercase tracking-widest">Instant</p>
+                           <p className="text-[9px] font-bold opacity-60 uppercase tracking-widest">Records</p>
+                        </div>
+                     </div>
+                  </div>
                </div>
 
-               <div className="relative z-10 flex flex-col lg:flex-row items-stretch min-h-[380px]">
-                  {/* Campus Label */}
-                  <div className="absolute top-6 left-8 text-[8px] font-black text-foreground/30 uppercase tracking-[0.4em] z-20">
-                     Campus Night
-                  </div>
+               {/* Right Side: Campus Imagery (Imagery Half) */}
+               <div className="lg:w-1/2 relative overflow-hidden bg-identity-navy/5 min-h-[300px] lg:min-h-full">
+                  <img
+                     src={isDayTime ? "/pup-pylon-day.jpg" : "/pup-pylon-night.jpg"}
+                     alt={`PUP Lopez Campus ${isDayTime ? 'Day' : 'Night'}`}
+                     className="absolute inset-0 w-full h-full object-cover object-center group-hover:scale-110 transition-transform duration-[10s]"
+                  />
+                  {/* Subtle technical overlay for depth */}
+                  <div className="absolute inset-0 bg-identity-navy/10 group-hover:bg-transparent transition-colors duration-500"></div>
 
-                  {/* Context Box (Left 40%) */}
-                  <div className="lg:w-[40%] z-10 p-8 lg:p-12 lg:pt-16 flex flex-col justify-center">
-                     <div className="inline-flex items-center gap-2 py-1.5 px-4 rounded-full bg-emerald-500/10 text-emerald-500 text-[8px] font-black uppercase tracking-[0.2em] mb-4 w-fit border border-emerald-500/20">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                        System Online
-                     </div>
+                  {/* Visual scanning frame */}
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                     <div className="relative w-64 h-64">
+                        {/* Viewfinder Corners - Themed Blue */}
+                        <div className="absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2 border-identity-sky rounded-tl-xl shadow-[0_0_10px_rgba(92,180,228,0.3)]"></div>
+                        <div className="absolute top-0 right-0 w-8 h-8 border-t-2 border-r-2 border-identity-sky rounded-tr-xl shadow-[0_0_10px_rgba(92,180,228,0.3)]"></div>
+                        <div className="absolute bottom-0 left-0 w-8 h-8 border-b-2 border-l-2 border-identity-sky rounded-bl-xl shadow-[0_0_10px_rgba(92,180,228,0.3)]"></div>
+                        <div className="absolute bottom-0 right-0 w-8 h-8 border-b-2 border-r-2 border-identity-sky rounded-br-xl shadow-[0_0_10px_rgba(92,180,228,0.3)]"></div>
 
-                     <h3 className="text-3xl md:text-5xl font-black text-foreground mb-4 tracking-tight leading-[0.9] font-outfit uppercase">
-                        Intelligent Face <br /> Detection
-                     </h3>
-
-                     <p className="text-foreground/70 text-[9px] md:text-[10px] font-bold leading-relaxed mb-6 uppercase tracking-widest max-w-sm">
-                        Seamlessly integrated with PUP Lopez Campus infrastructure for secure and rapid attendance tracking.
-                     </p>
-
-                     <div className="grid grid-cols-2 gap-4 pt-6 border-t border-foreground/10">
-                        <div className="flex items-center gap-3">
-                           <div className="w-8 h-8 bg-yellow-500/10 text-yellow-500 rounded-lg flex items-center justify-center shrink-0">
-                              <ScanFace size={16} />
-                           </div>
-                           <div className="text-foreground">
-                              <p className="text-[11px] font-black uppercase tracking-widest">Contactless</p>
-                              <p className="text-[8px] font-bold opacity-60 uppercase tracking-widest">Entry</p>
-                           </div>
-                        </div>
-                        <div className="flex items-center gap-3">
-                           <div className="w-8 h-8 bg-yellow-500/10 text-yellow-500 rounded-lg flex items-center justify-center shrink-0">
-                              <FileText size={16} />
-                           </div>
-                           <div className="text-foreground">
-                              <p className="text-[11px] font-black uppercase tracking-widest">Automated</p>
-                              <p className="text-[8px] font-bold opacity-60 uppercase tracking-widest">Logging</p>
-                           </div>
-                        </div>
+                        {/* Animated Scan Line */}
+                        <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-identity-sky to-transparent animate-scan-y shadow-[0_0_15px_rgba(92,180,228,0.5)] z-30"></div>
                      </div>
                   </div>
 
-                  {/* Right Side: Visual scanning frame */}
-                  <div className="hidden lg:flex flex-1 items-center justify-center relative overflow-hidden">
-
-                     {/* ✅ Gradient fade to fix the hard cut */}
-                     <div className="absolute inset-y-0 left-0 w-32 bg-gradient-to-r from-background to-transparent z-10 pointer-events-none" />
-
-                     <div className="relative w-64 h-64 lg:ml-12 z-20">
-                        <div className="absolute top-0 left-0 w-6 h-6 border-t-2 border-l-2 border-yellow-500 rounded-tl-lg transition-all duration-500 group-hover:scale-110"></div>
-                        <div className="absolute top-0 right-0 w-6 h-6 border-t-2 border-r-2 border-yellow-500 rounded-tr-lg transition-all duration-500 group-hover:scale-110"></div>
-                        <div className="absolute bottom-0 left-0 w-6 h-6 border-b-2 border-l-2 border-yellow-500 rounded-bl-lg transition-all duration-500 group-hover:scale-110"></div>
-                        <div className="absolute bottom-0 right-0 w-6 h-6 border-b-2 border-r-2 border-yellow-500 rounded-br-lg transition-all duration-500 group-hover:scale-110"></div>
-                        <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-yellow-500/40 to-transparent animate-scan-y shadow-[0_0_10px_rgba(234,179,8,0.2)]"></div>
-                     </div>
+                  {/* Campus Day/Night Label */}
+                  <div className="absolute bottom-6 right-8 text-[8px] font-black text-white uppercase tracking-[0.4em] z-20 bg-black/20 p-2 backdrop-blur-sm rounded-lg">
+                     Campus {isDayTime ? 'Day' : 'Night'}
                   </div>
                </div>
             </div>
          </section>
 
-         {/* Stats Bar (Image 1 Style) */}
-         <section className="bg-primary/5 dark:bg-white/[0.03] border-y border-primary/10 dark:border-white/5 py-16">
-            <div className="max-w-6xl mx-auto px-6">
+         {/* Stats Bar */}
+         <section className="relative bg-identity-navy/[0.03] border-y border-identity-navy/10 py-16 z-10">
+            <div className="max-w-6xl mx-auto px-6 relative z-10">
                <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
-                  <div className="flex flex-col items-center group">
-                     <div className="w-14 h-14 rounded-2xl bg-primary/5 border border-primary/20 dark:border-white/10 flex items-center justify-center text-yellow-500 mb-5 group-hover:scale-110 transition-transform">
+                  <div className="flex flex-col items-center group p-6 rounded-3xl identity-glass border border-identity-sky/5 shadow-lg text-center">
+                     <div className="w-14 h-14 rounded-2xl bg-identity-navy/5 border border-identity-navy/10 flex items-center justify-center text-identity-sky mb-4 group-hover:scale-110 transition-transform shadow-inner">
                         <MapPin size={24} />
                      </div>
-                     <h4 className="text-[10px] font-black uppercase text-primary dark:text-brand-cream tracking-[0.2em]">PUP Lopez Campus</h4>
-                     <p className="text-[8px] font-bold text-primary/40 dark:text-brand-cream/30 uppercase tracking-[0.3em] mt-2">Quezon Province</p>
+                     <h4 className="text-lg md:text-xl font-black uppercase text-identity-navy tracking-tight w-full">PUP Lopez Campus</h4>
+                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mt-2 w-full">Quezon Province</p>
                   </div>
-                  <div className="flex flex-col items-center group">
-                     <div className="w-14 h-14 rounded-2xl bg-primary/5 border border-primary/20 dark:border-white/10 flex items-center justify-center text-yellow-500 mb-5 group-hover:scale-110 transition-transform">
+                  <div className="flex flex-col items-center group p-6 rounded-3xl identity-glass border border-identity-sky/5 shadow-lg text-center">
+                     <div className="w-14 h-14 rounded-2xl bg-identity-navy/5 border border-identity-navy/10 flex items-center justify-center text-identity-sky mb-4 group-hover:scale-110 transition-transform shadow-inner">
                         <Monitor size={24} />
                      </div>
-                     <h4 className="text-[10px] font-black uppercase text-primary dark:text-brand-cream tracking-[0.2em]">Computer Laboratory</h4>
-                     <p className="text-[8px] font-bold text-primary/40 dark:text-brand-cream/30 uppercase tracking-[0.3em] mt-2">Facility</p>
+                     <h4 className="text-lg md:text-xl font-black uppercase text-identity-navy tracking-tight w-full">ICT Laboratory 1</h4>
+                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mt-2 w-full">Active Facility Center</p>
                   </div>
-                  <div className="flex flex-col items-center group">
-                     <div className="w-14 h-14 rounded-2xl bg-primary/5 border border-primary/20 dark:border-white/10 flex items-center justify-center text-yellow-500 mb-5 group-hover:scale-110 transition-transform">
+                  <div className="flex flex-col items-center group p-6 rounded-3xl identity-glass border border-identity-sky/5 shadow-lg text-center">
+                     <div className="w-14 h-14 rounded-2xl bg-identity-navy/5 border border-identity-navy/10 flex items-center justify-center text-identity-sky mb-4 group-hover:scale-110 transition-transform shadow-inner">
                         <Calendar size={24} />
                      </div>
-                     <h4 className="text-[10px] font-black uppercase text-primary dark:text-brand-cream tracking-[0.2em]">{academicSettings?.schoolYear || 'A.Y. 2025-2026'}</h4>
-                     <p className="text-[8px] font-bold text-primary/40 dark:text-brand-cream/30 uppercase tracking-[0.3em] mt-2">{academicSettings?.semester || '2nd Semester'}</p>
+                     <h4 className="text-lg md:text-xl font-black uppercase text-identity-navy tracking-tight w-full">{academicSettings?.schoolYear || 'A.Y. 2025-2026'}</h4>
+                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mt-2 w-full">{academicSettings?.semester || '2nd Semester'}</p>
                   </div>
                </div>
             </div>
          </section>
 
-         {/* Operational Protocol (Image 5 Style) */}
-         <section className="py-32 lg:py-56 text-center">
-            <div className="max-w-7xl mx-auto px-6">
-               <h3 className="text-4xl md:text-7xl font-black text-primary dark:text-brand-cream uppercase tracking-tighter mb-4 font-outfit">
-                  Operational Protocol
+         {/* Why LabFace? Section - Benefit Focused */}
+         <section className="relative py-24 lg:py-40 bg-white overflow-hidden z-10">
+            {/* Subtle Blueprint Grid */}
+            <div className="absolute inset-0 opacity-[0.03] bg-blueprint pointer-events-none"></div>
+
+            <div className="max-w-7xl mx-auto px-6 relative z-10 text-center">
+               <h3 className="text-3xl md:text-6xl font-black tracking-tighter mb-4 font-outfit">
+                  <span className="text-identity-navy">Why use </span>
+                  <span className="text-identity-navy">Lab</span><span className="text-identity-sky">Face</span><span className="text-identity-navy">?</span>
                </h3>
-               <p className="text-primary/40 dark:text-brand-cream/30 font-bold uppercase text-[10px] md:text-xs tracking-[0.4em] mb-24">
-                  Three steps to neural synchronization
+               <p className="text-slate-600 font-bold uppercase text-[10px] md:text-xs tracking-[0.4em] mb-20 max-w-2xl mx-auto">
+                  Transforming the laboratory experience through efficiency and innovation
+               </p>
+
+               <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
+                  {[
+                     {
+                        t: "One-Second Attendance",
+                        d: "Just walk in—our AI records your presence in less than a second. No lines, no IDs, no hassle.",
+                        i: <Zap size={32} />
+                     },
+                     {
+                        t: "Guaranteed Accuracy",
+                        d: "Biometric mapping ensures 100% accurate results. No more manual errors or proxy attendance issues.",
+                        i: <CheckCircle size={32} />
+                     },
+                     {
+                        t: <>Total <br /> Convenience</>,
+                        d: "Automated logs are synced instantly. Professors and students get real-time visibility without paperwork.",
+                        i: <Users size={32} />
+                     }
+                  ].map((item, i) => (
+                     <div key={i} className="p-10 rounded-[2.5rem] bg-slate-50 border border-slate-100 identity-glass hover:border-identity-sky/30 transition-all group text-center flex flex-col items-center">
+                        <div className="w-16 h-16 rounded-2xl bg-white border border-slate-100 flex items-center justify-center text-identity-sky mb-8 shadow-sm group-hover:scale-110 group-hover:bg-identity-navy group-hover:text-white transition-all duration-500 mx-auto">
+                           {item.i}
+                        </div>
+                        <h4 className="text-xl md:text-2xl font-black text-identity-navy uppercase tracking-tight mb-4 w-full">{item.t}</h4>
+                        <p className="text-slate-700 text-xs font-bold leading-relaxed uppercase tracking-wider w-full">{item.d}</p>
+                     </div>
+                  ))}
+               </div>
+            </div>
+         </section>
+
+         {/* Operational Protocol */}
+         {/* Security Framework Section */}
+         <section className="relative py-20 lg:py-40 text-center bg-[#F8FAFC] z-10 transition-colors">
+            {/* Opaque Mask for Header */}
+            <div className="max-w-7xl mx-auto px-6 relative z-10">
+               <h3 className="text-3xl md:text-7xl font-black text-identity-navy uppercase tracking-tighter mb-4 font-outfit bg-[#F8FAFC] inline-block px-4 md:px-8">
+                  Security Framework
+               </h3>
+               <p className="text-slate-600 font-bold uppercase text-[10px] md:text-xs tracking-[0.4em] mb-16">
+                  A seamless three-step verification process
                </p>
 
                <div className="grid grid-cols-1 md:grid-cols-3 gap-12 lg:gap-24 relative">
                   {/* Connecting Line */}
-                  <div className="hidden md:block absolute top-[60px] left-[15%] right-[15%] h-[1px] bg-primary/5 dark:bg-white/5 z-0"></div>
-
+                  <div className="hidden md:block absolute top-[60px] left-[15%] right-[15%] h-[1px] bg-slate-200 z-0"></div>
                   {[
-                     { n: "01", t: "Registration", d: "Biometric enrollment and neural mapping of facial vectors." },
-                     { n: "02", t: "Detection", d: "Passive CCTV scanning upon facility entry." },
-                     { n: "03", t: "Verification", d: "Instantaneous ledger update and dashboard synchronization." }
+                     { n: "01", t: "Face Registration", d: "Quickly enroll your face into the secure system ledger." },
+                     { n: "02", t: "Automatic Detection", d: "The system identifies you upon laboratory entry." },
+                     { n: "03", t: "Instant Logging", d: "Your attendance is updated immediately on the dashboard." }
                   ].map((step, i) => (
                      <div key={i} className="relative z-10 group">
-                        {/* Protocol Badge */}
-                        <div className="w-[120px] h-[120px] bg-primary/5 dark:bg-white/5 rounded-[3rem] border border-primary/10 dark:border-white/10 flex flex-col items-center justify-center mx-auto mb-10 group-hover:bg-primary group-hover:text-brand-cream dark:group-hover:bg-brand-cream dark:group-hover:text-black transition-all duration-500 shadow-xl">
-                           <p className="text-[9px] font-black uppercase tracking-[0.4em] mb-1 opacity-40">Protocol</p>
-                           <p className="text-3xl font-black font-outfit">{step.n}</p>
+                        {/* Protocol Badge - Enlarged and high contrast */}
+                        <div className="w-[140px] h-[140px] bg-white rounded-[3.5rem] border border-slate-200 flex flex-col items-center justify-center mx-auto mb-10 group-hover:bg-identity-navy group-hover:text-white transition-all duration-500 shadow-xl identity-glass group-hover:border-identity-sky/50 relative overflow-hidden">
+                           {/* Subtle blueprint grid inside circle */}
+                           <div className="absolute inset-0 opacity-5 bg-blueprint-fine pointer-events-none"></div>
+                           <p className="text-[11px] font-black uppercase tracking-[0.4em] mb-1 opacity-60 z-10">Step</p>
+                           <p className="text-4xl font-black font-outfit z-10">{step.n}</p>
                         </div>
 
-                        <h4 className="text-xl md:text-2xl font-black text-primary dark:text-brand-cream uppercase tracking-tight mb-4">{step.t}</h4>
-                        <p className="text-primary/50 dark:text-brand-cream/40 text-[9px] md:text-xs font-bold leading-relaxed uppercase tracking-wider max-w-[250px] mx-auto">
+                        <h4 className="text-xl md:text-2xl font-black text-identity-navy uppercase tracking-tight mb-4">{step.t}</h4>
+                        <p className="text-slate-800 text-[10px] md:text-xs font-bold leading-relaxed uppercase tracking-wider max-w-[250px] mx-auto">
                            {step.d}
                         </p>
                      </div>
@@ -223,73 +315,73 @@ export default function Home() {
             </div>
          </section>
 
-         {/* Modern CTA Section (Image 4 Style) */}
-         <section className="py-40 lg:py-60 px-6">
-            <div className="max-w-7xl mx-auto relative rounded-[4rem] bg-primary dark:bg-black/60 border border-primary/10 dark:border-white/10 p-20 lg:p-40 overflow-hidden text-center flex flex-col items-center">
-               {/* Grid Pattern */}
-               <div className="absolute inset-0 opacity-[0.05] dark:opacity-[0.1] bg-[url('https://www.transparenttextures.com/patterns/hexellence.png')] pointer-events-none"></div>
-               <div className="absolute inset-0 bg-gradient-to-b from-primary/50 via-transparent to-primary/50 dark:from-black/40 dark:to-black/40 pointer-events-none"></div>
+         {/* Modern CTA Section */}
+         <section className="relative py-40 lg:py-60 px-6 z-10">
+            <div className="max-w-7xl mx-auto relative rounded-[4rem] bg-identity-navy border border-white/10 p-20 lg:p-40 overflow-hidden text-center flex flex-col items-center">
+               {/* Grid Pattern - Blueprint Style */}
+               <div className="absolute inset-0 opacity-[0.1] bg-blueprint pointer-events-none"></div>
+               <div className="absolute inset-0 opacity-[0.05] bg-blueprint-fine pointer-events-none"></div>
+               <div className="absolute inset-0 bg-gradient-to-b from-black/20 to-black/60 pointer-events-none"></div>
 
                <div className="relative z-10 max-w-2xl">
-                  <h2 className="text-4xl md:text-6xl font-black text-brand-cream leading-[0.85] tracking-tighter mb-8 font-outfit uppercase">
+                  <h2 className="text-4xl md:text-6xl font-black text-white leading-[0.85] tracking-tighter mb-8 font-outfit uppercase">
                      Modernize your <br />
-                     <span className="text-yellow-500">Laboratory</span> <br />
+                     <span className="text-identity-sky">Laboratory</span> <br />
                      Experience
                   </h2>
 
-                  <p className="text-brand-cream/40 text-[10px] md:text-xs font-black uppercase tracking-[0.4em] mb-12">
+                  <p className="text-white/70 text-[10px] md:text-xs font-black uppercase tracking-[0.4em] mb-12">
                      Join the next generation of academic management. Secure, efficient, and AI-driven.
                   </p>
 
                   <Link href={isLoggedIn ? getDashboardPath() : "/register/student"}
-                     className="inline-flex items-center gap-4 px-12 py-7 bg-yellow-500 text-black rounded-2xl font-black uppercase text-[10px] tracking-[0.4em] shadow-4xl hover:bg-white transition-all scale-105 active:scale-100 group">
-                     Join the Network
+                     className="inline-flex items-center gap-4 px-12 py-7 bg-identity-sky text-white rounded-2xl font-black uppercase text-[10px] tracking-[0.4em] shadow-4xl hover:bg-white hover:text-identity-navy transition-all scale-105 active:scale-100 group">
+                     Create Account
                      <ArrowRight size={18} className="group-hover:translate-x-2 transition-transform" />
                   </Link>
                </div>
             </div>
          </section>
 
-         {/* Heritage Footer (Replicated from screenshot) */}
-         <footer className="bg-primary/5 dark:bg-black text-primary/40 dark:text-brand-cream/40 py-24 lg:py-32 border-t border-primary/10 dark:border-white/5 transition-colors">
+         {/* Heritage Footer */}
+         <footer className="relative bg-[#F8FAFC] pt-24 pb-12 overflow-hidden z-10 border-t border-identity-navy/10">
             <div className="max-w-7xl mx-auto px-6 lg:px-8 grid grid-cols-1 md:grid-cols-3 gap-16 lg:gap-32">
                {/* Column 1: Branding */}
                <div>
-                  <div className="text-3xl font-black text-primary dark:text-brand-cream mb-8 font-outfit uppercase tracking-tighter">LabFace</div>
-                  <p className="text-[10px] md:text-xs font-bold leading-relaxed uppercase tracking-widest opacity-80 max-w-sm">
+                  <div className="text-3xl font-black mb-8 font-outfit tracking-tighter">
+                     <span className="text-identity-navy">Lab</span>
+                     <span className="text-identity-sky">Face</span>
+                  </div>
+                  <p className="text-[10px] md:text-xs font-bold leading-relaxed uppercase tracking-widest text-slate-700 max-w-sm">
                      Advancing biometric security and administrative efficiency for the Polytechnic University of the Philippines.
                   </p>
                </div>
 
                {/* Column 2: Quick Links */}
                <div>
-                  <h4 className="text-primary dark:text-brand-cream font-black uppercase text-[10px] md:text-xs tracking-[0.4em] mb-8">Quick Links</h4>
-                  <ul className="space-y-4 text-[10px] md:text-xs font-bold uppercase tracking-widest opacity-70">
-                     <li><Link href="/" className="hover:text-yellow-500 transition-colors">Home</Link></li>
-                     <li><Link href="/login" className="hover:text-yellow-500 transition-colors">Login</Link></li>
-                     <li><Link href="/register/student" className="hover:text-yellow-500 transition-colors">Student Registration</Link></li>
+                  <h4 className="text-identity-navy font-black uppercase text-[10px] md:text-xs tracking-[0.4em] mb-8">Quick Links</h4>
+                  <ul className="space-y-4 text-[10px] md:text-xs font-bold uppercase tracking-widest text-slate-700">
+                     <li><Link href="/" className="hover:text-identity-sky transition-colors">Home</Link></li>
+                     <li><Link href="/login" className="hover:text-identity-sky transition-colors">Login</Link></li>
+                     <li><Link href="/register/student" className="hover:text-identity-sky transition-colors">Student Registration</Link></li>
                   </ul>
                </div>
 
                {/* Column 3: Contact */}
                <div>
-                  <h4 className="text-primary dark:text-brand-cream font-black uppercase text-[10px] md:text-xs tracking-[0.4em] mb-8">Contact</h4>
-                  <ul className="space-y-4 text-[10px] md:text-xs font-bold uppercase tracking-widest opacity-70">
-                     <li>PUP Lopez Campus</li>
-                     <li>Lopez, Quezon</li>
-                     <li><a href="mailto:labfaceassistance@gmail.com" className="hover:text-yellow-500 transition-colors">labfaceassistance@gmail.com</a></li>
+                  <h4 className="text-identity-navy font-black uppercase text-[10px] md:text-xs tracking-[0.4em] mb-8">Contact</h4>
+                  <ul className="space-y-4 text-[10px] md:text-xs font-bold uppercase tracking-widest text-slate-700">
+                     <li><a href="https://www.pup.edu.ph/lopez/" target="_blank" rel="noopener noreferrer" className="hover:text-identity-sky transition-colors">PUP Lopez Campus</a></li>
+                     <li><a href="https://livelopez.gov.ph/" target="_blank" rel="noopener noreferrer" className="hover:text-identity-sky transition-colors">Lopez, Quezon</a></li>
+                     <li><a href="mailto:labfaceassistance@gmail.com" className="hover:text-identity-sky transition-colors">labfaceassistance@gmail.com</a></li>
                   </ul>
                </div>
             </div>
 
             {/* Bottom Bar */}
-            <div className="max-w-7xl mx-auto px-6 mt-20 pt-12 border-t border-primary/5 dark:border-white/5 flex flex-col items-center gap-2">
-               <p className="text-[9px] md:text-[10px] font-bold uppercase tracking-[0.3em] opacity-50">
-                  © {new Date().getFullYear()} LabFace - PUP Lopez Campus. All rights reserved.
-               </p>
-               <p className="text-[9px] md:text-[10px] font-bold uppercase tracking-[0.3em] opacity-50">
-                  For support: <a href="mailto:labfaceassistance@gmail.com" className="text-yellow-600 dark:text-yellow-500 hover:underline">labfaceassistance@gmail.com</a>
-               </p>
+            <div className="max-w-7xl mx-auto px-6 mt-20 pt-12 border-t border-identity-navy/10 flex flex-col items-center gap-2 text-slate-800 font-bold uppercase tracking-[0.3em] text-[10px] text-center">
+               <p>© {new Date().getFullYear()} <span className="normal-case">LabFace</span> - PUP Lopez Campus. All rights reserved.</p>
+               <p>For support: <a href="mailto:labfaceassistance@gmail.com" className="text-identity-sky hover:underline">labfaceassistance@gmail.com</a></p>
             </div>
          </footer>
       </main>

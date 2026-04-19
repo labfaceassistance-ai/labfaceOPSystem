@@ -19,8 +19,8 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
     onConfirm,
     title,
     message,
-    confirmText = 'Confirm',
-    cancelText = 'Cancel',
+    confirmText = 'Execute Protocol',
+    cancelText = 'Abort',
     type = 'info',
     isAlert = false
 }) => {
@@ -30,27 +30,27 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
         switch (type) {
             case 'danger':
                 return {
-                    icon: <AlertCircle className="text-red-400" size={24} />,
-                    btn: 'bg-red-600 hover:bg-red-700 text-white shadow-red-600/20',
-                    bg: 'bg-red-400/10 border-red-400/20'
+                    icon: <AlertCircle className="text-rose-500" size={24} />,
+                    btn: 'bg-rose-600 hover:bg-rose-500 text-white shadow-rose-900/40 border border-rose-500/20',
+                    bg: 'bg-rose-500/10 border-rose-500/20'
                 };
             case 'warning':
                 return {
-                    icon: <AlertTriangle className="text-yellow-400" size={24} />,
-                    btn: 'bg-yellow-600 hover:bg-yellow-700 text-white shadow-yellow-600/20',
-                    bg: 'bg-yellow-400/10 border-yellow-400/20'
+                    icon: <AlertTriangle className="text-brand-gold" size={24} />,
+                    btn: 'bg-brand-gold hover:bg-black hover:text-brand-gold text-black shadow-brand-gold/20 border border-brand-gold',
+                    bg: 'bg-brand-gold/10 border-brand-gold/20'
                 };
             case 'success':
                 return {
                     icon: <CheckCircle2 className="text-emerald-400" size={24} />,
-                    btn: 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/20',
-                    bg: 'bg-emerald-400/10 border-emerald-400/20'
+                    btn: 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-900/40 border border-emerald-500/20',
+                    bg: 'bg-emerald-500/10 border-emerald-500/20'
                 };
             default:
                 return {
-                    icon: <AlertCircle className="text-brand-400" size={24} />,
-                    btn: 'bg-brand-600 hover:bg-brand-700 text-white shadow-brand-600/20',
-                    bg: 'bg-brand-400/10 border-brand-400/20'
+                    icon: <AlertCircle className="text-brand-gold" size={24} />,
+                    btn: 'bg-brand-gold hover:bg-black hover:text-brand-gold text-black shadow-brand-gold/20 border border-brand-gold',
+                    bg: 'bg-brand-gold/10 border-brand-gold/20'
                 };
         }
     };
@@ -58,30 +58,34 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
     const colors = getColorClasses();
 
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="bg-slate-900 border border-slate-800 w-full max-w-md rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
-                <div className="p-6">
-                    <div className="flex items-start justify-between mb-4">
-                        <div className={`p-3 rounded-xl ${colors.bg}`}>
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/95 backdrop-blur-md animate-in fade-in duration-300">
+            <div className="bg-maroon-950 border border-white/10 w-full max-w-md rounded-[40px] shadow-3xl overflow-hidden animate-in zoom-in-95 duration-300 relative">
+                <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-white/5 to-transparent pointer-events-none opacity-20" />
+                
+                <div className="p-10 relative z-10">
+                    <div className="flex items-start justify-between mb-8">
+                        <div className={`p-5 rounded-2xl border shadow-inner ${colors.bg}`}>
                             {colors.icon}
                         </div>
                         <button
                             onClick={onClose}
-                            className="text-slate-500 hover:text-slate-300 transition-colors p-1"
+                            className="text-secondary/20 hover:text-white transition-all hover:rotate-90 p-2"
                         >
-                            <X size={20} />
+                            <X size={24} />
                         </button>
                     </div>
 
-                    <h3 className="text-xl font-bold text-white mb-2">{title}</h3>
-                    <p className="text-slate-400 leading-relaxed">{message}</p>
+                    <h3 className="text-2xl font-black text-white mb-4 uppercase tracking-tighter leading-tight">{title}</h3>
+                    <p className="text-[10px] font-black text-secondary/40 leading-relaxed uppercase tracking-[0.2em] italic">
+                        {message}
+                    </p>
                 </div>
 
-                <div className="p-6 pt-0 flex gap-3">
+                <div className="px-10 pb-10 flex gap-4 relative z-10">
                     {!isAlert && (
                         <button
                             onClick={onClose}
-                            className="flex-1 px-4 py-2.5 rounded-xl bg-slate-800 text-slate-300 font-bold hover:bg-slate-700 transition-all border border-slate-700"
+                            className="flex-1 px-8 py-4 rounded-2xl bg-black/40 text-[10px] font-black text-secondary/40 hover:text-white uppercase tracking-widest hover:bg-black transition-all border border-white/10 shadow-inner"
                         >
                             {cancelText}
                         </button>
@@ -91,11 +95,13 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
                             if (onConfirm) onConfirm();
                             else onClose();
                         }}
-                        className={`flex-1 px-4 py-2.5 rounded-xl font-bold transition-all shadow-lg ${colors.btn}`}
+                        className={`flex-1 px-8 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all shadow-2xl active:scale-95 ${colors.btn}`}
                     >
                         {confirmText}
                     </button>
                 </div>
+                
+                <div className="absolute bottom-0 inset-x-0 h-1 bg-gradient-to-r from-transparent via-brand-gold/20 to-transparent opacity-50" />
             </div>
         </div>
     );

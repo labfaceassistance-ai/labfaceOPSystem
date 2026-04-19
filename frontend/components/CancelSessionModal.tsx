@@ -67,90 +67,95 @@ export default function CancelSessionModal({
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <div className="bg-slate-900 rounded-2xl shadow-2xl border border-slate-800 max-w-md w-full">
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
+            <div className="bg-maroon-950 rounded-2xl shadow-3xl border border-white/10 max-w-md w-full overflow-hidden animate-in zoom-in-95 duration-200">
                 {/* Header */}
-                <div className="flex items-center justify-between p-6 border-b border-slate-800">
-                    <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                        <AlertTriangle className="text-orange-400" size={24} />
-                        Cancel Class Session
+                <div className="flex items-center justify-between p-8 border-b border-white/5 bg-white/2">
+                    <h2 className="text-xl font-black text-white uppercase tracking-tight flex items-center gap-3">
+                        <AlertTriangle className="text-brand-gold" size={24} />
+                        Cancel Session
                     </h2>
                     <button
                         onClick={handleClose}
                         disabled={loading}
-                        className="text-slate-400 hover:text-white transition-colors disabled:opacity-50"
+                        className="text-secondary/40 hover:text-white transition-colors disabled:opacity-50 p-1"
                     >
                         <X size={24} />
                     </button>
                 </div>
 
                 {/* Body */}
-                <div className="p-6 space-y-4">
+                <div className="p-8 space-y-6">
                     {/* Session Details */}
-                    <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
-                        <div className="flex items-center gap-2 mb-2">
-                            <Calendar className="text-brand-400" size={18} />
-                            <span className="text-sm font-medium text-slate-400">Session Details</span>
+                    <div className="bg-black/40 rounded-2xl p-6 border border-white/5 shadow-inner">
+                        <div className="flex items-center gap-2 mb-4">
+                            <Calendar className="text-brand-gold/60" size={16} />
+                            <span className="text-[10px] font-black uppercase tracking-widest text-secondary/40">Reference Session</span>
                         </div>
-                        <div className="space-y-1">
-                            <p className="text-white font-bold">{className}</p>
-                            <p className="text-sm text-slate-300">
-                                {new Date(sessionDate).toLocaleDateString('en-US', {
-                                    weekday: 'long',
-                                    month: 'long',
-                                    day: 'numeric',
-                                    year: 'numeric'
-                                })}
-                            </p>
-                            <p className="text-sm text-slate-300">{sessionTime}</p>
+                        <div className="space-y-2">
+                            <p className="text-lg font-black text-white tracking-tight">{className}</p>
+                            <div className="flex flex-col gap-1">
+                                <p className="text-[10px] font-bold text-secondary/60 uppercase tracking-widest leading-none">
+                                    {new Date(sessionDate).toLocaleDateString('en-US', {
+                                        weekday: 'long',
+                                        month: 'long',
+                                        day: 'numeric',
+                                        year: 'numeric'
+                                    })}
+                                </p>
+                                <p className="text-[10px] font-black text-brand-gold uppercase tracking-widest">{sessionTime}</p>
+                            </div>
                         </div>
                     </div>
 
                     {/* Warning */}
-                    <div className="bg-orange-500/10 border border-orange-500/30 rounded-xl p-4">
-                        <p className="text-orange-300 text-sm">
-                            <strong>Warning:</strong> All enrolled students will be notified about this cancellation.
-                        </p>
+                    <div className="bg-brand-gold/10 border border-brand-gold/20 rounded-xl p-5 shadow-inner">
+                        <div className="flex gap-3">
+                            <AlertTriangle size={18} className="text-brand-gold flex-shrink-0 mt-0.5" />
+                            <p className="text-[10px] font-black uppercase tracking-widest text-brand-gold leading-relaxed">
+                                Security Protocol Alert: All enrolled students will be formally notified of this cancellation.
+                            </p>
+                        </div>
                     </div>
 
                     {/* Reason Input */}
                     <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-2">
-                            Reason for Cancellation <span className="text-red-400">*</span>
+                        <label className="block text-[10px] font-black text-secondary/40 uppercase tracking-widest mb-3">
+                            Reason for Cancellation <span className="text-brand-gold">*</span>
                         </label>
                         <textarea
                             value={reason}
                             onChange={(e) => setReason(e.target.value)}
-                            placeholder="e.g., Faculty meeting, Emergency, etc."
+                            placeholder="Specify formal reason for archival..."
                             disabled={loading}
                             rows={3}
-                            className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent disabled:opacity-50 resize-none"
+                            className="w-full px-5 py-4 bg-black/40 border border-white/10 rounded-xl text-white placeholder-secondary/20 font-bold focus:outline-none focus:ring-2 focus:ring-brand-gold/20 focus:border-brand-gold/40 transition-all disabled:opacity-50 resize-none shadow-inner"
                         />
                     </div>
 
                     {/* Error Message */}
                     {error && (
-                        <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-3">
-                            <p className="text-red-400 text-sm">{error}</p>
+                        <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4">
+                            <p className="text-red-400 text-[10px] font-black uppercase tracking-widest">{error}</p>
                         </div>
                     )}
                 </div>
 
                 {/* Footer */}
-                <div className="flex gap-3 p-6 border-t border-slate-800">
+                <div className="flex gap-4 p-8 border-t border-white/5 bg-white/2">
                     <button
                         onClick={handleClose}
                         disabled={loading}
-                        className="flex-1 px-4 py-3 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-medium transition-colors disabled:opacity-50"
+                        className="flex-1 px-6 py-4 bg-black/40 hover:bg-white/5 text-secondary/60 hover:text-white rounded-xl font-black uppercase tracking-widest text-[10px] border border-white/5 transition-all shadow-inner disabled:opacity-50"
                     >
-                        Keep Session
+                        Retain Session
                     </button>
                     <button
                         onClick={handleCancel}
                         disabled={loading || !reason.trim()}
-                        className="flex-1 px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="flex-1 px-6 py-4 bg-red-500 hover:bg-red-600 text-white rounded-xl font-black uppercase tracking-widest text-[10px] transition-all shadow-lg shadow-red-500/10 disabled:opacity-30 disabled:cursor-not-allowed"
                     >
-                        {loading ? 'Canceling...' : 'Cancel Session'}
+                        {loading ? 'Processing...' : 'Confirm Cancellation'}
                     </button>
                 </div>
             </div>

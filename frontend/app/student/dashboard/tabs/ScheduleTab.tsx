@@ -1,3 +1,4 @@
+"use client";
 import { useEffect, useState } from 'react';
 import { Calendar, Clock, MapPin, User as UserIcon, X } from 'lucide-react';
 
@@ -40,7 +41,6 @@ export default function ScheduleTab({ user }: ScheduleTabProps) {
             const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
             const axios = (await import('axios')).default;
 
-            // Fetch enrolled classes
             const response = await axios.get(`${API_URL}/api/student/classes/${user.id}`);
             setClasses(response.data);
         } catch (error) {
@@ -54,93 +54,76 @@ export default function ScheduleTab({ user }: ScheduleTabProps) {
         fetchSchedule();
     }, [user.id]);
 
-    // Auto-refresh interval
     useEffect(() => {
         let intervalId: NodeJS.Timeout;
-
         if (user.id) {
-            // Refresh every 30 seconds in the background
             intervalId = setInterval(() => {
                 fetchSchedule(true);
             }, 30000);
         }
-
-        return () => {
-            if (intervalId) clearInterval(intervalId);
-        };
+        return () => { if (intervalId) clearInterval(intervalId); };
     }, [user.id]);
 
     const parseSchedule = (scheduleJson: string | any[]): ScheduleSlot[] => {
         if (typeof scheduleJson === 'string') {
-            try {
-                return JSON.parse(scheduleJson);
-            } catch {
-                return [];
-            }
+            try { return JSON.parse(scheduleJson); } catch { return []; }
         }
         return Array.isArray(scheduleJson) ? scheduleJson : [];
     };
 
-    const formatTime = (time: string) => {
-        return time;
-    };
-
     const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
-    // Group classes by day
     const scheduleByDay: { [key: string]: Array<{ class: ClassSchedule; slot: ScheduleSlot }> } = {};
-
     classes.forEach(cls => {
         const slots = parseSchedule(cls.schedule_json);
         slots.forEach(slot => {
-            if (!scheduleByDay[slot.day]) {
-                scheduleByDay[slot.day] = [];
-            }
+            if (!scheduleByDay[slot.day]) scheduleByDay[slot.day] = [];
             scheduleByDay[slot.day].push({ class: cls, slot });
         });
     });
 
-    // Sort classes by start time for each day
     Object.keys(scheduleByDay).forEach(day => {
-        scheduleByDay[day].sort((a, b) => {
-            const timeA = a.slot.startTime;
-            const timeB = b.slot.startTime;
-            return timeA.localeCompare(timeB);
-        });
+        scheduleByDay[day].sort((a, b) => a.slot.startTime.localeCompare(b.slot.startTime));
     });
 
     if (loading) {
         return (
-            <div className="flex items-center justify-center py-16">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-500"></div>
+            <div className="flex flex-col items-center justify-center py-24">
+                <div className="w-12 h-12 border-4 border-identity-sky/10 border-t-identity-sky rounded-full animate-spin mb-4"></div>
+                <p className="font-black text-[10px] text-slate-400 uppercase tracking-[0.4em]">Optimizing Time Matrix...</p>
             </div>
         );
     }
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-8 animate-fade-in">
             {/* Header */}
-            <div className="bg-slate-900/50 rounded-2xl border border-slate-800 p-6">
-                <div className="flex items-center gap-3 mb-2">
-                    <Calendar className="text-brand-400" size={28} />
-                    <h2 className="text-2xl font-bold text-white">Weekly Schedule</h2>
+            <div className="bg-white rounded-[2.5rem] shadow-xl shadow-slate-200/50 border border-slate-200 p-8 relative overflow-hidden group">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-identity-sky/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
+                <div className="flex items-center gap-4 mb-2 relative z-10">
+                    <div className="p-3 bg-identity-sky/10 text-identity-sky rounded-2xl group-hover:scale-110 transition-transform">
+                        <Calendar size={28} />
+                    </div>
+                    <div>
+                        <h2 className="text-3xl font-black text-identity-navy uppercase tracking-tighter font-outfit">Temporal Synchronization</h2>
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mt-1">Operational Schedule • Lab 1</p>
+                    </div>
                 </div>
-                <p className="text-slate-400 text-sm">Your class schedule for the week</p>
             </div>
 
             {/* No Classes Enrolled Message */}
             {classes.length === 0 && (
-                <div className="bg-slate-900/50 rounded-2xl border border-slate-800 p-12 text-center">
-                    <Calendar size={48} className="mx-auto mb-4 text-slate-600" />
-                    <p className="text-lg font-medium text-slate-400">No classes enrolled</p>
-                    <p className="text-sm text-slate-500 mt-2">
-                        You haven't enrolled in any classes yet.
+                <div className="bg-slate-50 rounded-[3rem] border-2 border-slate-100 border-dashed p-16 text-center">
+                    <Calendar size={48} className="mx-auto mb-4 text-slate-200" />
+                    <p className="font-black text-lg text-slate-400 uppercase tracking-tighter">No nodes synchronized</p>
+                    <p className="text-[10px] font-black text-slate-300 mt-2 uppercase tracking-[0.3em]">
+                        Your academic matrix is currently empty.
                     </p>
                 </div>
             )}
 
             {/* Weekly Schedule Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 {days.map(day => {
                     const dayClasses = scheduleByDay[day] || [];
                     const hasClasses = dayClasses.length > 0;
@@ -148,53 +131,59 @@ export default function ScheduleTab({ user }: ScheduleTabProps) {
                     return (
                         <div
                             key={day}
-                            className={`bg-slate-900/50 rounded-2xl border border-slate-800 p-6 ${hasClasses ? '' : 'opacity-60'
-                                }`}
+                            className={`rounded-[3rem] border transition-all duration-500 overflow-hidden ${
+                                hasClasses 
+                                    ? 'bg-white border-slate-100 shadow-xl' 
+                                    : 'bg-slate-50/50 border-slate-50 opacity-40 grayscale group hover:opacity-100 hover:grayscale-0'
+                            }`}
                         >
-                            <div className="flex items-center justify-between mb-4">
-                                <h3 className="text-lg font-bold text-white">{day}</h3>
-                                <span className="text-xs text-slate-400">
-                                    {dayClasses.length} {dayClasses.length === 1 ? 'class' : 'classes'}
+                            <div className={`px-8 py-5 flex items-center justify-between border-b ${hasClasses ? 'bg-slate-50 border-slate-100' : 'bg-transparent border-transparent'}`}>
+                                <h3 className="text-lg font-black text-identity-navy uppercase tracking-tighter font-outfit">{day}</h3>
+                                <span className={`text-[10px] font-black uppercase tracking-[0.2em] px-3 py-1 rounded-full ${hasClasses ? 'bg-identity-sky/10 text-identity-sky' : 'bg-slate-100 text-slate-300'}`}>
+                                    {dayClasses.length} {dayClasses.length === 1 ? 'Node' : 'Nodes'}
                                 </span>
                             </div>
 
-                            <div className="space-y-3">
+                            <div className="p-8 space-y-4">
                                 {hasClasses ? (
                                     dayClasses.map((item, index) => (
                                         <div
                                             key={index}
                                             onClick={() => setSelectedClass(item.class)}
-                                            className="bg-slate-800/50 rounded-xl p-4 border border-slate-700 hover:border-brand-500/50 transition-all hover:bg-slate-800 cursor-pointer group"
+                                            className="bg-slate-50 rounded-[1.8rem] p-6 border border-slate-100 hover:border-identity-sky/30 hover:bg-white transition-all duration-500 cursor-pointer group shadow-sm hover:shadow-2xl"
                                         >
-                                            <div className="flex items-start justify-between mb-2">
+                                            <div className="flex items-start justify-between mb-4">
                                                 <div>
-                                                    <h4 className="font-bold text-white text-sm">
+                                                    <h4 className="font-black text-identity-navy text-sm uppercase tracking-widest group-hover:text-identity-sky transition-colors">
                                                         {item.class.subject_code}
                                                     </h4>
-                                                    <p className="text-xs text-slate-400">
+                                                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 line-clamp-1 pr-10">
                                                         {item.class.subject_name}
                                                     </p>
                                                 </div>
-                                                <span className="text-xs font-medium text-brand-400 bg-brand-500/10 px-2 py-1 rounded">
+                                                <span className="text-[10px] font-black text-identity-sky bg-white px-3 py-1 rounded-full border border-slate-100 shadow-sm uppercase tracking-[0.2em]">
                                                     {item.class.section}
                                                 </span>
                                             </div>
 
-                                            <div className="flex items-center gap-4 text-xs text-slate-300 mt-3">
-                                                <div className="flex items-center gap-1">
-                                                    <Clock size={14} className="text-slate-500" />
-                                                    <span>{formatTime(item.slot.startTime)} - {formatTime(item.slot.endTime)}</span>
+                                            <div className="flex flex-wrap items-center gap-6 text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 mt-6 pt-6 border-t border-slate-100/50">
+                                                <div className="flex items-center gap-2 group-hover:text-slate-600 transition-colors">
+                                                    <Clock size={16} className="text-identity-sky opacity-40" />
+                                                    <span>{item.slot.startTime} - {item.slot.endTime}</span>
                                                 </div>
-                                                <div className="flex items-center gap-1">
-                                                    <UserIcon size={14} className="text-slate-500" />
-                                                    <span>Prof. {item.class.professor_id}</span>
+                                                <div className="flex items-center gap-2 group-hover:text-slate-600 transition-colors">
+                                                    <UserIcon size={16} className="text-identity-sky opacity-40" />
+                                                    <span className="truncate max-w-[150px]">Prof. {item.class.professor_id}</span>
                                                 </div>
                                             </div>
                                         </div>
                                     ))
                                 ) : (
-                                    <div className="text-center py-8 text-slate-500">
-                                        <p className="text-sm">No classes scheduled</p>
+                                    <div className="text-center py-10">
+                                        <div className="w-12 h-12 bg-white border border-slate-50 rounded-2xl flex items-center justify-center text-slate-100 mx-auto mb-4">
+                                            <Clock size={20} />
+                                        </div>
+                                        <p className="font-black text-[9px] text-slate-200 uppercase tracking-[0.5em]">System Idle</p>
                                     </div>
                                 )}
                             </div>
@@ -202,59 +191,63 @@ export default function ScheduleTab({ user }: ScheduleTabProps) {
                     );
                 })}
             </div>
+
             {/* Class Details Modal */}
             {selectedClass && (
                 <div
-                    className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[60] p-4 animate-in fade-in duration-200"
+                    className="fixed inset-0 bg-slate-900/40 backdrop-blur-xl flex items-center justify-center z-[100] p-4 animate-in fade-in duration-300"
                     onClick={() => setSelectedClass(null)}
                 >
                     <div
-                        className="bg-slate-900 w-full max-w-md rounded-2xl border border-slate-800 shadow-2xl overflow-hidden"
+                        className="bg-white w-full max-w-md rounded-[3rem] border border-slate-200 shadow-3xl overflow-hidden animate-in zoom-in-95 duration-300"
                         onClick={e => e.stopPropagation()}
                     >
                         {/* Modal Header */}
-                        <div className="bg-slate-800/50 p-6 border-b border-slate-700 flex justify-between items-start">
-                            <div>
-                                <h3 className="text-xl font-bold text-white mb-1">{selectedClass.subject_code}</h3>
-                                <p className="text-slate-400 text-sm">{selectedClass.subject_name}</p>
+                        <div className="bg-slate-50 p-8 border-b border-slate-200 flex justify-between items-start relative overflow-hidden">
+                            <div className="absolute top-0 right-0 w-24 h-24 bg-identity-sky/5 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2"></div>
+                            <div className="relative z-10">
+                                <h3 className="text-2xl font-black text-identity-navy mb-1 uppercase tracking-tighter font-outfit">{selectedClass.subject_code}</h3>
+                                <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.3em]">{selectedClass.subject_name}</p>
                             </div>
                             <button
                                 onClick={() => setSelectedClass(null)}
-                                className="p-2 hover:bg-slate-700 rounded-full text-slate-400 hover:text-white transition-colors"
+                                className="p-3 bg-white hover:bg-rose-50 rounded-2xl text-slate-300 hover:text-rose-500 transition-all shadow-sm border border-slate-100"
                             >
                                 <X size={20} />
                             </button>
                         </div>
 
                         {/* Modal Content */}
-                        <div className="p-6 space-y-6">
-                            {/* Section & Professor */}
+                        <div className="p-8 space-y-8">
                             <div className="grid grid-cols-2 gap-4">
-                                <div className="bg-slate-950/50 p-4 rounded-xl border border-slate-800">
-                                    <span className="text-xs text-slate-500 uppercase tracking-wider font-bold block mb-1">Section</span>
-                                    <span className="text-white font-medium">{selectedClass.section}</span>
+                                <div className="bg-slate-50 p-5 rounded-2xl border border-slate-100 shadow-inner">
+                                    <span className="text-[9px] text-slate-400 uppercase tracking-[0.4em] font-black block mb-2">Section</span>
+                                    <span className="text-identity-navy font-black tracking-tight text-sm uppercase">{selectedClass.section}</span>
                                 </div>
-                                <div className="bg-slate-950/50 p-4 rounded-xl border border-slate-800">
-                                    <span className="text-xs text-slate-500 uppercase tracking-wider font-bold block mb-1">Professor</span>
-                                    <span className="text-white font-medium truncate" title={selectedClass.professor_id}>
+                                <div className="bg-slate-50 p-5 rounded-2xl border border-slate-100 shadow-inner overflow-hidden">
+                                    <span className="text-[9px] text-slate-400 uppercase tracking-[0.4em] font-black block mb-2">Professor</span>
+                                    <span className="text-identity-navy font-black tracking-tight text-sm truncate block" title={selectedClass.professor_id}>
                                         {selectedClass.professor_id}
                                     </span>
                                 </div>
                             </div>
 
-                            {/* Schedule Details */}
                             <div>
-                                <h4 className="text-sm font-bold text-slate-300 mb-3 flex items-center gap-2">
-                                    <Clock size={16} className="text-brand-400" />
-                                    Class Schedule
+                                <h4 className="text-[10px] font-black text-identity-sky uppercase tracking-[0.4em] mb-6 flex items-center gap-4">
+                                    <span className="h-px bg-slate-100 flex-1"></span>
+                                    Schedule Matrix
+                                    <span className="h-px bg-slate-100 flex-1"></span>
                                 </h4>
-                                <div className="space-y-2">
+                                <div className="space-y-3">
                                     {parseSchedule(selectedClass.schedule_json).map((slot, idx) => (
-                                        <div key={idx} className="flex items-center justify-between text-sm bg-slate-800/30 p-3 rounded-lg border border-slate-800">
-                                            <span className="text-slate-200 font-medium">{slot.day}</span>
-                                            <span className="text-slate-400 font-mono">
-                                                {formatTime(slot.startTime)} - {formatTime(slot.endTime)}
-                                            </span>
+                                        <div key={idx} className="flex items-center justify-between text-[11px] bg-white p-4 rounded-2xl border border-slate-100 shadow-sm hover:border-identity-sky/30 transition-colors">
+                                            <span className="text-identity-navy font-black uppercase tracking-widest">{slot.day}</span>
+                                            <div className="flex items-center gap-3">
+                                                <Clock size={14} className="text-identity-sky" />
+                                                <span className="text-slate-500 font-black">
+                                                    {slot.startTime} - {slot.endTime}
+                                                </span>
+                                            </div>
                                         </div>
                                     ))}
                                 </div>
@@ -262,12 +255,12 @@ export default function ScheduleTab({ user }: ScheduleTabProps) {
                         </div>
 
                         {/* Modal Footer */}
-                        <div className="p-4 bg-slate-800/30 border-t border-slate-700 text-center">
+                        <div className="p-6 bg-slate-50/50 border-t border-slate-200 text-center">
                             <button
                                 onClick={() => setSelectedClass(null)}
-                                className="text-slate-400 hover:text-white text-sm font-medium transition-colors"
+                                className="px-10 py-3 bg-white text-slate-400 hover:text-identity-navy hover:shadow-lg rounded-full text-[10px] font-black uppercase tracking-[0.4em] transition-all border border-slate-100"
                             >
-                                Close Values
+                                Terminate Connection
                             </button>
                         </div>
                     </div>

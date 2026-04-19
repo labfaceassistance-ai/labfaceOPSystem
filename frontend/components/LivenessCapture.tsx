@@ -78,21 +78,24 @@ export default function LivenessCapture({
     }, [requireFrames, frameCount, captureFrame, onCapture]);
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg shadow-2xl max-w-2xl w-full mx-4 overflow-hidden">
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-xl flex items-center justify-center z-[100] p-4 animate-fade-in">
+            <div className="bg-maroon-950 rounded-[40px] shadow-[0_0_50px_rgba(0,0,0,0.5)] max-w-2xl w-full overflow-hidden border border-white/10 relative">
+                {/* Decorative background */}
+                <div className="absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-brand-gold/10 via-transparent to-transparent pointer-events-none" />
+
                 {/* Header */}
-                <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-4">
-                    <h2 className="text-2xl font-bold text-white">Liveness Detection</h2>
-                    <p className="text-blue-100 text-sm mt-1">
+                <div className="px-10 py-8 relative z-10 border-b border-white/5">
+                    <h2 className="text-2xl font-black text-white uppercase tracking-tight leading-none">Liveness Verification</h2>
+                    <p className="text-[10px] font-black text-brand-gold/60 uppercase tracking-[0.3em] mt-3">
                         {requireFrames
-                            ? 'We need to verify you are a real person'
-                            : 'Quick face verification'}
+                            ? 'Neural Connectivity Check · Active Biometrics'
+                            : 'Quick Identity Validation'}
                     </p>
                 </div>
 
                 {/* Camera View */}
-                <div className="p-6">
-                    <div className="relative bg-gray-900 rounded-lg overflow-hidden" style={{ aspectRatio: '4/3' }}>
+                <div className="p-10 relative z-10">
+                    <div className="relative bg-black rounded-[32px] overflow-hidden border border-white/10 shadow-inner group" style={{ aspectRatio: '4/3' }}>
                         <Webcam
                             ref={webcamRef}
                             audio={false}
@@ -102,27 +105,32 @@ export default function LivenessCapture({
                                 height: 960,
                                 facingMode: 'user'
                             }}
-                            className="w-full h-full object-cover"
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-[2000ms]"
                         />
 
                         {/* Face Guide Overlay */}
                         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                            <div className="relative w-64 h-80">
+                            <div className="relative w-64 h-80 transition-all duration-700">
                                 {/* Oval guide */}
-                                <div className="absolute inset-0 border-4 border-white border-dashed rounded-full opacity-50"></div>
+                                <div className="absolute inset-0 border-[3px] border-white/10 border-dashed rounded-[80px] scale-105"></div>
 
                                 {/* Corner markers */}
-                                <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-blue-500"></div>
-                                <div className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-blue-500"></div>
-                                <div className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-blue-500"></div>
-                                <div className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-blue-500"></div>
+                                <span className="absolute top-0 left-0 w-10 h-10 border-t-4 border-l-4 border-brand-gold rounded-tl-[40px]" />
+                                <span className="absolute top-0 right-0 w-10 h-10 border-t-4 border-r-4 border-brand-gold rounded-tr-[40px]" />
+                                <span className="absolute bottom-0 left-0 w-10 h-10 border-b-4 border-l-4 border-brand-gold rounded-bl-[40px]" />
+                                <span className="absolute bottom-0 right-0 w-10 h-10 border-b-4 border-r-4 border-brand-gold rounded-br-[40px]" />
+                                
+                                {/* Scan line */}
+                                {isCapturing && (
+                                    <div className="absolute top-0 inset-x-8 h-px bg-brand-gold shadow-[0_0_15px_#F5BD4F] animate-scan-y rounded-full" />
+                                )}
                             </div>
                         </div>
 
                         {/* Countdown Overlay */}
                         {countdown !== null && (
-                            <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-                                <div className="text-white text-9xl font-bold animate-pulse">
+                            <div className="absolute inset-0 bg-maroon-950/60 backdrop-blur-sm flex items-center justify-center">
+                                <div className="text-white text-[120px] font-black animate-ping opacity-80">
                                     {countdown}
                                 </div>
                             </div>
@@ -130,9 +138,9 @@ export default function LivenessCapture({
 
                         {/* Progress Bar */}
                         {isCapturing && progress > 0 && (
-                            <div className="absolute bottom-0 left-0 right-0 h-2 bg-gray-700">
+                            <div className="absolute bottom-0 left-0 right-0 h-1.5 bg-white/5 mx-6 mb-6 rounded-full overflow-hidden shadow-inner border border-white/5">
                                 <div
-                                    className="h-full bg-blue-500 transition-all duration-150"
+                                    className="h-full bg-brand-gold transition-all duration-150 shadow-[0_0_12px_rgba(245,189,79,0.4)]"
                                     style={{ width: `${progress}%` }}
                                 ></div>
                             </div>
@@ -140,48 +148,45 @@ export default function LivenessCapture({
                     </div>
 
                     {/* Instructions */}
-                    <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
-                        <div className="flex items-start">
-                            <svg className="w-6 h-6 text-blue-600 mr-3 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
+                    <div className="mt-8 p-6 bg-black/40 rounded-3xl border border-white/5 shadow-inner">
+                        <div className="flex items-start gap-5">
+                            <div className="p-3 bg-brand-gold/10 text-brand-gold rounded-2xl">
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            </div>
                             <div>
-                                <p className="font-semibold text-blue-900">{instruction}</p>
+                                <p className="text-[11px] font-black text-white uppercase tracking-widest mb-3">{instruction}</p>
                                 {!isCapturing && requireFrames && (
-                                    <ul className="mt-2 text-sm text-blue-700 space-y-1">
-                                        <li>• Position your face in the oval guide</li>
-                                        <li>• Ensure good lighting</li>
-                                        <li>• You'll need to blink 2-3 times</li>
-                                        <li>• Move your head slightly during capture</li>
+                                    <ul className="grid grid-cols-2 gap-x-6 gap-y-2 text-[8px] font-black text-secondary/40 uppercase tracking-[0.2em]">
+                                        <li className="flex items-center gap-2"><div className="w-1 h-1 bg-brand-gold rounded-full"></div> Align Face in Guide</li>
+                                        <li className="flex items-center gap-2"><div className="w-1 h-1 bg-brand-gold rounded-full"></div> Optimal Lighting</li>
+                                        <li className="flex items-center gap-2"><div className="w-1 h-1 bg-brand-gold rounded-full"></div> Blink Frequently</li>
+                                        <li className="flex items-center gap-2"><div className="w-1 h-1 bg-brand-gold rounded-full"></div> Slight Head Tilt</li>
                                     </ul>
-                                )}
-                                {!isCapturing && !requireFrames && (
-                                    <p className="mt-2 text-sm text-blue-700">
-                                        Position your face in the oval guide and click "Capture"
-                                    </p>
                                 )}
                             </div>
                         </div>
                     </div>
 
-                    {/* Captured Frames Preview (optional) */}
+                    {/* Captured Frames Preview */}
                     {capturedFrames.length > 0 && (
-                        <div className="mt-4">
-                            <p className="text-sm text-gray-600 mb-2">
-                                Captured {capturedFrames.length} frames
+                        <div className="mt-8">
+                            <p className="text-[8px] font-black text-secondary/20 uppercase tracking-[0.4em] mb-3">
+                                BUFFER STATUS: {capturedFrames.length} FRAMES ARCHIVED
                             </p>
-                            <div className="flex gap-1 overflow-x-auto">
-                                {capturedFrames.slice(0, 10).map((frame, idx) => (
+                            <div className="flex gap-2 overflow-x-auto custom-scrollbar pb-2">
+                                {capturedFrames.slice(0, 8).map((frame, idx) => (
                                     <img
                                         key={idx}
                                         src={frame}
                                         alt={`Frame ${idx + 1}`}
-                                        className="w-12 h-12 object-cover rounded border border-gray-300"
+                                        className="w-10 h-10 object-cover rounded-xl border border-white/10 grayscale opacity-40 hover:grayscale-0 hover:opacity-100 transition-all duration-300"
                                     />
                                 ))}
-                                {capturedFrames.length > 10 && (
-                                    <div className="w-12 h-12 bg-gray-200 rounded border border-gray-300 flex items-center justify-center text-xs text-gray-600">
-                                        +{capturedFrames.length - 10}
+                                {capturedFrames.length > 8 && (
+                                    <div className="w-10 h-10 bg-white/5 rounded-xl border border-white/10 flex items-center justify-center text-[8px] font-black text-secondary/20">
+                                        +{capturedFrames.length - 8}
                                     </div>
                                 )}
                             </div>
@@ -190,12 +195,12 @@ export default function LivenessCapture({
                 </div>
 
                 {/* Actions */}
-                <div className="px-6 py-4 bg-gray-50 border-t border-gray-200 flex justify-end gap-3">
+                <div className="px-10 py-8 bg-maroon-950 border-t border-white/5 flex justify-end gap-4 relative z-10">
                     {onCancel && (
                         <button
                             onClick={onCancel}
                             disabled={isCapturing}
-                            className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                            className="px-8 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest text-secondary/40 hover:text-white hover:bg-white/5 transition-all disabled:opacity-20 active:scale-95 border border-transparent hover:border-white/5"
                         >
                             Cancel
                         </button>
@@ -203,9 +208,9 @@ export default function LivenessCapture({
                     <button
                         onClick={startCapture}
                         disabled={isCapturing}
-                        className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-semibold"
+                        className="px-12 py-3 bg-brand-gold text-black rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] shadow-2xl shadow-brand-gold/20 hover:brightness-110 disabled:opacity-20 transition-all active:scale-95 border border-brand-gold"
                     >
-                        {isCapturing ? 'Capturing...' : 'Start Capture'}
+                        {isCapturing ? 'Synchronizing...' : 'Initialize Capture'}
                     </button>
                 </div>
             </div>

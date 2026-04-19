@@ -4,7 +4,7 @@
  */
 
 import { useState, useEffect } from 'react';
-import { TrendingUp, TrendingDown, Minus, Award, Target, AlertTriangle, Users, Calendar, Flame, CheckCircle, BarChart3, Clock, XCircle } from 'lucide-react';
+import { TrendingUp, TrendingDown, Minus, Award, Target, AlertTriangle, Users, Calendar, Flame, CheckCircle, BarChart3, Clock, XCircle, ShieldCheck, Zap, Brain } from 'lucide-react';
 import axios from 'axios';
 import { getToken } from '@/utils/auth';
 import AttendanceInsightsSkeleton from './AttendanceInsightsSkeleton';
@@ -33,9 +33,7 @@ export default function AttendanceInsightsDashboard({ studentId }: { studentId: 
 
     useEffect(() => {
         const savedGoal = localStorage.getItem('attendanceGoal');
-        if (savedGoal) {
-            setGoal(parseInt(savedGoal));
-        }
+        if (savedGoal) { setGoal(parseInt(savedGoal)); }
     }, []);
 
     const handleSaveGoal = (newGoal: number) => {
@@ -52,23 +50,16 @@ export default function AttendanceInsightsDashboard({ studentId }: { studentId: 
         try {
             const token = getToken();
             if (!token || token === 'undefined' || token === 'null') {
-                console.error('[Insights] No valid token found in storage (checked session & local).');
                 setLoading(false);
                 return;
             }
 
-            console.log('[Insights] Fetching for student:', studentId);
-
             const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
             const response = await axios.get(`${API_URL}/api/ai/student-insights/${studentId}`, {
-                headers: {
-                    Authorization: `Bearer ${token}`
-                }
+                headers: { Authorization: `Bearer ${token}` }
             });
-            console.log('[Insights] Success:', response.data);
             setInsights(response.data);
 
-            // Fetch overall summary
             const summaryResponse = await axios.get(`${API_URL}/api/student/attendance-summary/${studentId}`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
@@ -76,17 +67,12 @@ export default function AttendanceInsightsDashboard({ studentId }: { studentId: 
 
         } catch (error: any) {
             console.error('Failed to fetch insights:', error);
-            if (error.response?.status === 403) {
-                console.error('[Insights] 403 Forbidden - Check backend logs for mismatch details');
-            }
         } finally {
             setLoading(false);
         }
     };
 
-    if (loading) {
-        return <AttendanceInsightsSkeleton />;
-    }
+    if (loading) { return <AttendanceInsightsSkeleton />; }
 
     const displayInsights = insights || {
         streak: 0,
@@ -95,54 +81,51 @@ export default function AttendanceInsightsDashboard({ studentId }: { studentId: 
         riskLevel: 'low' as const,
         attendanceRate: 0,
         percentile: 0,
-        predictions: {
-            passLikelihood: 0,
-            classesNeeded: 0
-        },
+        predictions: { passLikelihood: 0, classesNeeded: 0 },
         recommendations: ['Start attending classes to get personalized recommendations!'],
         monthlyData: []
     };
 
     const getTrendIcon = () => {
         switch (displayInsights.trend) {
-            case 'up': return <TrendingUp className="text-green-500" size={24} />;
-            case 'down': return <TrendingDown className="text-red-500" size={24} />;
-            default: return <Minus className="text-slate-500" size={24} />;
+            case 'up': return <TrendingUp className="text-emerald-500" size={24} />;
+            case 'down': return <TrendingDown className="text-rose-500" size={24} />;
+            default: return <Minus className="text-slate-400" size={24} />;
         }
     };
 
     const getTrendMessage = () => {
-        if (!insights) return 'Not enough data yet';
+        if (!insights) return 'Synchronizing...';
         const percentage = Math.abs(displayInsights.trendPercentage);
         switch (displayInsights.trend) {
-            case 'up': return `📈 Improving! +${percentage}% this month`;
-            case 'down': return `📉 Attendance dropping. -${percentage}% this month`;
-            default: return `➡️ Consistent attendance`;
+            case 'up': return `Matrix Gains: +${percentage}%`;
+            case 'down': return `Matrix Loss: -${percentage}%`;
+            default: return `Consistency Lock`;
         }
     };
 
     const getRiskMessage = () => {
         if (!insights) return {
-            icon: 'ℹ️',
-            message: 'Not enough data for risk assessment',
-            color: 'text-blue-400 bg-blue-500/10 border-blue-500/30'
+            icon: <Minus size={20} />,
+            message: 'Insufficient Synchronization',
+            color: 'text-identity-sky bg-identity-sky/5 border-identity-sky/10'
         };
 
         switch (displayInsights.riskLevel) {
             case 'low': return {
-                icon: '✅',
-                message: 'On track to pass',
-                color: 'text-green-400 bg-green-500/10 border-green-500/30'
+                icon: <ShieldCheck size={20} />,
+                message: 'Operational Baseline Secured',
+                color: 'text-emerald-600 bg-emerald-50 border-emerald-100'
             };
             case 'medium': return {
-                icon: '⚠️',
-                message: `Attend ${displayInsights.predictions.classesNeeded} more classes to stay safe`,
-                color: 'text-yellow-400 bg-yellow-500/10 border-yellow-500/30'
+                icon: <AlertTriangle size={20} />,
+                message: `Require ${displayInsights.predictions.classesNeeded} Sessions for Re-Stabilization`,
+                color: 'text-amber-600 bg-amber-50 border-amber-100'
             };
             case 'high': return {
-                icon: '🚨',
-                message: 'At risk! Contact professor',
-                color: 'text-red-400 bg-red-500/10 border-red-500/30'
+                icon: <XCircle size={20} />,
+                message: 'Critical Stability Compromise',
+                color: 'text-rose-600 bg-rose-50 border-rose-100'
             };
         }
     };
@@ -150,140 +133,120 @@ export default function AttendanceInsightsDashboard({ studentId }: { studentId: 
     const riskInfo = getRiskMessage();
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-8 animate-fade-in">
 
             {/* Overall Summary Card */}
             {overallStats && (
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 bg-slate-900/50 p-6 rounded-2xl border border-slate-800">
-                    <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 bg-emerald-500/10 rounded-xl flex items-center justify-center">
-                            <CheckCircle className="text-emerald-400" size={24} />
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-6 bg-slate-50/50 p-8 rounded-[2.5rem] border border-slate-100">
+                    {[
+                        { label: 'Total Present', val: overallStats.presentCount, icon: CheckCircle, color: 'text-emerald-500', bg: 'bg-emerald-50' },
+                        { label: 'Total Late', val: overallStats.lateCount, icon: Clock, color: 'text-amber-500', bg: 'bg-amber-50' },
+                        { label: 'Total Absent', val: overallStats.absentCount, icon: XCircle, color: 'text-rose-500', bg: 'bg-rose-50' },
+                        { label: 'Final Sync Rate', val: `${overallStats.attendanceRate}%`, icon: BarChart3, color: 'text-identity-sky', bg: 'bg-identity-sky/10' }
+                    ].map((stat, i) => (
+                        <div key={i} className="flex flex-col items-center text-center">
+                            <div className={`w-14 h-14 ${stat.bg} ${stat.color} rounded-2xl flex items-center justify-center mb-4 shadow-sm border border-white`}>
+                                <stat.icon size={28} />
+                            </div>
+                            <div className="text-2xl font-black text-identity-navy font-outfit leading-none mb-1">{stat.val}</div>
+                            <div className="text-[9px] text-slate-400 font-black uppercase tracking-[0.2em]">{stat.label}</div>
                         </div>
-                        <div>
-                            <div className="text-2xl font-bold text-white">{overallStats.presentCount}</div>
-                            <div className="text-sm text-slate-400">Total Present</div>
-                        </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 bg-orange-500/10 rounded-xl flex items-center justify-center">
-                            <Clock className="text-orange-400" size={24} />
-                        </div>
-                        <div>
-                            <div className="text-2xl font-bold text-white">{overallStats.lateCount}</div>
-                            <div className="text-sm text-slate-400">Total Late</div>
-                        </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 bg-red-500/10 rounded-xl flex items-center justify-center">
-                            <XCircle className="text-red-400" size={24} />
-                        </div>
-                        <div>
-                            <div className="text-2xl font-bold text-white">{overallStats.absentCount}</div>
-                            <div className="text-sm text-slate-400">Total Absent</div>
-                        </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 bg-brand-500/10 rounded-xl flex items-center justify-center">
-                            <BarChart3 className="text-brand-400" size={24} />
-                        </div>
-                        <div>
-                            <div className="text-2xl font-bold text-white">{overallStats.attendanceRate}%</div>
-                            <div className="text-sm text-slate-400">Overall Rate</div>
-                        </div>
-                    </div>
+                    ))}
                 </div>
             )}
 
             {/* Streak Card */}
-            <div className="bg-gradient-to-br from-orange-500/20 to-red-500/20 border-2 border-orange-500/50 rounded-2xl p-6">
-                <div className="flex items-center justify-between mb-4">
-                    <div>
-                        <h3 className="text-lg font-semibold text-white mb-1">Attendance Streak</h3>
-                        <p className="text-sm text-orange-200">Keep it going!</p>
+            <div className="bg-identity-navy rounded-[3rem] p-10 text-white relative overflow-hidden group">
+                <div className="absolute top-0 right-0 w-80 h-80 bg-identity-sky/20 rounded-full blur-[100px] -translate-y-1/2 translate-x-1/2 opacity-30"></div>
+                <div className="absolute inset-0 bg-blueprint opacity-[0.05] pointer-events-none"></div>
+                
+                <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-10">
+                    <div className="text-center md:text-left">
+                        <div className="flex items-center gap-3 text-identity-sky/80 mb-4 text-[10px] font-black uppercase tracking-[0.4em]">
+                            <Zap size={16} className="animate-pulse" /> Neural Pulse Active
+                        </div>
+                        <h3 className="text-3xl font-black text-white mb-2 tracking-tighter uppercase font-outfit">Identity Persistence</h3>
+                        <p className="text-identity-sky/60 font-black text-[10px] uppercase tracking-[0.3em]">Keep the matrix synchronized.</p>
+                        
+                        <div className="mt-8 flex items-baseline gap-3">
+                            <span className="text-8xl font-black text-identity-sky font-outfit tracking-tighter drop-shadow-2xl">{displayInsights.streak}</span>
+                            <span className="text-xl text-white/40 font-black uppercase tracking-[0.4em]">Nodes</span>
+                        </div>
                     </div>
-                    <Flame className="text-orange-400" size={32} />
-                </div>
-                <div className="flex items-baseline gap-2">
-                    <span className="text-6xl font-bold text-orange-400">{displayInsights.streak}</span>
-                    <span className="text-2xl text-orange-300">{displayInsights.streak === 1 ? 'day' : 'days'}</span>
-                </div>
-                {displayInsights.streak >= 7 && (
-                    <div className="mt-4 flex items-center gap-2 text-orange-200">
-                        <Award size={18} />
-                        <span className="text-sm font-medium">
-                            {displayInsights.streak >= 30 ? '🏆 Legendary Streak!' :
-                                displayInsights.streak >= 14 ? '⭐ Amazing Streak!' :
-                                    '🔥 Great Streak!'}
-                        </span>
+                    
+                    <div className="flex flex-col items-center md:items-end text-center md:text-right">
+                        <div className="w-24 h-24 bg-white/5 backdrop-blur-md rounded-[2rem] flex items-center justify-center text-identity-sky border border-white/10 shadow-2xl mb-6">
+                            <Flame size={48} className="drop-shadow-[0_0_15px_rgba(14,165,233,0.5)]" />
+                        </div>
+                        {displayInsights.streak >= 7 && (
+                            <div className="bg-identity-sky/20 backdrop-blur-sm px-6 py-3 rounded-2xl border border-identity-sky/30 text-identity-sky flex items-center gap-3">
+                                <Award size={20} />
+                                <span className="text-[10px] font-black uppercase tracking-[0.3em]">
+                                    {displayInsights.streak >= 30 ? 'Legendary Tier Status' :
+                                        displayInsights.streak >= 14 ? 'Elite Synchronicity' :
+                                            'Optimal Session Link'}
+                                </span>
+                            </div>
+                        )}
                     </div>
-                )}
+                </div>
             </div>
 
             {/* Stats Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {/* Attendance Rate */}
-                <div className="bg-slate-900 border border-slate-800 rounded-lg p-6">
-                    <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm text-slate-400">Attendance Rate</span>
-                        <Calendar className="text-blue-400" size={20} />
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {[
+                    { label: 'Matrix Sync Rate', val: `${displayInsights.attendanceRate}%`, icon: Calendar, color: 'text-identity-sky', bg: 'bg-identity-sky/5', trend: true },
+                    { label: 'Global Ranking', val: displayInsights.percentile > 0 ? `Top ${100 - displayInsights.percentile}%` : 'Pending', icon: Users, color: 'text-indigo-500', bg: 'bg-indigo-50', sub: displayInsights.percentile > 0 ? `Superior to ${displayInsights.percentile}%` : "Awaiting more sessions" },
+                    { label: 'Pass Probability', val: `${displayInsights.predictions.passLikelihood}%`, icon: Target, color: 'text-emerald-500', bg: 'bg-emerald-50', bar: true }
+                ].map((stat, i) => (
+                    <div key={i} className="bg-white border border-slate-100 rounded-[2.5rem] p-8 shadow-xl shadow-slate-200/50">
+                        <div className="flex items-center justify-between mb-6">
+                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em]">{stat.label}</span>
+                            <stat.icon className={stat.color} size={20} />
+                        </div>
+                        <div className="text-4xl font-black text-identity-navy font-outfit mb-2 tracking-tighter uppercase">
+                            {stat.val}
+                        </div>
+                        {stat.trend && (
+                            <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest mt-4 pt-4 border-t border-slate-50">
+                                {getTrendIcon()}
+                                <span className={displayInsights.trend === 'up' ? 'text-emerald-500' : displayInsights.trend === 'down' ? 'text-rose-500' : 'text-slate-400'}>
+                                    {getTrendMessage()}
+                                </span>
+                            </div>
+                        )}
+                        {stat.sub && <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest mt-4 pt-4 border-t border-slate-50">{stat.sub}</p>}
+                        {stat.bar && (
+                            <div className="mt-6 pt-6 border-t border-slate-50">
+                                <div className="w-full bg-slate-100 rounded-full h-2 mb-2 shadow-inner">
+                                    <div
+                                        className={`h-2 rounded-full transition-all duration-1000 ${displayInsights.predictions.passLikelihood >= 75 ? 'bg-emerald-500' : displayInsights.predictions.passLikelihood >= 50 ? 'bg-amber-500' : 'bg-rose-500'}`}
+                                        style={{ width: `${displayInsights.predictions.passLikelihood}%` }}
+                                    />
+                                </div>
+                                <span className="text-[8px] font-black text-slate-300 uppercase tracking-[0.2em]">{displayInsights.predictions.passLikelihood >= 50 ? 'Stability Nominal' : 'Stability Warning'}</span>
+                            </div>
+                        )}
                     </div>
-                    <div className="text-3xl font-bold text-white mb-1">
-                        {displayInsights.attendanceRate}%
-                    </div>
-                    <div className="flex items-center gap-2 text-sm">
-                        {getTrendIcon()}
-                        <span className={displayInsights.trend === 'up' ? 'text-green-400' : displayInsights.trend === 'down' ? 'text-red-400' : 'text-slate-400'}>
-                            {getTrendMessage()}
-                        </span>
-                    </div>
-                </div>
-
-                {/* Percentile */}
-                <div className="bg-slate-900 border border-slate-800 rounded-lg p-6">
-                    <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm text-slate-400">Class Ranking</span>
-                        <Users className="text-purple-400" size={20} />
-                    </div>
-                    <div className="text-3xl font-bold text-white mb-1">
-                        {displayInsights.percentile > 0 ? `Top ${100 - displayInsights.percentile}%` : 'N/A'}
-                    </div>
-                    <p className="text-sm text-purple-300">
-                        {displayInsights.percentile > 0
-                            ? `You're in the top ${100 - displayInsights.percentile}% of your class`
-                            : "Ranking available after more classes"}
-                    </p>
-                </div>
-
-                {/* Pass Likelihood */}
-                <div className="bg-slate-900 border border-slate-800 rounded-lg p-6">
-                    <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm text-slate-400">Pass Likelihood</span>
-                        <Target className="text-green-400" size={20} />
-                    </div>
-                    <div className="text-3xl font-bold text-white mb-1">
-                        {displayInsights.predictions.passLikelihood}%
-                    </div>
-                    <div className="w-full bg-slate-800 rounded-full h-2 mt-2">
-                        <div
-                            className={`h-2 rounded-full ${displayInsights.predictions.passLikelihood >= 75 ? 'bg-green-500' :
-                                displayInsights.predictions.passLikelihood >= 50 ? 'bg-yellow-500' :
-                                    'bg-red-500'
-                                }`}
-                            style={{ width: `${displayInsights.predictions.passLikelihood}%` }}
-                        />
-                    </div>
-                </div>
+                ))}
             </div>
 
             {/* Risk Alert */}
-            <div className={`border-2 rounded-lg p-4 ${riskInfo.color}`}>
-                <div className="flex items-start gap-3">
-                    <span className="text-2xl">{riskInfo.icon}</span>
+            <div className={`border-2 rounded-3xl p-8 shadow-xl transition-all duration-500 ${riskInfo.color}`}>
+                <div className="flex items-start gap-6">
+                    <div className="p-4 bg-white/20 rounded-2xl">
+                        {riskInfo.icon}
+                    </div>
                     <div>
-                        <h4 className="font-semibold mb-1">{riskInfo.message}</h4>
+                        <h4 className="font-black uppercase tracking-widest text-sm mb-2">{riskInfo.message}</h4>
                         {displayInsights.riskLevel !== 'low' && (
-                            <p className="text-sm opacity-80">
-                                Based on your current attendance pattern, maintain or improve your attendance to ensure passing.
+                            <p className="text-[10px] font-black uppercase tracking-[0.2em] opacity-60 leading-relaxed">
+                                Current attendance trajectory indicates a high probability of system failure. Stabilize immediately.
+                            </p>
+                        )}
+                        {displayInsights.riskLevel === 'low' && (
+                            <p className="text-[10px] font-black uppercase tracking-[0.2em] opacity-60 leading-relaxed">
+                                Current performance is within optimal operational range.
                             </p>
                         )}
                     </div>
@@ -292,16 +255,20 @@ export default function AttendanceInsightsDashboard({ studentId }: { studentId: 
 
             {/* Recommendations */}
             {displayInsights.recommendations.length > 0 && (
-                <div className="bg-slate-900 border border-slate-800 rounded-lg p-6">
-                    <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-                        <AlertTriangle className="text-blue-400" size={20} />
-                        Personalized Recommendations
+                <div className="bg-white border border-slate-100 rounded-[3rem] p-10 shadow-2xl relative overflow-hidden">
+                    <div className="absolute top-0 left-0 w-2 h-full bg-identity-sky"></div>
+                    <h3 className="text-[11px] font-black text-identity-navy uppercase tracking-[0.4em] mb-8 flex items-center gap-4">
+                        <Brain className="text-identity-sky" size={24} />
+                        Strategic Optimization
+                        <span className="h-px bg-slate-100 flex-1"></span>
                     </h3>
-                    <ul className="space-y-3">
+                    <ul className="space-y-6">
                         {displayInsights.recommendations.map((rec, index) => (
-                            <li key={index} className="flex items-start gap-3 text-slate-300">
-                                <span className="text-blue-400 font-bold">{index + 1}.</span>
-                                <span>{rec}</span>
+                            <li key={index} className="flex items-start gap-6 group">
+                                <span className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-identity-navy font-black group-hover:bg-identity-sky group-hover:text-white transition-all shadow-sm">
+                                    {index + 1}
+                                </span>
+                                <span className="text-[11px] font-black text-slate-500 uppercase tracking-widest leading-relaxed pt-2 group-hover:text-identity-navy transition-colors">{rec}</span>
                             </li>
                         ))}
                     </ul>
@@ -309,191 +276,123 @@ export default function AttendanceInsightsDashboard({ studentId }: { studentId: 
             )}
 
             {/* Monthly Trend Chart */}
-            <div className="bg-slate-900 border border-slate-800 rounded-lg p-6">
-                <h3 className="text-lg font-semibold text-white mb-4">Monthly Attendance Trend</h3>
+            <div className="bg-white border border-slate-100 rounded-[3rem] p-10 shadow-2xl">
+                <h3 className="text-[11px] font-black text-identity-navy uppercase tracking-[0.4em] mb-12 flex items-center gap-4">
+                    <BarChart3 className="text-identity-sky" size={24} />
+                    Monthly Sync Trajectory
+                    <span className="h-px bg-slate-100 flex-1"></span>
+                </h3>
 
                 {(() => {
-                    // Generate a complete 6-month view (current month + 5 future months)
                     const currentDate = new Date();
                     const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-
-                    // Create array of 6 months starting from the current month
                     const completeMonthData = Array.from({ length: 6 }, (_, index) => {
                         const monthDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + index, 1);
                         const monthName = monthNames[monthDate.getMonth()];
-
-                        // Find actual data for this month
-                        const actualData = displayInsights.monthlyData.find(m => m.month === monthName);
-
-                        return actualData || {
-                            month: monthName,
-                            rate: 0,
-                            attended: 0,
-                            total: 0,
-                            isPlaceholder: true
-                        };
+                        const actualData = (displayInsights.monthlyData || []).find(m => m.month === monthName);
+                        return actualData || { month: monthName, rate: 0, attended: 0, total: 0, isPlaceholder: true };
                     });
 
-                    const hasAnyData = displayInsights.monthlyData.length > 0;
+                    const hasAnyData = (displayInsights.monthlyData || []).length > 0;
 
                     return hasAnyData ? (
-                        <>
-                            {/* Summary Card */}
-                            <div className="grid grid-cols-3 gap-4 mb-6">
+                        <div className="space-y-12">
+                            <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
                                 {completeMonthData.map((data, index) => (
-                                    <div key={index} className={`rounded-lg p-4 border ${data.isPlaceholder
-                                        ? 'bg-slate-800/20 border-slate-700/50'
-                                        : 'bg-slate-800/50 border-slate-700'
-                                        }`}>
-                                        <div className="text-xs text-slate-400 mb-1">{data.month}</div>
-                                        {data.isPlaceholder ? (
-                                            <>
-                                                <div className="flex items-baseline gap-2 mb-2">
-                                                    <span className="text-2xl font-bold text-slate-600">--</span>
-                                                </div>
-                                                <div className="text-xs text-slate-600">
-                                                    No data yet
-                                                </div>
-                                            </>
-                                        ) : (
-                                            <>
-                                                <div className="flex items-baseline gap-2 mb-2">
-                                                    <span className={`text-2xl font-bold ${data.rate >= 75 ? 'text-green-400' :
-                                                        data.rate >= 50 ? 'text-yellow-400' :
-                                                            'text-red-400'
-                                                        }`}>{data.rate}%</span>
-                                                </div>
-                                                <div className="text-xs text-slate-400">
-                                                    <span className="text-white font-medium">{data.attended}</span> of <span className="text-white font-medium">{data.total}</span> sessions
-                                                </div>
-                                            </>
-                                        )}
+                                    <div key={index} className={`rounded-[1.8rem] p-5 border transition-all ${data.isPlaceholder ? 'bg-slate-50/50 border-slate-50 opacity-40' : 'bg-slate-50 border-slate-100 hover:shadow-xl hover:bg-white'}`}>
+                                        <div className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-3">{data.month}</div>
+                                        <div className="text-xl font-black font-outfit text-identity-navy">{data.isPlaceholder ? '---' : `${data.rate}%`}</div>
+                                        <div className="text-[7px] text-slate-300 font-black uppercase tracking-widest mt-1">
+                                            {data.isPlaceholder ? 'Sync Locked' : `${data.attended}/${data.total} SESSIONS`}
+                                        </div>
                                     </div>
                                 ))}
                             </div>
 
-                            {/* Bar Chart */}
-                            <div className="flex items-end gap-2 h-48">
+                            <div className="flex items-end gap-6 h-48 px-10">
                                 {completeMonthData.map((data, index) => (
-                                    <div key={index} className="flex-1 flex flex-col items-center gap-2">
-                                        <div className={`w-full rounded-t relative ${data.isPlaceholder ? 'bg-slate-800/30' : 'bg-slate-800'
-                                            }`} style={{ height: `${Math.max(data.rate, 5)}%` }}>
+                                    <div key={index} className="flex-1 flex flex-col items-center gap-4 group">
+                                        <div className={`w-full max-w-[40px] rounded-2xl relative transition-all duration-700 ${data.isPlaceholder ? 'bg-slate-50 border border-slate-100 border-dashed' : 'bg-slate-50'}`} style={{ height: `${Math.max(data.rate, 5)}%` }}>
                                             {!data.isPlaceholder && (
                                                 <>
-                                                    <div
-                                                        className={`absolute inset-0 rounded-t transition-all ${data.rate >= 75 ? 'bg-green-500' :
-                                                            data.rate >= 50 ? 'bg-yellow-500' :
-                                                                'bg-red-500'
-                                                            }`}
-                                                    />
-                                                    <span className="absolute -top-6 left-1/2 transform -translate-x-1/2 text-xs text-white font-medium">
+                                                    <div className={`absolute inset-0 rounded-2xl shadow-lg transition-all ${data.rate >= 75 ? 'bg-emerald-500' : data.rate >= 50 ? 'bg-amber-500' : 'bg-rose-500'}`} />
+                                                    <span className="absolute -top-10 left-1/2 transform -translate-x-1/2 text-[10px] text-identity-navy font-black uppercase tracking-tighter opacity-0 group-hover:opacity-100 transition-opacity">
                                                         {data.rate}%
                                                     </span>
-                                                    {data.rate > 15 && (
-                                                        <span className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-[10px] text-white/80 font-medium whitespace-nowrap">
-                                                            {data.attended}/{data.total}
-                                                        </span>
-                                                    )}
                                                 </>
                                             )}
-                                            {data.isPlaceholder && (
-                                                <div className="absolute inset-0 flex items-center justify-center">
-                                                    <div className="w-1 h-1 bg-slate-600 rounded-full"></div>
-                                                </div>
-                                            )}
                                         </div>
-                                        <span className={`text-xs ${data.isPlaceholder ? 'text-slate-600' : 'text-slate-500'}`}>
+                                        <span className={`text-[9px] font-black uppercase tracking-widest ${data.isPlaceholder ? 'text-slate-200' : 'text-slate-400 group-hover:text-identity-sky'}`}>
                                             {data.month}
                                         </span>
                                     </div>
                                 ))}
                             </div>
-
-                            {/* Contextual Insight */}
-                            {displayInsights.monthlyData.length === 1 && (
-                                <div className="mt-4 p-4 bg-blue-500/10 border border-blue-500/30 rounded-lg">
-                                    <p className="text-sm text-slate-300">
-                                        <span className="font-semibold text-white">Current Month: </span>
-                                        You attended <span className="text-blue-400 font-semibold">{displayInsights.monthlyData[0].attended}</span> out of <span className="text-blue-400 font-semibold">{displayInsights.monthlyData[0].total}</span> sessions.
-                                        {displayInsights.monthlyData[0].rate < 75 && (
-                                            <span className="block mt-2 text-yellow-400">
-                                                💡 Attend {Math.ceil(displayInsights.monthlyData[0].total * 0.75) - displayInsights.monthlyData[0].attended} more session(s) to reach 75% attendance.
-                                            </span>
-                                        )}
-                                    </p>
-                                </div>
-                            )}
-                        </>
+                        </div>
                     ) : (
-                        <div className="h-48 flex flex-col items-center justify-center text-slate-500 border-2 border-dashed border-slate-700 rounded-xl">
-                            <Calendar className="mb-3 text-slate-600" size={40} />
-                            <p className="text-sm">No attendance data yet</p>
-                            <p className="text-xs text-slate-600 mt-1">Start attending classes to see your monthly trends</p>
+                        <div className="h-64 flex flex-col items-center justify-center text-slate-200 border-2 border-dashed border-slate-100 rounded-[3rem]">
+                            <Calendar className="mb-6" size={48} />
+                            <p className="text-[10px] font-black uppercase tracking-[0.4em]">Historical Matrix Empty</p>
                         </div>
                     );
                 })()}
             </div>
 
             {/* Goal Setting */}
-            <div className="bg-gradient-to-br from-blue-500/10 to-purple-500/10 border border-blue-500/30 rounded-lg p-6">
-                <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
-                    <Target className="text-blue-400" size={20} />
-                    {goal ? 'Your Attendance Goal' : 'Set Your Goal'}
-                </h3>
-
-                {goal ? (
-                    <div className="mb-4">
-                        <div className="flex items-end gap-2 mb-2">
-                            <span className="text-4xl font-bold text-white">{goal}%</span>
-                            <span className="text-slate-400 mb-1">target</span>
-                        </div>
-                        <p className="text-slate-300 text-sm">
-                            You are currently {displayInsights.attendanceRate >= goal ? 'meeting' : 'below'} your goal.
-                            {displayInsights.attendanceRate < goal && ` Try to attend ${Math.ceil((goal - displayInsights.attendanceRate) / 5)} more classes!`}
+            <div className="bg-identity-sky/5 border border-identity-sky/20 rounded-[3rem] p-10 flex flex-col md:flex-row items-center justify-between gap-10">
+                <div className="flex-1">
+                    <h3 className="text-xl font-black text-identity-navy uppercase tracking-tighter font-outfit mb-4 flex items-center gap-4">
+                        <Target className="text-identity-sky" size={28} />
+                        Matrix Objective: {goal ? `${goal}% Sync` : 'Unassigned'}
+                    </h3>
+                    {goal ? (
+                        <p className="text-[11px] font-black text-slate-500 uppercase tracking-widest leading-relaxed">
+                            Current performance: <span className="text-identity-sky">{displayInsights.attendanceRate}%</span>. 
+                            {displayInsights.attendanceRate >= goal ? ' Matrix objective secured.' : ` Matrix stabilization requires +${goal - displayInsights.attendanceRate}% gain.`}
                         </p>
-                    </div>
-                ) : (
-                    <p className="text-slate-300 mb-4">
-                        Aim for 100% attendance this month to improve your ranking and ensure passing!
-                    </p>
-                )}
+                    ) : (
+                        <p className="text-[11px] font-black text-slate-500 uppercase tracking-widest leading-relaxed">
+                            Define your operational attendance target to enable Neural Optimization.
+                        </p>
+                    )}
+                </div>
 
                 <button
                     onClick={() => setIsGoalModalOpen(true)}
-                    className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition-all shadow-lg hover:shadow-blue-500/50"
+                    className="px-12 py-5 bg-identity-navy text-white hover:bg-identity-sky hover:shadow-2xl rounded-2xl font-black text-[10px] uppercase tracking-[0.4em] transition-all shadow-xl shadow-identity-navy/20 active:scale-95 whitespace-nowrap"
                 >
-                    {goal ? 'Update Goal' : 'Set Attendance Goal'}
+                    {goal ? 'Update Objective' : 'Initialize Goal'}
                 </button>
             </div>
 
             {/* Goal Modal */}
             {isGoalModalOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-                    <div className="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-md p-6 shadow-xl transform transition-all scale-100">
-                        <h3 className="text-xl font-bold text-white mb-4">Set Attendance Goal</h3>
-                        <p className="text-slate-400 mb-6">Choose a realistic attendance target for yourself. We'll help you track your progress.</p>
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 backdrop-blur-xl p-4 animate-in fade-in duration-300">
+                    <div className="bg-white border border-slate-200 rounded-[3rem] w-full max-w-md p-10 shadow-3xl transform transition-all animate-in zoom-in-95 duration-300">
+                        <h3 className="text-2xl font-black text-identity-navy mb-4 uppercase tracking-tighter font-outfit">Set Objective</h3>
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-relaxed mb-10">Select your operational target for the current academic period.</p>
 
-                        <div className="space-y-3 mb-6">
+                        <div className="space-y-4 mb-10">
                             {[90, 95, 100].map((target) => (
                                 <button
                                     key={target}
                                     onClick={() => handleSaveGoal(target)}
-                                    className={`w-full p-4 rounded-xl border flex items-center justify-between group transition-all ${goal === target
-                                        ? 'bg-blue-600 border-blue-500 text-white'
-                                        : 'bg-slate-800 border-slate-700 text-slate-300 hover:border-blue-500/50 hover:bg-slate-800/80'
+                                    className={`w-full p-6 rounded-2xl border flex items-center justify-between group transition-all duration-500 ${goal === target
+                                        ? 'bg-identity-navy border-identity-navy text-white shadow-xl translate-x-1'
+                                        : 'bg-slate-50 border-slate-100 text-slate-400 hover:border-identity-sky/30 hover:bg-white hover:shadow-lg'
                                         }`}
                                 >
-                                    <span className="font-bold text-lg">{target}%</span>
-                                    {goal === target && <CheckCircle size={20} />}
+                                    <span className="font-black text-xl font-outfit uppercase tracking-tighter">{target}% Efficiency</span>
+                                    {goal === target ? <CheckCircle size={24} className="text-identity-sky" /> : <div className="w-6 h-6 rounded-full border-2 border-slate-200 group-hover:border-identity-sky/30"></div>}
                                 </button>
                             ))}
                         </div>
 
                         <button
                             onClick={() => setIsGoalModalOpen(false)}
-                            className="w-full py-3 text-slate-400 hover:text-white transition-colors"
+                            className="w-full py-4 text-slate-300 hover:text-identity-navy font-black text-[11px] uppercase tracking-[0.3em] transition-colors"
                         >
-                            Cancel
+                            Abort Initialization
                         </button>
                     </div>
                 </div>

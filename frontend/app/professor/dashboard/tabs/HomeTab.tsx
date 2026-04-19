@@ -105,14 +105,15 @@ export default function HomeTab({ user, classes, error }: HomeTabProps) {
     return (
         <>
             {/* Welcome Header */}
-            <div className="bg-slate-900/50 rounded-2xl shadow-sm border border-slate-800 backdrop-blur-sm p-8 mb-8 flex flex-col md:flex-row items-center justify-between">
+            <div className="bg-maroon-950/40 rounded-2xl shadow-sm border border-white/10 backdrop-blur-sm p-8 mb-8 flex flex-col md:flex-row items-center justify-between">
                 <div className="text-center md:text-left">
-                    <h1 className="text-3xl font-bold text-white">Welcome back, Prof. {user.lastName}!</h1>
-                    <p className="text-slate-400 mt-2">Manage your classes and monitor attendance.</p>
+                    <h1 className="text-3xl font-black text-white uppercase tracking-tight italic">Welcome back,</h1>
+                    <h2 className="text-4xl font-black text-brand-gold uppercase tracking-tighter">Prof. {user.lastName}</h2>
+                    <p className="text-secondary/40 mt-2 font-bold uppercase tracking-widest text-xs">Manage your classes and monitor attendance.</p>
                 </div>
-                <div className="mt-4 md:mt-0 flex items-center gap-4 bg-brand-500/10 px-6 py-3 rounded-xl border border-brand-500/20">
+                <div className="mt-4 md:mt-0 flex items-center gap-4 bg-brand-gold/10 px-6 py-4 rounded-xl border border-brand-gold/20 shadow-lg shadow-brand-gold/5">
                     <div className="text-right">
-                        <div className="text-sm font-bold text-white">{new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</div>
+                        <div className="text-xs font-black text-white uppercase tracking-widest">{new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</div>
                         <div className="flex items-center justify-end gap-1.5 mt-1">
                             {(() => {
                                 const todayDate = new Date();
@@ -124,28 +125,28 @@ export default function HomeTab({ user, classes, error }: HomeTabProps) {
                                     return (
                                         <>
                                             <PartyPopper size={14} className="text-purple-400" />
-                                            <span className="text-xs font-semibold text-purple-400">Holiday</span>
+                                            <span className="text-[10px] font-black uppercase tracking-widest text-purple-400">Holiday</span>
                                         </>
                                     );
                                 } else if (dayOfWeek === 0 || dayOfWeek === 6) {
                                     return (
                                         <>
-                                            <Coffee size={14} className="text-amber-400" />
-                                            <span className="text-xs font-semibold text-amber-400">Weekend</span>
+                                            <Coffee size={14} className="text-brand-gold" />
+                                            <span className="text-[10px] font-black uppercase tracking-widest text-brand-gold">Weekend</span>
                                         </>
                                     );
                                 } else {
                                     return (
                                         <>
-                                            <Briefcase size={14} className="text-brand-400" />
-                                            <span className="text-xs font-semibold text-brand-400">Current Session</span>
+                                            <Briefcase size={14} className="text-brand-gold" />
+                                            <span className="text-[10px] font-black uppercase tracking-widest text-brand-gold">Current Session</span>
                                         </>
                                     );
                                 }
                             })()}
                         </div>
                     </div>
-                    <Calendar className="text-brand-400" size={24} />
+                    <Calendar className="text-brand-gold" size={24} />
                 </div>
             </div>
 
@@ -155,34 +156,34 @@ export default function HomeTab({ user, classes, error }: HomeTabProps) {
                     {/* Quick Stats Grid */}
                     <div className="grid grid-cols-2 gap-4">
                         {/* Hero Stat - Total Students */}
-                        <div className="col-span-2 bg-gradient-to-br from-slate-900 to-slate-800 p-6 rounded-2xl shadow-lg border border-slate-700 relative overflow-hidden group">
-                            <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 group-hover:bg-blue-500/20 transition-colors"></div>
+                        <div className="col-span-2 bg-maroon-900/40 p-6 rounded-2xl shadow-lg border border-white/5 relative overflow-hidden group">
+                            <div className="absolute top-0 right-0 w-32 h-32 bg-brand-gold/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 group-hover:bg-brand-gold/20 transition-colors"></div>
                             <div className="relative z-10 flex items-center justify-between">
                                 <div>
-                                    <div className="text-4xl font-bold text-white mb-1">{totalStudents}</div>
-                                    <div className="text-sm text-slate-400 font-medium">Total Details</div>
+                                    <div className="text-4xl font-black text-white mb-1 tracking-tighter">{totalStudents}</div>
+                                    <div className="text-[10px] text-secondary/40 font-black uppercase tracking-widest">Total Students</div>
                                 </div>
-                                <div className="w-12 h-12 bg-blue-500/10 rounded-xl flex items-center justify-center text-blue-400 border border-blue-500/20 group-hover:scale-110 transition-transform">
+                                <div className="w-12 h-12 bg-brand-gold/10 rounded-xl flex items-center justify-center text-brand-gold border border-brand-gold/20 group-hover:scale-110 transition-transform">
                                     <Users size={24} />
                                 </div>
                             </div>
                         </div>
 
                         {/* Mini Stats */}
-                        <div className="bg-slate-900/50 p-4 rounded-2xl shadow-sm border border-slate-800 backdrop-blur-sm hover:border-emerald-500/30 transition-colors group">
+                        <div className="bg-black/40 p-4 rounded-2xl shadow-sm border border-white/5 backdrop-blur-sm hover:border-emerald-500/30 transition-all group">
                             <div className="flex items-start justify-between mb-2">
-                                <div className="text-xs text-slate-400">Active Classes</div>
+                                <div className="text-[10px] text-secondary/40 font-black uppercase tracking-widest">Active Classes</div>
                                 <BookOpen size={16} className="text-emerald-400/70 group-hover:text-emerald-400 transition-colors" />
                             </div>
-                            <div className="text-2xl font-bold text-white">{activeClasses.length}</div>
+                            <div className="text-2xl font-black text-white tracking-tighter">{activeClasses.length}</div>
                         </div>
 
-                        <div className="bg-slate-900/50 p-4 rounded-2xl shadow-sm border border-slate-800 backdrop-blur-sm hover:border-purple-500/30 transition-colors group">
+                        <div className="bg-black/40 p-4 rounded-2xl shadow-sm border border-white/5 backdrop-blur-sm hover:border-purple-500/30 transition-all group">
                             <div className="flex items-start justify-between mb-2">
-                                <div className="text-xs text-slate-400">Classes Today</div>
+                                <div className="text-[10px] text-secondary/40 font-black uppercase tracking-widest">Classes Today</div>
                                 <Calendar size={16} className="text-purple-400/70 group-hover:text-purple-400 transition-colors" />
                             </div>
-                            <div className="text-2xl font-bold text-white">{todayClasses.length}</div>
+                            <div className="text-2xl font-black text-white tracking-tighter">{todayClasses.length}</div>
                         </div>
                     </div>
                 </div>
@@ -190,62 +191,62 @@ export default function HomeTab({ user, classes, error }: HomeTabProps) {
                 {/* Right Column - Next Class & Schedule */}
                 <div className="lg:col-span-2 space-y-8">
                     {/* Next Class Card (Matching Student Design) */}
-                    <div className="bg-brand-900 rounded-2xl shadow-lg p-8 text-white relative overflow-hidden">
-                        <div className="absolute top-0 right-0 w-64 h-64 bg-brand-800 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 opacity-50"></div>
+                    <div className="bg-maroon-950 rounded-2xl shadow-lg p-8 text-white relative overflow-hidden border border-white/10">
+                        <div className="absolute top-0 right-0 w-64 h-64 bg-maroon-800/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 opacity-50"></div>
                         <div className="relative z-10">
-                            <div className="flex items-center gap-2 text-brand-300 mb-4 text-sm font-bold uppercase tracking-wider">
+                            <div className="flex items-center gap-2 text-brand-gold mb-4 text-[10px] font-black uppercase tracking-widest">
                                 <Clock size={16} /> {nextClass && nextClass.status === 'Now' ? 'Current Class' : 'Next Class'}
                             </div>
                             {nextClass ? (
                                 <>
                                     <div className="flex justify-between items-start mb-2">
-                                        <h2 className="text-3xl font-bold">{nextClass.subject_code}</h2>
-                                        <span className="bg-brand-500/20 text-brand-200 border border-brand-500/30 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
+                                        <h2 className="text-3xl font-black uppercase tracking-tighter">{nextClass.subject_code}</h2>
+                                        <span className="bg-brand-gold/10 text-brand-gold border border-brand-gold/20 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">
                                             {nextClass.section}
                                         </span>
                                     </div>
-                                    <p className="text-brand-200 text-lg mb-6">{nextClass.subject_name} • {nextClass.room || 'Lab 1'}</p>
+                                    <p className="text-secondary/60 text-lg mb-6 font-bold uppercase tracking-tight">{nextClass.subject_name} • {nextClass.room || 'Lab 1'}</p>
 
                                     <div className="flex flex-wrap items-center gap-3">
-                                        <div className="bg-white/10 backdrop-blur-md px-4 py-2 rounded-lg border border-white/20">
-                                            <span className="block text-xs text-brand-300">Time</span>
-                                            <span className="font-bold">{nextClass.startTime} - {nextClass.endTime}</span>
+                                        <div className="bg-black/40 backdrop-blur-md px-4 py-3 rounded-lg border border-white/5 shadow-inner">
+                                            <span className="block text-[10px] font-black uppercase tracking-widest text-secondary/40">Time</span>
+                                            <span className="font-black text-white">{nextClass.startTime} - {nextClass.endTime}</span>
                                         </div>
-                                        <div className="bg-white/10 backdrop-blur-md px-4 py-2 rounded-lg border border-white/20">
-                                            <span className="block text-xs text-brand-300">Students</span>
-                                            <span className="font-bold">{nextClass.student_count || 0} Enrolled</span>
+                                        <div className="bg-black/40 backdrop-blur-md px-4 py-3 rounded-lg border border-white/5 shadow-inner">
+                                            <span className="block text-[10px] font-black uppercase tracking-widest text-secondary/40">Students</span>
+                                            <span className="font-black text-white">{nextClass.student_count || 0} Enrolled</span>
                                         </div>
                                     </div>
 
                                     <div className="mt-6 flex justify-end">
                                         <button
                                             onClick={() => router.push(`/professor/classes/${nextClass.id}`)}
-                                            className="bg-white text-brand-900 px-6 py-2 rounded-lg font-bold text-sm hover:bg-brand-50 transition-colors flex items-center gap-2"
+                                            className="bg-brand-gold text-black px-6 py-2.5 rounded-lg font-black uppercase tracking-widest text-[10px] hover:bg-brand-gold/80 transition-all flex items-center gap-2 shadow-lg shadow-brand-gold/10"
                                         >
                                             View Class <ChevronRight size={16} />
                                         </button>
                                     </div>
                                 </>
                             ) : (
-                                <div className="text-brand-200">
-                                    <h2 className="text-2xl font-bold mb-2">No upcoming classes</h2>
-                                    <p>You have no more classes scheduled for today.</p>
+                                <div className="text-secondary/20">
+                                    <h2 className="text-2xl font-black uppercase tracking-tighter mb-2">No upcoming classes</h2>
+                                    <p className="text-sm font-bold uppercase tracking-widest">You have no more classes scheduled for today.</p>
                                 </div>
                             )}
                         </div>
                     </div>
 
                     {/* Today's Schedule List (To replace Recent Activity) */}
-                    <div className="bg-slate-900/50 rounded-2xl shadow-sm border border-slate-800 backdrop-blur-sm p-6">
-                        <h3 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
-                            <Calendar size={20} className="text-brand-400" /> Today's Schedule
+                    <div className="bg-black/40 rounded-2xl shadow-sm border border-white/5 backdrop-blur-sm p-6 shadow-inner">
+                        <h3 className="text-lg font-black text-white mb-6 flex items-center gap-2 uppercase tracking-tight">
+                            <Calendar size={20} className="text-brand-gold" /> Today's Schedule
                         </h3>
                         <div className="space-y-4">
                             {error ? (
-                                <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-8 text-center">
+                                <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-8 text-center">
                                     <XCircle className="mx-auto mb-3 text-red-400" size={40} />
-                                    <p className="text-red-400 font-bold text-lg mb-2">Failed to Load Data</p>
-                                    <p className="text-slate-400 text-sm">{error}</p>
+                                    <p className="text-red-400 font-black uppercase tracking-widest text-lg mb-2">Failed to Load Data</p>
+                                    <p className="text-secondary/40 text-xs font-bold uppercase tracking-widest">{error}</p>
                                 </div>
                             ) : todayClasses.length > 0 ? (
                                 todayClasses.map((cls) => {
@@ -256,18 +257,18 @@ export default function HomeTab({ user, classes, error }: HomeTabProps) {
                                         <div
                                             key={cls.id}
                                             onClick={() => router.push(`/professor/classes/${cls.id}`)}
-                                            className="bg-slate-800/30 rounded-xl p-4 border border-slate-700 hover:border-brand-500/50 transition-colors cursor-pointer group"
+                                            className="bg-maroon-800/20 rounded-xl p-4 border border-white/5 hover:border-brand-gold/50 transition-all cursor-pointer group shadow-sm"
                                         >
                                             <div className="flex items-start justify-between">
                                                 <div>
-                                                    <h4 className="font-bold text-white group-hover:text-brand-400 transition-colors">{cls.subject_code}</h4>
-                                                    <p className="text-sm text-slate-400">{cls.subject_name}</p>
-                                                    <p className="text-xs text-brand-400 mt-1">Section {cls.section}</p>
+                                                    <h4 className="font-black text-white group-hover:text-brand-gold transition-colors uppercase tracking-tight">{cls.subject_code}</h4>
+                                                    <p className="text-[10px] text-secondary/40 font-black uppercase tracking-widest">{cls.subject_name}</p>
+                                                    <p className="text-[10px] text-brand-gold font-black uppercase tracking-widest mt-1">Section {cls.section}</p>
                                                 </div>
                                                 {todaySchedule && (
                                                     <div className="text-right">
-                                                        <div className="text-sm font-medium text-white">{todaySchedule.startTime} - {todaySchedule.endTime}</div>
-                                                        <div className="text-xs text-slate-400">{cls.student_count || 0} students</div>
+                                                        <div className="text-xs font-black text-white uppercase tracking-widest">{todaySchedule.startTime} - {todaySchedule.endTime}</div>
+                                                        <div className="text-[10px] text-secondary/40 font-bold uppercase tracking-widest">{cls.student_count || 0} students</div>
                                                     </div>
                                                 )}
                                             </div>
@@ -275,9 +276,10 @@ export default function HomeTab({ user, classes, error }: HomeTabProps) {
                                     );
                                 })
                             ) : (
-                                <div className="text-center py-12 text-slate-400">
+                                <div className="text-center py-12 text-secondary/20">
                                     <Calendar size={48} className="mx-auto mb-4 opacity-50" />
-                                    <p className="text-lg font-medium">No classes scheduled for today</p>
+                                    <p className="text-lg font-black uppercase tracking-tighter">No classes today</p>
+                                    <p className="text-[10px] font-bold uppercase tracking-widest mt-1">Enjoy your break!</p>
                                 </div>
                             )}
                         </div>

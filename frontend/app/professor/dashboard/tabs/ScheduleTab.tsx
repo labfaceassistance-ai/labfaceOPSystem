@@ -186,25 +186,25 @@ export default function ScheduleTab({ user, classes }: ScheduleTabProps) {
         <>
             <div className="space-y-6">
                 {/* Header */}
-                <div className="bg-slate-900/50 rounded-2xl shadow-sm border border-slate-800 backdrop-blur-sm p-6">
+                <div className="bg-maroon-950/40 rounded-2xl shadow-sm border border-white/10 backdrop-blur-sm p-6 shadow-3xl">
                     <div className="flex items-center justify-between mb-4">
-                        <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-                            <Calendar className="text-brand-400" size={28} />
+                        <h1 className="text-2xl font-black text-white flex items-center gap-2 uppercase tracking-tight">
+                            <Calendar className="text-brand-gold" size={28} />
                             Weekly Schedule
                         </h1>
                         <div className="flex items-center gap-3">
                             <button
                                 onClick={handlePreviousWeek}
-                                className="p-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg transition-colors"
+                                className="p-2 bg-black/40 hover:bg-white/5 text-white border border-white/5 rounded-lg transition-colors shadow-inner"
                             >
                                 <ChevronLeft size={20} />
                             </button>
-                            <span className="text-white font-medium min-w-[200px] text-center">
+                            <span className="text-[10px] font-black uppercase tracking-widest text-brand-gold min-w-[200px] text-center">
                                 {getWeekRange()}
                             </span>
                             <button
                                 onClick={handleNextWeek}
-                                className="p-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg transition-colors"
+                                className="p-2 bg-black/40 hover:bg-white/5 text-white border border-white/5 rounded-lg transition-colors shadow-inner"
                             >
                                 <ChevronRight size={20} />
                             </button>
@@ -214,7 +214,7 @@ export default function ScheduleTab({ user, classes }: ScheduleTabProps) {
 
                 {/* Schedule Grid */}
                 {loading ? (
-                    <div className="text-center py-12 text-slate-400">Loading schedule...</div>
+                    <div className="text-center py-12 text-secondary/40 font-black uppercase tracking-widest">Loading schedule...</div>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                         {daysOfWeek.map((day, index) => {
@@ -225,14 +225,14 @@ export default function ScheduleTab({ user, classes }: ScheduleTabProps) {
                             return (
                                 <div
                                     key={day}
-                                    className={`bg-slate-900/50 rounded-xl border ${isToday ? 'border-brand-500' : 'border-slate-800'
+                                    className={`bg-maroon-950/40 rounded-xl border transition-all ${isToday ? 'border-brand-gold shadow-lg shadow-brand-gold/5' : 'border-white/5'
                                         } p-4`}
                                 >
                                     <div className="mb-3">
-                                        <h3 className={`font-bold ${isToday ? 'text-brand-400' : 'text-white'}`}>
+                                        <h3 className={`font-black uppercase tracking-widest text-sm ${isToday ? 'text-brand-gold' : 'text-white'}`}>
                                             {day}
                                         </h3>
-                                        <p className="text-xs text-slate-400">
+                                        <p className="text-[10px] font-bold text-secondary/40 uppercase tracking-widest">
                                             {dayDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                                         </p>
                                     </div>
@@ -242,9 +242,9 @@ export default function ScheduleTab({ user, classes }: ScheduleTabProps) {
                                             weekSessions[day].map((session, idx) => (
                                                 <div
                                                     key={idx}
-                                                    className={`p-3 rounded-lg border ${session.isCancelled
+                                                    className={`p-3 rounded-lg border transition-all ${session.isCancelled
                                                         ? 'bg-red-500/10 border-red-500/30'
-                                                        : 'bg-slate-800/50 border-slate-700'
+                                                        : 'bg-black/20 border-white/5 hover:border-brand-gold/20'
                                                         }`}
                                                 >
                                                     <div className="flex items-start justify-between mb-2">
@@ -253,45 +253,45 @@ export default function ScheduleTab({ user, classes }: ScheduleTabProps) {
                                                                 <Ban className="text-red-400 flex-shrink-0" size={16} />
                                                             )}
                                                             <div>
-                                                                <p className={`font-bold text-sm ${session.isCancelled ? 'text-red-400 line-through' : 'text-white'}`}>
+                                                                <p className={`font-black text-xs uppercase tracking-tight ${session.isCancelled ? 'text-red-400 line-through' : 'text-white'}`}>
                                                                     {session.subjectCode}
                                                                 </p>
-                                                                <p className="text-xs text-slate-400">
+                                                                <p className="text-[10px] font-bold text-secondary/40 uppercase tracking-widest">
                                                                     Section {session.section}
                                                                 </p>
                                                             </div>
                                                         </div>
                                                         {session.isCancelled && (
-                                                            <span className="text-xs bg-red-500/20 text-red-400 px-2 py-1 rounded flex items-center gap-1">
+                                                            <span className="text-[10px] font-black uppercase tracking-widest bg-red-500/20 text-red-400 px-2 py-1 rounded flex items-center gap-1">
                                                                 <Ban size={12} />
                                                                 Cancelled
                                                             </span>
                                                         )}
                                                     </div>
 
-                                                    <div className="space-y-1 text-xs text-slate-300">
+                                                    <div className="space-y-1 text-[10px] font-bold text-secondary/60 uppercase tracking-widest">
                                                         <div className="flex items-center gap-1">
-                                                            <Clock size={12} />
+                                                            <Clock size={12} className="text-brand-gold" />
                                                             {formatTime(session.startTime)} - {formatTime(session.endTime)}
                                                         </div>
                                                         <div className="flex items-center gap-1">
-                                                            <MapPin size={12} />
+                                                            <MapPin size={12} className="text-brand-gold" />
                                                             {session.room}
                                                         </div>
                                                         <div className="flex items-center gap-1">
-                                                            <Users size={12} />
+                                                            <Users size={12} className="text-brand-gold" />
                                                             {session.studentCount} students
                                                         </div>
                                                     </div>
 
                                                     {session.isCancelled ? (
-                                                        <div className="mt-2 text-xs text-red-400">
+                                                        <div className="mt-2 text-[10px] font-black uppercase tracking-widest text-red-400 bg-red-500/5 p-2 rounded border border-red-500/10">
                                                             Reason: {session.cancelReason}
                                                         </div>
                                                     ) : (
                                                         <button
                                                             onClick={() => handleCancelClick(session)}
-                                                            className="mt-2 w-full px-3 py-1.5 bg-red-600/20 hover:bg-red-600/30 text-red-400 rounded text-xs font-medium transition-colors flex items-center justify-center gap-1"
+                                                            className="mt-2 w-full px-3 py-1.5 bg-red-600/10 hover:bg-red-600/20 text-red-400 rounded text-[10px] font-black uppercase tracking-widest transition-colors flex items-center justify-center gap-1 border border-red-500/10"
                                                         >
                                                             <X size={14} />
                                                             Cancel Session
@@ -300,7 +300,7 @@ export default function ScheduleTab({ user, classes }: ScheduleTabProps) {
                                                 </div>
                                             ))
                                         ) : (
-                                            <p className="text-center text-slate-500 text-sm py-4">
+                                            <p className="text-center text-secondary/20 text-[10px] font-black uppercase tracking-widest py-4">
                                                 No classes
                                             </p>
                                         )}

@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 import { getToken, getUser, API_URL, createAuthAxios, getProfilePictureUrl, logout, dataURLtoBlob, fetchCurrentUser } from '../../../utils/auth';
 import Navbar from '../../../components/Navbar';
 import Link from 'next/link';
-import { User, Mail, MapPin, Save, Camera, Lock, Shield, ShieldCheck, Image as ImageIcon, ArrowLeft, Eye, EyeOff, CheckCircle, AlertCircle, X, Upload, RefreshCw, Check, FileText, AlertTriangle, CheckCircle2, XCircle, Download, Trash2, Undo2, Edit, MessageSquare, ExternalLink, Sparkles } from 'lucide-react';
+import { User, Mail, MapPin, Save, Camera, Lock, Shield, ShieldCheck, Image as ImageIcon, ArrowLeft, Eye, EyeOff, CheckCircle, AlertCircle, X, Upload, RefreshCw, Check, FileText, AlertTriangle, CheckCircle2, XCircle, Download, Trash2, Undo2, Edit, MessageSquare, ExternalLink, Sparkles, ChevronRight, Fingerprint, Database, Info, GraduationCap, Clock, Calendar } from 'lucide-react';
 import axios from 'axios';
 import FaceEnrollmentScanner from '../../../components/FaceEnrollmentScanner';
 import { useToast } from '../../../components/Toast';
@@ -33,6 +33,16 @@ interface FacePhoto {
     photo_url: string;
 }
 
+function IdentityNode({ className = "" }) {
+    return (
+        <svg className={`absolute opacity-20 pointer-events-none ${className}`} width="400" height="400" viewBox="0 0 100 100" fill="none">
+            <circle cx="50" cy="50" r="40" stroke="currentColor" strokeWidth="0.5" strokeDasharray="2 2" className="text-identity-sky" />
+            <circle cx="50" cy="50" r="30" stroke="currentColor" strokeWidth="0.5" className="text-identity-sky" />
+            <path d="M50 10 V90 M10 50 H90" stroke="currentColor" strokeWidth="0.2" className="text-identity-sky" />
+        </svg>
+    );
+}
+
 export default function StudentProfile() {
     const { showToast } = useToast();
     const [user, setUser] = useState<UserData | null>(null);
@@ -56,20 +66,11 @@ export default function StudentProfile() {
     const [facePhotos, setFacePhotos] = useState<FacePhoto[]>([]);
     const [cameraActive, setCameraActive] = useState(false);
     const [currentAngle, setCurrentAngle] = useState('Front');
-    const videoRef = useRef<HTMLVideoElement>(null);
-    const streamRef = useRef<MediaStream | null>(null);
-    const [facingMode, setFacingMode] = useState<'user' | 'environment'>('user');
-    const [videoDevices, setVideoDevices] = useState<MediaDeviceInfo[]>([]);
-    const [selectedDeviceId, setSelectedDeviceId] = useState<string>('');
-
-    // UI Message State
-    const [message, setMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
     const [deletedPhotoIds, setDeletedPhotoIds] = useState<number[]>([]);
     const [isCapturing, setIsCapturing] = useState(false);
     const [isEditingFaceData, setIsEditingFaceData] = useState(false);
     const [newFacePhotos, setNewFacePhotos] = useState<Record<string, string>>({});
     const [isTraining, setIsTraining] = useState(false);
-    const [isVideoReady, setIsVideoReady] = useState(false);
 
     // Academic Settings State
     const [academicSettings, setAcademicSettings] = useState<{ id: number; schoolYear: string; semester: string } | null>(null);
@@ -84,9 +85,10 @@ export default function StudentProfile() {
     const [corVerified, setCorVerified] = useState(false);
     const [corVerificationResult, setCorVerificationResult] = useState<any>(null);
 
+    // UI Message State
+    const [message, setMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+
     useEffect(() => {
-        // Clear deleted IDs when face photos list is refreshed from server
-        // This handles cases where we hard refresh data
         setDeletedPhotoIds([]);
     }, [facePhotos]);
 
@@ -108,12 +110,9 @@ export default function StudentProfile() {
             try {
                 const authAxios = createAuthAxios();
                 const response = await authAxios.get(`${API_URL}/api/auth/me`);
-
                 const userData = response.data;
 
-                // Role Guard: Ensure user is a student in this session
                 if (userData.role !== 'student') {
-                    console.warn(`[RoleGuard] Access denied for role: ${userData.role}. Redirecting to appropriate workspace.`);
                     if (userData.role === 'professor') window.location.href = '/professor/dashboard';
                     else if (userData.role === 'admin') window.location.href = '/admin/dashboard';
                     else window.location.href = '/login';
@@ -123,7 +122,6 @@ export default function StudentProfile() {
                 setUser(userData);
                 setFormData(userData);
 
-                // Update storage (respecting where the user is currently stored)
                 if (sessionStorage.getItem('token')) {
                     sessionStorage.setItem('user', JSON.stringify(userData));
                 }
@@ -131,27 +129,21 @@ export default function StudentProfile() {
                     localStorage.setItem('user', JSON.stringify(userData));
                 }
 
-                // Fetch face photos and consent data
                 fetchFacePhotos(userData.id);
                 if (userData.userId) {
                     fetchConsentData(userData.userId);
                 }
             } catch (error: any) {
                 console.error('Failed to fetch user data:', error);
-
-                // If token is invalid, redirect to login
                 if (error.response?.status === 401 || error.response?.status === 403) {
                     logout();
                     return;
                 }
 
-                // Fallback to stored user data if API fails
                 const storedUser = getUser();
                 if (storedUser) {
-                    console.log('Using cached user data');
                     setUser(storedUser);
                     setFormData(storedUser);
-                    // Update academic form with current data
                     setAcademicForm(prev => ({
                         ...prev,
                         course: storedUser.course || '',
@@ -166,31 +158,12 @@ export default function StudentProfile() {
 
         fetchUserData();
 
-        // Handle direct tab access from URL
         const params = new URLSearchParams(window.location.search);
         const tabParam = params.get('tab');
         if (tabParam === 'academic') {
-            setActiveTab('profile'); // The academic update is currently in the profile tab
-            // In the future we might want a dedicated 'academic' tab, 
-            // but for now we'll ensure the academic alert is visible.
+            setActiveTab('profile');
         }
 
-        // Enumerate devices initially
-        const getDevices = async () => {
-            try {
-                const devices = await navigator.mediaDevices.enumerateDevices();
-                const videoInputs = devices.filter(device => device.kind === 'videoinput');
-                setVideoDevices(videoInputs);
-                if (videoInputs.length > 0 && !selectedDeviceId) {
-                    setSelectedDeviceId(videoInputs[0].deviceId);
-                }
-            } catch (err) {
-                console.error("Error enumerating devices:", err);
-            }
-        };
-        getDevices();
-
-        // Fetch Academic Settings
         const fetchAcademicSettings = async () => {
             try {
                 const res = await axios.get(`${API_URL}/api/users/academic-settings`);
@@ -201,31 +174,6 @@ export default function StudentProfile() {
         };
         fetchAcademicSettings();
     }, []);
-
-    const profileTabs: ('profile' | 'face' | 'security' | 'privacy' | 'feedback')[] =
-        ['profile', 'face', 'security', 'privacy', 'feedback'];
-
-    const handleTabChange = (tab: 'profile' | 'face' | 'security' | 'privacy' | 'feedback') => {
-        setActiveTab(tab);
-        setIsEditing(false);
-    };
-
-    // useSwipe removed — hook deleted in Phase 2 cleanup; tab buttons remain fully functional
-
-    const fetchLatestUserData = async (userId: number) => {
-        try {
-            const res = await axios.get(`${API_URL}/api/users/profile/${userId}`);
-            setUser(prev => ({ ...prev, ...res.data }));
-            setFormData(prev => ({ ...prev, ...res.data }));
-            const storedUser = localStorage.getItem('user');
-            if (storedUser) {
-                const parsed = JSON.parse(storedUser);
-                localStorage.setItem('user', JSON.stringify({ ...parsed, ...res.data }));
-            }
-        } catch (error) {
-            console.error("Failed to fetch latest user data", error);
-        }
-    };
 
     const fetchFacePhotos = async (userId: number) => {
         try {
@@ -239,7 +187,6 @@ export default function StudentProfile() {
     const fetchConsentData = async (userId: string) => {
         try {
             setConsentLoading(true);
-
             const [statusRes, historyRes] = await Promise.all([
                 axios.get(`${API_URL}/api/consent/status/${userId}`),
                 axios.get(`${API_URL}/api/consent/history/${userId}`)
@@ -279,7 +226,36 @@ export default function StudentProfile() {
         }
     };
 
-    // ... (handleChangePassword stays same)
+    const handleChangePassword = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setMessage(null);
+
+        if (passwordData.newPassword !== passwordData.confirmPassword) {
+            showMessage("New passwords do not match", 'error');
+            return;
+        }
+
+        if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/.test(passwordData.newPassword)) {
+            showMessage("Password does not meet requirements", 'error');
+            return;
+        }
+
+        try {
+            const token = getToken();
+            await axios.put(`${API_URL}/api/auth/change-password`, {
+                currentPassword: passwordData.currentPassword,
+                newPassword: passwordData.newPassword
+            }, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+
+            showMessage("Password changed successfully", 'success');
+            setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+        } catch (error: any) {
+            console.error("Change password error:", error);
+            showMessage(error.response?.data?.message || "Failed to change password", 'error');
+        }
+    };
 
     const handleCorFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -303,7 +279,6 @@ export default function StudentProfile() {
         setCorVerificationResult(null);
 
         try {
-            // Convert file to base64
             const base64Data = await new Promise<string>((resolve, reject) => {
                 const reader = new FileReader();
                 reader.onload = () => resolve(reader.result as string);
@@ -351,7 +326,6 @@ export default function StudentProfile() {
 
         setIsSubmittingAcademic(true);
         try {
-            // Convert file to base64
             const reader = new FileReader();
             reader.readAsDataURL(academicForm.corFile);
             reader.onload = async () => {
@@ -359,8 +333,8 @@ export default function StudentProfile() {
 
                 try {
                     const response = await axios.post(`${API_URL}/api/student/update-academic-data`, {
-                        userId: user.userId, // Send user_id string for verification service
-                        studentId: user.id.toString(), // Send PK just in case
+                        userId: user.userId,
+                        studentId: user.id.toString(),
                         course: academicForm.course,
                         yearLevel: academicForm.yearLevel,
                         corFile: base64File
@@ -368,7 +342,6 @@ export default function StudentProfile() {
 
                     showMessage(response.data.message, 'success');
 
-                    // Update local user state
                     const updatedUser = {
                         ...user,
                         course: academicForm.course,
@@ -378,17 +351,12 @@ export default function StudentProfile() {
                     setUser(updatedUser);
                     setFormData(updatedUser);
 
-                    // Update cache in both storages
                     localStorage.setItem('user', JSON.stringify(updatedUser));
                     sessionStorage.setItem('user', JSON.stringify(updatedUser));
 
-                    // Reset verification state
                     setCorVerified(false);
                     setCorVerificationResult(null);
-
-                    // Clear form
                     setAcademicForm({ course: '', yearLevel: '', corFile: null, corPreview: null });
-
                 } catch (error: any) {
                     console.error("Academic update failed:", error);
                     const errorMsg = error.response?.data?.message || "Failed to update academic information.";
@@ -405,188 +373,6 @@ export default function StudentProfile() {
         }
     };
 
-    const startCamera = async () => {
-        try {
-            if (streamRef.current) {
-                streamRef.current.getTracks().forEach(track => track.stop());
-            }
-            const constraints: MediaStreamConstraints = {
-                video: {
-                    ...(selectedDeviceId ? { deviceId: { exact: selectedDeviceId } } : { facingMode: facingMode }),
-                    width: { ideal: 640 },
-                    height: { ideal: 480 }
-                }
-            };
-
-            const stream = await navigator.mediaDevices.getUserMedia(constraints);
-            streamRef.current = stream;
-            setCameraActive(true);
-            setIsVideoReady(false);
-
-            // Wait for the video element to be mounted
-            setTimeout(() => {
-                if (videoRef.current) {
-                    videoRef.current.srcObject = stream;
-
-                    // Wait for video to have actual dimensions
-                    const checkVideoReady = setInterval(() => {
-                        if (videoRef.current && videoRef.current.videoWidth > 0 && videoRef.current.videoHeight > 0) {
-                            console.log('✅ Video dimensions detected:', videoRef.current.videoWidth, 'x', videoRef.current.videoHeight);
-                            // Add a small safety delay for frames to actually start rendering
-                            setTimeout(() => {
-                                console.log('✅ Video stream stabilized and ready');
-                                setIsVideoReady(true);
-                            }, 200);
-                            clearInterval(checkVideoReady);
-                        }
-                    }, 100);
-
-                    videoRef.current.play().catch(e => console.error("Error playing video:", e));
-                }
-            }, 100);
-        } catch (err) {
-            console.error("Error accessing camera:", err);
-            showMessage("Could not access camera. Please ensure you have granted permission.", 'error');
-        }
-    };
-
-    // Effect to handle camera switch when selection changes (if camera is already running)
-    useEffect(() => {
-        if (cameraActive && selectedDeviceId) {
-            startCamera();
-        }
-    }, [selectedDeviceId]);
-
-    const stopCamera = () => {
-        if (streamRef.current) {
-            streamRef.current.getTracks().forEach(track => track.stop());
-            streamRef.current = null;
-        }
-        setCameraActive(false);
-        setIsVideoReady(false);
-    };
-
-    const toggleCamera = () => {
-        setFacingMode(prev => prev === 'user' ? 'environment' : 'user');
-        if (cameraActive) {
-            stopCamera();
-            setTimeout(startCamera, 100);
-        }
-    };
-
-    const captureFromCamera = async () => {
-        if (!videoRef.current || !isVideoReady) {
-            showMessage("Camera is not ready yet. Please wait a moment.", 'error');
-            return;
-        }
-        if (!user) return;
-
-        setIsCapturing(true);
-
-        // Debug logging
-        console.log('📸 Capturing from video:', {
-            videoWidth: videoRef.current.videoWidth,
-            videoHeight: videoRef.current.videoHeight,
-            readyState: videoRef.current.readyState,
-            paused: videoRef.current.paused
-        });
-
-        const canvas = document.createElement('canvas');
-        canvas.width = videoRef.current.videoWidth;
-        canvas.height = videoRef.current.videoHeight;
-
-        if (canvas.width === 0 || canvas.height === 0) {
-            console.error('❌ Canvas has zero dimensions!');
-            showMessage("Video not ready. Please wait and try again.", 'error');
-            setIsCapturing(false);
-            return;
-        }
-
-        const ctx = canvas.getContext('2d');
-        if (ctx) {
-            ctx.drawImage(videoRef.current, 0, 0);
-            console.log('✅ Drew image to canvas:', canvas.width, 'x', canvas.height);
-            canvas.toBlob(async (blob) => {
-                if (blob) {
-                    console.log(`[DEBUG] Blob Created: size=${blob.size}, type=${blob.type}`);
-                    if (blob.size === 0) {
-                        console.error('❌ Created blob is 0 bytes!');
-                        showMessage("Failed to capture image: Data is empty.", 'error');
-                        setIsCapturing(false);
-                        return;
-                    }
-                    const formData = new FormData();
-                    formData.append('facePhoto', blob, `${currentAngle}.jpg`);
-                    formData.append('angle', currentAngle);
-                    // Skip automatic training in edit mode
-                    formData.append('skipTraining', 'true');
-
-                    try {
-                        const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
-                        const url = `${API_URL}/api/users/profile/${user.id}/upload-face-photo`;
-                        console.log(`[DEBUG] Attempting upload to: ${url}`);
-                        const response = await axios.post(url, formData, {
-                            headers: { 'Content-Type': 'multipart/form-data' }
-                        });
-                        console.log('[DEBUG] Upload Success response:', response.data);
-
-                        fetchFacePhotos(user.id);
-                        // Auto-advance to next angle
-                        const angles = ['Front', 'Left', 'Right', 'Up', 'Down'];
-                        const nextIndex = angles.findIndex(a => a.toLowerCase() === currentAngle.toLowerCase()) + 1;
-                        if (nextIndex < angles.length) {
-                            setCurrentAngle(angles[nextIndex]);
-                        }
-                        // Visual confirmation
-                        showMessage("Photo captured! (Training pending)", 'success');
-                    } catch (error: any) {
-                        console.error("[DEBUG] Upload Error:", error.response?.data || error.message);
-                        const errorMsg = error.response?.data?.message ||
-                            error.response?.data?.error ||
-                            error.message ||
-                            "Failed to save photo.";
-                        showMessage(`Error: ${errorMsg}`, 'error');
-                    } finally {
-                        setIsCapturing(false);
-                    }
-                } else {
-                    showMessage("Failed to create image from camera.", 'error');
-                    setIsCapturing(false);
-                }
-            }, 'image/jpeg', 0.8);
-        } else {
-            showMessage("Failed to initialize canvas.", 'error');
-            setIsCapturing(false);
-        }
-    };
-
-    const handleFacePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>, angle: string) => {
-        const file = e.target.files?.[0];
-        if (file && user) {
-            const formData = new FormData();
-            formData.append('facePhoto', file);
-            formData.append('angle', angle);
-
-            try {
-                await axios.post(`${API_URL}/api/users/profile/${user.id}/upload-face-photo`, formData, {
-                    headers: { 'Content-Type': 'multipart/form-data' }
-                });
-
-                fetchFacePhotos(user.id);
-                // Auto-advance to next angle
-                const angles = ['Front', 'Left', 'Right', 'Up', 'Down'];
-                const nextIndex = angles.findIndex(a => a.toLowerCase() === angle.toLowerCase()) + 1;
-                if (nextIndex < angles.length) {
-                    setCurrentAngle(angles[nextIndex]);
-                }
-                showMessage("Photo uploaded successfully!", 'success');
-            } catch (error) {
-                console.error("Failed to upload face photo", error);
-                showMessage("Failed to upload photo.", 'error');
-            }
-        }
-    };
-
     const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file && user) {
@@ -595,9 +381,7 @@ export default function StudentProfile() {
 
             try {
                 const response = await axios.post(`${API_URL}/api/users/profile/${user.id}/upload-photo`, formData, {
-                    headers: {
-                        'Content-Type': 'multipart/form-data'
-                    }
+                    headers: { 'Content-Type': 'multipart/form-data' }
                 });
 
                 const updatedUser = { ...user, profilePicture: response.data.profilePicture };
@@ -612,108 +396,10 @@ export default function StudentProfile() {
         }
     };
 
-    const handleDeletePhoto = async (photoId: number) => {
-        if (!user) return;
-        try {
-            // Optimistic update
-            setDeletedPhotoIds(prev => [...prev, photoId]);
-            await axios.delete(`${API_URL}/api/users/profile/${user.id}/face-photos/${photoId}`);
-            // Don't refetch immediately to keep the "Undo" state visible
-        } catch (error) {
-            console.error("Failed to delete photo", error);
-            setDeletedPhotoIds(prev => prev.filter(id => id !== photoId)); // Revert
-            showMessage("Failed to delete photo.", 'error');
-        }
-    };
-
-    const handleSaveFaceData = async () => {
-        if (!user) return;
-        setIsTraining(true);
-        try {
-            await axios.post(`${API_URL}/api/users/profile/${user.id}/train-model`);
-
-            showMessage("Face data saved and model trained successfully!", 'success');
-            setIsEditingFaceData(false);
-            stopCamera();
-        } catch (error: any) {
-            console.error("Failed to train model", error);
-            const errorMsg = error.response?.data?.message || "Failed to train model.";
-            const errorDetails = error.response?.data?.details;
-
-            // Log details to console for debugging
-            if (errorDetails && Array.isArray(errorDetails)) {
-                console.error("Error details:", errorDetails);
-                // Show first few errors in the message
-                const detailMsg = errorDetails.slice(0, 3).join('; ');
-                showMessage(`${errorMsg}\n${detailMsg}`, 'error');
-            } else {
-                showMessage(errorMsg, 'error');
-            }
-        } finally {
-            setIsTraining(false);
-        }
-    };
-
-    const handleUndoDelete = async (photoId: number) => {
-        if (!user) return;
-        try {
-            // Optimistic update
-            setDeletedPhotoIds(prev => prev.filter(id => id !== photoId));
-            await axios.post(`${API_URL}/api/users/profile/${user.id}/face-photos/${photoId}/restore`);
-            fetchFacePhotos(user.id);
-        } catch (error) {
-            console.error("Failed to restore photo", error);
-            setDeletedPhotoIds(prev => [...prev, photoId]); // Revert
-            showMessage("Failed to restore photo.", 'error');
-        }
-    };
-
-    const triggerFileInput = () => {
-        fileInputRef.current?.click();
-    };
-
-    if (!user || !formData) return <div className="min-h-screen flex items-center justify-center bg-slate-950"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-500"></div></div>;
-
-
-    const handleChangePassword = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setMessage(null);
-
-        if (passwordData.newPassword !== passwordData.confirmPassword) {
-            showMessage("New passwords do not match", 'error');
-            return;
-        }
-
-        // Validate password strength pattern from JSX
-        if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/.test(passwordData.newPassword)) {
-            showMessage("Password does not meet requirements", 'error');
-            return;
-        }
-
-        try {
-            const token = getToken();
-            await axios.put(`${API_URL}/api/auth/change-password`, {
-                currentPassword: passwordData.currentPassword,
-                newPassword: passwordData.newPassword
-            }, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-
-            showMessage("Password changed successfully", 'success');
-            setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
-        } catch (error: any) {
-            console.error("Change password error:", error);
-            showMessage(error.response?.data?.message || "Failed to change password", 'error');
-        }
-    };
-
-    const profileImageSrc = getProfilePictureUrl(user.profilePicture);
-
     const generatePrivacyReport = (data: any) => {
         const doc = new jsPDF();
         const pageWidth = doc.internal.pageSize.width;
 
-        // Header
         doc.setFontSize(20);
         doc.setTextColor(40, 40, 40);
         doc.text("Data Privacy Export Report", 14, 22);
@@ -723,7 +409,6 @@ export default function StudentProfile() {
         doc.text(`Generated on: ${new Date().toLocaleString()}`, 14, 30);
         doc.text(`Reference ID: ${data.export_info?.user_id || 'N/A'}`, 14, 35);
 
-        // User Profile Section
         doc.setFontSize(14);
         doc.setTextColor(0, 0, 0);
         doc.text("User Profile", 14, 45);
@@ -742,10 +427,9 @@ export default function StudentProfile() {
             head: [['Field', 'Value']],
             body: profileData,
             theme: 'striped',
-            headStyles: { fillColor: [41, 128, 185] }
+            headStyles: { fillColor: [13, 148, 136] }
         });
 
-        // Consent History Section
         let lastY = (doc as any).lastAutoTable.finalY + 15;
         doc.text("Consent History", 14, lastY);
 
@@ -762,18 +446,11 @@ export default function StudentProfile() {
             head: [['Type', 'Status', 'IP Address', 'Date']],
             body: consentRows,
             theme: 'grid',
-            headStyles: { fillColor: [46, 204, 113] }
+            headStyles: { fillColor: [34, 197, 94] }
         });
 
-        // Attendance History Section
         lastY = (doc as any).lastAutoTable.finalY + 15;
-
-        // Check if we need a new page
-        if (lastY > 250) {
-            doc.addPage();
-            lastY = 20;
-        }
-
+        if (lastY > 250) { doc.addPage(); lastY = 20; }
         doc.text("Attendance History (Recent)", 14, lastY);
 
         const attendance = data.attendance_records || [];
@@ -789,10 +466,9 @@ export default function StudentProfile() {
             head: [['Date', 'Status', 'Time In', 'Time Out']],
             body: attendanceRows,
             theme: 'striped',
-            headStyles: { fillColor: [142, 68, 173] }
+            headStyles: { fillColor: [147, 51, 234] }
         });
 
-        // Footer
         const pageCount = (doc as any).internal.getNumberOfPages();
         for (let i = 1; i <= pageCount; i++) {
             doc.setPage(i);
@@ -804,818 +480,656 @@ export default function StudentProfile() {
         doc.save(`LabFace-Data-Export-${data.export_info?.user_id || 'user'}.pdf`);
     };
 
-    console.log("Current formData:", formData);
+    const triggerFileInput = () => { fileInputRef.current?.click(); };
+
+    if (!user || !formData) return <div className="min-h-screen flex items-center justify-center bg-slate-50"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-identity-sky"></div></div>;
+
+    const profileImageSrc = getProfilePictureUrl(user.profilePicture);
 
     return (
-        <div className="min-h-screen bg-slate-950 font-sans">
+        <div className="min-h-screen bg-[#F8FAFC] font-sans selection:bg-identity-sky/30">
             <Navbar />
 
-            <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-8">
-                <div className="mb-6">
-                    <Link href="/student/dashboard" className="inline-flex items-center text-brand-400 hover:text-brand-300 transition-colors">
-                        <ArrowLeft size={20} className="mr-2" />
-                        <span className="font-medium">Back to Dashboard</span>
-                    </Link>
-                </div>
-                <div className="bg-slate-900/50 rounded-2xl shadow-sm border border-slate-800 backdrop-blur-sm overflow-hidden">
-                    <div className="bg-brand-600 h-32 relative">
-                        <div className="absolute -bottom-12 left-8">
-                            <div className="relative group">
-                                <div className="w-24 h-24 bg-white rounded-full p-1 shadow-lg overflow-hidden">
-                                    {profileImageSrc ? (
-                                        <img src={profileImageSrc} alt="Profile" className="w-full h-full object-cover rounded-full" />
-                                    ) : (
-                                        <div className="w-full h-full bg-brand-100 rounded-full flex items-center justify-center text-brand-600 font-bold text-3xl">
-                                            {user.firstName[0]}{user.lastName[0]}
-                                        </div>
-                                    )}
-                                </div>
-                                <input
-                                    type="file"
-                                    ref={fileInputRef}
-                                    onChange={handleFileChange}
-                                    className="hidden"
-                                    accept="image/*"
-                                />
-                                <button
-                                    onClick={triggerFileInput}
-                                    className="absolute bottom-0 right-0 bg-gray-900 text-white p-2 rounded-full hover:bg-gray-700 transition-colors shadow-md z-10"
-                                >
-                                    <Camera size={16} />
-                                </button>
+            {/* Global Message Modal */}
+            {message && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-identity-navy/20 backdrop-blur-md animate-in fade-in duration-300">
+                    <div className="bg-white rounded-[2.5rem] shadow-3xl max-w-md w-full overflow-hidden animate-scale-up border border-slate-200">
+                        <div className={`p-8 flex items-center gap-4 ${message.type === 'success' ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'}`}>
+                            <div className={`p-3 rounded-2xl ${message.type === 'success' ? 'bg-emerald-500 text-white' : 'bg-rose-500 text-white'}`}>
+                                {message.type === 'success' ? <CheckCircle size={28} /> : <AlertCircle size={28} />}
                             </div>
+                            <div>
+                                <h3 className="font-black text-xl uppercase tracking-tighter leading-none">{message.type === 'success' ? 'Synchronized' : 'Node Alert'}</h3>
+                                <p className="text-[10px] font-black uppercase tracking-widest mt-1 opacity-60">Identity Core Feedback</p>
+                            </div>
+                        </div>
+                        <div className="p-10">
+                            <p className="text-slate-500 text-sm font-black uppercase tracking-widest leading-relaxed">{message.text}</p>
+                            <button
+                                onClick={() => setMessage(null)}
+                                className={`w-full mt-8 py-4 rounded-2xl font-black text-[10px] uppercase tracking-[0.3em] transition-all shadow-xl hover:-translate-y-1 active:translate-y-0 ${
+                                    message.type === 'success' ? 'bg-emerald-500 text-white shadow-emerald-500/20' : 'bg-rose-500 text-white shadow-rose-500/20'
+                                }`}
+                            >
+                                Acknowledge
+                            </button>
                         </div>
                     </div>
+                </div>
+            )}
 
-                    <div className="pt-16 px-8 pb-8">
-                        {message && (
-                            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-                                <div className="bg-white rounded-xl shadow-2xl max-w-md w-full overflow-hidden transform transition-all">
-                                    <div className={`p-4 flex items-center gap-3 ${message.type === 'success' ? 'bg-green-600 text-white' : 'bg-red-600 text-white'}`}>
-                                        {message.type === 'success' ? <CheckCircle size={24} /> : <AlertCircle size={24} />}
-                                        <h3 className="font-bold text-lg">{message.type === 'success' ? 'Success' : 'Error'}</h3>
-                                        <button onClick={() => setMessage(null)} className="ml-auto p-1 hover:bg-white/20 rounded-full transition-colors">
-                                            <X size={20} />
-                                        </button>
-                                    </div>
-                                    <div className="p-6">
-                                        <p className="text-gray-700 text-base leading-relaxed">{message.text}</p>
-                                        <div className="mt-6 flex justify-end">
-                                            <button
-                                                onClick={() => setMessage(null)}
-                                                className={`px-6 py-2 rounded-lg font-bold text-white transition-colors ${message.type === 'success' ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'}`}
-                                            >
-                                                Okay
-                                            </button>
+            <main className="relative pt-24 pb-20">
+                <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+                    
+                    {/* Navigation Bar */}
+                    <div className="mb-10 flex items-center justify-between">
+                        <Link href="/student/dashboard" className="group flex items-center gap-3 px-6 py-3 rounded-2xl bg-white border border-slate-200 shadow-sm hover:border-identity-sky/50 transition-all">
+                            <ArrowLeft size={18} className="text-identity-sky group-hover:-translate-x-1 transition-transform" />
+                            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-identity-navy">Back to Dashboard</span>
+                        </Link>
+                    </div>
+
+                    <div className="identity-glass rounded-[3.5rem] shadow-3xl border border-slate-200/50 overflow-hidden bg-white/40 backdrop-blur-xl">
+                        {/* Profile Header */}
+                        <div className="h-64 bg-identity-sky relative overflow-hidden">
+                            <IdentityNode className="top-0 right-0 -translate-y-1/2 translate-x-1/2 scale-150 rotate-12" />
+                            <IdentityNode className="bottom-0 left-0 translate-y-1/2 -translate-x-1/2 scale-125 opacity-10" />
+                            <div className="absolute inset-0 bg-gradient-to-b from-black/10 to-transparent"></div>
+                            
+                            {/* Profile Image & Summary */}
+                            <div className="absolute -bottom-16 left-12 flex items-end gap-8">
+                                <div className="relative group">
+                                    <div className="w-40 h-40 bg-white rounded-[2.5rem] p-1.5 shadow-2xl overflow-hidden border-4 border-white transition-transform group-hover:scale-105 duration-500">
+                                        {profileImageSrc ? (
+                                            <img src={profileImageSrc} alt="Profile" className="w-full h-full object-cover rounded-[2rem]" />
+                                        ) : (
+                                            <div className="w-full h-full bg-slate-50 rounded-[2rem] flex items-center justify-center text-identity-sky font-black text-4xl font-outfit uppercase">
+                                                {user.firstName[0]}{user.lastName[0]}
+                                            </div>
+                                        )}
+                                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-[2rem]">
+                                            <Camera size={32} className="text-white" />
                                         </div>
+                                    </div>
+                                    <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept="image/*" />
+                                    <button
+                                        onClick={triggerFileInput}
+                                        className="absolute bottom-2 right-2 bg-identity-navy text-white p-3 rounded-2xl hover:bg-identity-sky transition-all shadow-xl z-10 scale-110"
+                                    >
+                                        <Camera size={20} />
+                                    </button>
+                                </div>
+                                <div className="mb-6 pb-2">
+                                    <div className="flex items-center gap-3 mb-2">
+                                        <h1 className="text-4xl font-black text-white uppercase tracking-tighter drop-shadow-md leading-none">{user.firstName} {user.lastName}</h1>
+                                        {corVerified && <ShieldCheck size={28} className="text-emerald-400 drop-shadow-sm" />}
+                                    </div>
+                                    <div className="flex items-center gap-4 text-white/80 font-black text-[10px] uppercase tracking-[0.4em]">
+                                        <span className="flex items-center gap-1.5"><Fingerprint size={14} className="text-white" /> {user.studentId || 'ID UNKNOWN'}</span>
+                                        <span className="w-1.5 h-1.5 bg-white/30 rounded-full"></span>
+                                        <span className="flex items-center gap-1.5"><GraduationCap size={14} className="text-white" /> {user.course || 'PENDING ASSIGNMENT'}</span>
                                     </div>
                                 </div>
                             </div>
-                        )}
-                        {/* ... rest of the component */}
 
-                        <div className="flex justify-between items-start mb-6">
-                            <div>
-                                <h1 className="text-2xl font-bold text-white">{user.firstName} {user.lastName}</h1>
-                                <p className="text-slate-400">{user.studentId || 'Student ID'}</p>
+                            {/* Action Buttons */}
+                            <div className="absolute top-8 right-8">
+                                {activeTab === 'profile' && (
+                                    <button
+                                        onClick={() => isEditing ? handleSave() : setIsEditing(true)}
+                                        className={`flex items-center gap-3 px-8 py-4 rounded-2xl font-black text-[10px] uppercase tracking-[0.3em] transition-all shadow-2xl backdrop-blur-md border ${
+                                            isEditing 
+                                            ? 'bg-emerald-500 text-white border-emerald-400 shadow-emerald-500/20' 
+                                            : 'bg-white/20 text-white border-white/30 hover:bg-white/30 active:scale-95'
+                                        }`}
+                                    >
+                                        {isEditing ? <><Save size={18} className="animate-pulse" /> Finalize Changes</> : 'Edit Identity'}
+                                    </button>
+                                )}
                             </div>
-                            {activeTab === 'profile' && (
-                                <button
-                                    onClick={() => isEditing ? handleSave() : setIsEditing(true)}
-                                    className={`flex items-center gap-2 px-4 py-2 rounded-lg font-bold transition-colors ${isEditing ? 'bg-brand-500 text-white hover:bg-brand-400' : 'bg-slate-800 text-slate-200 hover:bg-slate-700'}`}
-                                >
-                                    {isEditing ? <><Save size={18} /> Save Changes</> : 'Edit Profile'}
-                                </button>
-                            )}
                         </div>
 
-                        {/* Tabs */}
-                        <div className="flex gap-2 overflow-x-auto border-b border-slate-700 mb-8 pb-0 scrollbar-hide">
-                            <button
-                                onClick={() => { setActiveTab('profile'); setIsEditing(false); }}
-                                className={`pb-4 px-4 font-medium text-sm transition-colors relative whitespace-nowrap ${activeTab === 'profile' ? 'text-brand-400 border-b-2 border-brand-500' : 'text-slate-400 hover:text-slate-200'}`}
-                            >
-                                Personal Info
-                            </button>
-                            <button
-                                onClick={() => { setActiveTab('face'); setIsEditing(false); }}
-                                className={`pb-4 px-4 font-medium text-sm transition-colors relative whitespace-nowrap ${activeTab === 'face' ? 'text-brand-400 border-b-2 border-brand-500' : 'text-slate-400 hover:text-slate-200'}`}
-                            >
-                                Face Data
-                            </button>
-                            <button
-                                onClick={() => { setActiveTab('security'); setIsEditing(false); }}
-                                className={`pb-4 px-4 font-medium text-sm transition-colors relative whitespace-nowrap ${activeTab === 'security' ? 'text-brand-400 border-b-2 border-brand-500' : 'text-slate-400 hover:text-slate-200'}`}
-                            >
-                                Security
-                            </button>
-                            <button
-                                onClick={() => { setActiveTab('privacy'); setIsEditing(false); }}
-                                className={`pb-4 px-4 font-medium text-sm transition-colors relative whitespace-nowrap ${activeTab === 'privacy' ? 'text-brand-400 border-b-2 border-brand-500' : 'text-slate-400 hover:text-slate-200'}`}
-                            >
-                                Privacy & Consent
-                            </button>
-                            <button
-                                onClick={() => { setActiveTab('feedback'); setIsEditing(false); }}
-                                className={`pb-4 px-4 font-medium text-sm transition-colors relative whitespace-nowrap ${activeTab === 'feedback' ? 'text-brand-400 border-b-2 border-brand-500' : 'text-slate-400 hover:text-slate-200'}`}
-                            >
-                                Feedback
-                            </button>
-                        </div>
+                        {/* Content Area */}
+                        <div className="pt-24 px-12 pb-16">
+                            
+                            {/* Custom Tab Switcher */}
+                            <div className="flex gap-4 p-2 bg-slate-50/50 backdrop-blur-md rounded-[2rem] mb-12 border border-slate-100/50 shadow-inner max-w-fit mx-auto">
+                                {[
+                                    { id: 'profile', label: 'Persona', icon: User },
+                                    { id: 'face', label: 'Biometrics', icon: Sparkles },
+                                    { id: 'security', label: 'Security', icon: Lock },
+                                    { id: 'privacy', label: 'Vault', icon: Shield },
+                                    { id: 'feedback', label: 'Signals', icon: MessageSquare }
+                                ].map((tab) => (
+                                    <button
+                                        key={tab.id}
+                                        onClick={() => setActiveTab(tab.id as any)}
+                                        className={`flex items-center gap-3 px-8 py-4 rounded-[1.5rem] text-[9px] font-black uppercase tracking-[0.2em] transition-all ${
+                                            activeTab === tab.id 
+                                            ? 'bg-identity-navy text-white shadow-xl shadow-identity-navy/20 scale-105' 
+                                            : 'text-slate-400 hover:text-identity-navy hover:bg-white'
+                                        }`}
+                                    >
+                                        <tab.icon size={16} />
+                                        {tab.label}
+                                    </button>
+                                ))}
+                            </div>
 
-                        <div key={activeTab} className="tab-content-fade">
-                            {/* Profile Tab */}
-                            {activeTab === 'profile' && (
-                                <div className="space-y-8">
-                                    {/* Academic Update Alert */}
-                                    {academicSettings && user && user.lastVerifiedPeriodId !== academicSettings.id && (
-                                        <div className="bg-amber-500/10 border border-amber-500/50 rounded-2xl p-6 sm:p-8 animate-fade-in">
-                                            <div className="flex flex-col xl:flex-row gap-8">
-                                                <div className="xl:w-1/3 space-y-4">
-                                                    <div className="flex items-center gap-3">
-                                                        <div className="p-2.5 bg-amber-500/20 rounded-xl">
-                                                            <AlertTriangle className="w-6 h-6 text-amber-500" />
-                                                        </div>
-                                                        <h3 className="text-xl font-bold text-white">
-                                                            Academic Update Required
-                                                        </h3>
-                                                    </div>
-                                                    <p className="text-slate-300 leading-relaxed">
-                                                        The current academic period is <span className="text-white font-semibold">{academicSettings.schoolYear} - {academicSettings.semester}</span>.
-                                                        Please update your record and upload a new COR to maintain access to your classes.
-                                                    </p>
-                                                </div>
-
-                                                <div className="xl:w-2/3">
-                                                    <form onSubmit={handleAcademicUpdate} className="space-y-6 bg-slate-900/40 p-6 sm:p-8 rounded-2xl border border-slate-700/50 shadow-2xl backdrop-blur-sm">
-                                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                                                            {/* Course */}
-                                                            <div className="space-y-2">
-                                                                <label className="block text-sm font-medium text-slate-400 ml-1">Current Course</label>
-                                                                <input
-                                                                    type="text"
-                                                                    value={academicForm.course}
-                                                                    onChange={(e) => {
-                                                                        setAcademicForm({ ...academicForm, course: e.target.value });
-                                                                        setCorVerified(false);
-                                                                    }}
-                                                                    className="w-full px-4 py-3 bg-slate-950 border border-slate-700 rounded-xl text-white focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 transition-all outline-none placeholder:text-slate-700"
-                                                                    placeholder="e.g. BSIT"
-                                                                    required
-                                                                    disabled={isSubmittingAcademic || corVerifying}
-                                                                />
-                                                            </div>
-                                                            {/* Year Level */}
-                                                            <div className="space-y-2">
-                                                                <label className="block text-sm font-medium text-slate-400 ml-1">Current Year Level</label>
-                                                                <select
-                                                                    value={academicForm.yearLevel}
-                                                                    onChange={(e) => {
-                                                                        setAcademicForm({ ...academicForm, yearLevel: e.target.value });
-                                                                        setCorVerified(false);
-                                                                    }}
-                                                                    className="w-full px-4 py-3 bg-slate-950 border border-slate-700 rounded-xl text-white focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 transition-all outline-none"
-                                                                    required
-                                                                    disabled={isSubmittingAcademic || corVerifying}
-                                                                >
-                                                                    <option value="">Select Year Level</option>
-                                                                    <option value="1">1st Year</option>
-                                                                    <option value="2">2nd Year</option>
-                                                                    <option value="3">3rd Year</option>
-                                                                    <option value="4">4th Year</option>
-                                                                    <option value="5">5th Year</option>
-                                                                </select>
-                                                            </div>
-                                                        </div>
-
-                                                        {/* COR Upload & Verification */}
-                                                        <div className="space-y-3">
-                                                            <label className="block text-sm font-medium text-slate-400 ml-1">Certificate of Registration (COR)</label>
-                                                            <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-4">
-                                                                <div className="flex-1">
-                                                                    <input
-                                                                        type="file"
-                                                                        accept="image/*,application/pdf"
-                                                                        onChange={(e) => {
-                                                                            handleCorFileChange(e);
-                                                                            setCorVerified(false);
-                                                                            setCorVerificationResult(null);
-                                                                        }}
-                                                                        className="hidden"
-                                                                        id="cor-upload-profile"
-                                                                        disabled={isSubmittingAcademic || corVerifying}
-                                                                    />
-                                                                    <label
-                                                                        htmlFor="cor-upload-profile"
-                                                                        className="flex items-center justify-center gap-3 px-4 py-3 bg-slate-950 border border-slate-700 rounded-xl text-white cursor-pointer hover:bg-slate-900 transition-all w-full group overflow-hidden"
-                                                                    >
-                                                                        <FileText className="w-5 h-5 text-brand-500 group-hover:scale-110 transition-transform" />
-                                                                        <span className="truncate max-w-[200px] text-sm font-medium">
-                                                                            {academicForm.corFile ? academicForm.corFile.name : 'Click to Upload COR Document'}
-                                                                        </span>
-                                                                    </label>
+                            <div className="tab-content-fade">
+                                {activeTab === 'profile' && (
+                                    <div className="space-y-12">
+                                        {/* Premium Academic Update Section */}
+                                        {academicSettings && user && user.lastVerifiedPeriodId !== academicSettings.id && (
+                                            <div className="relative overflow-hidden group">
+                                                <div className="absolute inset-0 bg-identity-sky rounded-[3rem] opacity-5 group-hover:opacity-10 transition-opacity"></div>
+                                                <div className="bg-white border-2 border-identity-sky/20 rounded-[3rem] p-10 relative z-10 shadow-xl">
+                                                    <div className="flex flex-col xl:flex-row gap-12">
+                                                        <div className="xl:w-[35%] space-y-6">
+                                                            <div className="flex items-center gap-4">
+                                                                <div className="p-4 bg-identity-sky/10 rounded-2xl text-identity-sky">
+                                                                    <RefreshCw className="w-8 h-8 animate-spin-slow" />
                                                                 </div>
-
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={verifyCOR}
-                                                                    disabled={!academicForm.corFile || corVerifying || corVerified || isSubmittingAcademic}
-                                                                    className={`px-8 py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all shadow-xl hover:-translate-y-0.5 active:translate-y-0 ${corVerified
-                                                                            ? 'bg-green-500/10 text-green-400 border border-green-500/30 cursor-default'
-                                                                            : 'bg-brand-600 hover:bg-brand-500 text-white disabled:opacity-50 disabled:translate-y-0 shadow-brand-600/20'
-                                                                        }`}
-                                                                >
-                                                                    {corVerifying ? (
-                                                                        <RefreshCw className="w-5 h-5 animate-spin" />
-                                                                    ) : corVerified ? (
-                                                                        <Check className="w-5 h-5" />
-                                                                    ) : (
-                                                                        <ShieldCheck className="w-5 h-5" />
-                                                                    )}
-                                                                    {corVerifying ? 'Verifying...' : corVerified ? 'Verified' : 'Verify Now'}
-                                                                </button>
+                                                                <div>
+                                                                    <h3 className="text-2xl font-black text-identity-navy uppercase tracking-tighter leading-tight">
+                                                                        Academic Sync Required
+                                                                    </h3>
+                                                                    <p className="text-[9px] font-black text-identity-sky uppercase tracking-[0.3em] mt-1">Pending Validation Node</p>
+                                                                </div>
                                                             </div>
-                                                            <p className="text-[10px] text-slate-500 uppercase tracking-widest font-bold px-1 flex items-center gap-2">
-                                                                <span className="w-1 h-1 bg-slate-700 rounded-full"></span>
-                                                                PDF or Image (Max 10MB)
+                                                            <div className="space-y-4 bg-slate-50/50 p-6 rounded-2xl border border-slate-100">
+                                                                <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest text-slate-400">
+                                                                    <span>Active Term</span>
+                                                                    <span className="text-identity-navy">{academicSettings.schoolYear}</span>
+                                                                </div>
+                                                                <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest text-slate-400">
+                                                                    <span>Semester</span>
+                                                                    <span className="text-identity-navy">{academicSettings.semester}</span>
+                                                                </div>
+                                                            </div>
+                                                            <p className="text-slate-400 text-xs font-black uppercase tracking-widest leading-relaxed">
+                                                                Synchronize your academic credentials to ensure uninterrupted class accessibility.
                                                             </p>
                                                         </div>
 
-                                                        {/* Verification Results Alert */}
-                                                        {corVerificationResult && (
-                                                            <div className={`p-5 rounded-2xl border flex gap-4 animate-in slide-in-from-top-4 duration-500 ${corVerificationResult.valid
-                                                                    ? 'bg-green-500/5 border-green-500/20'
-                                                                    : 'bg-red-500/5 border-red-500/20'
-                                                                }`}>
-                                                                <div className={`p-2.5 rounded-full h-fit flex-shrink-0 ${corVerificationResult.valid ? 'bg-green-500/20 text-green-500' : 'bg-red-500/20 text-red-500'
+                                                        <div className="xl:w-[65%]">
+                                                            <form onSubmit={handleAcademicUpdate} className="space-y-8">
+                                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                                                    <div className="space-y-3">
+                                                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">Assigned Course</label>
+                                                                        <input
+                                                                            type="text"
+                                                                            value={academicForm.course}
+                                                                            onChange={(e) => { setAcademicForm({ ...academicForm, course: e.target.value }); setCorVerified(false); }}
+                                                                            className="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl text-identity-navy font-black text-sm uppercase tracking-widest focus:ring-4 focus:ring-identity-sky/10 focus:border-identity-sky transition-all outline-none placeholder:text-slate-300 shadow-inner"
+                                                                            placeholder="E.G. BSIT"
+                                                                            required
+                                                                        />
+                                                                    </div>
+                                                                    <div className="space-y-3">
+                                                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">Academic Year</label>
+                                                                        <select
+                                                                            value={academicForm.yearLevel}
+                                                                            onChange={(e) => { setAcademicForm({ ...academicForm, yearLevel: e.target.value }); setCorVerified(false); }}
+                                                                            className="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl text-identity-navy font-black text-sm uppercase tracking-widest focus:ring-4 focus:ring-identity-sky/10 focus:border-identity-sky transition-all outline-none appearance-none shadow-inner cursor-pointer"
+                                                                            required
+                                                                        >
+                                                                            <option value="">Choose Level</option>
+                                                                            {[1, 2, 3, 4, 5].map(y => <option key={y} value={y}>{y}{y === 1 ? 'st' : y === 2 ? 'nd' : y === 3 ? 'rd' : 'th'} Year</option>)}
+                                                                        </select>
+                                                                    </div>
+                                                                </div>
+
+                                                                <div className="space-y-4">
+                                                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">Certificate of Registration (COR)</label>
+                                                                    <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-6">
+                                                                        <div className="flex-1">
+                                                                            <input type="file" accept="image/*,application/pdf" onChange={(e) => { handleCorFileChange(e); setCorVerified(false); setCorVerificationResult(null); }} className="hidden" id="cor-upload-profile" />
+                                                                            <label
+                                                                                htmlFor="cor-upload-profile"
+                                                                                className="flex items-center justify-center gap-4 px-8 py-5 bg-white border-2 border-dashed border-slate-200 rounded-[2rem] text-slate-400 cursor-pointer hover:border-identity-sky hover:bg-identity-sky/5 transition-all w-full group overflow-hidden"
+                                                                            >
+                                                                                <FileText className="w-6 h-6 text-identity-sky" />
+                                                                                <span className="truncate max-w-[250px] text-[10px] font-black uppercase tracking-widest">
+                                                                                    {academicForm.corFile ? academicForm.corFile.name : 'Upload Credentials'}
+                                                                                </span>
+                                                                            </label>
+                                                                        </div>
+
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={verifyCOR}
+                                                                            disabled={!academicForm.corFile || corVerifying || corVerified || isSubmittingAcademic}
+                                                                            className={`px-10 py-5 rounded-2xl font-black text-[10px] uppercase tracking-[0.3em] flex items-center justify-center gap-3 transition-all shadow-2xl active:scale-95 ${
+                                                                                corVerified
+                                                                                ? 'bg-emerald-50 text-emerald-500 border border-emerald-200'
+                                                                                : 'bg-identity-navy text-white hover:bg-identity-sky disabled:opacity-30'
+                                                                            }`}
+                                                                        >
+                                                                            {corVerifying ? <RefreshCw className="animate-spin" size={18} /> : corVerified ? <Check size={18} /> : <ShieldCheck size={18} />}
+                                                                            {corVerifying ? 'Validating...' : corVerified ? 'Verified' : 'Verify Node'}
+                                                                        </button>
+                                                                    </div>
+                                                                </div>
+
+                                                                {corVerificationResult && (
+                                                                    <div className={`p-8 rounded-[2rem] border-2 flex gap-6 animate-in slide-in-from-top-4 duration-500 ${
+                                                                        corVerificationResult.valid ? 'bg-emerald-50 border-emerald-100' : 'bg-rose-50 border-rose-100'
                                                                     }`}>
-                                                                    {corVerificationResult.valid ? <Check size={20} /> : <X size={20} />}
-                                                                </div>
-                                                                <div className="flex-1 min-w-0">
-                                                                    <div className={`font-bold text-base ${corVerificationResult.valid ? 'text-green-400' : 'text-red-400'}`}>
-                                                                        {corVerificationResult.valid ? 'Identity Verified' : 'Verification Failed'}
+                                                                        <div className={`p-4 rounded-2xl h-fit ${corVerificationResult.valid ? 'bg-emerald-500 text-white shadow-xl shadow-emerald-500/20' : 'bg-rose-500 text-white shadow-xl shadow-rose-500/20'}`}>
+                                                                            {corVerificationResult.valid ? <Check size={24} /> : <X size={24} />}
+                                                                        </div>
+                                                                        <div className="flex-1">
+                                                                            <h4 className={`font-black text-lg uppercase tracking-tighter leading-none ${corVerificationResult.valid ? 'text-emerald-600' : 'text-rose-600'}`}>
+                                                                                {corVerificationResult.valid ? 'Identity Match Found' : 'Validation Error'}
+                                                                            </h4>
+                                                                            <div className="text-[10px] font-black uppercase tracking-widest text-slate-500 mt-3 space-y-2">
+                                                                                {corVerificationResult.valid ? (
+                                                                                    <p className="flex items-center gap-3">
+                                                                                        <span className="text-identity-navy">{corVerificationResult.extractedName}</span>
+                                                                                        <span className="w-1 h-1 bg-slate-300 rounded-full"></span>
+                                                                                        <span className="text-identity-navy">{corVerificationResult.extractedId}</span>
+                                                                                    </p>
+                                                                                ) : (
+                                                                                    <p className="text-rose-500">{corVerificationResult.reason}</p>
+                                                                                )}
+                                                                            </div>
+                                                                        </div>
                                                                     </div>
-                                                                    <div className="text-sm text-slate-400 mt-2 space-y-2">
-                                                                        {corVerificationResult.valid ? (
-                                                                            <>
-                                                                                <p className="flex items-center gap-2">
-                                                                                    Matched: <span className="text-white font-semibold">{corVerificationResult.extractedName}</span>
-                                                                                    <span className="text-slate-600">|</span>
-                                                                                    <span className="text-white font-semibold">{corVerificationResult.extractedId}</span>
-                                                                                </p>
-                                                                                <p>Extracted Course: <span className="text-white font-semibold">{corVerificationResult.extractedCourse || 'N/A'}</span></p>
-                                                                            </>
-                                                                        ) : (
-                                                                            <p className="text-red-300 font-medium bg-red-500/10 p-2 rounded-lg inline-block">{corVerificationResult.reason}</p>
-                                                                        )}
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        )}
+                                                                )}
 
-                                                        {/* Preview Section */}
-                                                        {academicForm.corPreview && (
-                                                            <div className="mt-2 relative w-full sm:w-64 h-40 rounded-2xl overflow-hidden border border-slate-700/50 bg-slate-950/80 shadow-inner group">
-                                                                <img src={academicForm.corPreview} alt="COR Preview" className="w-full h-full object-contain transition-transform group-hover:scale-105" />
-                                                                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/60 to-transparent pointer-events-none"></div>
-                                                            </div>
-                                                        )}
-
-                                                        {/* Action Button */}
-                                                        <button
-                                                            type="submit"
-                                                            disabled={isSubmittingAcademic || !corVerified}
-                                                            className="w-full py-4 bg-brand-600 hover:bg-brand-500 disabled:bg-slate-800 disabled:opacity-40 text-white font-bold rounded-2xl transition-all shadow-2xl shadow-brand-600/30 disabled:shadow-none hover:-translate-y-0.5 active:translate-y-0.5"
-                                                        >
-                                                            {isSubmittingAcademic ? (
-                                                                <span className="flex items-center justify-center gap-3">
-                                                                    <RefreshCw className="w-5 h-5 animate-spin" />
-                                                                    Applying Changes...
-                                                                </span>
-                                                            ) : (
-                                                                'Confirm & Submit Academic Update'
-                                                            )}
-                                                        </button>
-                                                    </form>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
-                                        <div className="space-y-6">
-
-                                            <h3 className="text-lg font-bold text-white border-b border-slate-800 pb-2">Personal Information</h3>
-
-
-                                            <div className="space-y-4">
-                                                <div>
-                                                    <label className="block text-sm font-medium text-slate-300 mb-1">First Name</label>
-                                                    <input
-                                                        type="text"
-                                                        name="firstName"
-                                                        value={formData.firstName || ''}
-                                                        onChange={handleChange}
-                                                        disabled={!isEditing}
-                                                        className="w-full px-4 py-2 border border-slate-700 rounded-lg bg-slate-800 text-white focus:ring-2 focus:outline-none focus:ring-brand-500 focus:border-brand-500 disabled:bg-slate-900 disabled:text-slate-400"
-                                                    />
-                                                </div>
-                                                <div>
-                                                    <label className="block text-sm font-medium text-slate-300 mb-1">Last Name</label>
-                                                    <input
-                                                        type="text"
-                                                        name="lastName"
-                                                        value={formData.lastName || ''}
-                                                        onChange={handleChange}
-                                                        disabled={!isEditing}
-                                                        className="w-full px-4 py-2 border border-slate-700 rounded-lg bg-slate-800 text-white focus:ring-2 focus:outline-none focus:ring-brand-500 focus:border-brand-500 disabled:bg-slate-900 disabled:text-slate-400"
-                                                    />
-                                                </div>
-                                                <div>
-                                                    <label className="block text-sm font-medium text-slate-300 mb-1">Email Address</label>
-                                                    <div className="relative">
-                                                        <Mail className="absolute left-3 top-2.5 text-slate-500" size={18} />
-                                                        <input
-                                                            type="email"
-                                                            name="email"
-                                                            value={formData.email || ''}
-                                                            onChange={handleChange}
-                                                            disabled={!isEditing}
-                                                            placeholder="email@example.com"
-                                                            className="w-full pl-10 pr-4 py-2 border border-slate-700 rounded-lg bg-slate-800 text-white placeholder-slate-500 focus:ring-2 focus:outline-none focus:ring-brand-500 focus:border-brand-500 disabled:bg-slate-900 disabled:text-slate-400"
-                                                        />
+                                                                <button
+                                                                    type="submit"
+                                                                    disabled={isSubmittingAcademic || !corVerified}
+                                                                    className="w-full py-6 bg-identity-sky hover:bg-identity-navy disabled:bg-slate-200 disabled:text-slate-400 text-white font-black text-[12px] uppercase tracking-[0.4em] rounded-[2rem] transition-all shadow-3xl shadow-identity-sky/20 active:scale-[0.98]"
+                                                                >
+                                                                    {isSubmittingAcademic ? 'Synchronizing Academic Node...' : 'Commit Academic Update'}
+                                                                </button>
+                                                            </form>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
-                                        </div>
+                                        )}
 
-                                        <div className="space-y-6">
-                                            <h3 className="text-lg font-bold text-white border-b border-slate-800 pb-2">Academic Details</h3>
+                                        {/* Profile Grid */}
+                                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
+                                            <div className="space-y-10">
+                                                <div className="flex items-center gap-4">
+                                                    <div className="w-1.5 h-8 bg-identity-sky rounded-full"></div>
+                                                    <h3 className="text-2xl font-black text-identity-navy uppercase tracking-tighter">Personal Parameters</h3>
+                                                </div>
+                                                <div className="space-y-8">
+                                                    {[
+                                                        { label: 'Primary Name', name: 'firstName', icon: User },
+                                                        { label: 'Family Name', name: 'lastName', icon: User },
+                                                        { label: 'Cognitive Link (Email)', name: 'email', icon: Mail }
+                                                    ].map((field) => (
+                                                        <div key={field.name} className="space-y-3 relative group">
+                                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2 flex items-center gap-2">
+                                                                <field.icon size={12} className="text-identity-sky" /> {field.label}
+                                                            </label>
+                                                            <div className="relative">
+                                                                <input
+                                                                    type={field.name === 'email' ? 'email' : 'text'}
+                                                                    name={field.name}
+                                                                    value={(formData as any)[field.name] || ''}
+                                                                    onChange={handleChange}
+                                                                    disabled={!isEditing}
+                                                                    className="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl text-identity-navy font-black text-sm uppercase tracking-widest focus:ring-4 focus:ring-identity-sky/10 focus:border-identity-sky transition-all outline-none disabled:opacity-60 disabled:bg-slate-100/50 shadow-inner"
+                                                                />
+                                                                {isEditing && <Edit size={16} className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-300 group-hover:text-identity-sky transition-colors" />}
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
 
-                                            <div className="space-y-4">
-                                                <div>
-                                                    <label className="block text-sm font-medium text-slate-300 mb-1">Student ID</label>
-                                                    <input
-                                                        type="text"
-                                                        value={formData.studentId || formData.schoolId || ''}
-                                                        disabled
-                                                        className="w-full px-4 py-2 border border-slate-700 rounded-lg bg-slate-900 text-slate-400 cursor-not-allowed"
-                                                    />
+                                            <div className="space-y-10">
+                                                <div className="flex items-center gap-4">
+                                                    <div className="w-1.5 h-8 bg-identity-navy rounded-full"></div>
+                                                    <h3 className="text-2xl font-black text-identity-navy uppercase tracking-tighter">Academic Matrix</h3>
                                                 </div>
-                                                <div>
-                                                    <label className="block text-sm font-medium text-slate-300 mb-1">Course</label>
-                                                    <input
-                                                        type="text"
-                                                        value={formData.course || ''}
-                                                        disabled
-                                                        className="w-full px-4 py-2 border border-slate-700 rounded-lg bg-slate-900 text-slate-400 cursor-not-allowed"
-                                                    />
-                                                </div>
-                                                <div>
-                                                    <label className="block text-sm font-medium text-slate-300 mb-1">Year Level</label>
-                                                    <input
-                                                        type="text"
-                                                        value={formData.yearLevel || ''}
-                                                        disabled
-                                                        className="w-full px-4 py-2 border border-slate-700 rounded-lg bg-slate-900 text-slate-400 cursor-not-allowed"
-                                                    />
-                                                </div>
-                                                <div>
-                                                    <label className="block text-sm font-medium text-slate-300 mb-1">Section</label>
-                                                    <input
-                                                        type="text"
-                                                        value={formData.section || 'Not specified'}
-                                                        disabled
-                                                        className="w-full px-4 py-2 border border-slate-700 rounded-lg bg-slate-900 text-slate-400 cursor-not-allowed"
-                                                    />
-                                                </div>
-                                                <div>
-                                                    <label className="block text-sm font-medium text-slate-300 mb-1">School Year</label>
-                                                    <input
-                                                        type="text"
-                                                        value={academicSettings?.schoolYear || 'Loading...'}
-                                                        disabled
-                                                        className="w-full px-4 py-2 border border-slate-700 rounded-lg bg-slate-900 text-slate-400 cursor-not-allowed"
-                                                    />
-                                                </div>
-                                                <div>
-                                                    <label className="block text-sm font-medium text-slate-300 mb-1">Semester</label>
-                                                    <input
-                                                        type="text"
-                                                        value={academicSettings?.semester || 'Loading...'}
-                                                        disabled
-                                                        className="w-full px-4 py-2 border border-slate-700 rounded-lg bg-slate-900 text-slate-400 cursor-not-allowed"
-                                                    />
+                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
+                                                    {[
+                                                        { label: 'Entity ID', value: formData.studentId || formData.schoolId, icon: Fingerprint },
+                                                        { label: 'Mapped Course', value: formData.course, icon: GraduationCap },
+                                                        { label: 'Academic Year', value: formData.yearLevel, icon: Database },
+                                                        { label: 'Assigned Section', value: formData.section || 'NOT_ASSIGNED', icon: MapPin },
+                                                        { label: 'Term Reference', value: academicSettings?.schoolYear, icon: FileText },
+                                                        { label: 'Temporal Phase', value: academicSettings?.semester, icon: Clock }
+                                                    ].map((field, idx) => (
+                                                        <div key={idx} className="bg-slate-50/50 rounded-2xl p-6 border border-slate-100 shadow-sm group hover:border-identity-sky/30 transition-all">
+                                                            <div className="flex items-center gap-3 mb-3">
+                                                                <div className="p-2 bg-white rounded-xl text-identity-sky border border-slate-100 group-hover:scale-110 transition-transform shadow-sm">
+                                                                    <field.icon size={14} />
+                                                                </div>
+                                                                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{field.label}</span>
+                                                            </div>
+                                                            <p className="text-[11px] font-black text-identity-navy uppercase tracking-widest truncate">{field.value || 'N/A'}</p>
+                                                        </div>
+                                                    ))}
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
-                                </div>
-                            )}
+                                )}
 
-                            {/* Face Data Tab */}
-                             {activeTab === 'face' && (
-                                     !isEditingFaceData ? (
-                                        <div className="space-y-8 animate-fade-in">
+                                {activeTab === 'face' && (
+                                    !isEditingFaceData ? (
+                                        <div className="space-y-12 animate-fade-in">
                                             {/* Header HUD */}
-                                            <div className="bg-coffee p-8 rounded-[2rem] shadow-4xl border border-secondary/10 relative overflow-hidden">
-                                                <div className="absolute inset-0 bg-gradient-to-br from-secondary/5 to-transparent opacity-30"></div>
-                                                <div className="relative z-10 flex items-center justify-between">
-                                                    <div className="space-y-1">
-                                                        <h3 className="text-brand-cream font-black uppercase text-xl tracking-tighter">Identity Core</h3>
-                                                        <p className="text-secondary/60 text-[9px] font-black uppercase tracking-[0.3em]">Neural Pattern Secured • 5/5 Validated</p>
+                                            <div className="bg-identity-navy p-10 rounded-[3rem] shadow-3xl border border-white/5 relative overflow-hidden group">
+                                                <IdentityNode className="top-0 right-0 -translate-y-1/2 translate-x-1/2 opacity-20 group-hover:scale-110 transition-transform duration-700" />
+                                                <div className="absolute inset-0 bg-gradient-to-br from-identity-sky/20 to-transparent opacity-30"></div>
+                                                <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
+                                                    <div className="space-y-3">
+                                                        <div className="flex items-center gap-3">
+                                                            <h3 className="text-white font-black uppercase text-3xl tracking-tighter leading-none">Neural Pattern</h3>
+                                                            <div className="px-3 py-1 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-lg text-[8px] font-black uppercase tracking-widest">Secured</div>
+                                                        </div>
+                                                        <p className="text-white/40 text-[10px] font-black uppercase tracking-[0.4em]">5 of 5 Biometric Nodes Synchronized • Latest Sync: {new Date().toLocaleDateString()}</p>
                                                     </div>
                                                     <button 
                                                         onClick={() => setIsEditingFaceData(true)}
-                                                        className="bg-brand-cream text-coffee px-8 py-3 rounded-2xl font-black uppercase text-[9px] tracking-[0.3em] shadow-3xl hover:bg-white transition-all"
+                                                        className="bg-identity-sky text-white px-10 py-5 rounded-2xl font-black uppercase text-[10px] tracking-[0.3em] shadow-2xl shadow-identity-sky/30 hover:bg-white hover:text-identity-navy transition-all active:scale-95 flex items-center gap-3"
                                                     >
-                                                        Re-Scan Biometrics
+                                                        <RefreshCw size={16} /> Re-Scan Identity
                                                     </button>
                                                 </div>
                                             </div>
 
                                             {/* Preview Grid */}
-                                            <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+                                            <div className="grid grid-cols-2 lg:grid-cols-5 gap-8">
                                                 {['Front', 'Left', 'Right', 'Up', 'Down'].map((angle) => {
                                                     const photo = facePhotos.find(p => p.angle.toLowerCase() === angle.toLowerCase());
                                                     const photoUrl = photo ? getProfilePictureUrl(photo.photo_url) : null;
                                                     return (
-                                                        <div key={angle} className="space-y-3">
-                                                            <div className="aspect-[3/4] rounded-3xl overflow-hidden border-2 border-coffee/10 bg-white/50 relative group">
+                                                        <div key={angle} className="space-y-4 group">
+                                                            <div className="aspect-[3/4] rounded-[2.5rem] overflow-hidden border-2 border-slate-100 bg-white relative shadow-lg group-hover:shadow-2xl group-hover:border-identity-sky/50 transition-all duration-500">
                                                                 {photoUrl ? (
-                                                                    <img src={photoUrl} alt={angle} className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500" />
+                                                                    <img src={photoUrl} alt={angle} className="w-full h-full object-cover transition-all duration-700 group-hover:scale-110" />
                                                                 ) : (
-                                                                    <div className="w-full h-full flex items-center justify-center text-coffee/20">
-                                                                        <User size={32} />
+                                                                    <div className="w-full h-full flex items-center justify-center text-slate-200">
+                                                                        <User size={48} className="opacity-20" />
                                                                     </div>
                                                                 )}
-                                                                <div className="absolute inset-x-0 bottom-0 bg-coffee/80 backdrop-blur-md py-3 text-center">
-                                                                    <span className="text-brand-cream text-[9px] font-black uppercase tracking-[0.2em]">{angle}</span>
+                                                                <div className="absolute inset-x-0 bottom-0 bg-identity-navy/90 backdrop-blur-md py-4 text-center border-t border-white/10 translate-y-1 transition-transform group-hover:translate-y-0">
+                                                                    <span className="text-white text-[9px] font-black uppercase tracking-[0.3em]">{angle}</span>
                                                                 </div>
                                                             </div>
                                                         </div>
                                                     );
                                                 })}
                                             </div>
+                                            <div className="p-8 bg-slate-50 rounded-[2rem] border border-slate-100 flex items-start gap-4">
+                                                <Info className="text-identity-sky flex-shrink-0 mt-1" size={20} />
+                                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-relaxed">
+                                                    Ensure your biometric signatures are current to maintain high recognition accuracy throughout campus operational hours.
+                                                </p>
+                                            </div>
                                         </div>
                                     ) : (
-                                        <div className="animate-fade-in space-y-10">
-                                            <div className="flex items-center justify-between bg-white/50 backdrop-blur-xl p-8 rounded-[2.5rem] border border-coffee/5 shadow-2xl">
+                                        <div className="animate-fade-in space-y-12">
+                                            <div className="flex items-center justify-between bg-white/50 backdrop-blur-xl p-10 rounded-[3rem] border border-slate-200 shadow-2xl">
                                                 <div className="space-y-1">
-                                                    <h3 className="text-coffee font-black uppercase text-xl tracking-tighter">Biometric Resynchronization</h3>
-                                                    <p className="text-coffee/40 text-[9px] font-black uppercase tracking-[0.3em]">Initializing Smart Pose Detection...</p>
+                                                    <h3 className="text-identity-navy font-black uppercase text-2xl tracking-tighter">Biometric Override</h3>
+                                                    <p className="text-identity-sky text-[10px] font-black uppercase tracking-[0.4em] animate-pulse">Initializing Neural Optic Array...</p>
                                                 </div>
                                                 <button 
                                                     onClick={() => setIsEditingFaceData(false)}
-                                                    className="bg-brand-cream text-coffee/40 hover:text-coffee px-8 py-3 rounded-2xl font-black uppercase text-[9px] tracking-[0.3em] transition-all"
+                                                    className="bg-slate-100 text-slate-400 hover:text-rose-500 px-8 py-4 rounded-2xl font-black uppercase text-[10px] tracking-[0.3em] transition-all border border-slate-200 hover:border-rose-200"
                                                 >
-                                                    Cancel Sync
+                                                    Abort Sync
                                                 </button>
                                             </div>
 
-                                            <FaceEnrollmentScanner 
-                                                requireAll={false}
-                                                initialCaptures={facePhotos.reduce((acc, p) => ({ ...acc, [p.angle.toLowerCase()]: getProfilePictureUrl(p.photo_url) }), {})}
-                                                onComplete={async (newCaptures) => {
-                                                    setNewFacePhotos(newCaptures);
-                                                    setIsTraining(true);
-                                                    try {
-                                                        const formData = new FormData();
-                                                        // Only send CHANGED photos (those that are newly captured in this session)
-                                                        // We can distinguish because new captures are base64, initial are URLs
-                                                        Object.entries(newCaptures).forEach(([angle, data]) => {
-                                                            if (data.startsWith('data:')) {
-                                                                const blob = dataURLtoBlob(data);
-                                                                formData.append('faceImages', blob, `${angle}.jpg`);
-                                                            }
-                                                        });
-                                                        
-                                                        // Ensure we have at least one new image
-                                                        if (formData.getAll('faceImages').length === 0) {
-                                                            showToast('No new captures to sync', 'info');
+                                            <div className="max-w-3xl mx-auto">
+                                                <FaceEnrollmentScanner 
+                                                    requireAll={true}
+                                                    initialCaptures={facePhotos.reduce((acc, p) => ({ ...acc, [p.angle.toLowerCase()]: getProfilePictureUrl(p.photo_url) }), {})}
+                                                    onComplete={async (newCaptures) => {
+                                                        setNewFacePhotos(newCaptures);
+                                                        setIsTraining(true);
+                                                        try {
+                                                            const token = getToken();
+                                                            await axios.post(`${API_URL}/api/auth/update-face-data`, {
+                                                                userId: user?.id,
+                                                                facePhotos: newCaptures
+                                                            }, {
+                                                                headers: { Authorization: `Bearer ${token}` }
+                                                            });
+
+                                                            const authAxios = createAuthAxios();
+                                                            const meRes = await authAxios.get(`${API_URL}/api/auth/me`);
+                                                            setUser(meRes.data);
+                                                            fetchFacePhotos(meRes.data.id);
+                                                            localStorage.setItem('img_version', Date.now().toString());
+                                                            
+                                                            showToast('Neural Matrix Successfully Updated', 'success');
                                                             setIsEditingFaceData(false);
-                                                            return;
+                                                        } catch (err) {
+                                                            console.error("Sync failed:", err);
+                                                            showToast('Protocol Communication Error', 'error');
+                                                        } finally {
+                                                            setIsTraining(false);
                                                         }
-
-                                                        formData.append('userId', user?.id?.toString() || ''); 
-
-                                                        const token = getToken();
-                                                        await axios.post(`${API_URL}/api/auth/update-face-data`, formData, {
-                                                            headers: { 'Content-Type': 'multipart/form-data', Authorization: `Bearer ${token}` }
-                                                        });
-
-                                                        // Refresh data
-                                                        const authAxios = createAuthAxios();
-                                                        const meRes = await authAxios.get(`${API_URL}/api/auth/me`);
-                                                        setUser(meRes.data);
-                                                        fetchFacePhotos(meRes.data.id);
-                                                        
-                                                        // Bump image version for cache busting
-                                                        localStorage.setItem('img_version', Date.now().toString());
-                                                        
-                                                        showToast('Neural Identity Synchronized', 'success');
-                                                        setIsEditingFaceData(false);
-                                                    } catch (err) {
-                                                        console.error("Sync failed:", err);
-                                                        showToast('Sync Failed', 'error');
-                                                    } finally {
-                                                        setIsTraining(false);
-                                                    }
-                                                }}
-                                            />
+                                                    }}
+                                                />
+                                            </div>
                                         </div>
                                     )
-                            )}
+                                )}
 
-                            {/* Security Tab */}
-                            {activeTab === 'security' && (
-                                <div className="max-w-md">
-                                    <h3 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
-                                        <Lock size={20} className="text-brand-500" /> Change Password
-                                    </h3>
-                                    <form onSubmit={handleChangePassword} className="space-y-4" autoComplete="off">
-                                        <div>
-                                            <label className="block text-sm font-medium text-slate-300 mb-1">Current Password</label>
-                                            <div className="relative">
-                                                <input
-                                                    type={showCurrentPassword ? "text" : "password"}
-                                                    name="currentPassword"
-                                                    required
-                                                    value={passwordData.currentPassword}
-                                                    onChange={handlePasswordChange}
-                                                    autoComplete="new-password"
-                                                    className="w-full px-4 py-2 border border-slate-700 rounded-lg bg-slate-800 text-white focus:ring-2 focus:outline-none focus:ring-brand-500 focus:border-brand-500 pr-10"
-                                                />
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                                                    className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-200"
-                                                >
-                                                    {showCurrentPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                                                </button>
+                                {activeTab === 'security' && (
+                                    <div className="max-w-2xl mx-auto py-8">
+                                        <div className="text-center mb-16">
+                                            <div className="w-20 h-20 bg-identity-navy rounded-[1.5rem] flex items-center justify-center mx-auto mb-6 shadow-2xl shadow-identity-navy/20 text-white">
+                                                <Lock size={32} />
                                             </div>
+                                            <h3 className="text-3xl font-black text-identity-navy uppercase tracking-tighter">Security Protocols</h3>
+                                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em] mt-3">Rotate keys regularly for optimal safety</p>
                                         </div>
-                                        <div>
-                                            <label className="block text-sm font-medium text-slate-300 mb-1">New Password</label>
-                                            <div className="relative">
-                                                <input
-                                                    type={showNewPassword ? "text" : "password"}
-                                                    name="newPassword"
-                                                    required
-                                                    value={passwordData.newPassword}
-                                                    onChange={handlePasswordChange}
-                                                    autoComplete="new-password"
-                                                    className="w-full px-4 py-2 border border-slate-700 rounded-lg bg-slate-800 text-white focus:ring-2 focus:outline-none focus:ring-brand-500 focus:border-brand-500 pr-10"
-                                                />
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setShowNewPassword(!showNewPassword)}
-                                                    className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-200"
-                                                >
-                                                    {showNewPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                                                </button>
-                                            </div>
-                                            {passwordData.newPassword && !/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/.test(passwordData.newPassword) && (
-                                                <p className="mt-1 text-xs text-red-400 flex items-start gap-1">
-                                                    <AlertCircle size={14} className="shrink-0 mt-0.5" />
-                                                    Must be at least 8 chars with uppercase, lowercase, number, and special char.
-                                                </p>
-                                            )}
-                                        </div>
-                                        <div>
-                                            <label className="block text-sm font-medium text-slate-300 mb-1">Confirm New Password</label>
-                                            <div className="relative">
-                                                <input
-                                                    type={showConfirmPassword ? "text" : "password"}
-                                                    name="confirmPassword"
-                                                    required
-                                                    value={passwordData.confirmPassword}
-                                                    onChange={handlePasswordChange}
-                                                    autoComplete="new-password"
-                                                    className="w-full px-4 py-2 border border-slate-700 rounded-lg bg-slate-800 text-white focus:ring-2 focus:outline-none focus:ring-brand-500 focus:border-brand-500 pr-10"
-                                                />
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                                                    className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-200"
-                                                >
-                                                    {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                                                </button>
-                                            </div>
-                                            {passwordData.confirmPassword && passwordData.newPassword !== passwordData.confirmPassword && (
-                                                <p className="mt-1 text-sm text-red-400 flex items-center gap-1">
-                                                    <AlertCircle size={14} />
-                                                    Passwords do not match
-                                                </p>
-                                            )}
-                                        </div>
-                                        <button
-                                            type="submit"
-                                            className="w-full bg-brand-500 text-white font-bold py-2 rounded-lg hover:bg-brand-400 transition-colors shadow-md"
-                                        >
-                                            Update Password
-                                        </button>
-                                    </form>
-                                </div>
-                            )}
 
-                            {/* Privacy & Consent Tab */}
-                            {activeTab === 'privacy' && (
-                                <div className="space-y-6">
-                                    <div className="bg-blue-500/10 border border-blue-500/20 text-blue-400 p-4 rounded-lg flex items-center gap-3">
-                                        <Shield size={20} />
-                                        <div className="text-sm">
-                                            <strong>Philippine Data Privacy Act Compliance</strong>
-                                            <p className="text-blue-300 mt-1">Your privacy rights are protected under the Data Privacy Act of 2012</p>
-                                        </div>
-                                    </div>
-
-                                    <div className="bg-slate-800 rounded-lg p-6 border border-slate-700">
-                                        <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-                                            <FileText size={20} className="text-brand-400" />
-                                            Consent Status
-                                        </h3>
-                                        {consentLoading ? (
-                                            <p className="text-slate-400">Loading...</p>
-                                        ) : consentStatus ? (
-                                            <div className="space-y-3">
-                                                <div className="flex items-center justify-between p-3 bg-slate-700/50 rounded-lg">
-                                                    <span className="text-slate-300">Biometric Data</span>
-                                                    {consentStatus.biometricAccepted ? (
-                                                        <span className="flex items-center gap-2 text-green-400">
-                                                            <CheckCircle2 size={18} /> Consented
-                                                        </span>
-                                                    ) : (
-                                                        <span className="flex items-center gap-2 text-yellow-400">
-                                                            <AlertTriangle size={18} /> Pending
-                                                        </span>
+                                        <form onSubmit={handleChangePassword} className="space-y-8 bg-slate-50/50 p-12 rounded-[3rem] border border-slate-100 shadow-inner" autoComplete="off">
+                                            {[
+                                                { label: 'Current Phrase', name: 'currentPassword', type: 'password', show: showCurrentPassword, setShow: setShowCurrentPassword },
+                                                { label: 'New Signature', name: 'newPassword', type: 'password', show: showNewPassword, setShow: setShowNewPassword },
+                                                { label: 'Confirm Signature', name: 'confirmPassword', type: 'password', show: showConfirmPassword, setShow: setShowConfirmPassword }
+                                            ].map((field) => (
+                                                <div key={field.name} className="space-y-3 relative group">
+                                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4">{field.label}</label>
+                                                    <div className="relative">
+                                                        <input
+                                                            type={field.show ? "text" : "password"}
+                                                            name={field.name}
+                                                            required
+                                                            value={(passwordData as any)[field.name]}
+                                                            onChange={handlePasswordChange}
+                                                            className="w-full px-8 py-5 bg-white border border-slate-200 rounded-2xl text-identity-navy font-black text-sm tracking-widest focus:ring-4 focus:ring-identity-sky/10 focus:border-identity-sky transition-all outline-none shadow-sm"
+                                                        />
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => field.setShow(!field.show)}
+                                                            className="absolute right-6 top-1/2 -translate-y-1/2 text-slate-300 hover:text-identity-sky transition-colors"
+                                                        >
+                                                            {field.show ? <EyeOff size={20} /> : <Eye size={20} />}
+                                                        </button>
+                                                    </div>
+                                                    {field.name === 'newPassword' && passwordData.newPassword && !/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/.test(passwordData.newPassword) && (
+                                                        <div className="p-4 bg-rose-50 rounded-xl border border-rose-100 flex items-start gap-3 mt-4 animate-in slide-in-from-top-2">
+                                                            <XCircle size={16} className="text-rose-500 mt-0.5" />
+                                                            <p className="text-[10px] font-black text-rose-500 uppercase tracking-widest leading-relaxed">Requires: 8+ Chars, [A-Z], [a-z], [0-9], [@!#$]</p>
+                                                        </div>
                                                     )}
                                                 </div>
-                                                <div className="flex items-center justify-between p-3 bg-slate-700/50 rounded-lg">
-                                                    <span className="text-slate-300">Privacy Policy</span>
-                                                    {consentStatus.privacyPolicyAccepted ? (
-                                                        <span className="flex items-center gap-2 text-green-400">
-                                                            <CheckCircle2 size={18} /> Accepted
-                                                        </span>
-                                                    ) : (
-                                                        <span className="flex items-center gap-2 text-yellow-400">
-                                                            <AlertTriangle size={18} /> Not Accepted
-                                                        </span>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        ) : (
-                                            <p className="text-slate-400">No consent data</p>
-                                        )}
-                                    </div>
-
-                                    <div className="bg-slate-800 rounded-lg p-6 border border-slate-700">
-                                        <h3 className="text-lg font-bold text-white mb-4">Consent History</h3>
-                                        {consentHistory.length > 0 ? (
-                                            <div className="overflow-x-auto">
-                                                <table className="w-full text-sm">
-                                                    <thead>
-                                                        <tr className="border-b border-slate-700">
-                                                            <th className="text-left py-2 px-3 text-slate-400 font-medium">Date</th>
-                                                            <th className="text-left py-2 px-3 text-slate-400 font-medium">Type</th>
-                                                            <th className="text-left py-2 px-3 text-slate-400 font-medium">Action</th>
-                                                            <th className="text-left py-2 px-3 text-slate-400 font-medium">Version</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody>
-                                                        {consentHistory.map((record: any, index: number) => (
-                                                            <tr key={index} className="border-b border-slate-700/50">
-                                                                <td className="py-3 px-3 text-slate-300">
-                                                                    {new Date(record.timestamp).toLocaleDateString()}
-                                                                </td>
-                                                                <td className="py-3 px-3 text-slate-300 capitalize">
-                                                                    {record.consent_type.replace('_', ' ')}
-                                                                </td>
-                                                                <td className="py-3 px-3">
-                                                                    {record.consent_given ? (
-                                                                        <span className="text-green-400 flex items-center gap-1">
-                                                                            <CheckCircle2 size={14} /> Accepted
-                                                                        </span>
-                                                                    ) : record.consent_text?.toLowerCase().includes('pending') ? (
-                                                                        <span className="text-yellow-400 flex items-center gap-1">
-                                                                            <AlertTriangle size={14} /> Pending Request
-                                                                        </span>
-                                                                    ) : (
-                                                                        <span className="text-red-400 flex items-center gap-1">
-                                                                            <XCircle size={14} /> Revoked
-                                                                        </span>
-                                                                    )}
-                                                                </td>
-                                                                <td className="py-3 px-3 text-slate-400">v{record.consent_version}</td>
-                                                            </tr>
-                                                        ))}
-                                                    </tbody>
-                                                </table>
-                                            </div>
-                                        ) : (
-                                            <p className="text-slate-400">No history</p>
-                                        )}
-                                    </div>
-
-                                    <div className="bg-slate-800 rounded-lg p-6 border border-slate-700">
-                                        <h3 className="text-lg font-bold text-white mb-4">Your Data Rights</h3>
-                                        <p className="text-slate-400 mb-4 text-sm">Under the Philippine Data Privacy Act:</p>
-                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                            ))}
                                             <button
-                                                onClick={async () => {
-                                                    try {
-                                                        setMessage({ type: 'success', text: 'Generating PDF...' });
-                                                        const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
-                                                        const token = getToken();
-
-                                                        const res = await axios.post(
-                                                            `${API_URL}/api/data-rights/export`,
-                                                            { userId: user?.userId },
-                                                            { headers: { Authorization: `Bearer ${token}` } }
-                                                        );
-
-                                                        generatePrivacyReport(res.data);
-                                                        setMessage({ type: 'success', text: 'Report downloaded!' });
-                                                    } catch (error) {
-                                                        console.error(error);
-                                                        setMessage({ type: 'error', text: 'Export failed' });
-                                                    }
-                                                }}
-                                                className="flex items-center justify-center gap-2 p-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+                                                type="submit"
+                                                className="w-full bg-identity-navy hover:bg-identity-sky text-white font-black py-6 rounded-[2rem] text-[10px] uppercase tracking-[0.4em] transition-all shadow-3xl shadow-identity-navy/20 active:scale-[0.98] mt-4"
                                             >
-                                                <Download size={18} />
-                                                <span className="font-medium">Export Report (PDF)</span>
+                                                Update Security Key
                                             </button>
-                                            <Link href="/privacy-policy" className="flex items-center justify-center gap-2 p-4 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors">
-                                                <FileText size={18} />
-                                                <span className="font-medium">Privacy Policy</span>
-                                            </Link>
-                                            <button
-                                                onClick={async () => {
-                                                    if (confirm('Request data deletion? This cannot be undone.')) {
+                                        </form>
+                                    </div>
+                                )}
+
+                                {activeTab === 'privacy' && (
+                                    <div className="space-y-12">
+                                        <div className="bg-identity-sky/5 border border-identity-sky/10 text-identity-navy p-10 rounded-[3rem] flex flex-col md:flex-row items-center gap-8 relative overflow-hidden">
+                                            <div className="absolute top-0 left-0 w-2 h-full bg-identity-sky"></div>
+                                            <div className="p-5 bg-white rounded-3xl text-identity-sky shadow-xl">
+                                                <Shield size={32} />
+                                            </div>
+                                            <div>
+                                                <h4 className="text-2xl font-black uppercase tracking-tighter mb-2">Philippine Data Privacy Act</h4>
+                                                <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest leading-relaxed max-w-2xl">
+                                                    Your privacy is our core mandate. We are fully compliant with the Data Privacy Act of 2012 (RA 10173). Your biometric data is encrypted and never shared.
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                                            <div className="bg-white rounded-[3rem] p-10 border border-slate-200 shadow-xl">
+                                                <h3 className="text-xl font-black text-identity-navy mb-8 uppercase tracking-tighter flex items-center gap-4">
+                                                    <FileText size={24} className="text-identity-sky" />
+                                                    Active Consents
+                                                </h3>
+                                                {consentLoading ? (
+                                                    <div className="flex justify-center p-12"><RefreshCw className="animate-spin text-slate-200" /></div>
+                                                ) : (
+                                                    <div className="space-y-4">
+                                                        {[
+                                                            { label: 'Neural Matrix Consent', status: consentStatus?.biometricAccepted },
+                                                            { label: 'Privacy Policy Agreement', status: consentStatus?.privacyPolicyAccepted }
+                                                        ].map((item, idx) => (
+                                                            <div key={idx} className="flex items-center justify-between p-6 bg-slate-50 rounded-[2rem] border border-slate-100 group hover:border-emerald-200 transition-all">
+                                                                <span className="text-[10px] font-black text-identity-navy uppercase tracking-widest">{item.label}</span>
+                                                                <div className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[8px] font-black uppercase tracking-widest ${item.status ? 'bg-emerald-100 text-emerald-600' : 'bg-amber-100 text-amber-600'}`}>
+                                                                    {item.status ? <CheckCircle2 size={14} /> : <AlertTriangle size={14} />}
+                                                                    {item.status ? 'Consented' : 'Awaiting'}
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            <div className="bg-white rounded-[3rem] p-10 border border-slate-200 shadow-xl overflow-hidden">
+                                                <h3 className="text-xl font-black text-identity-navy mb-8 uppercase tracking-tighter">Timeline Logs</h3>
+                                                <div className="overflow-x-auto max-h-[300px] pr-4 scrollbar-hide">
+                                                    <table className="w-full text-[9px] font-black uppercase tracking-widest leading-none">
+                                                        <thead>
+                                                            <tr className="border-b border-slate-100">
+                                                                <th className="text-left py-4 text-slate-400">Date Log</th>
+                                                                <th className="text-left py-4 text-slate-400">Parameter</th>
+                                                                <th className="text-right py-4 text-slate-400">Status</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody className="divide-y divide-slate-50">
+                                                            {consentHistory.map((record: any, index: number) => (
+                                                                <tr key={index} className="group hover:bg-slate-50 transition-colors">
+                                                                    <td className="py-5 text-slate-500">{new Date(record.timestamp).toLocaleDateString()}</td>
+                                                                    <td className="py-5 text-identity-navy">{record.consent_type.replace('_', ' ')}</td>
+                                                                    <td className="py-5 text-right">
+                                                                        <span className={record.consent_given ? 'text-emerald-500' : 'text-rose-500'}>
+                                                                            {record.consent_given ? 'SYNCED' : 'REVOKED'}
+                                                                        </span>
+                                                                    </td>
+                                                                </tr>
+                                                            ))}
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="bg-slate-900 p-12 rounded-[3.5rem] shadow-3xl text-white relative overflow-hidden group">
+                                            <IdentityNode className="bottom-0 right-0 translate-y-1/3 translate-x-1/3 opacity-10 group-hover:scale-125 transition-transform duration-[2s]" />
+                                            <h3 className="text-3xl font-black uppercase tracking-tighter mb-4">Identity Rights Hub</h3>
+                                            <p className="text-white/40 text-[10px] font-black uppercase tracking-[0.4em] mb-12">Exercise your digital sovereignty</p>
+                                            
+                                            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                                                <button
+                                                    onClick={async () => {
                                                         try {
+                                                            showToast('Generating Neural PDF Report...', 'info');
                                                             const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
                                                             const token = getToken();
-                                                            await axios.post(
-                                                                `${API_URL}/api/data-rights/delete`,
-                                                                { userId: user?.userId, reason: 'User requested' },
-                                                                { headers: { Authorization: `Bearer ${token}` } }
-                                                            );
-                                                            setMessage({ type: 'success', text: 'Deletion request submitted (30 days)' });
-                                                        } catch (error) {
-                                                            console.error(error);
-                                                            setMessage({ type: 'error', text: 'Request failed' });
+                                                            const res = await axios.post(`${API_URL}/api/data-rights/export`, { userId: user?.userId }, { headers: { Authorization: `Bearer ${token}` } });
+                                                            generatePrivacyReport(res.data);
+                                                            showToast('Identity Report Exported', 'success');
+                                                        } catch (error) { showToast('Export Failed', 'error'); }
+                                                    }}
+                                                    className="flex flex-col items-center gap-6 p-10 bg-white/5 border border-white/10 rounded-[2.5rem] hover:bg-white hover:text-identity-navy transition-all group active:scale-95"
+                                                >
+                                                    <Download size={32} className="text-identity-sky group-hover:scale-110 transition-transform" />
+                                                    <span className="text-[9px] font-black uppercase tracking-[0.3em]">Export Matrix</span>
+                                                </button>
+                                                
+                                                <Link href="/privacy-policy" className="flex flex-col items-center gap-6 p-10 bg-white/5 border border-white/10 rounded-[2.5rem] hover:bg-white hover:text-identity-navy transition-all group active:scale-95">
+                                                    <FileText size={32} className="text-identity-sky group-hover:scale-110 transition-transform" />
+                                                    <span className="text-[9px] font-black uppercase tracking-[0.3em]">Terms of Vault</span>
+                                                </Link>
+
+                                                <button
+                                                    onClick={async () => {
+                                                        if (confirm('Request total identity deletion? All neural pattern data will be purged. This cannot be undone.')) {
+                                                            try {
+                                                                const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
+                                                                const token = getToken();
+                                                                await axios.post(`${API_URL}/api/data-rights/delete`, { userId: user?.userId, reason: 'Manual Purge' }, { headers: { Authorization: `Bearer ${token}` } });
+                                                                showToast('Purge Protocol Initialized', 'success');
+                                                            } catch (error) { showToast('Request Failed', 'error'); }
                                                         }
-                                                    }
-                                                }}
-                                                className="flex items-center justify-center gap-2 p-4 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
-                                            >
-                                                <Trash2 size={18} />
-                                                <span className="font-medium">Request Deletion</span>
-                                            </button>
+                                                    }}
+                                                    className="flex flex-col items-center gap-6 p-10 bg-rose-500/10 border border-rose-500/20 rounded-[2.5rem] hover:bg-rose-500 hover:text-white transition-all group active:scale-95"
+                                                >
+                                                    <Trash2 size={32} className="text-rose-500 group-hover:scale-110 group-hover:text-white transition-all" />
+                                                    <span className="text-[9px] font-black uppercase tracking-[0.3em]">Purge Identity</span>
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            )}
+                                )}
 
-                            {/* Feedback Tab */}
-                            {activeTab === 'feedback' && (
-                                <div className="animate-fade-in max-w-2xl mx-auto text-center space-y-8 py-8">
-                                    <div className="space-y-4">
-                                        <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-brand-500/10 text-brand-500 mb-4">
-                                            <MessageSquare size={32} />
+                                {activeTab === 'feedback' && (
+                                    <div className="animate-fade-in max-w-3xl mx-auto text-center py-16 space-y-12">
+                                        <div className="space-y-6">
+                                            <div className="inline-flex items-center justify-center w-24 h-24 rounded-[2rem] bg-identity-sky/10 text-identity-sky mb-4 shadow-inner">
+                                                <MessageSquare size={44} />
+                                            </div>
+                                            <h2 className="text-4xl font-black text-identity-navy uppercase tracking-tighter">Identity Feedback Portal</h2>
+                                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.5em] leading-relaxed max-w-xl mx-auto">
+                                                Contribute to the evolution of the LabFace neural ecosystem. Your feedback is synchronized directly with our core developers.
+                                            </p>
                                         </div>
-                                        <h2 className="text-2xl font-bold text-white">We Value Your Feedback</h2>
-                                        <p className="text-slate-400 max-w-lg mx-auto">
-                                            Help us improve LabFace by sharing your thoughts, suggestions, or reporting any issues you've encountered.
-                                        </p>
-                                    </div>
 
-                                    <div className="bg-white p-6 rounded-xl inline-block shadow-lg mx-auto">
-                                        <img
-                                            src="/feedback-qr.png"
-                                            alt="Scan to provide feedback"
-                                            className="w-48 h-48 object-contain"
-                                        />
+                                        <div className="relative group mx-auto max-w-fit">
+                                            <div className="absolute -inset-4 bg-gradient-to-tr from-identity-sky to-identity-navy rounded-[3.5rem] opacity-20 blur-2xl group-hover:opacity-40 transition-opacity"></div>
+                                            <div className="bg-white p-10 rounded-[3rem] shadow-3xl relative z-10 border border-slate-100 group-hover:scale-105 transition-transform duration-500">
+                                                <img src="/feedback-qr.png" alt="Scan QR" className="w-64 h-64 object-contain grayscale-0 group-hover:grayscale-0 transition-all" />
+                                                <div className="mt-8 pt-8 border-t border-slate-100 flex items-center justify-center gap-4 text-identity-navy font-black text-[12px] uppercase tracking-[0.3em]">
+                                                    <ExternalLink size={20} className="text-identity-sky" /> Scan to Synchronize
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <p className="text-[9px] font-black text-slate-300 uppercase tracking-widest mt-10">Neural signals are encrypted end-to-end.</p>
                                     </div>
-
-                                    <div className="space-y-4">
-                                        <p className="text-sm text-slate-500">Scan the QR code or click the button below</p>
-                                        <a
-                                            href="https://forms.gle/58sdJkHppikg8iMq7"
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="inline-flex items-center gap-2 px-8 py-3 bg-brand-600 hover:bg-brand-500 text-white font-bold rounded-lg transition-all transform hover:scale-105 shadow-md"
-                                        >
-                                            Open Feedback Form <ExternalLink size={18} />
-                                        </a>
-                                    </div>
-                                </div>
-                            )}
+                                )}
+                            </div>
                         </div>
                     </div>
                 </div>
-            </main >
-        </div >
+            </main>
+            
+            <footer className="mt-auto py-12 border-t border-slate-200/50 bg-white/50 backdrop-blur-md">
+                <div className="max-w-7xl mx-auto px-4 text-center">
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.5em]">LabFace Identity Management v2.0 • {new Date().getFullYear()}</p>
+                </div>
+            </footer>
+        </div>
     );
 }
+

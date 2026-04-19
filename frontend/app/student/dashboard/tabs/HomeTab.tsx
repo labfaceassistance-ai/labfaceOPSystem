@@ -1,6 +1,6 @@
+"use client";
 import { useState } from 'react';
-import { Calendar, Clock, MapPin, User as UserIcon, AlertCircle, XCircle, Briefcase, Coffee, PartyPopper, CheckCircle, BookOpen, TrendingUp, User, Brain, ChevronLeft } from 'lucide-react';
-import Link from 'next/link';
+import { Calendar, Clock, MapPin, User as UserIcon, AlertCircle, XCircle, Briefcase, Coffee, PartyPopper, CheckCircle, BookOpen, TrendingUp, User, Brain, ChevronLeft, ChevronRight, Zap } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { isHoliday } from '@/utils/holidays';
 
@@ -14,51 +14,52 @@ export default function HomeTab({ user, dashboardData, error }: HomeTabProps) {
     const router = useRouter();
 
     return (
-        <>
+        <div className="space-y-8 animate-fade-in">
             {/* Welcome Header */}
-            <div className="bg-white/5 rounded-2xl shadow-sm border border-white/10 backdrop-blur-sm p-8 mb-8 flex flex-col md:flex-row items-center justify-between">
-                <div className="text-center md:text-left">
-                    <h1 className="text-3xl font-bold text-white">Welcome back, {user.firstName}!</h1>
-                    <p className="text-brand-cream/60 mt-2 font-medium tracking-wide">Here's what's happening with your classes today.</p>
+            <div className="bg-white rounded-[2.5rem] shadow-xl shadow-slate-200/50 border border-slate-200 p-8 flex flex-col md:flex-row items-center justify-between relative overflow-hidden group">
+                <div className="absolute top-0 left-0 w-2 h-full bg-identity-sky"></div>
+                <div className="text-center md:text-left relative z-10">
+                    <h1 className="text-4xl font-black text-identity-navy tracking-tighter uppercase font-outfit">Identity: {user.firstName || 'User'}</h1>
+                    <p className="text-slate-400 mt-2 font-black uppercase tracking-[0.3em] text-[10px]">Portal synchronization active • Lab 1</p>
                 </div>
-                <div className="mt-4 md:mt-0 flex items-center gap-4 bg-yellow-500/10 px-6 py-3 rounded-xl border border-yellow-500/20">
+                <div className="mt-6 md:mt-0 flex items-center gap-6 bg-slate-50 px-8 py-4 rounded-2xl border border-slate-200 relative z-10 transition-all hover:bg-white group-hover:scale-105">
                     <div className="text-right">
-                        <div className="text-sm font-bold text-white">{new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</div>
-                        <div className="flex items-center justify-end gap-1.5 mt-1">
+                        <div className="text-[10px] font-black text-identity-navy uppercase tracking-widest">{new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</div>
+                        <div className="flex items-center justify-end gap-2 mt-2">
                             {(() => {
                                 const today = new Date();
                                 const dayOfWeek = today.getDay();
                                 const dateStr = today.toISOString().split('T')[0];
-
-                                // Check if today is a holiday
                                 const holidayName = isHoliday(dateStr);
 
                                 if (holidayName) {
                                     return (
                                         <>
-                                            <PartyPopper size={14} className="text-purple-400" />
-                                            <span className="text-xs font-bold text-purple-400 uppercase tracking-wider">Holiday</span>
+                                            <PartyPopper size={14} className="text-rose-500" />
+                                            <span className="text-[9px] font-black text-rose-500 uppercase tracking-widest">Holiday Status</span>
                                         </>
                                     );
                                 } else if (dayOfWeek === 0 || dayOfWeek === 6) {
                                     return (
                                         <>
-                                            <Coffee size={14} className="text-yellow-400" />
-                                            <span className="text-xs font-bold text-yellow-400 uppercase tracking-wider">Weekend</span>
+                                            <Coffee size={14} className="text-identity-sky" />
+                                            <span className="text-[9px] font-black text-identity-sky uppercase tracking-widest">Weekend Mode</span>
                                         </>
                                     );
                                 } else {
                                     return (
                                         <>
-                                            <Briefcase size={14} className="text-yellow-500" />
-                                            <span className="text-xs font-bold text-yellow-500 uppercase tracking-wider">Weekday</span>
+                                            <Briefcase size={14} className="text-identity-navy" />
+                                            <span className="text-[9px] font-black text-identity-navy uppercase tracking-widest">Active Operations</span>
                                         </>
                                     );
                                 }
                             })()}
                         </div>
                     </div>
-                    <Calendar className="text-yellow-500" size={24} />
+                    <div className="p-3 bg-white shadow-inner rounded-xl text-identity-sky">
+                        <Calendar size={24} />
+                    </div>
                 </div>
             </div>
 
@@ -68,133 +69,111 @@ export default function HomeTab({ user, dashboardData, error }: HomeTabProps) {
                     {/* Quick Stats */}
                     <div className="grid grid-cols-2 gap-4">
                         {/* Attendance Rate - Hero Stat */}
-                        <div className="col-span-2 bg-gradient-to-br from-white/10 to-white/5 p-6 rounded-2xl shadow-lg border border-white/10 relative overflow-hidden group">
-                            <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 group-hover:bg-emerald-500/20 transition-colors"></div>
-                            <div className="relative z-10 flex items-center justify-between">
+                        <div className="col-span-2 bg-white p-8 rounded-[2.5rem] shadow-xl shadow-slate-200/50 border border-slate-200 relative overflow-hidden group">
+                            <div className="absolute top-0 right-0 w-40 h-40 bg-identity-sky/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 group-hover:bg-identity-sky/10 transition-all duration-700"></div>
+                            <div className="relative z-10 flex items-center justify-between mb-8">
                                 <div>
-                                    <div className="text-4xl font-bold text-white mb-1">{dashboardData?.stats?.attendanceRate || 0}%</div>
-                                    <div className="text-[11px] text-brand-cream/60 font-bold uppercase tracking-widest">Attendance Rate</div>
+                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em] mb-2">Sync Rate</p>
+                                    <div className="text-5xl font-black text-identity-navy tracking-tighter uppercase font-outfit">{dashboardData?.stats?.attendanceRate || 0}%</div>
                                 </div>
-                                <div className="w-12 h-12 bg-emerald-500/10 rounded-xl flex items-center justify-center text-emerald-400 border border-emerald-500/20 group-hover:scale-110 transition-transform">
-                                    <TrendingUp size={24} />
+                                <div className="w-14 h-14 bg-identity-sky/5 rounded-2xl flex items-center justify-center text-identity-sky border border-identity-sky/20 group-hover:scale-110 transition-transform shadow-sm">
+                                    <TrendingUp size={28} />
                                 </div>
                             </div>
                             {/* Progress Bar */}
-                            <div className="mt-4 h-2 w-full bg-black/20 rounded-full overflow-hidden">
+                            <div className="mt-8 h-3 w-full bg-slate-100 rounded-full overflow-hidden shadow-inner">
                                 <div
-                                    className="h-full bg-emerald-500 rounded-full transition-all duration-1000 ease-out"
+                                    className="h-full bg-identity-sky rounded-full transition-all duration-1000 ease-out shadow-[0_0_15px_rgba(14,165,233,0.3)]"
                                     style={{ width: `${dashboardData?.stats?.attendanceRate || 0}%` }}
                                 ></div>
                             </div>
                         </div>
 
                         {/* Status Grid */}
-                        <div className="bg-white/5 p-4 rounded-2xl shadow-sm border border-white/5 backdrop-blur-sm hover:border-emerald-500/30 transition-colors group">
-                            <div className="flex items-start justify-between mb-2">
-                                <div className="text-[10px] font-bold text-brand-cream/50 uppercase tracking-widest">Present</div>
-                                <UserIcon size={16} className="text-emerald-400/70 group-hover:text-emerald-400 transition-colors" />
+                        {[
+                            { label: 'Present', val: dashboardData?.stats?.present || 0, icon: UserIcon, color: 'text-emerald-500', bg: 'hover:border-emerald-200' },
+                            { label: 'Late', val: dashboardData?.stats?.late || 0, icon: Clock, color: 'text-amber-500', bg: 'hover:border-amber-200' },
+                            { label: 'Excused', val: dashboardData?.stats?.excused || 0, icon: AlertCircle, color: 'text-identity-sky', bg: 'hover:border-identity-sky/20' },
+                            { label: 'Absences', val: dashboardData?.stats?.absences || 0, icon: XCircle, color: 'text-rose-500', bg: 'hover:border-rose-200' }
+                        ].map((stat, i) => (
+                            <div key={i} className={`bg-white p-6 rounded-3xl shadow-sm border border-slate-100 transition-all group ${stat.bg} hover:shadow-xl`}>
+                                <div className="flex items-start justify-between mb-4">
+                                    <div className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">{stat.label}</div>
+                                    <stat.icon size={18} className={`${stat.color} opacity-40 group-hover:opacity-100 transition-opacity`} />
+                                </div>
+                                <div className="text-3xl font-black text-identity-navy font-outfit">{stat.val}</div>
                             </div>
-                            <div className="text-2xl font-bold text-white">{dashboardData?.stats?.present || 0}</div>
-                        </div>
-
-                        <div className="bg-white/5 p-4 rounded-2xl shadow-sm border border-white/5 backdrop-blur-sm hover:border-orange-500/30 transition-colors group">
-                            <div className="flex items-start justify-between mb-2">
-                                <div className="text-[10px] font-bold text-brand-cream/50 uppercase tracking-widest">Late</div>
-                                <Clock size={16} className="text-orange-400/70 group-hover:text-orange-400 transition-colors" />
-                            </div>
-                            <div className="text-2xl font-bold text-white">{dashboardData?.stats?.late || 0}</div>
-                        </div>
-
-                        <div className="bg-white/5 p-4 rounded-2xl shadow-sm border border-white/5 backdrop-blur-sm hover:border-blue-500/30 transition-colors group">
-                            <div className="flex items-start justify-between mb-2">
-                                <div className="text-[10px] font-bold text-brand-cream/50 uppercase tracking-widest">Excused</div>
-                                <AlertCircle size={16} className="text-blue-400/70 group-hover:text-blue-400 transition-colors" />
-                            </div>
-                            <div className="text-2xl font-bold text-white">{dashboardData?.stats?.excused || 0}</div>
-                        </div>
-
-                        <div className="bg-white/5 p-4 rounded-2xl shadow-sm border border-white/5 backdrop-blur-sm hover:border-red-500/30 transition-colors group">
-                            <div className="flex items-start justify-between mb-2">
-                                <div className="text-[10px] font-bold text-brand-cream/50 uppercase tracking-widest">Absences</div>
-                                <XCircle size={16} className="text-red-400/70 group-hover:text-red-400 transition-colors" />
-                            </div>
-                            <div className="text-2xl font-bold text-white">{dashboardData?.stats?.absences || 0}</div>
-                        </div>
+                        ))}
                     </div>
                 </div>
 
                 {/* Right Column - Schedule & Recent Activity */}
                 <div className="lg:col-span-2 space-y-8">
                     {/* Next Class */}
-                    <div className="bg-background rounded-2xl shadow-lg p-8 text-primary relative overflow-hidden border border-background">
-                        <div className="absolute top-0 right-0 w-64 h-64 bg-white/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 opacity-50"></div>
+                    <div className="bg-identity-navy rounded-[3rem] shadow-2xl p-10 text-white relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 w-80 h-80 bg-identity-sky/20 rounded-full blur-[100px] -translate-y-1/2 translate-x-1/2 opacity-30 group-hover:opacity-50 transition-opacity duration-1000"></div>
+                        <div className="absolute inset-0 bg-blueprint opacity-[0.05] pointer-events-none"></div>
+                        
                         <div className="relative z-10">
-                            <div className="flex items-center gap-2 text-primary/70 mb-4 text-[10px] font-black uppercase tracking-[0.3em]">
-                                <Clock size={16} /> Next Class
+                            <div className="flex items-center gap-3 text-identity-sky/80 mb-6 text-[10px] font-black uppercase tracking-[0.4em]">
+                                <Zap size={16} className="animate-pulse" /> Next Priority Node
                             </div>
                             {dashboardData?.nextClass ? (
                                 <>
-                                    <div className="flex justify-between items-start mb-2">
-                                        <h2 className="text-3xl font-black text-primary tracking-tight">{dashboardData.nextClass.subject}</h2>
+                                    <div className="flex justify-between items-start mb-4">
+                                        <h2 className="text-4xl md:text-5xl font-black text-white tracking-tighter uppercase font-outfit leading-none">{dashboardData.nextClass.subject}</h2>
                                         {dashboardData.nextClass.type && dashboardData.nextClass.type.toLowerCase().includes('makeup') && (
-                                            <span className="bg-amber-500/20 text-amber-700 border border-amber-500/30 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-[0.2em]">
-                                                Make-up Class
+                                            <span className="bg-identity-sky text-identity-navy px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-[0.2em] shadow-xl">
+                                                Special Session
                                             </span>
                                         )}
                                     </div>
-                                    <p className="text-primary/70 font-bold text-sm mb-6 uppercase tracking-wider">{dashboardData.nextClass.professor} • {dashboardData.nextClass.room}</p>
+                                    <p className="text-identity-sky/60 font-black text-[10px] mb-10 uppercase tracking-[0.4em]">{dashboardData.nextClass.professor} • Portal {dashboardData.nextClass.room}</p>
 
-                                    <div className="flex flex-wrap items-center gap-3">
-                                        <div className="bg-primary/5 backdrop-blur-md px-4 py-2 rounded-lg border border-primary/10">
-                                            <span className="block text-[9px] font-black uppercase tracking-widest text-primary/50">Date</span>
-                                            <span className="font-black text-primary mt-0.5 block tracking-wide">{dashboardData.nextClass.date || 'Today'}</span>
-                                        </div>
-                                        <div className="bg-primary/5 backdrop-blur-md px-4 py-2 rounded-lg border border-primary/10">
-                                            <span className="block text-[9px] font-black uppercase tracking-widest text-primary/50">Time</span>
-                                            <span className="font-black text-primary mt-0.5 block tracking-wide">{dashboardData.nextClass.time}</span>
-                                        </div>
-                                        <div className={`bg-primary/5 backdrop-blur-md px-4 py-2 rounded-lg border border-primary/10 ${dashboardData.nextClass.status === 'Cancelled' ? 'bg-red-500/10 border-red-500/20' : ''}`}>
-                                            <span className="block text-[9px] font-black uppercase tracking-widest text-primary/50">Status</span>
-                                            <span className={`font-black mt-0.5 block tracking-wide ${dashboardData.nextClass.status === 'Cancelled' ? 'text-red-600' : 'text-emerald-700'}`}>
-                                                {dashboardData.nextClass.status}
-                                            </span>
-                                        </div>
+                                    <div className="flex flex-wrap items-center gap-4">
+                                        {[
+                                            { label: 'Sync Date', val: dashboardData.nextClass.date || 'Today' },
+                                            { label: 'Time Window', val: dashboardData.nextClass.time },
+                                            { label: 'Matrix Status', val: dashboardData.nextClass.status, special: dashboardData.nextClass.status === 'Cancelled' }
+                                        ].map((item, i) => (
+                                            <div key={i} className={`bg-white/5 backdrop-blur-md px-6 py-4 rounded-2xl border border-white/10 ${item.special ? 'border-rose-500/30' : ''}`}>
+                                                <span className="block text-[8px] font-black uppercase tracking-[0.3em] text-white/40 mb-1">{item.label}</span>
+                                                <span className={`font-black text-sm tracking-widest uppercase ${item.special ? 'text-rose-400' : 'text-identity-sky'}`}>{item.val}</span>
+                                            </div>
+                                        ))}
                                     </div>
 
                                     {dashboardData.nextClass.reason && (
-                                        <div className="mt-4 bg-red-500/10 border border-red-500/20 rounded-lg p-3">
-                                            <p className="text-[9px] text-red-600 uppercase font-black tracking-widest mb-1">Cancellation Reason</p>
-                                            <p className="text-primary font-medium text-xs">{dashboardData.nextClass.reason}</p>
+                                        <div className="mt-8 bg-rose-500/10 border border-rose-500/20 rounded-2xl p-5 backdrop-blur-sm">
+                                            <div className="flex items-center gap-3 mb-2">
+                                                <AlertCircle size={14} className="text-rose-400" />
+                                                <p className="text-[9px] text-rose-400 uppercase font-black tracking-[0.3em]">System Interruption Log</p>
+                                            </div>
+                                            <p className="text-white font-bold text-xs uppercase tracking-widest leading-relaxed opacity-80">{dashboardData.nextClass.reason}</p>
                                         </div>
                                     )}
                                 </>
                             ) : (
-                                <div className="text-primary/70">
-                                    <h2 className="text-2xl font-black mb-2 tracking-tight">No classes scheduled</h2>
-                                    <p className="text-sm font-medium">You have no upcoming classes for today.</p>
+                                <div className="py-10">
+                                    <h2 className="text-3xl font-black mb-4 tracking-tighter uppercase font-outfit">Matrix Idle</h2>
+                                    <p className="text-identity-sky/60 text-xs font-black uppercase tracking-widest">No active sessions scheduled for this node.</p>
                                 </div>
                             )}
                         </div>
                     </div>
 
-                    {/* Active Classes List */}
+                    {/* Performance Overview (Classes Summary) */}
                     {dashboardData?.classesSummary && dashboardData.classesSummary.length > 0 && (
-                        <div className="bg-white/5 rounded-2xl shadow-sm border border-white/10 backdrop-blur-sm p-6">
-                            <h3 className="text-lg font-black tracking-tight text-white mb-6 flex items-center gap-2">
-                                <TrendingUp size={20} className="text-yellow-500" /> Overall Attendance
+                        <div className="bg-white rounded-[2.5rem] shadow-xl shadow-slate-200/50 border border-slate-200 p-8">
+                            <h3 className="text-[11px] font-black tracking-[0.4em] text-identity-navy mb-8 uppercase flex items-center gap-4">
+                                <TrendingUp size={20} className="text-identity-sky" /> 
+                                Performance Matrix
+                                <span className="h-px bg-slate-100 flex-1"></span>
                             </h3>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 {(() => {
-                                    const sortedClasses = dashboardData?.classesSummary
-                                        ? [...dashboardData.classesSummary].sort((a: any, b: any) => b.attendanceRate - a.attendanceRate)
-                                        : [];
-
-                                    let displayClasses = [];
-                                    if (sortedClasses.length >= 2) {
-                                        displayClasses = [sortedClasses[0], sortedClasses[sortedClasses.length - 1]];
-                                    } else {
-                                        displayClasses = sortedClasses;
-                                    }
+                                    const sortedClasses = [...(dashboardData.classesSummary || [])].sort((a: any, b: any) => b.attendanceRate - a.attendanceRate);
+                                    let displayClasses = sortedClasses.length >= 2 ? [sortedClasses[0], sortedClasses[sortedClasses.length - 1]] : sortedClasses;
 
                                     return displayClasses.map((cls: any, index: number) => {
                                         const isHighest = sortedClasses.length >= 2 && index === 0;
@@ -206,68 +185,50 @@ export default function HomeTab({ user, dashboardData, error }: HomeTabProps) {
                                                 key={cls.id}
                                                 className="block h-full group relative z-10 cursor-pointer"
                                             >
-                                                <div className="p-5 bg-black/10 hover:bg-black/20 border border-white/5 hover:border-yellow-500/50 rounded-xl transition-all relative overflow-hidden h-full shadow-inner">
-
-                                                    {/* Badge for Highest/Lowest */}
+                                                <div className="p-6 bg-slate-50 border border-slate-100 hover:border-identity-sky/30 hover:bg-white rounded-3xl transition-all duration-500 relative overflow-hidden h-full shadow-sm hover:shadow-2xl">
                                                     {(isHighest || isLowest) && (
-                                                        <div className={`absolute top-0 right-0 px-2 py-1 text-[8px] font-black uppercase rounded-bl-lg border-b border-l tracking-widest ${isHighest
-                                                            ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                                                            : 'bg-red-500/10 text-red-400 border-red-500/20'
+                                                        <div className={`absolute top-0 right-0 px-4 py-2 text-[8px] font-black uppercase rounded-bl-2xl border-b border-l tracking-widest ${isHighest
+                                                            ? 'bg-emerald-50 text-emerald-600 border-emerald-100'
+                                                            : 'bg-rose-50 text-rose-600 border-rose-100'
                                                             }`}>
-                                                            {isHighest ? 'Highest Rate' : 'Lowest Rate'}
+                                                            {isHighest ? 'Optimal Performance' : 'Recovery Required'}
                                                         </div>
                                                     )}
 
-                                                    <div className="flex justify-between items-start mb-4">
-                                                        <div>
-                                                            <div className="flex items-center gap-2 mb-1">
-                                                                <span className="bg-black/30 text-brand-cream/80 text-[9px] font-black tracking-widest uppercase px-2 py-0.5 rounded border border-white/10">
-                                                                    {cls.subjectCode}
-                                                                </span>
-                                                                <ChevronLeft size={14} className="rotate-180 text-brand-cream/30 group-hover:text-yellow-500 transition-colors opacity-0 group-hover:opacity-100" />
-                                                            </div>
-                                                            <h4 className="font-bold text-white group-hover:text-yellow-400 transition-colors text-sm md:text-base pr-8">
-                                                                {cls.subjectName}
-                                                            </h4>
-                                                        </div>
-                                                        <div className="text-right pt-6">
-                                                            <div className={`text-2xl font-black ${cls.attendanceRate >= 90 ? 'text-emerald-400' :
-                                                                cls.attendanceRate >= 75 ? 'text-amber-400' :
-                                                                    'text-red-400'
-                                                                }`}>
-                                                                {cls.attendanceRate}%
-                                                            </div>
+                                                    <div className="mb-6">
+                                                        <span className="bg-white text-slate-400 text-[9px] font-black tracking-widest uppercase px-3 py-1 rounded-lg border border-slate-100 mb-4 inline-block">
+                                                            {cls.subjectCode}
+                                                        </span>
+                                                        <h4 className="font-black text-identity-navy group-hover:text-identity-sky transition-colors text-base uppercase tracking-tighter pr-12 line-clamp-2">
+                                                            {cls.subjectName}
+                                                        </h4>
+                                                    </div>
+
+                                                    <div className="flex items-end justify-between mb-4">
+                                                        <div className={`text-4xl font-black font-outfit ${cls.attendanceRate >= 90 ? 'text-emerald-500' : cls.attendanceRate >= 75 ? 'text-amber-500' : 'text-rose-500'}`}>
+                                                            {cls.attendanceRate}<span className="text-xl opacity-40">%</span>
                                                         </div>
                                                     </div>
 
-                                                    {/* Progress Bar */}
-                                                    <div className="h-2 w-full bg-black/30 rounded-full overflow-hidden mb-4">
+                                                    <div className="h-2 w-full bg-white rounded-full overflow-hidden mb-6 shadow-inner">
                                                         <div
-                                                            className={`h-full rounded-full transition-all duration-500 ${cls.attendanceRate >= 90 ? 'bg-gradient-to-r from-emerald-500 to-emerald-400' :
-                                                                cls.attendanceRate >= 75 ? 'bg-gradient-to-r from-amber-500 to-amber-400' :
-                                                                    'bg-gradient-to-r from-red-500 to-red-400'
-                                                                }`}
+                                                            className={`h-full rounded-full transition-all duration-700 ${cls.attendanceRate >= 90 ? 'bg-emerald-500' : cls.attendanceRate >= 75 ? 'bg-amber-500' : 'bg-rose-500'}`}
                                                             style={{ width: `${cls.attendanceRate}%` }}
                                                         ></div>
                                                     </div>
 
-                                                    <div className="grid grid-cols-4 gap-2 text-center text-xs">
-                                                        <div className="bg-black/20 rounded py-1.5 border border-white/5">
-                                                            <span className="block text-emerald-400 font-bold">{cls.present}</span>
-                                                            <span className="text-brand-cream/40 text-[9px] font-bold uppercase tracking-widest">Pres</span>
-                                                        </div>
-                                                        <div className="bg-black/20 rounded py-1.5 border border-white/5">
-                                                            <span className="block text-orange-400 font-bold">{cls.late}</span>
-                                                            <span className="text-brand-cream/40 text-[9px] font-bold uppercase tracking-widest">Late</span>
-                                                        </div>
-                                                        <div className="bg-black/20 rounded py-1.5 border border-white/5">
-                                                            <span className="block text-blue-400 font-bold">{cls.excused}</span>
-                                                            <span className="text-brand-cream/40 text-[9px] font-bold uppercase tracking-widest">Exc</span>
-                                                        </div>
-                                                        <div className="bg-black/20 rounded py-1.5 border border-white/5">
-                                                            <span className="block text-red-400 font-bold">{cls.absent}</span>
-                                                            <span className="text-brand-cream/40 text-[9px] font-bold uppercase tracking-widest">Abs</span>
-                                                        </div>
+                                                    <div className="grid grid-cols-4 gap-3">
+                                                        {[
+                                                            { val: cls.present, label: 'PR', color: 'text-emerald-500' },
+                                                            { val: cls.late, label: 'LT', color: 'text-amber-500' },
+                                                            { val: cls.excused, label: 'EX', color: 'text-identity-sky' },
+                                                            { val: cls.absent, label: 'AB', color: 'text-rose-500' }
+                                                        ].map((s, i) => (
+                                                            <div key={i} className="bg-white rounded-xl py-2 border border-slate-50 shadow-sm text-center">
+                                                                <span className={`block font-black text-[13px] ${s.color}`}>{s.val}</span>
+                                                                <span className="text-slate-300 text-[8px] font-black uppercase tracking-widest">{s.label}</span>
+                                                            </div>
+                                                        ))}
                                                     </div>
                                                 </div>
                                             </div>
@@ -278,45 +239,53 @@ export default function HomeTab({ user, dashboardData, error }: HomeTabProps) {
                         </div>
                     )}
 
-                    {/* Recent Activity */}
-                    <div className="bg-white/5 rounded-2xl shadow-sm border border-white/10 backdrop-blur-sm p-6">
-                        <h3 className="text-lg font-black tracking-tight text-white mb-6 flex items-center gap-2">
-                            <BookOpen size={20} className="text-yellow-500" /> Recent Attendance
+                    {/* Recent Sync Logs */}
+                    <div className="bg-white rounded-[2.5rem] shadow-xl shadow-slate-200/50 border border-slate-200 p-8">
+                        <h3 className="text-[11px] font-black tracking-[0.4em] text-identity-navy mb-8 uppercase flex items-center gap-4">
+                            <BookOpen size={20} className="text-identity-sky" /> 
+                            Recent Node Syncs
+                            <span className="h-px bg-slate-100 flex-1"></span>
                         </h3>
-                        {/* ... recent activity list ... */}
                         <div className="space-y-4">
                             {error ? (
-                                <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-8 text-center">
-                                    <XCircle className="mx-auto mb-3 text-red-400" size={40} />
-                                    <p className="text-red-400 font-bold text-lg mb-2">Failed to Load Data</p>
-                                    <p className="text-slate-400 text-sm">{error}</p>
+                                <div className="bg-rose-50 border border-rose-100 rounded-[2rem] p-10 text-center">
+                                    <XCircle className="mx-auto mb-4 text-rose-400" size={48} />
+                                    <p className="text-rose-900 font-black text-sm uppercase tracking-widest mb-2">Sync Error Detected</p>
+                                    <p className="text-rose-600/60 text-[10px] uppercase font-black tracking-widest leading-relaxed">{error}</p>
                                 </div>
                             ) : dashboardData?.recentActivities && dashboardData.recentActivities.length > 0 ? (
                                 dashboardData.recentActivities.map((item: any, i: number) => (
-                                    <div key={i} className="flex items-center justify-between p-4 hover:bg-white/5 rounded-xl transition-colors border border-white/5 shadow-sm">
-                                        <div className="flex items-center gap-4">
-                                            <div className="w-10 h-10 rounded-full bg-black/20 flex items-center justify-center text-brand-cream/80 font-black border border-white/5">
+                                    <div key={i} className="flex items-center justify-between p-5 bg-slate-50/50 hover:bg-white rounded-2xl transition-all border border-transparent hover:border-slate-100 hover:shadow-lg group">
+                                        <div className="flex items-center gap-5">
+                                            <div className="w-12 h-12 rounded-2xl bg-white border border-slate-100 flex items-center justify-center text-identity-navy font-black shadow-sm group-hover:bg-identity-navy group-hover:text-white transition-all duration-500 uppercase tracking-tighter">
                                                 {item.subject[0]}
                                             </div>
                                             <div>
-                                                <div className="font-bold text-white text-sm tracking-wide">{item.subject}</div>
-                                                <div className="text-[10px] font-bold uppercase tracking-widest text-brand-cream/50 mt-0.5">{item.date}</div>
+                                                <div className="font-black text-identity-navy text-xs uppercase tracking-widest mb-1">{item.subject}</div>
+                                                <div className="text-[9px] font-black uppercase tracking-[0.3em] text-slate-300 group-hover:text-identity-sky transition-colors">{item.date}</div>
                                             </div>
                                         </div>
-                                        <span className={`px-4 py-1.5 rounded-full text-[10px] font-black tracking-widest uppercase ${item.color}`}>
+                                        <span className={`px-5 py-2 rounded-full text-[9px] font-black tracking-widest uppercase border ${
+                                            item.status === 'Present' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' :
+                                            item.status === 'Late' ? 'bg-amber-50 text-amber-600 border-amber-100' :
+                                            'bg-rose-50 text-rose-600 border-rose-100'
+                                        }`}>
                                             {item.status}
                                         </span>
                                     </div>
                                 ))
                             ) : (
-                                <div className="text-center py-8 text-brand-cream/50 font-medium text-sm">
-                                    No recent attendance records found.
+                                <div className="text-center py-12">
+                                    <div className="w-16 h-16 bg-slate-50 border border-slate-100 rounded-2xl flex items-center justify-center text-slate-200 mx-auto mb-6">
+                                        <Clock size={32} />
+                                    </div>
+                                    <p className="font-black text-[10px] text-slate-300 uppercase tracking-[0.4em]">Matrix History Empty</p>
                                 </div>
                             )}
                         </div>
                     </div>
                 </div>
             </div>
-        </>
+        </div>
     );
 }

@@ -5,7 +5,7 @@
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { AlertCircle, Clock, RefreshCw, LogOut } from 'lucide-react';
+import { AlertCircle, Clock, RefreshCw, LogOut, ShieldAlert } from 'lucide-react';
 
 interface SessionTimeoutProps {
     sessionDuration?: number; // in milliseconds (default: 30 minutes)
@@ -15,8 +15,8 @@ interface SessionTimeoutProps {
 }
 
 export default function SessionTimeout({
-    sessionDuration = 30 * 60 * 1000, // 30 minutes
-    warningTime = 5 * 60 * 1000, // 5 minutes
+    sessionDuration = 30 * 60 * 1000, 
+    warningTime = 5 * 60 * 1000, 
     onExtend,
     onLogout
 }: SessionTimeoutProps) {
@@ -24,13 +24,9 @@ export default function SessionTimeout({
     const [timeLeft, setTimeLeft] = useState(warningTime);
     const [isExtending, setIsExtending] = useState(false);
 
-    // Use refs for values accessed in intervals to avoid stale closures and re-renders
     const lastActivityRef = useRef<number>(Date.now());
-
-    // Check interval ref
     const checkIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
-    // Reset activity timer
     const resetTimer = useCallback(() => {
         lastActivityRef.current = Date.now();
         setShowWarning(false);
@@ -38,38 +34,26 @@ export default function SessionTimeout({
     }, [warningTime]);
 
     useEffect(() => {
-        // Function to check session status
         const checkSession = () => {
             const now = Date.now();
             const timeSinceLastActivity = now - lastActivityRef.current;
             const timeRemaining = sessionDuration - timeSinceLastActivity;
 
-            // If time remaining is less than warning time, show warning
             if (timeRemaining <= warningTime && timeRemaining > 0) {
                 setShowWarning(true);
                 setTimeLeft(timeRemaining);
-            }
-            // If time is up
-            else if (timeRemaining <= 0) {
+            } else if (timeRemaining <= 0) {
                 if (onLogout) onLogout();
-            }
-            // Otherwise ensure warning is hidden
-            else {
+            } else {
                 setShowWarning(false);
             }
         };
 
-        // Run check every second
         checkIntervalRef.current = setInterval(checkSession, 1000);
 
-        // Activity handler - throttled to avoid excessive updates
         const handleActivity = () => {
-            // Only update if not currently in warning state
             const now = Date.now();
             const timeSinceLastActivity = now - lastActivityRef.current;
-
-            // Only update if we're not in the warning period (let the user manually extend)
-            // and don't update on every millisec
             if (sessionDuration - timeSinceLastActivity > warningTime) {
                 lastActivityRef.current = now;
             }
@@ -87,10 +71,7 @@ export default function SessionTimeout({
     const handleExtend = async () => {
         setIsExtending(true);
         try {
-            if (onExtend) {
-                await onExtend();
-            }
-            // Explicitly reset the timer after successful extension
+            if (onExtend) await onExtend();
             resetTimer();
         } catch (error) {
             console.error('Failed to extend session:', error);
@@ -99,12 +80,7 @@ export default function SessionTimeout({
         }
     };
 
-    const handleLogout = () => {
-        if (onLogout) onLogout();
-    };
-
     const formatTime = (ms: number) => {
-        // Prevent negative numbers
         const safeMs = Math.max(0, ms);
         const minutes = Math.floor(safeMs / 60000);
         const seconds = Math.floor((safeMs % 60000) / 1000);
@@ -114,49 +90,51 @@ export default function SessionTimeout({
     if (!showWarning) return null;
 
     return (
-        <div className="fixed inset-0 bg-slate-950/90 backdrop-blur-md z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
-            <div className="bg-slate-900 rounded-2xl p-6 shadow-2xl border-2 border-yellow-500/50 max-w-md w-full animate-in zoom-in duration-200">
-                <div className="flex items-center gap-3 mb-4">
-                    <div className="p-3 bg-yellow-500/20 rounded-full ring-2 ring-yellow-500/50">
-                        <Clock className="text-yellow-400" size={28} />
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-xl z-[100] flex items-center justify-center p-4 animate-in fade-in duration-300">
+            <div className="bg-white rounded-[3rem] p-10 shadow-3xl border border-slate-200 max-w-md w-full animate-in zoom-in-95 duration-300 relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-identity-sky/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
+                
+                <div className="flex items-center gap-5 mb-10 relative z-10">
+                    <div className="p-4 bg-identity-sky/10 rounded-2xl border border-identity-sky/20 text-identity-sky shadow-sm">
+                        <Clock size={32} />
                     </div>
                     <div>
-                        <h3 className="text-xl font-bold text-white">Session Expiring Soon</h3>
-                        <p className="text-sm text-slate-400">Your session will expire in</p>
+                        <h3 className="text-2xl font-black text-identity-navy uppercase tracking-tighter font-outfit">Session Expiry</h3>
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mt-1">Automatic Terminate in</p>
                     </div>
                 </div>
 
-                <div className="bg-slate-800/50 rounded-lg p-6 mb-6 text-center">
-                    <div className="text-5xl font-bold text-yellow-400 mb-2 font-mono">
+                <div className="bg-slate-50 rounded-[2rem] p-10 mb-8 text-center border border-slate-100 shadow-inner relative group">
+                    <div className="text-7xl font-black text-identity-navy mb-2 font-outfit tabular-nums tracking-tighter">
                         {formatTime(timeLeft)}
                     </div>
-                    <p className="text-sm text-slate-400">minutes remaining</p>
+                    <p className="text-[10px] font-black text-slate-300 uppercase tracking-[0.4em] text-center">Seconds Remaining</p>
                 </div>
 
-                <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-4 mb-6">
-                    <div className="flex items-start gap-2">
-                        <AlertCircle size={18} className="text-yellow-400 mt-0.5 flex-shrink-0" />
-                        <div className="text-sm text-yellow-200">
-                            <p className="font-semibold mb-1">Don't lose your work!</p>
-                            <p className="text-xs text-yellow-300/80">
-                                Click "Stay Logged In" to continue your session, or "Logout" to save and exit.
+                <div className="bg-slate-50/50 border border-slate-100 rounded-2xl p-6 mb-10 shadow-sm">
+                    <div className="flex items-start gap-4">
+                        <ShieldAlert size={20} className="text-identity-sky mt-1 flex-shrink-0" />
+                        <div className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 leading-relaxed">
+                            <p className="mb-2 text-identity-navy font-black tracking-widest text-[11px]">Identity Lock Active</p>
+                            <p className="opacity-60 text-[9px] leading-relaxed">
+                                Security protocols require periodic re-authentication. Extend to maintain your active node link or terminate securely.
                             </p>
                         </div>
                     </div>
                 </div>
 
-                <div className="flex gap-3">
+                <div className="flex gap-4 relative z-10">
                     <button
-                        onClick={handleLogout}
-                        className="flex-1 px-4 py-3 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors font-medium flex items-center justify-center gap-2"
+                        onClick={() => onLogout && onLogout()}
+                        className="flex-1 px-8 py-5 bg-white hover:bg-rose-50 text-slate-300 hover:text-rose-500 rounded-2xl transition-all font-black uppercase tracking-[0.3em] text-[10px] border border-slate-100 shadow-sm flex items-center justify-center gap-3"
                     >
                         <LogOut size={18} />
-                        Logout
+                        Terminate
                     </button>
                     <button
                         onClick={handleExtend}
                         disabled={isExtending}
-                        className="flex-1 px-4 py-3 bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg transition-all font-bold shadow-xl hover:shadow-yellow-500/50 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="flex-1 px-8 py-5 bg-identity-navy hover:bg-identity-sky text-white rounded-2xl transition-all font-black uppercase tracking-[0.3em] text-[10px] shadow-xl shadow-identity-navy/20 flex items-center justify-center gap-3 disabled:opacity-30 disabled:cursor-not-allowed group"
                     >
                         {isExtending ? (
                             <>
@@ -165,15 +143,15 @@ export default function SessionTimeout({
                             </>
                         ) : (
                             <>
-                                <RefreshCw size={18} />
-                                Stay Logged In
+                                <RefreshCw size={18} className="group-hover:rotate-180 transition-transform duration-700" />
+                                Stabilize Link
                             </>
                         )}
                     </button>
                 </div>
 
-                <p className="text-xs text-slate-500 text-center mt-4">
-                    Session will be extended by 30 minutes
+                <p className="text-[8px] font-black text-slate-200 uppercase tracking-[0.5em] text-center mt-8">
+                    Extension Period: 30 Units
                 </p>
             </div>
         </div>

@@ -128,9 +128,9 @@ export default function ActiveSessionPanel({ sessionId, onStopSession }: ActiveS
     };
 
     return (
-        <div className="bg-slate-900 rounded-2xl border border-slate-800 flex flex-col overflow-hidden h-[600px] animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <div className="bg-maroon-950 rounded-2xl border border-white/5 flex flex-col overflow-hidden h-[600px] animate-in fade-in slide-in-from-bottom-4 duration-500 shadow-2xl">
             {/* Header */}
-            <div className="p-4 border-b border-slate-800 bg-slate-900/50">
+            <div className="p-4 border-b border-white/5 bg-black/20">
                 <div className="flex items-start justify-between mb-3">
                     <div>
                         <h3 className="font-bold text-white flex items-center gap-2">
@@ -146,7 +146,7 @@ export default function ActiveSessionPanel({ sessionId, onStopSession }: ActiveS
                                 sessionInfo?.subject_name || 'Loading...'
                             )}
                         </p>
-                        <p className="text-xs text-slate-500 font-mono mt-0.5">
+                        <p className="text-xs text-secondary/50 font-mono mt-0.5">
                             {sessionInfo?.section}
                         </p>
                     </div>
@@ -167,19 +167,19 @@ export default function ActiveSessionPanel({ sessionId, onStopSession }: ActiveS
             </div>
 
             {/* Stats Bar */}
-            <div className="bg-slate-950/50 px-4 py-2 border-b border-slate-800 flex items-center justify-between text-xs">
+            <div className="bg-black/10 px-4 py-2 border-b border-white/5 flex items-center justify-between text-xs">
                 <div className="flex items-center gap-1.5 text-emerald-400">
                     <CheckCircle size={12} />
                     <span>{activity.filter(l => l.status.toLowerCase() === 'present').length} Present</span>
                 </div>
-                <div className="flex items-center gap-1.5 text-slate-400">
+                <div className="flex items-center gap-1.5 text-secondary/60">
                     <Clock size={12} />
                     <span>Running</span>
                 </div>
             </div>
 
             {/* Feed */}
-            <div className="flex-1 overflow-y-auto space-y-2 p-3 custom-scrollbar bg-slate-900/30">
+            <div className="flex-1 overflow-y-auto space-y-2 p-3 custom-scrollbar bg-black/5">
                 {loading ? (
                     <div className="flex items-center justify-center h-full text-slate-500">
                         <div className="animate-pulse flex flex-col items-center gap-2">
@@ -188,7 +188,7 @@ export default function ActiveSessionPanel({ sessionId, onStopSession }: ActiveS
                         </div>
                     </div>
                 ) : activity.length === 0 ? (
-                    <div className="flex items-center justify-center h-full text-slate-500">
+                    <div className="flex items-center justify-center h-full text-secondary/40">
                         <div className="text-center">
                             <Activity size={32} className="mx-auto mb-2 opacity-20" />
                             <p className="text-sm">No activity yet</p>
@@ -201,16 +201,16 @@ export default function ActiveSessionPanel({ sessionId, onStopSession }: ActiveS
                         .map((log) => (
                             <div
                                 key={log.id}
-                                className="bg-slate-800 rounded-lg p-3 border border-slate-700/50 hover:border-slate-600 transition-colors animate-fade-in group"
+                                className="bg-maroon-900/60 rounded-lg p-3 border border-white/5 hover:border-brand-gold/20 transition-all animate-fade-in group shadow-sm"
                             >
                                 <div className="flex items-start gap-3">
                                     {/* Student Photo */}
-                                    <div className="w-9 h-9 rounded-full bg-slate-700 flex-shrink-0 overflow-hidden ring-2 ring-slate-800 group-hover:ring-slate-700 transition-all">
+                                    <div className="w-9 h-9 rounded-full bg-maroon-800 flex-shrink-0 overflow-hidden ring-2 ring-black/20 group-hover:ring-brand-gold/30 transition-all">
                                         {log.id_photo ? (
                                             <img src={log.id_photo} alt={log.student_name} className="w-full h-full object-cover" />
                                         ) : (
                                             <div className="w-full h-full flex items-center justify-center">
-                                                <User size={16} className="text-slate-500" />
+                                                <User size={16} className="text-secondary/30" />
                                             </div>
                                         )}
                                     </div>
@@ -221,7 +221,7 @@ export default function ActiveSessionPanel({ sessionId, onStopSession }: ActiveS
                                             <span className="font-semibold text-white text-xs truncate">
                                                 {log.student_name} {log.student_last_name}
                                             </span>
-                                            <span className="text-[10px] text-slate-500 ml-auto font-mono">
+                                            <span className="text-[10px] text-secondary/40 ml-auto font-mono">
                                                 {formatTime(log.created_at)}
                                             </span>
                                         </div>
@@ -229,7 +229,7 @@ export default function ActiveSessionPanel({ sessionId, onStopSession }: ActiveS
                                             <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-[4px] text-[10px] font-medium border ${getStatusColor(log.status)}`}>
                                                 {log.status}
                                             </span>
-                                            <span className="text-[10px] text-slate-600" title={log.recognition_method}>
+                                            <span className="text-[10px] text-secondary/30" title={log.recognition_method}>
                                                 {log.recognition_method === 'CCTV' ? 'Via Camera' : 'Manual'}
                                             </span>
                                         </div>

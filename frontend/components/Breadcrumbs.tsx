@@ -43,7 +43,7 @@ export default function Breadcrumbs() {
     if (breadcrumbs.length <= 1) return null;
 
     return (
-        <nav className="flex items-center space-x-2 text-sm mb-6">
+        <nav className="flex items-center space-x-1 mb-6">
             {breadcrumbs.map((crumb, index) => {
                 const isLast = index === breadcrumbs.length - 1;
                 const isFirst = index === 0;
@@ -51,19 +51,19 @@ export default function Breadcrumbs() {
                 return (
                     <div key={crumb.href} className="flex items-center">
                         {index > 0 && (
-                            <ChevronRight size={16} className="text-slate-600 mx-2" />
+                            <ChevronRight size={14} className="text-secondary/20 mx-2" />
                         )}
                         {isLast ? (
-                            <span className="text-white font-medium flex items-center gap-2">
-                                {isFirst && <Home size={16} />}
+                            <span className="text-white font-black text-[10px] uppercase tracking-widest flex items-center gap-2 px-3 py-1.5 bg-white/5 rounded-lg border border-white/5 shadow-inner">
+                                {isFirst && <Home size={14} className="text-brand-gold" />}
                                 {crumb.label}
                             </span>
                         ) : (
                             <Link
                                 href={crumb.href}
-                                className="text-slate-400 hover:text-white transition-colors flex items-center gap-2"
+                                className="text-secondary/40 hover:text-white transition-colors flex items-center gap-2 text-[10px] font-black uppercase tracking-widest px-2 py-1 hover:bg-white/2 rounded-lg"
                             >
-                                {isFirst && <Home size={16} />}
+                                {isFirst && <Home size={14} className="text-brand-gold/60" />}
                                 {crumb.label}
                             </Link>
                         )}
