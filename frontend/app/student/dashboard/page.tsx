@@ -150,11 +150,11 @@ export default function StudentDashboard() {
     const handleLogout = () => { logout('/login'); };
 
     if (!user || loading) return (
-        <div className="min-h-screen bg-[#F8FAFC] flex flex-col items-center justify-center relative overflow-hidden">
-            <IdentityNode className="absolute top-[20%] right-[10%]" size={180} />
+        <div className="min-h-screen bg-identity-bg flex flex-col items-center justify-center relative overflow-hidden">
+            <IdentityNode className="absolute top-[20%] right-[10%] opacity-20" size={180} />
             <div className="relative z-10 text-center">
-                <div className="w-12 h-12 border-4 border-identity-sky/10 border-t-identity-sky rounded-full animate-spin mx-auto mb-6 shadow-2xl"></div>
-                <p className="font-black uppercase tracking-[0.4em] text-[10px] text-identity-navy animate-pulse">Identity Hub Loading...</p>
+                <div className="w-12 h-12 border-4 border-identity-sky/10 border-t-identity-sky rounded-full animate-spin mx-auto mb-6 shadow-2xl shadow-identity-sky/10"></div>
+                <p className="font-black uppercase tracking-[0.4em] text-[10px] text-identity-navy animate-pulse">Initializing Identity Hub...</p>
             </div>
         </div>
     );
@@ -168,9 +168,9 @@ export default function StudentDashboard() {
     ];
 
     return (
-        <div className="min-h-screen bg-[#F8FAFC] font-sans text-slate-900 relative">
+        <div className="min-h-screen bg-identity-bg font-sans text-slate-900 relative selection:bg-identity-sky/10 selection:text-identity-navy">
             {/* System Identity Nodes */}
-            <div className="fixed inset-0 pointer-events-none z-0 opacity-[0.08] overflow-hidden">
+            <div className="fixed inset-0 pointer-events-none z-0 opacity-[0.05] overflow-hidden">
                 <IdentityNode className="top-[10%] left-[5%]" size={160} />
                 <IdentityNode className="bottom-[10%] right-[5%]" size={220} />
                 <IdentityNode className="top-[40%] right-[15%]" size={110} />
@@ -229,20 +229,20 @@ export default function StudentDashboard() {
                 )}
 
                 {/* Tab Navigation */}
-                <div className="sticky top-[80px] z-[40] mb-12 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-2">
-                    <div className="bg-white/80 backdrop-blur-xl border border-slate-200 rounded-[2.5rem] p-2 shadow-2xl shadow-slate-200/50 flex gap-2 overflow-x-auto justify-start md:justify-center no-scrollbar">
+                <div className="sticky top-20 z-40 bg-identity-bg/90 backdrop-blur-xl border-b border-identity-sky/10 mb-8 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-0 transition-all duration-300">
+                    <div className="flex gap-2 overflow-x-auto justify-start md:justify-center px-4 no-scrollbar">
                         {tabs.map((tab) => {
                             const Icon = tab.icon;
                             return (
                                 <button
                                     key={tab.id}
                                     onClick={() => handleTabChange(tab.id)}
-                                    className={`px-8 py-4 rounded-[1.8rem] font-black transition-all flex items-center gap-3 whitespace-nowrap uppercase tracking-[0.3em] text-[10px] ${activeTab === tab.id
-                                        ? 'bg-identity-sky text-white shadow-lg shadow-identity-sky/20 scale-105'
-                                        : 'text-slate-400 hover:text-identity-navy hover:bg-slate-50'
+                                    className={`px-8 py-5 text-[10px] font-black uppercase tracking-[0.2em] transition-all border-b-2 flex items-center gap-3 whitespace-nowrap group ${activeTab === tab.id
+                                        ? 'text-identity-navy border-identity-navy bg-identity-navy/5'
+                                        : 'text-slate-400 border-transparent hover:text-identity-navy hover:bg-identity-navy/5'
                                         }`}
                                 >
-                                    <Icon size={16} />
+                                    <Icon className={`w-4 h-4 transition-transform group-hover:scale-110 ${activeTab === tab.id ? 'text-identity-navy' : 'text-slate-300'}`} />
                                     {tab.label}
                                 </button>
                             );
@@ -257,15 +257,15 @@ export default function StudentDashboard() {
                     {activeTab === 'schedule' && <ScheduleTab user={user} />}
                     {activeTab === 'attendance' && <AttendanceTab user={user} />}
                     {activeTab === 'ai-insights' && (
-                        <div className="bg-white rounded-[3rem] border border-slate-200 p-10 shadow-3xl relative overflow-hidden">
-                            <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-identity-navy via-identity-sky to-identity-navy"></div>
+                        <div className="identity-glass rounded-[3rem] border border-identity-sky/10 p-10 shadow-3xl relative overflow-hidden">
+                            <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-identity-navy via-identity-sky to-identity-navy opacity-50"></div>
                             <div className="flex items-center gap-6 mb-12">
-                                <div className="p-4 bg-identity-sky/5 text-identity-sky rounded-2xl">
+                                <div className="p-4 bg-identity-sky/10 text-identity-navy rounded-2xl border border-identity-sky/10">
                                     <Brain size={32} />
                                 </div>
                                 <div>
-                                    <h1 className="text-3xl font-black text-identity-navy tracking-tighter uppercase font-outfit">Neural Insights</h1>
-                                    <p className="text-[10px] font-black text-identity-sky uppercase tracking-[0.3em] mt-1">AI-Powered Attendance Prediction</p>
+                                    <h1 className="text-3xl font-black text-identity-navy tracking-tighter uppercase font-outfit italic">Neural Insights</h1>
+                                    <p className="text-[10px] font-black text-identity-sky uppercase tracking-[0.4em] mt-1">AI-Powered Attendance Matrix Analysis</p>
                                 </div>
                             </div>
                             <AttendanceInsights studentId={user.id.toString() || ''} />

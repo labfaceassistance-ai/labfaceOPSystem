@@ -367,18 +367,18 @@ export default function AttendanceInsightsDashboard({ studentId }: { studentId: 
 
             {/* Goal Modal */}
             {isGoalModalOpen && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 backdrop-blur-xl p-4 animate-in fade-in duration-300">
-                    <div className="bg-white border border-slate-200 rounded-[3rem] w-full max-w-md p-10 shadow-3xl transform transition-all animate-in zoom-in-95 duration-300">
-                        <h3 className="text-2xl font-black text-identity-navy mb-4 uppercase tracking-tighter font-outfit">Set Objective</h3>
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-relaxed mb-10">Select your operational target for the current academic period.</p>
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-identity-navy/40 backdrop-blur-xl p-4 animate-in fade-in duration-300">
+                    <div className="bg-white border border-identity-sky/10 rounded-[3rem] w-full max-w-md p-10 shadow-3xl transform transition-all animate-in zoom-in-95 duration-300">
+                        <h3 className="text-2xl font-black text-identity-navy mb-4 uppercase tracking-tighter font-outfit italic">Set Matrix Objective</h3>
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] leading-relaxed mb-10 italic">Select your operational target for the current academic period.</p>
 
                         <div className="space-y-4 mb-10">
                             {[90, 95, 100].map((target) => (
                                 <button
                                     key={target}
                                     onClick={() => handleSaveGoal(target)}
-                                    className={`w-full p-6 rounded-2xl border flex items-center justify-between group transition-all duration-500 ${goal === target
-                                        ? 'bg-identity-navy border-identity-navy text-white shadow-xl translate-x-1'
+                                    className={`w-full p-6 rounded-[2rem] border flex items-center justify-between group transition-all duration-500 ${goal === target
+                                        ? 'bg-identity-navy border-identity-navy text-white shadow-xl scale-[1.02]'
                                         : 'bg-slate-50 border-slate-100 text-slate-400 hover:border-identity-sky/30 hover:bg-white hover:shadow-lg'
                                         }`}
                                 >
@@ -390,7 +390,7 @@ export default function AttendanceInsightsDashboard({ studentId }: { studentId: 
 
                         <button
                             onClick={() => setIsGoalModalOpen(false)}
-                            className="w-full py-4 text-slate-300 hover:text-identity-navy font-black text-[11px] uppercase tracking-[0.3em] transition-colors"
+                            className="w-full py-4 text-slate-300 hover:text-identity-navy font-black text-[11px] uppercase tracking-[0.4em] transition-all hover:bg-slate-50 rounded-2xl"
                         >
                             Abort Initialization
                         </button>

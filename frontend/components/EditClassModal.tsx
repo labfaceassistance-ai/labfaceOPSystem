@@ -219,87 +219,87 @@ export default function EditClassModal({ isOpen, onClose, classId, className, is
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-50 animate-in fade-in duration-200 p-4">
-            <div className="bg-maroon-950 w-full max-w-4xl max-h-[90vh] rounded-2xl border border-white/10 shadow-3xl flex flex-col overflow-hidden animate-scale-up">
-                <div className="flex justify-between items-center p-6 border-b border-white/10 bg-black/40">
-                    <h2 className="text-xl font-black text-white flex items-center gap-2 uppercase tracking-tight">
-                        <Edit2 size={24} className="text-brand-gold" /> Edit Class: {className}
+        <div className="fixed inset-0 bg-identity-navy/20 backdrop-blur-md flex items-center justify-center z-50 animate-in fade-in duration-200 p-4">
+            <div className="identity-glass w-full max-w-4xl max-h-[90vh] rounded-3xl border border-identity-sky/10 shadow-3xl flex flex-col overflow-hidden animate-scale-up">
+                <div className="flex justify-between items-center p-8 border-b border-identity-sky/10 bg-white/40">
+                    <h2 className="text-2xl font-black text-identity-navy flex items-center gap-3 uppercase tracking-tight italic">
+                        <Edit2 size={24} className="text-identity-sky" /> Edit Class: {className}
                     </h2>
-                    <button onClick={onClose} className="text-secondary/40 hover:text-white transition-colors">
+                    <button onClick={onClose} className="text-slate-400 hover:text-identity-navy transition-colors">
                         <X size={24} />
                     </button>
                 </div>
 
                 {/* Tabs */}
-                <div className="flex border-b border-white/10 bg-black/40">
+                <div className="flex border-b border-identity-sky/10 bg-white/40">
                     <button
                         onClick={() => setActiveTab('details')}
-                        className={`flex-1 py-4 text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all ${activeTab === 'details' ? 'text-brand-gold border-b-2 border-brand-gold bg-brand-gold/5' : 'text-secondary/40 hover:text-white hover:bg-white/5'}`}
+                        className={`flex-1 py-5 text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all ${activeTab === 'details' ? 'text-white bg-identity-navy' : 'text-slate-400 hover:text-identity-navy hover:bg-white/60'}`}
                     >
                         <Settings size={16} /> General Info
                     </button>
                     {!isArchived && (
                         <button
                             onClick={() => setActiveTab('roster')}
-                            className={`flex-1 py-4 text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all ${activeTab === 'roster' ? 'text-brand-gold border-b-2 border-brand-gold bg-brand-gold/5' : 'text-secondary/40 hover:text-white hover:bg-white/5'}`}
+                            className={`flex-1 py-5 text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all ${activeTab === 'roster' ? 'text-white bg-identity-navy' : 'text-slate-400 hover:text-identity-navy hover:bg-white/60'}`}
                         >
                             <Users size={16} /> Student Roster
                         </button>
                     )}
                 </div>
 
-                <div className="overflow-y-auto p-6 flex-1 bg-maroon-950">
+                <div className="overflow-y-auto p-8 flex-1">
                     {loading ? (
-                        <div className="flex flex-col items-center justify-center py-12 gap-3">
-                            <div className="animate-spin h-8 w-8 border-4 border-brand-gold/10 border-t-brand-gold rounded-full"></div>
-                            <span className="text-[10px] font-black text-secondary/40 uppercase tracking-widest">Loading class data...</span>
+                        <div className="flex flex-col items-center justify-center py-20 gap-4">
+                            <div className="animate-spin h-10 w-10 border-4 border-identity-sky/10 border-t-identity-sky rounded-full"></div>
+                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic animate-pulse">Synchronizing class data...</span>
                         </div>
                     ) : activeTab === 'details' ? (
-                        <form onSubmit={handleSubmit} className="space-y-6">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <form onSubmit={handleSubmit} className="space-y-8">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                 <div>
-                                    <label className="block text-[10px] font-black text-secondary/40 uppercase tracking-widest mb-2 ml-1">Subject Code</label>
+                                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3 ml-1">Subject Code</label>
                                     <input
                                         type="text"
                                         value={details.subject_code}
                                         onChange={e => setDetails({ ...details, subject_code: e.target.value })}
-                                        className="w-full bg-black/40 border border-white/5 rounded-xl px-4 py-3 text-sm font-bold text-white uppercase tracking-widest focus:border-brand-gold/50 focus:outline-none transition-all shadow-inner"
+                                        className="w-full bg-white/60 border border-identity-sky/10 rounded-xl px-4 py-4 text-sm font-bold text-identity-navy uppercase tracking-widest focus:border-identity-sky/50 focus:outline-none transition-all shadow-inner"
                                         required
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-[10px] font-black text-secondary/40 uppercase tracking-widest mb-2 ml-1">Subject Name</label>
+                                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3 ml-1">Subject Name</label>
                                     <input
                                         type="text"
                                         value={details.subject_name}
                                         onChange={e => setDetails({ ...details, subject_name: e.target.value })}
-                                        className="w-full bg-black/40 border border-white/5 rounded-xl px-4 py-3 text-sm font-bold text-white uppercase tracking-widest focus:border-brand-gold/50 focus:outline-none transition-all shadow-inner"
+                                        className="w-full bg-white/60 border border-identity-sky/10 rounded-xl px-4 py-4 text-sm font-bold text-identity-navy uppercase tracking-widest focus:border-identity-sky/50 focus:outline-none transition-all shadow-inner"
                                         required
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-[10px] font-black text-secondary/40 uppercase tracking-widest mb-2 ml-1">Section</label>
+                                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3 ml-1">Section</label>
                                     <input
                                         type="text"
                                         value={details.section}
                                         readOnly
-                                        className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-sm font-bold text-secondary/40 uppercase tracking-widest cursor-not-allowed shadow-inner"
+                                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-4 text-sm font-bold text-slate-400 uppercase tracking-widest cursor-not-allowed shadow-inner"
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-[10px] font-black text-secondary/40 uppercase tracking-widest mb-2 ml-1">School Year</label>
+                                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3 ml-1">School Year</label>
                                     {isArchived ? (
                                         <input
                                             type="text"
                                             value={details.school_year}
                                             readOnly
-                                            className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-sm font-bold text-secondary/20 uppercase tracking-widest cursor-not-allowed shadow-inner"
+                                            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-4 text-sm font-bold text-slate-400 uppercase tracking-widest cursor-not-allowed shadow-inner"
                                         />
                                     ) : (
                                         <select
                                             value={details.school_year}
                                             onChange={e => setDetails({ ...details, school_year: e.target.value })}
-                                            className="w-full bg-black/40 border border-white/5 rounded-xl px-4 py-3 text-sm font-bold text-white uppercase tracking-widest focus:border-brand-gold/50 focus:outline-none transition-all shadow-inner"
+                                            className="w-full bg-white/60 border border-identity-sky/10 rounded-xl px-4 py-4 text-sm font-bold text-identity-navy uppercase tracking-widest focus:border-identity-sky/50 focus:outline-none transition-all shadow-inner"
                                             required
                                         >
                                             {schoolYears.map(year => (
@@ -309,19 +309,19 @@ export default function EditClassModal({ isOpen, onClose, classId, className, is
                                     )}
                                 </div>
                                 <div>
-                                    <label className="block text-[10px] font-black text-secondary/40 uppercase tracking-widest mb-2 ml-1">Semester</label>
+                                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3 ml-1">Semester</label>
                                     {isArchived ? (
                                         <input
                                             type="text"
                                             value={details.semester}
                                             readOnly
-                                            className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-sm font-bold text-secondary/20 uppercase tracking-widest cursor-not-allowed shadow-inner"
+                                            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-4 text-sm font-bold text-slate-400 uppercase tracking-widest cursor-not-allowed shadow-inner"
                                         />
                                     ) : (
                                         <select
                                             value={details.semester}
                                             onChange={e => setDetails({ ...details, semester: e.target.value })}
-                                            className="w-full bg-black/40 border border-white/5 rounded-xl px-4 py-3 text-sm font-bold text-white uppercase tracking-widest focus:border-brand-gold/50 focus:outline-none transition-all shadow-inner"
+                                            className="w-full bg-white/60 border border-identity-sky/10 rounded-xl px-4 py-4 text-sm font-bold text-identity-navy uppercase tracking-widest focus:border-identity-sky/50 focus:outline-none transition-all shadow-inner"
                                             required
                                         >
                                             <option value="1st Semester">1st Semester</option>
@@ -332,24 +332,24 @@ export default function EditClassModal({ isOpen, onClose, classId, className, is
                                 </div>
 
                                 {/* Schedule Editor */}
-                                <div className={`col-span-full bg-black/20 p-6 rounded-2xl border border-white/5 shadow-inner ${isArchived ? 'opacity-50 pointer-events-none' : ''}`}>
-                                    <label className="block text-[10px] font-black text-secondary/40 uppercase tracking-widest mb-4 ml-1">Schedule</label>
+                                <div className={`col-span-full bg-identity-sky/5 p-8 rounded-2xl border border-identity-sky/10 shadow-inner ${isArchived ? 'opacity-50 pointer-events-none' : ''}`}>
+                                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-5 ml-1">Schedule Configuration</label>
                                     {isArchived ? (
-                                        <div className="space-y-2">
+                                        <div className="space-y-3">
                                             {details.schedule.map((slot: any, idx: number) => (
-                                                <div key={idx} className="w-full bg-black/40 border border-white/5 rounded-xl px-4 py-3 text-white text-[10px] font-black uppercase tracking-widest shadow-inner">
+                                                <div key={idx} className="w-full bg-white/60 border border-identity-sky/10 rounded-xl px-4 py-3 text-identity-navy text-[10px] font-black uppercase tracking-widest shadow-inner">
                                                     {slot.day} • {slot.startTime} - {slot.endTime}
                                                 </div>
                                             ))}
-                                            {details.schedule.length === 0 && <div className="text-secondary/20 text-[10px] font-black uppercase tracking-widest italic text-center py-4">No schedule set</div>}
+                                            {details.schedule.length === 0 && <div className="text-slate-300 text-[10px] font-black uppercase tracking-widest italic text-center py-4">No schedule set</div>}
                                         </div>
                                     ) : (
                                         details.schedule.map((slot: any, idx: number) => (
-                                            <div key={idx} className="flex gap-3 mb-3 animate-slide-in">
+                                            <div key={idx} className="flex gap-4 mb-4 animate-slide-in">
                                                 <select
                                                     value={slot.day}
                                                     onChange={e => handleScheduleChange(idx, 'day', e.target.value)}
-                                                    className="bg-black/40 border border-white/5 rounded-xl px-4 py-2 text-white text-[10px] font-black uppercase tracking-widest focus:border-brand-gold/50 transition-all shadow-inner"
+                                                    className="bg-white/60 border border-identity-sky/10 rounded-xl px-4 py-2.5 text-identity-navy text-[10px] font-black uppercase tracking-widest focus:border-identity-sky/50 transition-all shadow-inner"
                                                 >
                                                     {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map(d => <option key={d} value={d}>{d}</option>)}
                                                 </select>
@@ -357,16 +357,16 @@ export default function EditClassModal({ isOpen, onClose, classId, className, is
                                                     type="time"
                                                     value={slot.startTime}
                                                     onChange={e => handleScheduleChange(idx, 'startTime', e.target.value)}
-                                                    className="flex-1 bg-black/40 border border-white/5 rounded-xl px-4 py-2 text-white text-[10px] font-black uppercase tracking-widest focus:border-brand-gold/50 transition-all shadow-inner"
-                                                    style={{ colorScheme: 'dark' }}
+                                                    className="flex-1 bg-white/60 border border-identity-sky/10 rounded-xl px-4 py-2.5 text-identity-navy text-[10px] font-black uppercase tracking-widest focus:border-identity-sky/50 transition-all shadow-inner"
+                                                    style={{ colorScheme: 'light' }}
                                                 />
-                                                <span className="text-secondary/20 self-center font-black">-</span>
+                                                <span className="text-slate-200 self-center font-black">-</span>
                                                 <input
                                                     type="time"
                                                     value={slot.endTime}
                                                     onChange={e => handleScheduleChange(idx, 'endTime', e.target.value)}
-                                                    className="flex-1 bg-black/40 border border-white/5 rounded-xl px-4 py-2 text-white text-[10px] font-black uppercase tracking-widest focus:border-brand-gold/50 transition-all shadow-inner"
-                                                    style={{ colorScheme: 'dark' }}
+                                                    className="flex-1 bg-white/60 border border-identity-sky/10 rounded-xl px-4 py-2.5 text-identity-navy text-[10px] font-black uppercase tracking-widest focus:border-identity-sky/50 transition-all shadow-inner"
+                                                    style={{ colorScheme: 'light' }}
                                                 />
                                             </div>
                                         ))
@@ -375,107 +375,111 @@ export default function EditClassModal({ isOpen, onClose, classId, className, is
 
                             </div>
 
-                            <div className="flex justify-end pt-6 border-t border-white/10">
+                            <div className="flex justify-end pt-8 border-t border-identity-sky/10">
                                 <button
                                     type="submit"
                                     disabled={submitting}
-                                    className="bg-brand-gold hover:bg-brand-gold/90 text-black px-8 py-3 rounded-xl font-black uppercase tracking-widest flex items-center gap-2 shadow-lg shadow-brand-gold/10 transition-all disabled:opacity-50"
+                                    className="bg-identity-navy hover:bg-identity-navy/90 text-white px-10 py-4 rounded-xl font-black uppercase tracking-widest flex items-center gap-3 shadow-lg shadow-identity-navy/20 transition-all disabled:opacity-50 active:scale-95"
                                 >
-                                    {submitting ? 'Saving...' : <><Save size={18} /> Save Changes</>}
+                                    {submitting ? 'Updating Class...' : <><Save size={18} /> Update Logic</>}
                                 </button>
                             </div>
                         </form>
                     ) : (
                         activeTab === 'roster' && (
-                            <div className="space-y-8 animate-in fade-in duration-300">
+                            <div className="space-y-10 animate-in fade-in duration-300">
                                 {previewData ? (
-                                    <div className="bg-black/40 p-6 rounded-2xl border border-white/5 shadow-inner space-y-6">
+                                    <div className="bg-white/40 p-8 rounded-2xl border border-identity-sky/10 shadow-inner space-y-8">
                                         <div className="flex justify-between items-center">
-                                            <h3 className="text-lg font-black text-white flex items-center gap-2 uppercase tracking-tight">
-                                                <FileSpreadsheet size={20} className="text-emerald-400" /> Preview Changes
+                                            <h3 className="text-xl font-black text-identity-navy flex items-center gap-3 uppercase tracking-tight italic">
+                                                <FileSpreadsheet size={24} className="text-emerald-500" /> Preview Matrix
                                             </h3>
-                                            <div className="px-3 py-1.5 rounded-lg bg-black/60 border border-white/5 text-[10px] font-black uppercase tracking-widest text-secondary/40 shadow-inner">
-                                                Total in File: <span className="text-white">{previewData.summary.total_uploaded}</span>
+                                            <div className="px-4 py-2 rounded-xl bg-white border border-identity-sky/10 text-[10px] font-black uppercase tracking-widest text-slate-400 shadow-inner">
+                                                Synchronized Entries: <span className="text-identity-navy">{previewData.summary.total_uploaded}</span>
                                             </div>
                                         </div>
 
-                                        <div className="grid grid-cols-3 gap-4">
-                                            <div className="bg-emerald-500/5 border border-emerald-500/10 p-4 rounded-xl shadow-inner">
-                                                <div className="text-emerald-400/60 text-[10px] font-black uppercase tracking-widest mb-1">To Add</div>
-                                                <div className="text-2xl font-black text-emerald-400 tracking-tighter">{previewData.summary.to_add}</div>
+                                        <div className="grid grid-cols-3 gap-6">
+                                            <div className="bg-emerald-50 p-6 rounded-2xl border border-emerald-100 shadow-inner">
+                                                <div className="text-emerald-500/60 text-[10px] font-black uppercase tracking-widest mb-2">New Registrations</div>
+                                                <div className="text-3xl font-black text-emerald-600 tracking-tighter">{previewData.summary.to_add}</div>
                                             </div>
-                                            <div className="bg-red-500/5 border border-red-500/10 p-4 rounded-xl shadow-inner">
-                                                <div className="text-red-400/60 text-[10px] font-black uppercase tracking-widest mb-1">To Remove</div>
-                                                <div className="text-2xl font-black text-red-400 tracking-tighter">{previewData.summary.to_remove}</div>
+                                            <div className="bg-rose-50 p-6 rounded-2xl border border-rose-100 shadow-inner">
+                                                <div className="text-rose-500/60 text-[10px] font-black uppercase tracking-widest mb-2">To Deprovision</div>
+                                                <div className="text-3xl font-black text-rose-600 tracking-tighter">{previewData.summary.to_remove}</div>
                                             </div>
-                                            <div className="bg-black/40 border border-white/5 p-4 rounded-xl shadow-inner">
-                                                <div className="text-secondary/40 text-[10px] font-black uppercase tracking-widest mb-1">Unchanged</div>
-                                                <div className="text-2xl font-black text-white tracking-tighter">{previewData.summary.unchanged}</div>
+                                            <div className="bg-slate-50 p-6 rounded-2xl border border-slate-200 shadow-inner">
+                                                <div className="text-slate-400 text-[10px] font-black uppercase tracking-widest mb-2">Maintained</div>
+                                                <div className="text-3xl font-black text-identity-navy tracking-tighter">{previewData.summary.unchanged}</div>
                                             </div>
                                         </div>
 
-                                        <div className="border border-white/10 rounded-xl overflow-hidden max-h-[300px] overflow-y-auto bg-black/20 shadow-inner">
+                                        <div className="border border-identity-sky/10 rounded-2xl overflow-hidden max-h-[350px] overflow-y-auto bg-white/40 shadow-inner">
                                             <table className="w-full text-left">
-                                                <thead className="bg-black/60 text-[10px] font-black uppercase tracking-widest text-secondary/40 sticky top-0 border-b border-white/5">
+                                                <thead className="bg-slate-50 text-[10px] font-black uppercase tracking-widest text-slate-500 sticky top-0 border-b border-identity-sky/5">
                                                     <tr>
-                                                        <th className="px-4 py-3">Status</th>
-                                                        <th className="px-4 py-3">Name</th>
-                                                        <th className="px-4 py-3">ID</th>
+                                                        <th className="px-6 py-4">Status Vector</th>
+                                                        <th className="px-6 py-4">Identity Name</th>
+                                                        <th className="px-6 py-4">Unique ID</th>
                                                     </tr>
                                                 </thead>
-                                                <tbody className="divide-y divide-white/5 text-[10px] font-black uppercase tracking-widest">
+                                                <tbody className="divide-y divide-identity-sky/5 text-[10px] font-black uppercase tracking-widest">
                                                     {previewData.changes.to_add.map((s: any, i: number) => (
-                                                        <tr key={`add-${i}`} className="bg-emerald-500/5 hover:bg-emerald-500/10 transition-colors">
-                                                            <td className="px-4 py-3 text-emerald-400">NEW</td>
-                                                            <td className="px-4 py-3 text-white">{s.student_name}</td>
-                                                            <td className="px-4 py-3 text-secondary/40 font-mono">{s.student_number}</td>
+                                                        <tr key={`add-${i}`} className="bg-emerald-50/30 hover:bg-emerald-50 transition-colors">
+                                                            <td className="px-6 py-4">
+                                                                <span className="px-2 py-1 rounded bg-emerald-500 text-white text-[8px]">PROVISION</span>
+                                                            </td>
+                                                            <td className="px-6 py-4 text-identity-navy">{s.student_name}</td>
+                                                            <td className="px-6 py-4 text-slate-400 font-mono">{s.student_number}</td>
                                                         </tr>
                                                     ))}
                                                     {previewData.changes.to_remove.map((s: any, i: number) => (
-                                                        <tr key={`rem-${i}`} className="bg-red-500/5 hover:bg-red-500/10 transition-colors">
-                                                            <td className="px-4 py-3 text-red-400">REM</td>
-                                                            <td className="px-4 py-3 text-secondary/20 line-through decoration-red-500/50">{s.student_name}</td>
-                                                            <td className="px-4 py-3 text-secondary/20 font-mono line-through">{s.student_number}</td>
+                                                        <tr key={`rem-${i}`} className="bg-rose-50/30 hover:bg-rose-50 transition-colors">
+                                                            <td className="px-6 py-4">
+                                                                <span className="px-2 py-1 rounded bg-rose-500 text-white text-[8px]">TERMINATE</span>
+                                                            </td>
+                                                            <td className="px-6 py-4 text-slate-400 line-through decoration-rose-500/50">{s.student_name}</td>
+                                                            <td className="px-6 py-4 text-slate-300 font-mono line-through">{s.student_number}</td>
                                                         </tr>
                                                     ))}
                                                     {previewData.changes.unchanged?.map((s: any, i: number) => (
-                                                        <tr key={`uc-${i}`} className="hover:bg-white/5 transition-colors">
-                                                            <td className="px-4 py-3 text-secondary/20">KEEP</td>
-                                                            <td className="px-4 py-3 text-secondary/40">{s.student_name}</td>
-                                                            <td className="px-4 py-3 text-secondary/20 font-mono">{s.student_number}</td>
+                                                        <tr key={`uc-${i}`} className="hover:bg-identity-sky/5 transition-colors">
+                                                            <td className="px-6 py-4 font-black text-slate-300">STABLE</td>
+                                                            <td className="px-6 py-4 text-slate-500">{s.student_name}</td>
+                                                            <td className="px-6 py-4 text-slate-300 font-mono">{s.student_number}</td>
                                                         </tr>
                                                     ))}
                                                 </tbody>
                                             </table>
                                         </div>
 
-                                        <div className="flex justify-end gap-3 pt-6 border-t border-white/10">
+                                        <div className="flex justify-end gap-6 pt-8 border-t border-identity-sky/10">
                                             <button
                                                 onClick={() => { setPreviewData(null); setSelectedFile(null); }}
-                                                className="px-6 py-2.5 text-secondary/40 hover:text-white font-black uppercase tracking-widest transition-colors"
+                                                className="px-8 py-3 text-slate-400 hover:text-identity-navy font-black uppercase tracking-widest transition-colors italic"
                                             >
-                                                Cancel
+                                                Abort Sync
                                             </button>
                                             <button
                                                 onClick={handleConfirmUpload}
                                                 disabled={uploading}
-                                                className="bg-brand-gold hover:bg-brand-gold/90 text-black px-8 py-2.5 rounded-xl font-black uppercase tracking-widest shadow-lg shadow-brand-gold/10 transition-all flex items-center gap-2"
+                                                className="bg-identity-navy hover:bg-identity-navy/90 text-white px-10 py-4 rounded-xl font-black uppercase tracking-widest shadow-lg shadow-identity-navy/20 transition-all flex items-center gap-3 active:scale-95"
                                             >
-                                                {uploading ? <div className="animate-spin h-4 w-4 border-2 border-black/50 border-t-black rounded-full" /> : <CheckCircle size={18} />}
-                                                Confirm Update
+                                                {uploading ? <div className="animate-spin h-5 w-5 border-2 border-white/50 border-t-white rounded-full" /> : <CheckCircle size={20} />}
+                                                Finalize Matrix Update
                                             </button>
                                         </div>
                                     </div>
                                 ) : (
-                                    <div className="space-y-6">
+                                    <div className="space-y-8">
                                         {/* CSV Upload */}
-                                        <div className="bg-black/20 p-8 rounded-2xl border-2 border-dashed border-white/5 hover:border-brand-gold/20 transition-all group shadow-inner">
+                                        <div className="bg-white/40 p-10 rounded-3xl border-2 border-dashed border-identity-sky/10 hover:border-identity-sky transition-all group shadow-inner">
                                             <div className="flex flex-col items-center text-center">
-                                                <div className="w-16 h-16 bg-emerald-500/10 rounded-2xl flex items-center justify-center mb-4 border border-emerald-500/20 group-hover:scale-110 transition-transform">
-                                                    <FileSpreadsheet size={32} className="text-emerald-400" />
+                                                <div className="w-20 h-20 bg-identity-sky/10 rounded-3xl flex items-center justify-center mb-6 border border-identity-sky/20 group-hover:scale-110 transition-transform shadow-lg">
+                                                    <FileSpreadsheet size={36} className="text-identity-sky" />
                                                 </div>
-                                                <h3 className="text-sm font-black text-white uppercase tracking-widest mb-1 flex items-center gap-2">Batch Upload Roster</h3>
-                                                <p className="text-[10px] font-bold text-secondary/40 uppercase tracking-widest mb-6 max-w-xs">Upload CSV or Excel file to bulk add students.</p>
+                                                <h3 className="text-xl font-black text-identity-navy uppercase tracking-widest mb-2 italic">Batch Roster Synchronization</h3>
+                                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-8 max-w-sm">Upload a standardized CSV or Excel dataset to synchronize student records with the central registry.</p>
                                                 
                                                 <div className="flex flex-col items-center gap-4 w-full">
                                                     <input
@@ -488,102 +492,106 @@ export default function EditClassModal({ isOpen, onClose, classId, className, is
                                                     <button
                                                         onClick={() => fileInputRef.current?.click()}
                                                         disabled={uploading}
-                                                        className="w-full max-w-xs bg-black/40 hover:bg-white/5 text-white border border-white/10 px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 shadow-inner"
+                                                        className="w-full max-w-md bg-white hover:bg-identity-sky/5 text-identity-navy border border-identity-sky/10 px-8 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-3 shadow-inner active:scale-95"
                                                     >
                                                         {uploading ? (
-                                                            <div className="animate-spin h-4 w-4 border-2 border-white/50 border-t-white rounded-full"></div>
-                                                        ) : <Upload size={18} className="text-brand-gold" />}
-                                                        Select File
+                                                            <div className="animate-spin h-5 w-5 border-2 border-identity-navy/50 border-t-identity-navy rounded-full"></div>
+                                                        ) : <Upload size={20} className="text-identity-sky" />}
+                                                        Initialize File Interface
                                                     </button>
                                                     {uploadStatus && (
-                                                        <span className={`text-[10px] font-black uppercase tracking-widest mt-2 ${uploadStatus.startsWith('Error') ? 'text-red-400' : 'text-emerald-400'}`}>
-                                                            {uploadStatus}
-                                                        </span>
+                                                        <div className={`px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest mt-4 flex items-center gap-2 border ${uploadStatus.startsWith('Error') ? 'bg-rose-50 text-rose-500 border-rose-100' : 'bg-emerald-50 text-emerald-500 border-emerald-100'}`}>
+                                                            <AlertCircle size={14} /> {uploadStatus}
+                                                        </div>
                                                     )}
                                                 </div>
                                             </div>
                                         </div>
 
                                         {/* Manual Add */}
-                                        <div className="bg-black/20 p-6 rounded-2xl border border-white/5 shadow-inner">
-                                            <h3 className="text-[10px] font-black text-secondary/40 uppercase tracking-widest mb-6 flex items-center gap-2 ml-1">
-                                                <UserPlus size={16} className="text-brand-gold" /> Manually Add Student
+                                        <div className="bg-white/40 p-8 rounded-3xl border border-identity-sky/10 shadow-inner">
+                                            <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-8 flex items-center gap-3 ml-1">
+                                                <UserPlus size={20} className="text-identity-sky" /> Manual Identity Assignment
                                             </h3>
-                                            <form onSubmit={handleAddStudent} className="flex flex-col gap-4">
-                                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                                    <input
-                                                        type="text"
-                                                        value={newStudentNumber}
-                                                        onChange={e => setNewStudentNumber(formatStudentId(e.target.value))}
-                                                        maxLength={15}
-                                                        className="bg-black/40 border border-white/5 rounded-xl px-4 py-2.5 text-white text-[10px] font-bold uppercase tracking-widest focus:border-brand-gold/50 focus:outline-none shadow-inner"
-                                                        placeholder="STUDENT ID"
-                                                        required
-                                                    />
+                                            <form onSubmit={handleAddStudent} className="flex flex-col gap-6">
+                                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                                    <div className="relative group">
+                                                        <input
+                                                            type="text"
+                                                            value={newStudentNumber}
+                                                            onChange={e => setNewStudentNumber(formatStudentId(e.target.value))}
+                                                            maxLength={15}
+                                                            className="w-full bg-white/60 border border-identity-sky/10 rounded-xl px-4 py-4 text-identity-navy text-[10px] font-black uppercase tracking-widest focus:border-identity-sky focus:outline-none shadow-inner transition-all"
+                                                            placeholder="STUDENT ID"
+                                                            required
+                                                        />
+                                                    </div>
                                                     <input
                                                         type="text"
                                                         value={newFirstName}
                                                         onChange={e => setNewFirstName(e.target.value)}
-                                                        className="bg-black/40 border border-white/5 rounded-xl px-4 py-2.5 text-white text-[10px] font-bold uppercase tracking-widest focus:border-brand-gold/50 focus:outline-none shadow-inner"
-                                                        placeholder="FIRST NAME"
+                                                        className="bg-white/60 border border-identity-sky/10 rounded-xl px-4 py-4 text-identity-navy text-[10px] font-black uppercase tracking-widest focus:border-identity-sky focus:outline-none shadow-inner transition-all"
+                                                        placeholder="GIVEN NAME"
                                                         required
                                                     />
                                                     <input
                                                         type="text"
                                                         value={newLastName}
                                                         onChange={e => setNewLastName(e.target.value)}
-                                                        className="bg-black/40 border border-white/5 rounded-xl px-4 py-2.5 text-white text-[10px] font-bold uppercase tracking-widest focus:border-brand-gold/50 focus:outline-none shadow-inner"
-                                                        placeholder="LAST NAME"
+                                                        className="bg-white/60 border border-identity-sky/10 rounded-xl px-4 py-4 text-identity-navy text-[10px] font-black uppercase tracking-widest focus:border-identity-sky focus:outline-none shadow-inner transition-all"
+                                                        placeholder="SURNAME"
                                                         required
                                                     />
                                                 </div>
-                                                {formError && <p className="text-red-400 text-[10px] font-black uppercase tracking-widest ml-1">{formError}</p>}
+                                                {formError && <div className="p-3 bg-rose-50 border border-rose-100 rounded-xl text-rose-500 text-[10px] font-black uppercase tracking-widest ml-1 flex items-center gap-2"><AlertCircle size={14} /> {formError}</div>}
                                                 <button
                                                     type="submit"
                                                     disabled={submitting}
-                                                    className="self-end bg-black/40 hover:bg-white/5 text-brand-gold border border-white/5 px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-inner"
+                                                    className="self-end bg-identity-navy hover:bg-identity-navy/90 text-white px-10 py-4 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-lg active:scale-95 disabled:opacity-50"
                                                 >
-                                                    Add Student
+                                                    {submitting ? 'Registering...' : 'Link Identity'}
                                                 </button>
                                             </form>
                                         </div>
 
                                         {/* List */}
-                                        <div>
-                                            <h3 className="text-[10px] font-black text-secondary/40 uppercase tracking-widest mb-4 ml-1 flex items-center justify-between">
-                                                <span>Enrolled Students ({students.length})</span>
-                                                <button onClick={fetchClassData} className="text-brand-gold hover:text-white transition-colors">
-                                                    <Settings size={14} />
+                                        <div className="space-y-6">
+                                            <div className="flex items-center justify-between ml-1">
+                                                <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-3">
+                                                    <Users size={18} className="text-identity-sky" /> Provisioned Students ({students.length})
+                                                </h3>
+                                                <button onClick={fetchClassData} className="p-2 text-identity-sky hover:text-identity-navy bg-identity-sky/5 rounded-lg transition-all hover:rotate-180">
+                                                    <Settings size={18} />
                                                 </button>
-                                            </h3>
-                                            <div className="bg-black/20 rounded-2xl border border-white/5 overflow-hidden max-h-[400px] overflow-y-auto shadow-inner">
+                                            </div>
+                                            <div className="bg-white/40 rounded-3xl border border-identity-sky/10 overflow-hidden max-h-[500px] overflow-y-auto shadow-inner">
                                                 <table className="w-full text-left">
-                                                    <thead className="bg-black/60 text-secondary/40 text-[10px] font-black uppercase tracking-widest sticky top-0 border-b border-white/5">
+                                                    <thead className="bg-slate-50 text-slate-400 text-[10px] font-black uppercase tracking-widest sticky top-0 border-b border-identity-sky/5">
                                                         <tr>
-                                                            <th className="px-6 py-4 font-black">Name</th>
-                                                            <th className="px-6 py-4 font-black">ID</th>
-                                                            <th className="px-6 py-4 text-right">Action</th>
+                                                            <th className="px-8 py-5">Full Digital Identity</th>
+                                                            <th className="px-8 py-5">Unique Reference</th>
+                                                            <th className="px-8 py-5 text-right">Administrative Action</th>
                                                         </tr>
                                                     </thead>
-                                                    <tbody className="divide-y divide-white/5 text-[10px] font-bold uppercase tracking-widest">
+                                                    <tbody className="divide-y divide-identity-sky/5 text-[10px] font-bold uppercase tracking-widest">
                                                         {students.map((s) => (
-                                                            <tr key={s.enrollment_id} className="hover:bg-white/5 group transition-colors">
-                                                                <td className="px-6 py-4 text-white">{s.full_name}</td>
-                                                                <td className="px-6 py-4 text-secondary/40 font-mono">{s.user_id}</td>
-                                                                <td className="px-6 py-4 text-right">
+                                                            <tr key={s.enrollment_id} className="hover:bg-identity-sky/5 group transition-colors">
+                                                                <td className="px-8 py-5 text-identity-navy">{s.full_name}</td>
+                                                                <td className="px-8 py-5 text-slate-400 font-mono">{s.user_id}</td>
+                                                                <td className="px-8 py-5 text-right">
                                                                     <button
                                                                         onClick={() => removeStudent(s.enrollment_id, s.full_name)}
-                                                                        className="text-secondary/20 hover:text-red-400 p-2 rounded-lg hover:bg-red-500/5 transition-all"
+                                                                        className="text-slate-300 hover:text-rose-500 p-2.5 rounded-xl hover:bg-rose-50 transition-all active:scale-90"
                                                                     >
-                                                                        <Trash2 size={16} />
+                                                                        <UserMinus size={20} />
                                                                     </button>
                                                                 </td>
                                                             </tr>
                                                         ))}
                                                         {students.length === 0 && (
                                                             <tr>
-                                                                <td colSpan={3} className="px-6 py-12 text-center text-secondary/20 font-black uppercase tracking-widest italic">
-                                                                    No students enrolled yet
+                                                                <td colSpan={3} className="px-8 py-20 text-center text-slate-300 font-black uppercase tracking-widest italic">
+                                                                    No provisioned identities found
                                                                 </td>
                                                             </tr>
                                                         )}

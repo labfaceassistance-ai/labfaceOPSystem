@@ -118,56 +118,56 @@ export default function SmartSearch() {
     const getTypeColor = (type: string) => {
         switch (type) {
             case 'student':
-                return 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20';
+                return 'bg-emerald-50 text-emerald-600 border-emerald-100';
             case 'professor':
-                return 'bg-brand-gold/10 text-brand-gold border-brand-gold/20';
+                return 'bg-identity-sky/10 text-identity-navy border-identity-sky/20';
             case 'class':
-                return 'bg-amber-500/10 text-amber-500 border-amber-500/20';
+                return 'bg-amber-50 text-amber-600 border-amber-100';
             case 'session':
-                return 'bg-brand-gold/10 text-brand-gold border-brand-gold/20';
+                return 'bg-identity-sky/10 text-identity-navy border-identity-sky/20';
             case 'notification':
-                return 'bg-rose-500/10 text-rose-500 border-rose-500/20';
+                return 'bg-rose-50 text-rose-600 border-rose-100';
             default:
-                return 'bg-white/5 text-secondary/40 border-white/5';
+                return 'bg-slate-50 text-slate-400 border-slate-100';
         }
     };
 
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-start justify-center pt-32 p-4 animate-in fade-in duration-300">
-            <div className="bg-maroon-950 rounded-2xl shadow-3xl border border-white/10 max-w-2xl w-full overflow-hidden animate-scale-up">
+        <div className="fixed inset-0 bg-identity-navy/40 backdrop-blur-md z-[100] flex items-start justify-center pt-32 p-4 animate-in fade-in duration-300">
+            <div className="bg-white rounded-[2rem] shadow-[0_32px_64px_-12px_rgba(4,28,60,0.3)] border border-identity-sky/10 max-w-2xl w-full overflow-hidden animate-scale-up">
                 {/* Search Input */}
-                <div className="p-6 bg-black/40 border-b border-white/10">
+                <div className="p-6 bg-slate-50/50 border-b border-slate-100">
                     <div className="relative group">
-                        <Search className="absolute left-4 top-4 text-brand-gold group-focus-within:scale-110 transition-transform" size={20} />
+                        <Search className="absolute left-4 top-4 text-identity-sky group-focus-within:scale-110 transition-transform" size={20} />
                         <input
                             ref={inputRef}
                             type="text"
                             value={query}
                             onChange={(e) => setQuery(e.target.value)}
                             onKeyDown={handleKeyDown}
-                            placeholder="Search students, classes, sessions..."
-                            className="w-full pl-12 pr-12 py-4 bg-black/40 border border-white/5 rounded-2xl text-white placeholder-secondary/20 focus:border-brand-gold/50 focus:outline-none transition-all font-black text-[10px] uppercase tracking-widest shadow-inner"
+                            placeholder="Search the campus nexus..."
+                            className="w-full pl-12 pr-12 py-4 bg-white border border-slate-200 rounded-2xl text-identity-navy placeholder-slate-300 focus:border-identity-sky/50 focus:ring-4 focus:ring-identity-sky/5 focus:outline-none transition-all font-black text-[10px] uppercase tracking-widest shadow-inner shadow-slate-100/50"
                         />
                         <button
                             onClick={() => setIsOpen(false)}
-                            className="absolute right-4 top-4 text-secondary/40 hover:text-white transition-colors"
+                            className="absolute right-4 top-4 text-slate-300 hover:text-identity-navy transition-colors bg-slate-100/50 p-1 rounded-lg"
                         >
-                            <X size={20} />
+                            <X size={16} />
                         </button>
                     </div>
                 </div>
 
                 {/* Results */}
-                <div className="max-h-96 overflow-y-auto">
+                <div className="max-h-96 overflow-y-auto p-2">
                     {isLoading ? (
                         <div className="p-20 text-center">
-                            <div className="inline-block w-12 h-12 border-4 border-brand-gold/10 border-t-brand-gold rounded-full animate-spin mb-6"></div>
-                            <p className="text-[10px] font-black text-secondary/40 uppercase tracking-widest">Searching the campus...</p>
+                            <div className="inline-block w-12 h-12 border-4 border-identity-sky/10 border-t-identity-sky rounded-full animate-spin mb-6 shadow-sm"></div>
+                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Accessing Neural Registry...</p>
                         </div>
                     ) : results.length > 0 ? (
-                        <div className="p-2">
+                        <div className="space-y-1">
                             {results.map((result, index) => {
                                 const Icon = getIcon(result.type);
                                 const isSelected = index === selectedIndex;
@@ -176,49 +176,49 @@ export default function SmartSearch() {
                                     <button
                                         key={result.id}
                                         onClick={() => handleSelect(result)}
-                                        className={`w-full p-5 rounded-2xl flex items-center gap-4 transition-all border shadow-inner ${isSelected
-                                            ? 'bg-brand-gold text-black border-brand-gold shadow-brand-gold/20 scale-[1.02]'
-                                            : 'bg-black/20 hover:bg-white/5 border-white/5 text-white'
+                                        className={`w-full p-5 rounded-2xl flex items-center gap-4 transition-all border ${isSelected
+                                            ? 'bg-identity-navy text-white border-identity-navy shadow-xl shadow-identity-navy/20 scale-[1.01]'
+                                            : 'bg-white hover:bg-slate-50 border-transparent text-identity-navy'
                                             }`}
                                     >
-                                        <div className={`p-2 rounded-lg border ${getTypeColor(result.type)}`}>
+                                        <div className={`p-2.5 rounded-xl border ${getTypeColor(result.type)} ${isSelected ? 'brightness-125 saturate-50' : ''}`}>
                                             <Icon size={18} />
                                         </div>
                                         <div className="flex-1 text-left">
-                                            <p className={`font-black uppercase tracking-tight ${isSelected ? 'text-black' : 'text-white'}`}>{result.title}</p>
-                                            <p className={`text-[10px] font-bold uppercase tracking-widest mt-0.5 ${isSelected ? 'text-black/60' : 'text-secondary/40'}`}>{result.subtitle}</p>
+                                            <p className={`font-black uppercase tracking-tight ${isSelected ? 'text-white' : 'text-identity-navy'}`}>{result.title}</p>
+                                            <p className={`text-[10px] font-bold uppercase tracking-widest mt-0.5 ${isSelected ? 'text-white/60' : 'text-slate-400'}`}>{result.subtitle}</p>
                                         </div>
-                                        <ArrowRight size={18} className={isSelected ? 'text-black' : 'text-secondary/20'} />
+                                        <ArrowRight size={18} className={isSelected ? 'text-white' : 'text-slate-200'} />
                                     </button>
                                 );
                             })}
                         </div>
                     ) : query.trim() ? (
                         <div className="p-20 text-center">
-                            <Search className="mx-auto text-secondary/10 mb-6" size={56} />
-                            <p className="text-[10px] font-black text-secondary/40 uppercase tracking-widest">No results found for "{query}"</p>
-                            <p className="text-[8px] font-bold text-secondary/20 uppercase tracking-widest mt-2">Try searching for students, classes, or sessions</p>
+                            <Search className="mx-auto text-slate-100 mb-6" size={56} />
+                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">No neural matches for "{query}"</p>
+                            <p className="text-[8px] font-bold text-slate-300 uppercase tracking-widest mt-2">Check the subject identifier or section code</p>
                         </div>
                     ) : (
                         <div className="p-20 text-center">
-                            <div className="w-20 h-20 bg-brand-gold/5 rounded-full flex items-center justify-center mx-auto mb-8 shadow-inner border border-brand-gold/10">
-                                <Search className="text-brand-gold/40" size={40} />
+                            <div className="w-20 h-20 bg-identity-sky/5 rounded-full flex items-center justify-center mx-auto mb-8 shadow-inner border border-identity-sky/10">
+                                <Search className="text-identity-sky/40" size={40} />
                             </div>
-                            <p className="text-[10px] font-black text-secondary/40 uppercase tracking-widest">LabFace Smart Search</p>
-                            <p className="text-[8px] font-bold text-secondary/20 uppercase tracking-widest mt-2">Start typing to search the campus registry</p>
+                            <p className="text-[10px] font-black text-identity-navy uppercase tracking-[0.4em] italic mb-2">Smart Nexus Search</p>
+                            <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">Start typing to scan the campus global registry</p>
                             
-                            <div className="flex items-center justify-center gap-6 mt-10 text-[8px] font-black text-secondary/20 uppercase tracking-tighter">
+                            <div className="flex items-center justify-center gap-6 mt-10 text-[8px] font-black text-slate-300 uppercase tracking-tighter">
                                 <div className="flex items-center gap-2">
-                                    <kbd className="px-2.5 py-1.5 bg-black/40 rounded-lg border border-white/10 shadow-inner">↑</kbd>
-                                    <kbd className="px-2.5 py-1.5 bg-black/40 rounded-lg border border-white/10 shadow-inner">↓</kbd>
+                                    <kbd className="px-2.5 py-1.5 bg-slate-50 rounded-lg border border-slate-100 shadow-sm font-outfit text-slate-500">↑</kbd>
+                                    <kbd className="px-2.5 py-1.5 bg-slate-50 rounded-lg border border-slate-100 shadow-sm font-outfit text-slate-500">↓</kbd>
                                     <span>Navigate</span>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                    <kbd className="px-3 py-1.5 bg-black/40 rounded-lg border border-white/10 shadow-inner">Enter</kbd>
+                                    <kbd className="px-3 py-1.5 bg-slate-50 rounded-lg border border-slate-100 shadow-sm font-outfit text-slate-500">Enter</kbd>
                                     <span>Select</span>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                    <kbd className="px-3 py-1.5 bg-black/40 rounded-lg border border-white/10 shadow-inner">Esc</kbd>
+                                    <kbd className="px-3 py-1.5 bg-slate-50 rounded-lg border border-slate-100 shadow-sm font-outfit text-slate-500">Esc</kbd>
                                     <span>Close</span>
                                 </div>
                             </div>
@@ -227,17 +227,17 @@ export default function SmartSearch() {
                 </div>
 
                 {/* Footer */}
-                <div className="p-4 bg-black/60 border-t border-white/10">
-                    <div className="flex items-center justify-between text-[8px] font-black text-secondary/20 uppercase tracking-widest">
+                <div className="p-4 bg-slate-50/50 border-t border-slate-100">
+                    <div className="flex items-center justify-between text-[8px] font-black text-slate-400 uppercase tracking-widest">
                         <div className="flex items-center gap-4">
                             <div className="flex items-center gap-2">
-                                <kbd className="px-2.5 py-1.5 bg-black/40 rounded-lg border border-white/10 shadow-inner text-white/40">Ctrl</kbd>
-                                <span>+</span>
-                                <kbd className="px-2.5 py-1.5 bg-black/40 rounded-lg border border-white/10 shadow-inner text-white/40">K</kbd>
-                                <span className="ml-1">Global Shortcut</span>
+                                <kbd className="px-2.5 py-1.5 bg-white rounded-lg border border-slate-200 shadow-sm text-slate-500 font-outfit">Ctrl</kbd>
+                                <span className="text-slate-300">+</span>
+                                <kbd className="px-2.5 py-1.5 bg-white rounded-lg border border-slate-200 shadow-sm text-slate-500 font-outfit">K</kbd>
+                                <span className="ml-1 text-slate-300">Global Command</span>
                             </div>
                         </div>
-                        <div className="text-brand-gold/40">{results.length} Registry Matches</div>
+                        <div className="text-identity-sky font-black italic">{results.length} Nexus Links</div>
                     </div>
                 </div>
             </div>

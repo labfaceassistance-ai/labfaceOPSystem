@@ -11,9 +11,10 @@ const warningService = require('../services/attendanceWarningService');
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 student_id INT NOT NULL,
                 class_id INT NOT NULL,
-                warning_type VARCHAR(50) NOT NULL, -- 'absence_warning', 'dropout_warning'
+                warning_type VARCHAR(50) NOT NULL, -- 'absence_warning', 'dropout_warning', 'late_threshold', 'incoming_absence_warning'
                 absent_count INT DEFAULT 0,
                 late_count INT DEFAULT 0,
+                excused_count INT DEFAULT 0,
                 equivalent_absences FLOAT DEFAULT 0,
                 triggered_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 is_resolved BOOLEAN DEFAULT FALSE,
@@ -23,6 +24,13 @@ const warningService = require('../services/attendanceWarningService');
                 FOREIGN KEY (class_id) REFERENCES classes(id) ON DELETE CASCADE
             )
         `);
+
+        // Migration: Add excused_count if missing
+        const [cols] = await pool.query("SHOW COLUMNS FROM attendance_warnings LIKE 'excused_count'");
+        if (cols.length === 0) {
+            console.log('[MIGRATION] Adding excused_count to attendance_warnings');
+            await pool.query('ALTER TABLE attendance_warnings ADD COLUMN excused_count INT DEFAULT 0 AFTER late_count');
+        }
     } catch (err) {
         console.error('Error initializing warnings table:', err);
     }

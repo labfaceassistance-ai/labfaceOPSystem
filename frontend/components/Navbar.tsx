@@ -6,7 +6,6 @@ import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { getToken, getUser, logout, API_URL, getBackendUrl, getProfilePictureUrl } from '@/utils/auth';
 import NotificationCenter from './NotificationCenter';
-import ThemeToggle from './ThemeToggle';
 
 interface UserData {
     id: number;
@@ -61,10 +60,10 @@ export default function Navbar() {
                                     user.role.includes('student') ? '/student/dashboard' :
                                         '/'
                         ) : '/'} className="flex items-center gap-3 group">
-                            <div className="relative h-10 w-10 bg-white rounded-full overflow-hidden shadow-xl group-hover:scale-105 transition-transform border border-brand-gold/20">
+                            <div className="relative h-10 w-10 bg-white rounded-full overflow-hidden shadow-xl group-hover:scale-105 transition-transform border border-identity-sky/20">
                                 <Image src="/logo.png" alt="LabFace Logo" width={40} height={40} className="object-cover" />
                             </div>
-                            <div className={`font-bold text-xl sm:text-2xl tracking-tight leading-none ${isHomePage ? '' : 'bg-black/5 px-2 py-1 rounded-lg backdrop-blur-sm border border-black/5'}`}>
+                            <div className={`font-bold text-xl sm:text-2xl tracking-tight leading-none`}>
                                 <span className="text-identity-navy drop-shadow-sm">Lab</span>
                                 <span className="text-identity-sky drop-shadow-sm">Face</span>
                             </div>
@@ -75,14 +74,9 @@ export default function Navbar() {
                         <div className="ml-10 flex items-baseline space-x-4">
 
 
-                            {!user && !isAuthPage && !isHomePage && (
-                                <div className="flex items-center gap-4">
-                                    <ThemeToggle />
-                                </div>
-                            )}
+
                             {user && !isAuthPage && (
                                 <div className="flex items-center gap-4 relative">
-                                    {!isHomePage && <ThemeToggle />}
                                     {!isHomePage && (
                                         <>
                                             {/* Enhanced Notification Center - Hide for Admins */}
@@ -120,7 +114,7 @@ export default function Navbar() {
                         <div className="-mr-2 flex md:hidden">
                             <button
                                 onClick={() => setIsOpen(!isOpen)}
-                                className="inline-flex items-center justify-center p-2 rounded-md text-brand-gold hover:bg-white/10 focus:outline-none transition-colors"
+                                className="inline-flex items-center justify-center p-2 rounded-md text-identity-sky hover:bg-identity-sky/10 focus:outline-none transition-colors"
                             >
                                 {isOpen ? <X size={24} /> : <Menu size={24} />}
                             </button>
@@ -150,8 +144,8 @@ export default function Navbar() {
                         {user && isHomePage && (
                             <>
                                 <div className="px-4 py-2 text-[8px] font-black text-secondary/20 uppercase tracking-widest">Signed in as {user.firstName} {user.lastName}</div>
-                                <Link href={user.role === 'professor' ? '/professor/dashboard' : '/student/dashboard'} onClick={() => setIsOpen(false)} className="block text-white hover:bg-white/5 px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-3 transition-all">
-                                    <LayoutDashboard size={18} className="text-brand-gold" /> Go to Dashboard
+                                <Link href={user.role === 'professor' ? '/professor/dashboard' : '/student/dashboard'} onClick={() => setIsOpen(false)} className="block text-identity-navy hover:bg-black/5 px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-3 transition-all">
+                                    <LayoutDashboard size={18} className="text-identity-sky" /> Go to Dashboard
                                 </Link>
                                 <button onClick={() => { handleLogout(); setIsOpen(false); }} className="block w-full text-left text-red-400 hover:bg-red-400/5 px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-3 transition-all">
                                     <LogOut size={18} /> Logout
@@ -165,12 +159,12 @@ export default function Navbar() {
                                     user.role === 'professor' ? '/professor/profile' :
                                         user.role === 'student' ? '/student/profile' :
                                             '/admin/profile'
-                                } onClick={() => setIsOpen(false)} className="block text-white hover:bg-white/5 px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-3 transition-all">
-                                    <User size={18} className="text-brand-gold" /> Profile
+                                } onClick={() => setIsOpen(false)} className="block text-identity-navy hover:bg-black/5 px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-3 transition-all">
+                                    <User size={18} className="text-identity-sky" /> Profile
                                 </Link>
                                 {(!user.role.includes('admin')) && (
-                                    <Link href="/notifications" onClick={() => setIsOpen(false)} className="block text-white hover:bg-white/5 px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-3 transition-all">
-                                        <Bell size={18} className="text-brand-gold" /> Notifications
+                                    <Link href="/notifications" onClick={() => setIsOpen(false)} className="block text-identity-navy hover:bg-black/5 px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-3 transition-all">
+                                        <Bell size={18} className="text-identity-sky" /> Notifications
                                     </Link>
                                 )}
                                 <button onClick={() => { handleLogout(); setIsOpen(false); }} className="block w-full text-left text-red-500 hover:bg-red-500/5 px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-3 transition-all">
@@ -184,51 +178,51 @@ export default function Navbar() {
 
             {/* Registration Choice Modal */}
             {isRegisterModalOpen && (
-                <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-in fade-in duration-300">
-                    <div className="identity-glass rounded-2xl shadow-3xl max-w-md w-full overflow-hidden animate-scale-up">
-                        <div className="p-6 bg-black/5 border-b border-black/5 flex justify-between items-center">
-                            <h3 className="text-xl font-black text-identity-navy uppercase tracking-tight">Create Account</h3>
+                <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-identity-navy/40 backdrop-blur-md animate-in fade-in duration-300">
+                    <div className="identity-glass rounded-3xl shadow-3xl max-w-md w-full overflow-hidden animate-scale-up border border-identity-sky/10">
+                        <div className="p-8 bg-white/40 border-b border-identity-sky/5 flex justify-between items-center">
+                            <h3 className="text-xl font-black text-identity-navy uppercase tracking-tight italic">Initialize Identity</h3>
                             <button
                                 onClick={() => setIsRegisterModalOpen(false)}
-                                className="text-secondary/40 hover:text-white transition-colors"
+                                className="text-slate-400 hover:text-identity-navy transition-all p-2 hover:bg-white/60 rounded-xl"
                             >
                                 <X size={24} />
                             </button>
                         </div>
 
-                        <div className="p-8 space-y-4">
-                            <p className="text-[10px] font-black text-secondary/40 uppercase tracking-widest mb-6 text-center">Choose your registration type</p>
+                        <div className="p-10 space-y-5">
+                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-8 text-center italic">Choose your operational role</p>
                             <Link
                                 href="/register/student"
                                 onClick={() => setIsRegisterModalOpen(false)}
-                                className="flex items-center p-5 bg-black/40 border border-white/5 rounded-2xl hover:border-brand-gold/50 transition-all group shadow-inner"
+                                className="flex items-center p-6 bg-white/60 border border-identity-sky/10 rounded-[2rem] hover:border-identity-sky/50 transition-all group shadow-sm hover:shadow-xl hover:-translate-y-1"
                             >
-                                <div className="w-14 h-14 bg-brand-gold/10 text-brand-gold rounded-2xl flex items-center justify-center mr-5 group-hover:bg-brand-gold group-hover:text-black transition-all border border-brand-gold/20 shadow-inner">
-                                    <GraduationCap size={28} />
+                                <div className="w-16 h-16 bg-identity-sky/10 text-identity-sky rounded-2xl flex items-center justify-center mr-6 group-hover:bg-identity-sky group-hover:text-white transition-all border border-identity-sky/20 shadow-inner">
+                                    <GraduationCap size={32} />
                                 </div>
                                 <div className="text-left">
-                                    <div className="font-black text-white uppercase tracking-tight">Student</div>
-                                    <div className="text-[8px] font-bold text-secondary/40 uppercase tracking-widest mt-1">Register with your student number</div>
+                                    <div className="font-black text-identity-navy uppercase tracking-tight text-lg italic">Student</div>
+                                    <div className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1">Register with your student number</div>
                                 </div>
-                                <div className="ml-auto text-secondary/20 group-hover:text-brand-gold group-hover:translate-x-1 transition-all">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6" /></svg>
+                                <div className="ml-auto text-slate-200 group-hover:text-identity-sky group-hover:translate-x-2 transition-all">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6" /></svg>
                                 </div>
                             </Link>
 
                             <Link
                                 href="/register/professor"
                                 onClick={() => setIsRegisterModalOpen(false)}
-                                className="flex items-center p-5 bg-black/40 border border-white/5 rounded-2xl hover:border-brand-gold/50 transition-all group shadow-inner"
+                                className="flex items-center p-6 bg-white/60 border border-identity-sky/10 rounded-[2rem] hover:border-identity-sky/50 transition-all group shadow-sm hover:shadow-xl hover:-translate-y-1"
                             >
-                                <div className="w-14 h-14 bg-brand-gold/10 text-brand-gold rounded-2xl flex items-center justify-center mr-5 group-hover:bg-brand-gold group-hover:text-black transition-all border border-brand-gold/20 shadow-inner">
-                                    <School size={28} />
+                                <div className="w-16 h-16 bg-identity-navy/10 text-identity-navy rounded-2xl flex items-center justify-center mr-6 group-hover:bg-identity-navy group-hover:text-white transition-all border border-identity-navy/20 shadow-inner">
+                                    <School size={32} />
                                 </div>
                                 <div className="text-left">
-                                    <div className="font-black text-white uppercase tracking-tight">Professor</div>
-                                    <div className="text-[8px] font-bold text-secondary/40 uppercase tracking-widest mt-1">Register with your faculty ID</div>
+                                    <div className="font-black text-identity-navy uppercase tracking-tight text-lg italic">Professor</div>
+                                    <div className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1">Register with faculty credentials</div>
                                 </div>
-                                <div className="ml-auto text-secondary/20 group-hover:text-brand-gold group-hover:translate-x-1 transition-all">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6" /></svg>
+                                <div className="ml-auto text-slate-200 group-hover:text-identity-navy group-hover:translate-x-2 transition-all">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6" /></svg>
                                 </div>
                             </Link>
                         </div>

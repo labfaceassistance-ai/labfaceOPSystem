@@ -14,32 +14,6 @@ const config: Config = {
                 foreground: "var(--foreground)",
                 primary: "var(--primary)",
                 secondary: "var(--secondary)",
-                brand: {
-                    950: "#2d0a0a", // Deep Maroon Background
-                    900: "#450a0a", // Dark Maroon
-                    800: "#800000", // PUP Maroon
-                    700: "#991b1b",
-                    600: "#dc2626",
-                    500: "#eab308", // PUP Gold (Primary Action)
-                    400: "#facc15",
-                    300: "#fde047",
-                    200: "#fef08a",
-                    100: "#fef9c3",
-                    50: "#fefce8",
-                },
-                maroon: {
-                    950: "#1A120B", // Deepest Coffee
-                    900: "#2D2424", // Dark Roast
-                    800: "#3C2A21", // Heritage Coffee (Primary)
-                    700: "#4B3621",
-                    600: "#5D4037",
-                    500: "#8B4513", // Saddle Brown
-                },
-                gold: {
-                    500: "#eab308",
-                    400: "#facc15",
-                    300: "#fde047",
-                },
                 identity: {
                     navy: "#041C3C",
                     sky: "#5CB4E4",
@@ -49,7 +23,7 @@ const config: Config = {
                 glass: {
                     white: "rgba(255, 255, 255, 0.6)",
                     border: "rgba(255, 255, 255, 0.4)",
-                    cyan: "rgba(92, 180, 228, 0.2)",
+                    blue: "rgba(92, 180, 228, 0.2)",
                 }
             },
             fontFamily: {

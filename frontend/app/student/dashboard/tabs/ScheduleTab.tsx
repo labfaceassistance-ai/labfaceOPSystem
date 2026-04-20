@@ -98,25 +98,25 @@ export default function ScheduleTab({ user }: ScheduleTabProps) {
     return (
         <div className="space-y-8 animate-fade-in">
             {/* Header */}
-            <div className="bg-white rounded-[2.5rem] shadow-xl shadow-slate-200/50 border border-slate-200 p-8 relative overflow-hidden group">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-identity-sky/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
-                <div className="flex items-center gap-4 mb-2 relative z-10">
-                    <div className="p-3 bg-identity-sky/10 text-identity-sky rounded-2xl group-hover:scale-110 transition-transform">
+            <div className="identity-glass rounded-2xl shadow-sm border border-identity-sky/10 backdrop-blur-sm p-8 relative overflow-hidden group">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-identity-sky/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 group-hover:bg-identity-sky/10 transition-colors"></div>
+                <div className="flex items-center gap-4 relative z-10">
+                    <div className="p-3 bg-identity-sky/10 text-identity-navy rounded-xl border border-identity-sky/10 shadow-lg shadow-identity-sky/5 group-hover:scale-110 transition-transform">
                         <Calendar size={28} />
                     </div>
                     <div>
-                        <h2 className="text-3xl font-black text-identity-navy uppercase tracking-tighter font-outfit">Temporal Synchronization</h2>
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mt-1">Operational Schedule • Lab 1</p>
+                        <h2 className="text-3xl font-black text-identity-navy uppercase tracking-tighter font-outfit italic">Temporal Synchronization</h2>
+                        <p className="text-[10px] font-black text-identity-sky uppercase tracking-[0.4em] mt-1">Operational Schedule • Lab 1</p>
                     </div>
                 </div>
             </div>
 
             {/* No Classes Enrolled Message */}
             {classes.length === 0 && (
-                <div className="bg-slate-50 rounded-[3rem] border-2 border-slate-100 border-dashed p-16 text-center">
-                    <Calendar size={48} className="mx-auto mb-4 text-slate-200" />
-                    <p className="font-black text-lg text-slate-400 uppercase tracking-tighter">No nodes synchronized</p>
-                    <p className="text-[10px] font-black text-slate-300 mt-2 uppercase tracking-[0.3em]">
+                <div className="identity-glass rounded-[2rem] border-2 border-identity-sky/10 border-dashed p-16 text-center">
+                    <Calendar size={48} className="mx-auto mb-4 text-slate-200 opacity-20" />
+                    <p className="font-black text-lg text-slate-300 uppercase tracking-tighter italic">No nodes synchronized</p>
+                    <p className="text-[10px] font-black text-slate-200 mt-2 uppercase tracking-[0.3em]">
                         Your academic matrix is currently empty.
                     </p>
                 </div>
@@ -131,15 +131,15 @@ export default function ScheduleTab({ user }: ScheduleTabProps) {
                     return (
                         <div
                             key={day}
-                            className={`rounded-[3rem] border transition-all duration-500 overflow-hidden ${
+                            className={`rounded-2xl border transition-all duration-500 overflow-hidden shadow-sm hover:shadow-xl ${
                                 hasClasses 
-                                    ? 'bg-white border-slate-100 shadow-xl' 
-                                    : 'bg-slate-50/50 border-slate-50 opacity-40 grayscale group hover:opacity-100 hover:grayscale-0'
+                                    ? 'bg-white/40 border-identity-sky/10 identity-glass' 
+                                    : 'bg-white/10 border-identity-sky/5 opacity-40 grayscale group hover:opacity-100 hover:grayscale-0 identity-glass'
                             }`}
                         >
-                            <div className={`px-8 py-5 flex items-center justify-between border-b ${hasClasses ? 'bg-slate-50 border-slate-100' : 'bg-transparent border-transparent'}`}>
-                                <h3 className="text-lg font-black text-identity-navy uppercase tracking-tighter font-outfit">{day}</h3>
-                                <span className={`text-[10px] font-black uppercase tracking-[0.2em] px-3 py-1 rounded-full ${hasClasses ? 'bg-identity-sky/10 text-identity-sky' : 'bg-slate-100 text-slate-300'}`}>
+                            <div className={`px-8 py-5 flex items-center justify-between border-b ${hasClasses ? 'bg-identity-sky/5 border-identity-sky/10' : 'bg-transparent border-transparent'}`}>
+                                <h3 className="text-lg font-black text-identity-navy uppercase tracking-tighter font-outfit italic">{day}</h3>
+                                <span className={`text-[10px] font-black uppercase tracking-[0.2em] px-3 py-1 rounded-full ${hasClasses ? 'bg-identity-navy text-white' : 'bg-white/40 text-slate-300'}`}>
                                     {dayClasses.length} {dayClasses.length === 1 ? 'Node' : 'Nodes'}
                                 </span>
                             </div>
@@ -150,28 +150,28 @@ export default function ScheduleTab({ user }: ScheduleTabProps) {
                                         <div
                                             key={index}
                                             onClick={() => setSelectedClass(item.class)}
-                                            className="bg-slate-50 rounded-[1.8rem] p-6 border border-slate-100 hover:border-identity-sky/30 hover:bg-white transition-all duration-500 cursor-pointer group shadow-sm hover:shadow-2xl"
+                                            className="bg-white/40 rounded-xl p-6 border border-identity-sky/5 hover:border-identity-sky/30 hover:bg-white transition-all duration-500 cursor-pointer group/card shadow-sm hover:shadow-xl shadow-inner"
                                         >
                                             <div className="flex items-start justify-between mb-4">
                                                 <div>
-                                                    <h4 className="font-black text-identity-navy text-sm uppercase tracking-widest group-hover:text-identity-sky transition-colors">
+                                                    <h4 className="font-black text-identity-navy text-sm uppercase tracking-widest group-hover/card:text-identity-sky transition-colors italic">
                                                         {item.class.subject_code}
                                                     </h4>
-                                                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 line-clamp-1 pr-10">
+                                                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 line-clamp-1 pr-10">
                                                         {item.class.subject_name}
                                                     </p>
                                                 </div>
-                                                <span className="text-[10px] font-black text-identity-sky bg-white px-3 py-1 rounded-full border border-slate-100 shadow-sm uppercase tracking-[0.2em]">
+                                                <span className="text-[10px] font-black text-identity-sky bg-white/60 px-3 py-1 rounded-full border border-identity-sky/10 shadow-sm uppercase tracking-[0.2em]">
                                                     {item.class.section}
                                                 </span>
                                             </div>
 
-                                            <div className="flex flex-wrap items-center gap-6 text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 mt-6 pt-6 border-t border-slate-100/50">
-                                                <div className="flex items-center gap-2 group-hover:text-slate-600 transition-colors">
+                                            <div className="flex flex-wrap items-center gap-6 text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 mt-6 pt-6 border-t border-identity-sky/5">
+                                                <div className="flex items-center gap-2 group-hover/card:text-identity-navy transition-colors">
                                                     <Clock size={16} className="text-identity-sky opacity-40" />
                                                     <span>{item.slot.startTime} - {item.slot.endTime}</span>
                                                 </div>
-                                                <div className="flex items-center gap-2 group-hover:text-slate-600 transition-colors">
+                                                <div className="flex items-center gap-2 group-hover/card:text-identity-navy transition-colors">
                                                     <UserIcon size={16} className="text-identity-sky opacity-40" />
                                                     <span className="truncate max-w-[150px]">Prof. {item.class.professor_id}</span>
                                                 </div>
@@ -179,11 +179,11 @@ export default function ScheduleTab({ user }: ScheduleTabProps) {
                                         </div>
                                     ))
                                 ) : (
-                                    <div className="text-center py-10">
-                                        <div className="w-12 h-12 bg-white border border-slate-50 rounded-2xl flex items-center justify-center text-slate-100 mx-auto mb-4">
+                                    <div className="text-center py-10 opacity-60">
+                                        <div className="w-12 h-12 bg-white/40 border border-identity-sky/5 rounded-xl flex items-center justify-center text-slate-200 mx-auto mb-4 shadow-inner">
                                             <Clock size={20} />
                                         </div>
-                                        <p className="font-black text-[9px] text-slate-200 uppercase tracking-[0.5em]">System Idle</p>
+                                        <p className="font-black text-[9px] text-slate-400 uppercase tracking-[0.5em]">System Idle</p>
                                     </div>
                                 )}
                             </div>
@@ -195,23 +195,23 @@ export default function ScheduleTab({ user }: ScheduleTabProps) {
             {/* Class Details Modal */}
             {selectedClass && (
                 <div
-                    className="fixed inset-0 bg-slate-900/40 backdrop-blur-xl flex items-center justify-center z-[100] p-4 animate-in fade-in duration-300"
+                    className="fixed inset-0 bg-identity-navy/20 backdrop-blur-md flex items-center justify-center z-[100] p-4 animate-in fade-in duration-300"
                     onClick={() => setSelectedClass(null)}
                 >
                     <div
-                        className="bg-white w-full max-w-md rounded-[3rem] border border-slate-200 shadow-3xl overflow-hidden animate-in zoom-in-95 duration-300"
+                        className="bg-white/95 backdrop-blur-xl w-full max-w-md rounded-2xl border border-identity-sky/20 shadow-3xl overflow-hidden animate-in zoom-in-95 duration-300"
                         onClick={e => e.stopPropagation()}
                     >
                         {/* Modal Header */}
-                        <div className="bg-slate-50 p-8 border-b border-slate-200 flex justify-between items-start relative overflow-hidden">
-                            <div className="absolute top-0 right-0 w-24 h-24 bg-identity-sky/5 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2"></div>
-                            <div className="relative z-10">
-                                <h3 className="text-2xl font-black text-identity-navy mb-1 uppercase tracking-tighter font-outfit">{selectedClass.subject_code}</h3>
-                                <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.3em]">{selectedClass.subject_name}</p>
+                        <div className="bg-identity-sky/5 p-8 border-b border-identity-sky/10 flex justify-between items-start relative overflow-hidden">
+                            <div className="absolute top-0 right-0 w-24 h-24 bg-identity-sky/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2"></div>
+                            <div className="relative z-10 font-outfit">
+                                <h3 className="text-2xl font-black text-identity-navy mb-1 uppercase tracking-tighter italic">{selectedClass.subject_code}</h3>
+                                <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.3em]">{selectedClass.subject_name}</p>
                             </div>
                             <button
                                 onClick={() => setSelectedClass(null)}
-                                className="p-3 bg-white hover:bg-rose-50 rounded-2xl text-slate-300 hover:text-rose-500 transition-all shadow-sm border border-slate-100"
+                                className="p-3 bg-white hover:bg-rose-50 rounded-xl text-slate-300 hover:text-rose-500 transition-all shadow-sm border border-identity-sky/10"
                             >
                                 <X size={20} />
                             </button>
@@ -220,13 +220,13 @@ export default function ScheduleTab({ user }: ScheduleTabProps) {
                         {/* Modal Content */}
                         <div className="p-8 space-y-8">
                             <div className="grid grid-cols-2 gap-4">
-                                <div className="bg-slate-50 p-5 rounded-2xl border border-slate-100 shadow-inner">
+                                <div className="bg-identity-sky/5 p-5 rounded-xl border border-identity-sky/10 shadow-inner">
                                     <span className="text-[9px] text-slate-400 uppercase tracking-[0.4em] font-black block mb-2">Section</span>
                                     <span className="text-identity-navy font-black tracking-tight text-sm uppercase">{selectedClass.section}</span>
                                 </div>
-                                <div className="bg-slate-50 p-5 rounded-2xl border border-slate-100 shadow-inner overflow-hidden">
+                                <div className="bg-identity-sky/5 p-5 rounded-xl border border-identity-sky/10 shadow-inner overflow-hidden">
                                     <span className="text-[9px] text-slate-400 uppercase tracking-[0.4em] font-black block mb-2">Professor</span>
-                                    <span className="text-identity-navy font-black tracking-tight text-sm truncate block" title={selectedClass.professor_id}>
+                                    <span className="text-identity-navy font-black tracking-tight text-sm truncate block font-outfit" title={selectedClass.professor_id}>
                                         {selectedClass.professor_id}
                                     </span>
                                 </div>
@@ -234,14 +234,14 @@ export default function ScheduleTab({ user }: ScheduleTabProps) {
 
                             <div>
                                 <h4 className="text-[10px] font-black text-identity-sky uppercase tracking-[0.4em] mb-6 flex items-center gap-4">
-                                    <span className="h-px bg-slate-100 flex-1"></span>
+                                    <span className="h-px bg-identity-sky/10 flex-1"></span>
                                     Schedule Matrix
-                                    <span className="h-px bg-slate-100 flex-1"></span>
+                                    <span className="h-px bg-identity-sky/10 flex-1"></span>
                                 </h4>
                                 <div className="space-y-3">
                                     {parseSchedule(selectedClass.schedule_json).map((slot, idx) => (
-                                        <div key={idx} className="flex items-center justify-between text-[11px] bg-white p-4 rounded-2xl border border-slate-100 shadow-sm hover:border-identity-sky/30 transition-colors">
-                                            <span className="text-identity-navy font-black uppercase tracking-widest">{slot.day}</span>
+                                        <div key={idx} className="flex items-center justify-between text-[11px] bg-white/60 p-4 rounded-xl border border-identity-sky/5 shadow-sm hover:border-identity-sky/30 transition-colors">
+                                            <span className="text-identity-navy font-black uppercase tracking-widest italic">{slot.day}</span>
                                             <div className="flex items-center gap-3">
                                                 <Clock size={14} className="text-identity-sky" />
                                                 <span className="text-slate-500 font-black">
@@ -255,10 +255,10 @@ export default function ScheduleTab({ user }: ScheduleTabProps) {
                         </div>
 
                         {/* Modal Footer */}
-                        <div className="p-6 bg-slate-50/50 border-t border-slate-200 text-center">
+                        <div className="p-6 bg-identity-sky/5 border-t border-identity-sky/10 text-center">
                             <button
                                 onClick={() => setSelectedClass(null)}
-                                className="px-10 py-3 bg-white text-slate-400 hover:text-identity-navy hover:shadow-lg rounded-full text-[10px] font-black uppercase tracking-[0.4em] transition-all border border-slate-100"
+                                className="px-10 py-3 bg-identity-navy text-white hover:bg-identity-navy/90 hover:shadow-lg rounded-xl text-[10px] font-black uppercase tracking-[0.4em] transition-all shadow-lg shadow-identity-navy/10"
                             >
                                 Terminate Connection
                             </button>

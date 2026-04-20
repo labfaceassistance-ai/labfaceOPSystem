@@ -60,20 +60,20 @@ export default function AnalyticsTab({ user, classes }: AnalyticsTabProps) {
     return (
         <div className="space-y-6">
             {/* Main Chart Section */}
-            <div className="bg-maroon-950/40 rounded-2xl border border-white/10 p-8 shadow-3xl backdrop-blur-sm">
+            <div className="identity-glass rounded-2xl border border-identity-sky/10 p-8 shadow-3xl backdrop-blur-sm">
                 <div className="flex items-center justify-between mb-6">
                     <div className="flex items-center gap-3">
-                        <BarChart3 className="text-brand-gold" size={28} />
+                        <BarChart3 className="text-identity-sky" size={28} />
                         <div>
-                            <h2 className="text-2xl font-black text-white uppercase tracking-tight">Class Analytics</h2>
-                            <p className="text-secondary/40 text-[10px] font-black uppercase tracking-widest">Attendance overview for the last 7 days</p>
+                            <h2 className="text-2xl font-black text-identity-navy uppercase tracking-tight">Class Analytics</h2>
+                            <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest">Attendance overview for the last 7 days</p>
                         </div>
                     </div>
                 </div>
 
                 <div className="h-[400px] w-full">
                     {loading ? (
-                        <div className="flex items-center justify-center h-full text-secondary/20 font-black uppercase tracking-widest">Loading charts...</div>
+                        <div className="flex items-center justify-center h-full text-slate-300 font-black uppercase tracking-widest">Loading charts...</div>
                     ) : (
                         <AttendanceChart data={trends} />
                     )}
@@ -82,44 +82,44 @@ export default function AnalyticsTab({ user, classes }: AnalyticsTabProps) {
 
             {/* Quick Stats Preview */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="bg-maroon-950/40 rounded-2xl border border-white/10 p-6 shadow-3xl backdrop-blur-sm">
+                <div className="identity-glass rounded-2xl border border-identity-sky/10 p-6 shadow-3xl backdrop-blur-sm">
                     <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 bg-brand-gold/10 rounded-xl flex items-center justify-center border border-brand-gold/20">
-                            <Users className="text-brand-gold" size={24} />
+                        <div className="w-12 h-12 bg-identity-sky/10 rounded-xl flex items-center justify-center border border-identity-sky/20">
+                            <Users className="text-identity-sky" size={24} />
                         </div>
                         <div>
-                            <div className="text-2xl font-black text-white tracking-tighter">{stats.totalStudents}</div>
-                            <div className="text-[10px] font-black text-secondary/40 uppercase tracking-widest">Total Students</div>
+                            <div className="text-2xl font-black text-identity-navy tracking-tighter">{stats.totalStudents}</div>
+                            <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total Students</div>
                         </div>
                     </div>
                 </div>
 
-                <div className="bg-maroon-950/40 rounded-2xl border border-white/10 p-6 shadow-3xl backdrop-blur-sm">
+                <div className="identity-glass rounded-2xl border border-identity-sky/10 p-6 shadow-3xl backdrop-blur-sm">
                     <div className="flex items-center gap-3">
                         <div className="w-12 h-12 bg-emerald-500/10 rounded-xl flex items-center justify-center border border-emerald-500/20">
-                            <Calendar className="text-emerald-400" size={24} />
+                            <Calendar className="text-emerald-500" size={24} />
                         </div>
                         <div>
-                            <div className="text-2xl font-black text-white tracking-tighter">{stats.activeClasses}</div>
-                            <div className="text-[10px] font-black text-secondary/40 uppercase tracking-widest">Active Classes</div>
+                            <div className="text-2xl font-black text-identity-navy tracking-tighter">{stats.activeClasses}</div>
+                            <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Active Classes</div>
                         </div>
                     </div>
                 </div>
 
-                <div className="bg-maroon-950/40 rounded-2xl border border-white/10 p-6 shadow-3xl backdrop-blur-sm">
+                <div className="identity-glass rounded-2xl border border-identity-sky/10 p-6 shadow-3xl backdrop-blur-sm">
                     <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 bg-brand-gold/10 rounded-xl flex items-center justify-center border border-brand-gold/20">
-                            <TrendingUp className="text-brand-gold" size={24} />
+                        <div className="w-12 h-12 bg-identity-sky/10 rounded-xl flex items-center justify-center border border-identity-sky/20">
+                            <TrendingUp className="text-identity-sky" size={24} />
                         </div>
                         <div>
                             <div className="flex items-center gap-2">
-                                <span className="text-2xl font-black text-white tracking-tighter">{stats.avgAttendance}%</span>
-                                <span className="text-[10px] font-black text-emerald-400 flex items-center bg-emerald-400/10 px-1.5 py-0.5 rounded border border-emerald-500/20">
+                                <span className="text-2xl font-black text-identity-navy tracking-tighter">{stats.avgAttendance}%</span>
+                                <span className="text-[10px] font-black text-emerald-600 flex items-center bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-100">
                                     <ArrowUpRight size={12} className="mr-0.5" />
                                     {stats.attendanceGrowth}%
                                 </span>
                             </div>
-                            <div className="text-[10px] font-black text-secondary/40 uppercase tracking-widest">Avg. Attendance</div>
+                            <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Avg. Attendance</div>
                         </div>
                     </div>
                 </div>

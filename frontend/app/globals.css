@@ -6,54 +6,26 @@
 
 @layer base {
   :root {
-    /* Heritage Cream & Coffee Palette */
-    --background: #ddc57e;
-    /* Warm Cream background */
-    --foreground: #1A120B;
-    /* Deep brown text */
-
-    /* Branding Core */
-    --primary: #3C2A21;
-    /* Rich Roasted Coffee */
-    --primary-foreground: #FAF9F6;
-
-    --secondary: #A67B5B;
-    /* Latte accent */
-    --secondary-foreground: #FAF9F6;
-
-    --brand-coffee: #3C2A21;
-    --brand-cream: #FAF9F6;
-    --brand-gold: #EAB308;
-    --brand-gold-glow: rgba(234, 179, 8, 0.4);
-
-    --surface: #FFFFFF;
-    /* White/Cream for cards */
-    --border: #D7CCC8;
-    /* Soft mocha border */
-
-    /* Semantic Colors */
-    --success: #22c55e;
-    --error: #ef4444;
-    --warning: #f59e0b;
-    --info: #3b82f6;
-
-    /* Legacy compatibility for components using these variables */
-    --brand-maroon: #3C2A21;
-    /* Mapping Maroon to Coffee */
-
-    /* Identity Blue Palette (Logo Based) */
+    /* Identity Blue Palette - Clean Foundation */
+    --background: #F8FAFC;
+    --foreground: #041C3C;
+    --primary: #041C3C;
+    --secondary: #5CB4E4;
     --identity-navy: #041C3C;
     --identity-sky: #5CB4E4;
     --identity-sky-glow: rgba(92, 180, 228, 0.4);
-    --identity-bg: #F8FAFC; /* Clean Light Theme Background */
-  }
-
-  /* Dark mode override (Keeping it Coffee themed) */
-  .dark {
-    --background: #23170c;
-    --foreground: #FAF9F6;
-    --surface: #2D2424;
-    --border: #3C2A21;
+    --identity-bg: #F8FAFC;
+    --surface: #FFFFFF;
+    --border: #E2E8F0;
+    --success: #10B981;
+    --error: #EF4444;
+    --warning: #F59E0B;
+    --info: #3B82F6;
+    --slate-50: #F8FAFC;
+    --slate-100: #F1F5F9;
+    --slate-200: #E2E8F0;
+    --slate-300: #CBD5E1;
+    --slate-400: #94A3B8;
   }
 }
 
@@ -70,10 +42,10 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Custom Scrollbar - Heritage Style */
+/* Custom Scrollbar - Identity Style */
 * {
   scrollbar-width: thin;
-  scrollbar-color: var(--primary) var(--background);
+  scrollbar-color: var(--identity-navy) var(--background);
 }
 
 *::-webkit-scrollbar {
@@ -85,13 +57,13 @@ body {
 }
 
 *::-webkit-scrollbar-thumb {
-  background: var(--primary);
+  background: var(--identity-navy);
   border-radius: 20px;
   border: 2px solid var(--background);
 }
 
 *::-webkit-scrollbar-thumb:hover {
-  background: #5D4037;
+  background: var(--identity-sky);
 }
 
 /* Typography & Readability */
@@ -106,48 +78,25 @@ h4,
 }
 
 .text-gradient {
-  background: linear-gradient(135deg, var(--brand-coffee) 0%, var(--secondary) 100%);
+  background: linear-gradient(135deg, var(--identity-navy) 0%, var(--identity-sky) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
-.text-gold-gradient {
-  background: linear-gradient(135deg, #EAB308 0%, #B45309 100%);
+.text-sky-gradient {
+  background: linear-gradient(135deg, var(--identity-sky) 0%, var(--identity-navy) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-}
-
-.text-gold {
-  color: var(--brand-gold);
-}
-
-.text-coffee {
-  color: var(--brand-coffee);
-}
-
-.bg-coffee {
-  background-color: var(--brand-coffee);
-}
-
-.bg-cream {
-  background-color: var(--brand-cream);
-}
-
-.bg-gold {
-  background-color: var(--brand-gold);
 }
 
 /* Premium Animations */
 @keyframes bloom {
-
-  0%,
-  100% {
+  0%, 100% {
     opacity: 0.4;
     filter: blur(80px) scale(1);
   }
-
   50% {
     opacity: 0.6;
     filter: blur(100px) scale(1.1);
@@ -159,23 +108,10 @@ h4,
 }
 
 @keyframes scan-y {
-  0% {
-    transform: translateY(0);
-    opacity: 0;
-  }
-
-  10% {
-    opacity: 1;
-  }
-
-  90% {
-    opacity: 1;
-  }
-
-  100% {
-    transform: translateY(280px);
-    opacity: 0;
-  }
+  0% { transform: translateY(0); opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { transform: translateY(280px); opacity: 0; }
 }
 
 .animate-scan-y {
@@ -183,20 +119,9 @@ h4,
 }
 
 @keyframes bounce-in {
-  0% {
-    transform: scale(0.95);
-    opacity: 0;
-  }
-
-  70% {
-    transform: scale(1.02);
-    opacity: 1;
-  }
-
-  100% {
-    transform: scale(1);
-    opacity: 1;
-  }
+  0% { transform: scale(0.95); opacity: 0; }
+  70% { transform: scale(1.02); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
 }
 
 .animate-bounce-in {
@@ -204,13 +129,8 @@ h4,
 }
 
 @keyframes spin-slow {
-  from {
-    transform: rotate(0deg);
-  }
-
-  to {
-    transform: rotate(360deg);
-  }
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 .animate-spin-slow {
@@ -287,36 +207,17 @@ button:active {
 input:focus,
 select:focus,
 textarea:focus {
-  border-color: var(--brand-coffee) !important;
-  box-shadow: 0 0 0 2px rgba(60, 42, 33, 0.1) !important;
+  border-color: var(--identity-sky) !important;
+  box-shadow: 0 0 0 4px rgba(92, 180, 228, 0.15) !important;
   outline: none !important;
 }
 
 /* Glassmorphism Classes */
-.glass-panel {
-  background: rgba(250, 249, 246, 0.6);
-  backdrop-filter: blur(16px);
-  border: 1px solid rgba(166, 123, 91, 0.2);
-}
-
-.glass-card {
-  background: rgba(255, 255, 255, 0.4);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(60, 42, 33, 0.1);
-}
-
-.coffee-glass {
-  background: rgba(60, 42, 33, 0.85);
-  backdrop-filter: blur(20px);
-  border: 1px solid rgba(234, 179, 8, 0.2);
-}
-
-/* Identity Blue Glassmorphism */
 .identity-glass {
   background: rgba(255, 255, 255, 0.7);
   backdrop-filter: blur(12px);
   border: 1px solid rgba(92, 180, 228, 0.2);
-  box-shadow: 0 8px 32px 0 rgba(4, 28, 60, 0.1);
+  box-shadow: 0 8px 32px 0 rgba(4, 28, 60, 0.08);
 }
 
 .identity-glass-dark {
@@ -347,5 +248,13 @@ textarea:focus {
     -webkit-text-fill-color: transparent;
     background-clip: text;
 }
+
 .bg-mesh { background-image: radial-gradient(at 0% 0%, rgba(92, 180, 228, 0.05) 0px, transparent 50%), radial-gradient(at 100% 0%, rgba(4, 28, 60, 0.05) 0px, transparent 50%); }
-.bg-dots { background-image: radial-gradient(rgba(4, 28, 60, 0.1) 1px, transparent 1px); background-size: 30px 30px; }
+.bg-dots { background-image: radial-gradient(rgba(4, 28, 60, 0.05) 1px, transparent 1px); background-size: 30px 30px; }
+.bg-blueprint {
+  background-image: linear-gradient(var(--identity-sky) 1px, transparent 1px),
+    linear-gradient(90deg, var(--identity-sky) 1px, transparent 1px);
+  background-size: 20px 20px;
+  opacity: 0.05;
+}
+

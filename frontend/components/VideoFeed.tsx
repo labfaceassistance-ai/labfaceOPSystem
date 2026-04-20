@@ -112,7 +112,7 @@ const VideoFeed = ({ src, alt, className, onExpand, label }: VideoFeedProps) => 
     const currentSrc = `${src}${src.includes('?') ? '&' : '?'}t=${retryCount}`;
 
     return (
-        <div className={`relative bg-black group overflow-hidden rounded-2xl border ${cameraStatus.isOnline && !error ? 'border-brand-gold/20 shadow-[0_0_20px_rgba(234,179,8,0.05)]' : 'border-rose-500/30'} shadow-2xl transition-all duration-500 ${className}`}>
+        <div className={`relative bg-black group overflow-hidden rounded-2xl border ${cameraStatus.isOnline && !error ? 'border-identity-sky/20 shadow-[0_0_20px_rgba(92,180,228,0.05)]' : 'border-rose-500/30'} shadow-2xl transition-all duration-500 ${className}`}>
             {cameraStatus.isOnline && !error ? (
                 <img
                     src={currentSrc}
@@ -121,10 +121,10 @@ const VideoFeed = ({ src, alt, className, onExpand, label }: VideoFeedProps) => 
                     onError={() => setError(true)}
                 />
             ) : (
-                <div className="w-full h-full flex flex-col items-center justify-center text-secondary/40 bg-maroon-950/80 absolute inset-0 backdrop-blur-xl">
+                <div className="w-full h-full flex flex-col items-center justify-center text-slate-400 bg-identity-navy/80 absolute inset-0 backdrop-blur-xl">
                     {isChecking ? (
                         <>
-                            <div className="animate-spin mb-4 text-brand-gold/40">
+                            <div className="animate-spin mb-4 text-identity-sky/40">
                                 <RefreshCw size={40} />
                             </div>
                             <span className="text-[10px] font-black tracking-[0.3em] uppercase">Checking Neural Link...</span>
@@ -138,13 +138,13 @@ const VideoFeed = ({ src, alt, className, onExpand, label }: VideoFeedProps) => 
                             </div>
                             <span className="text-[10px] font-black tracking-[0.3em] uppercase text-rose-500/60">Feed Offline</span>
                             {autoRetryCount < maxAutoRetries ? (
-                                <span className="text-[8px] font-bold text-secondary/20 uppercase tracking-widest mt-4">Restoring in 5s... ({autoRetryCount}/{maxAutoRetries})</span>
+                                <span className="text-[8px] font-bold text-slate-500 uppercase tracking-widest mt-4">Restoring in 5s... ({autoRetryCount}/{maxAutoRetries})</span>
                             ) : (
                                 <button
                                     onClick={handleManualRefresh}
                                     className="mt-6 px-10 py-3 bg-black/40 hover:bg-white/5 text-white rounded-xl flex items-center gap-3 transition-all border border-white/10 text-[10px] font-black uppercase tracking-widest shadow-inner group/btn"
                                 >
-                                    <RefreshCw size={14} className="group-hover/btn:rotate-180 transition-transform duration-500 text-brand-gold" />
+                                    <RefreshCw size={14} className="group-hover/btn:rotate-180 transition-transform duration-500 text-identity-sky" />
                                     <span>Force Sync</span>
                                 </button>
                             )}
@@ -157,8 +157,8 @@ const VideoFeed = ({ src, alt, className, onExpand, label }: VideoFeedProps) => 
             <div className="absolute inset-0 pointer-events-none p-4 flex flex-col justify-between">
                 <div className="flex justify-between items-start">
                     <div className="flex items-center gap-2">
-                        <div className={`h-2 w-2 rounded-full shadow-[0_0_8px_currentColor] ${cameraStatus.isOnline && !error ? 'text-brand-gold bg-brand-gold animate-pulse' : 'text-rose-500 bg-rose-500'}`}></div>
-                        <span className={`bg-black/60 text-[9px] font-black uppercase tracking-[0.2em] px-3 py-1.5 rounded-lg backdrop-blur-md border ${cameraStatus.isOnline && !error ? 'text-brand-gold border-brand-gold/20' : 'text-rose-200 border-rose-500/30'
+                        <div className={`h-2 w-2 rounded-full shadow-[0_0_8px_currentColor] ${cameraStatus.isOnline && !error ? 'text-identity-sky bg-identity-sky animate-pulse' : 'text-rose-500 bg-rose-500'}`}></div>
+                        <span className={`bg-black/60 text-[9px] font-black uppercase tracking-[0.2em] px-3 py-1.5 rounded-lg backdrop-blur-md border ${cameraStatus.isOnline && !error ? 'text-identity-sky border-identity-sky/20' : 'text-rose-200 border-rose-500/30'
                             }`}>
                             {cameraStatus.isOnline && !error ? (label || 'SECURE FEED') : 'OFFLINE'}
                         </span>
@@ -167,7 +167,7 @@ const VideoFeed = ({ src, alt, className, onExpand, label }: VideoFeedProps) => 
                     {cameraStatus.isOnline && onExpand && (
                         <button
                             onClick={onExpand}
-                            className="pointer-events-auto bg-black/60 hover:bg-brand-gold text-black p-3 rounded-xl backdrop-blur-md border border-white/10 opacity-0 group-hover:opacity-100 transition-all duration-500 transform translate-y-2 group-hover:translate-y-0 shadow-2xl active:scale-95"
+                            className="pointer-events-auto bg-black/60 hover:bg-identity-sky text-black p-3 rounded-xl backdrop-blur-md border border-white/10 opacity-0 group-hover:opacity-100 transition-all duration-500 transform translate-y-2 group-hover:translate-y-0 shadow-2xl active:scale-95"
                         >
                             <Maximize2 size={18} />
                         </button>
@@ -176,7 +176,7 @@ const VideoFeed = ({ src, alt, className, onExpand, label }: VideoFeedProps) => 
 
                 {cameraStatus.isOnline && (
                     <div className="flex justify-between items-end opacity-0 group-hover:opacity-100 transition-opacity duration-500">
-                        <div className="text-[9px] font-black uppercase tracking-widest text-secondary/40 bg-black/60 px-3 py-1.5 rounded-lg backdrop-blur-md border border-white/5">
+                        <div className="text-[9px] font-black uppercase tracking-widest text-slate-400 bg-black/60 px-3 py-1.5 rounded-lg backdrop-blur-md border border-white/5">
                             {cameraStatus.resolution} · {cameraStatus.fps} FPS · {cameraStatus.bitrate}
                         </div>
                     </div>
@@ -185,7 +185,7 @@ const VideoFeed = ({ src, alt, className, onExpand, label }: VideoFeedProps) => 
 
             {/* Scanlines Effect - only when online */}
             {cameraStatus.isOnline && (
-                <div className="absolute inset-0 pointer-events-none bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.1)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] z-10 bg-[length:100%_2px,3px_100%] pointer-events-none opacity-20"></div>
+                <div className="absolute inset-0 pointer-events-none bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.1)_50%),linear-gradient(90deg,rgba(92,180,228,0.06),rgba(0,255,0,0.02),rgba(92,180,228,0.06))] z-10 bg-[length:100%_2px,3px_100%] pointer-events-none opacity-20"></div>
             )}
         </div>
     );

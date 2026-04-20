@@ -11,32 +11,32 @@ export default function TermsAndConditions({ isOpen, onClose, onAccept }: TermsA
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-in fade-in duration-300">
-            <div className="bg-maroon-950 rounded-2xl shadow-3xl border border-white/10 max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col animate-scale-up">
+        <div className="fixed inset-0 bg-identity-navy/40 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-in fade-in duration-300">
+            <div className="bg-white rounded-[2.5rem] shadow-3xl border border-identity-sky/10 max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col animate-scale-up">
                 {/* Header */}
-                <div className="p-8 bg-black/40 border-b border-white/10 flex items-center justify-between">
+                <div className="p-8 bg-slate-50/50 border-b border-slate-100 flex items-center justify-between">
                     <div>
-                        <h2 className="text-2xl font-black text-white uppercase tracking-tight">Terms and Conditions</h2>
-                        <p className="text-[10px] font-bold text-secondary/40 uppercase tracking-widest mt-1">LabFace System - PUP Lopez Campus</p>
+                        <h2 className="text-2xl font-black text-identity-navy uppercase tracking-tight italic">Terms and Conditions</h2>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">LabFace System - Operational Guidelines</p>
                     </div>
                     <button
                         onClick={onClose}
-                        className="text-secondary/40 hover:text-white transition-colors p-3 hover:bg-white/5 rounded-xl border border-white/5 shadow-inner"
+                        className="text-slate-400 hover:text-identity-navy transition-all p-3 hover:bg-slate-100 rounded-2xl border border-slate-100 shadow-sm"
                     >
                         <X size={24} />
                     </button>
                 </div>
 
                 {/* Scrollable Content */}
-                <div className="flex-1 overflow-y-auto p-8 space-y-10 text-secondary/60">
-                    <div className="bg-brand-gold/5 border border-brand-gold/10 rounded-2xl p-6 shadow-inner">
-                        <p className="text-[10px] font-black text-brand-gold uppercase tracking-widest leading-relaxed">
+                <div className="flex-1 overflow-y-auto p-8 space-y-10 text-slate-500">
+                    <div className="bg-identity-sky/5 border border-identity-sky/10 rounded-2xl p-6 shadow-inner">
+                        <p className="text-[10px] font-black text-identity-navy uppercase tracking-widest leading-relaxed italic">
                             Please read these Terms and Conditions carefully before using the LabFace System.
                         </p>
                     </div>
 
                     <section>
-                        <h3 className="text-lg font-bold text-white mb-3">1. Acceptance of Terms</h3>
+                        <h3 className="text-lg font-black text-identity-navy mb-3 uppercase tracking-tight">1. Acceptance of Terms</h3>
                         <p className="text-sm leading-relaxed">
                             By registering for and using the LabFace Web-Based CCTV Face Recognition System for Attendance
                             ("the System"), you agree to be bound by these Terms and Conditions. If you do not agree to
@@ -45,7 +45,7 @@ export default function TermsAndConditions({ isOpen, onClose, onAccept }: TermsA
                     </section>
 
                     <section>
-                        <h3 className="text-lg font-bold text-white mb-3">2. System Purpose and Scope</h3>
+                        <h3 className="text-lg font-black text-identity-navy mb-3 uppercase tracking-tight">2. System Purpose and Scope</h3>
                         <p className="text-sm leading-relaxed mb-2">
                             The LabFace System is designed exclusively for:
                         </p>
@@ -58,7 +58,7 @@ export default function TermsAndConditions({ isOpen, onClose, onAccept }: TermsA
                     </section>
 
                     <section>
-                        <h3 className="text-lg font-bold text-white mb-3">3. User Responsibilities</h3>
+                        <h3 className="text-lg font-black text-identity-navy mb-3 uppercase tracking-tight">3. User Responsibilities</h3>
                         <p className="text-sm leading-relaxed mb-2">As a user of the System, you agree to:</p>
                         <ul className="list-disc list-inside space-y-1 text-sm ml-4">
                             <li>Provide accurate and truthful information during registration</li>
@@ -72,7 +72,7 @@ export default function TermsAndConditions({ isOpen, onClose, onAccept }: TermsA
                     </section>
 
                     <section>
-                        <h3 className="text-lg font-bold text-white mb-3">4. Biometric Data Usage</h3>
+                        <h3 className="text-lg font-black text-identity-navy mb-3 uppercase tracking-tight">4. Biometric Data Usage</h3>
                         <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-4">
                             <p className="text-sm leading-relaxed text-amber-200 mb-2">
                                 <strong>Important Notice:</strong> You acknowledge and agree that:
@@ -88,7 +88,7 @@ export default function TermsAndConditions({ isOpen, onClose, onAccept }: TermsA
                     </section>
 
                     <section>
-                        <h3 className="text-lg font-bold text-white mb-3">5. Attendance Policy</h3>
+                        <h3 className="text-lg font-black text-identity-navy mb-3 uppercase tracking-tight">5. Attendance Policy</h3>
                         <p className="text-sm leading-relaxed mb-2">
                             The System operates under the following attendance rules:
                         </p>
@@ -102,7 +102,7 @@ export default function TermsAndConditions({ isOpen, onClose, onAccept }: TermsA
                     </section>
 
                     <section>
-                        <h3 className="text-lg font-bold text-white mb-3">6. Account Security</h3>
+                        <h3 className="text-lg font-black text-identity-navy mb-3 uppercase tracking-tight">6. Account Security</h3>
                         <p className="text-sm leading-relaxed">
                             You are responsible for maintaining the security of your account. This includes:
                         </p>
@@ -115,7 +115,7 @@ export default function TermsAndConditions({ isOpen, onClose, onAccept }: TermsA
                     </section>
 
                     <section>
-                        <h3 className="text-lg font-bold text-white mb-3">7. System Availability</h3>
+                        <h3 className="text-lg font-black text-identity-navy mb-3 uppercase tracking-tight">7. System Availability</h3>
                         <p className="text-sm leading-relaxed">
                             While we strive to maintain 24/7 availability, the System may be temporarily unavailable due to:
                         </p>
@@ -131,7 +131,7 @@ export default function TermsAndConditions({ isOpen, onClose, onAccept }: TermsA
                     </section>
 
                     <section>
-                        <h3 className="text-lg font-bold text-white mb-3">8. Prohibited Activities</h3>
+                        <h3 className="text-lg font-black text-identity-navy mb-3 uppercase tracking-tight">8. Prohibited Activities</h3>
                         <p className="text-sm leading-relaxed mb-2">
                             The following activities are strictly prohibited:
                         </p>
@@ -150,7 +150,7 @@ export default function TermsAndConditions({ isOpen, onClose, onAccept }: TermsA
                     </section>
 
                     <section>
-                        <h3 className="text-lg font-bold text-white mb-3">9. Intellectual Property</h3>
+                        <h3 className="text-lg font-black text-identity-navy mb-3 uppercase tracking-tight">9. Intellectual Property</h3>
                         <p className="text-sm leading-relaxed">
                             The LabFace System, including its source code, design, and documentation, is the intellectual
                             property of the development team and PUP Lopez Campus. Unauthorized reproduction, distribution,
@@ -159,7 +159,7 @@ export default function TermsAndConditions({ isOpen, onClose, onAccept }: TermsA
                     </section>
 
                     <section>
-                        <h3 className="text-lg font-bold text-white mb-3">10. Limitation of Liability</h3>
+                        <h3 className="text-lg font-black text-identity-navy mb-3 uppercase tracking-tight">10. Limitation of Liability</h3>
                         <p className="text-sm leading-relaxed">
                             To the fullest extent permitted by law, PUP Lopez Campus and the LabFace development team
                             shall not be liable for:
@@ -173,7 +173,7 @@ export default function TermsAndConditions({ isOpen, onClose, onAccept }: TermsA
                     </section>
 
                     <section>
-                        <h3 className="text-lg font-bold text-white mb-3">11. Modifications to Terms</h3>
+                        <h3 className="text-lg font-black text-identity-navy mb-3 uppercase tracking-tight">11. Modifications to Terms</h3>
                         <p className="text-sm leading-relaxed">
                             PUP Lopez Campus reserves the right to modify these Terms and Conditions at any time.
                             Users will be notified of significant changes via email or system notifications.
@@ -182,7 +182,7 @@ export default function TermsAndConditions({ isOpen, onClose, onAccept }: TermsA
                     </section>
 
                     <section>
-                        <h3 className="text-lg font-bold text-white mb-3">12. Termination</h3>
+                        <h3 className="text-lg font-black text-identity-navy mb-3 uppercase tracking-tight">12. Termination</h3>
                         <p className="text-sm leading-relaxed">
                             Your access to the System may be terminated:
                         </p>
@@ -195,7 +195,7 @@ export default function TermsAndConditions({ isOpen, onClose, onAccept }: TermsA
                     </section>
 
                     <section>
-                        <h3 className="text-lg font-bold text-white mb-3">13. Governing Law</h3>
+                        <h3 className="text-lg font-black text-identity-navy mb-3 uppercase tracking-tight">13. Governing Law</h3>
                         <p className="text-sm leading-relaxed">
                             These Terms and Conditions are governed by the laws of the Republic of the Philippines.
                             Any disputes shall be resolved in accordance with university policies and Philippine law.
@@ -203,22 +203,22 @@ export default function TermsAndConditions({ isOpen, onClose, onAccept }: TermsA
                     </section>
 
                     <section>
-                        <h3 className="text-lg font-black text-brand-gold mb-4 uppercase tracking-widest">14. Contact Information</h3>
+                        <h3 className="text-lg font-black text-identity-navy mb-4 uppercase tracking-widest italic">14. Contact Information</h3>
                         <p className="text-[10px] font-bold uppercase tracking-widest leading-relaxed mb-4">
                             For questions or concerns regarding these Terms and Conditions:
                         </p>
-                        <div className="bg-black/40 border border-white/5 rounded-2xl p-6 shadow-inner">
-                            <p className="text-[10px] font-black text-white uppercase tracking-widest mb-2">LabFace System Support</p>
-                            <p className="text-[10px] font-bold text-secondary/40 uppercase tracking-widest">Email: support@labface.site</p>
-                            <p className="text-[10px] font-bold text-secondary/40 uppercase tracking-widest">Polytechnic University of the Philippines - Lopez Campus</p>
-                            <p className="text-[10px] font-bold text-secondary/40 uppercase tracking-widest">Computer Laboratory</p>
+                        <div className="bg-slate-50 border border-slate-100 rounded-2xl p-6 shadow-inner">
+                            <p className="text-[10px] font-black text-identity-navy uppercase tracking-widest mb-2 italic">LabFace System Support</p>
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Email: support@labface.site</p>
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Polytechnic University of the Philippines - Lopez Campus</p>
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Computer Laboratory</p>
                         </div>
                     </section>
 
                     <section>
-                        <h3 className="text-lg font-bold text-white mb-3">15. Acknowledgment</h3>
-                        <div className="bg-slate-800 border-l-4 border-brand-500 rounded-lg p-4">
-                            <p className="text-sm leading-relaxed text-white">
+                        <h3 className="text-lg font-black text-identity-navy mb-3 uppercase tracking-tight">15. Acknowledgment</h3>
+                        <div className="bg-identity-sky/5 border-l-4 border-identity-sky rounded-lg p-6">
+                            <p className="text-sm leading-relaxed text-identity-navy font-bold italic">
                                 By clicking "I Accept" below, you acknowledge that you have read, understood, and agree
                                 to be bound by these Terms and Conditions. You also confirm that you are authorized to
                                 use the LabFace System as a registered student or professor of PUP Lopez Campus.
@@ -228,19 +228,19 @@ export default function TermsAndConditions({ isOpen, onClose, onAccept }: TermsA
                 </div>
 
                 {/* Footer Actions */}
-                <div className="p-8 bg-black/40 border-t border-white/10 flex gap-4 justify-end">
+                <div className="p-8 bg-slate-50/50 border-t border-slate-100 flex gap-4 justify-end">
                     <button
                         onClick={onClose}
-                        className="px-8 py-3 rounded-xl text-[10px] font-black text-secondary/40 uppercase tracking-widest hover:text-white hover:bg-white/5 transition-all border border-white/5 shadow-inner"
+                        className="px-10 py-4 rounded-2xl text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] hover:text-identity-navy hover:bg-slate-100 transition-all active:scale-95 border border-slate-100 shadow-sm"
                     >
-                        Cancel
+                        Decline
                     </button>
                     <button
                         onClick={() => {
                             onAccept();
                             onClose();
                         }}
-                        className="px-8 py-3 rounded-xl text-[10px] font-black bg-brand-gold hover:bg-brand-gold/90 text-black uppercase tracking-widest transition-all shadow-lg shadow-brand-gold/20 active:scale-95"
+                        className="px-12 py-4 rounded-2xl text-[10px] font-black bg-identity-navy hover:bg-identity-sky text-white uppercase tracking-[0.4em] transition-all shadow-xl shadow-identity-navy/10 active:scale-95"
                     >
                         I Accept
                     </button>

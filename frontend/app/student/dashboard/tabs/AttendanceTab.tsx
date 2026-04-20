@@ -97,14 +97,14 @@ export default function AttendanceTab({ user }: AttendanceTabProps) {
                     { label: 'Excused', val: attendanceData?.excusedCount || 0, icon: ShieldCheck, color: 'text-indigo-500', bg: 'bg-indigo-500/10' },
                     { label: 'Absent', val: attendanceData?.absentCount || 0, icon: XCircle, color: 'text-rose-500', bg: 'bg-rose-500/10' }
                 ].map((stat, i) => (
-                    <div key={i} className="bg-white rounded-[2rem] border border-slate-100 p-6 shadow-xl shadow-slate-200/50 group hover:scale-[1.02] transition-transform">
+                    <div key={i} className="identity-glass rounded-2xl border border-identity-sky/10 p-6 shadow-sm group hover:scale-[1.02] transition-transform">
                         <div className="flex items-center gap-4">
-                            <div className={`w-12 h-12 ${stat.bg} ${stat.color} rounded-2xl flex items-center justify-center shadow-inner`}>
+                            <div className={`w-12 h-12 ${stat.bg} ${stat.color} rounded-xl flex items-center justify-center shadow-inner border border-identity-sky/5`}>
                                 <stat.icon size={24} />
                             </div>
                             <div>
                                 <div className="text-2xl font-black text-identity-navy font-outfit leading-none mb-1">{stat.val}</div>
-                                <div className="text-[9px] text-slate-400 font-black uppercase tracking-widest">{stat.label}</div>
+                                <div className="text-[9px] text-slate-500 font-black uppercase tracking-widest">{stat.label}</div>
                             </div>
                         </div>
                     </div>
@@ -112,14 +112,14 @@ export default function AttendanceTab({ user }: AttendanceTabProps) {
             </div>
 
             {/* Recent Attendance History - Grouped by Class */}
-            <div className="bg-white rounded-[3rem] border border-slate-200 p-8 shadow-2xl relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-identity-sky/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
+            <div className="identity-glass rounded-[2rem] border border-identity-sky/10 p-8 shadow-sm relative overflow-hidden group">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-identity-sky/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 group-hover:bg-identity-sky/10 transition-colors"></div>
                 <div className="flex items-center gap-4 mb-8 relative z-10">
-                    <div className="p-3 bg-identity-navy text-white rounded-2xl">
+                    <div className="p-3 bg-identity-navy text-white rounded-xl shadow-lg shadow-identity-navy/10 transform group-hover:rotate-6 transition-transform">
                         <Activity size={24} />
                     </div>
                     <div>
-                        <h2 className="text-2xl font-black text-identity-navy uppercase tracking-tighter font-outfit">Historical Synchronization</h2>
+                        <h2 className="text-2xl font-black text-identity-navy uppercase tracking-tighter font-outfit italic">Historical Synchronization</h2>
                         <p className="text-[10px] font-black text-identity-sky uppercase tracking-[0.3em] mt-1">Operational Logs • Academic Matrix</p>
                     </div>
                 </div>
@@ -127,35 +127,35 @@ export default function AttendanceTab({ user }: AttendanceTabProps) {
                 <div className="space-y-6 relative z-10">
                     {Object.entries(groupedActivity).length > 0 ? (
                         Object.entries(groupedActivity).map(([className, activities]) => (
-                            <div key={className} className="border border-slate-100 rounded-[2.5rem] overflow-hidden shadow-sm hover:shadow-xl transition-all duration-500">
-                                <details className="group">
-                                    <summary className="flex items-center justify-between p-6 cursor-pointer bg-slate-50/50 hover:bg-slate-50 transition-all list-none select-none">
+                            <div key={className} className="border border-identity-sky/5 rounded-2xl overflow-hidden shadow-inner bg-white/30 hover:border-identity-sky/20 transition-all duration-500">
+                                <details className="group/details">
+                                    <summary className="flex items-center justify-between p-6 cursor-pointer bg-white/40 hover:bg-white transition-all list-none select-none">
                                         <div className="flex items-center gap-5">
-                                            <div className="w-14 h-14 rounded-2xl bg-white border border-slate-100 flex items-center justify-center text-identity-navy font-black shadow-inner uppercase text-xl">
+                                            <div className="w-14 h-14 rounded-xl bg-identity-sky/5 border border-identity-sky/10 flex items-center justify-center text-identity-navy font-black shadow-inner uppercase text-xl font-outfit group-hover/details:bg-identity-navy group-hover/details:text-white transition-colors duration-500">
                                                 {className.split(' - ')[0].replace(/[^A-Za-z]/g, '').substring(0, 2) || className[0]}
                                             </div>
                                             <div>
-                                                <div className="font-black text-identity-navy text-base uppercase tracking-tighter">{className}</div>
-                                                <div className="text-[10px] text-slate-400 font-black uppercase tracking-[0.2em] mt-1">
+                                                <div className="font-black text-identity-navy text-base uppercase tracking-tighter italic">{className}</div>
+                                                <div className="text-[10px] text-slate-500 font-black uppercase tracking-[0.2em] mt-1">
                                                     {activities.length} Entries Detected • Last: <span className="text-identity-sky">{activities[0].status}</span>
                                                 </div>
                                             </div>
                                         </div>
-                                        <div className="group-open:rotate-180 transition-transform duration-500 text-slate-300 p-2 bg-white rounded-full shadow-sm border border-slate-100">
+                                        <div className="group-open/details:rotate-180 transition-transform duration-500 text-identity-sky p-2 bg-white rounded-full shadow-sm border border-identity-sky/5">
                                             <ChevronDown size={20} />
                                         </div>
                                     </summary>
 
-                                    <div className="p-4 space-y-3 bg-white">
+                                    <div className="p-4 space-y-3 bg-transparent">
                                         {activities.map((activity, index) => (
                                             <div
                                                 key={index}
-                                                className="flex items-center justify-between p-5 bg-slate-50/30 hover:bg-slate-50 rounded-2xl transition-all border border-slate-50 hover:border-slate-100 group"
+                                                className="flex items-center justify-between p-5 bg-white/40 hover:bg-white rounded-xl transition-all border border-identity-sky/5 hover:border-identity-sky/30 group/item shadow-sm hover:shadow-xl"
                                             >
                                                 <div className="flex items-center gap-6">
                                                     {/* Date Block */}
-                                                    <div className="text-center min-w-[70px] px-3 py-2 bg-white rounded-2xl border border-slate-100 shadow-sm group-hover:bg-identity-navy group-hover:text-white transition-all duration-500">
-                                                        <div className="text-[9px] text-slate-400 group-hover:text-white/40 uppercase font-black tracking-widest mb-1">
+                                                    <div className="text-center min-w-[70px] px-3 py-2 bg-white rounded-xl border border-identity-sky/10 shadow-sm group-hover/item:bg-identity-navy group-hover/item:text-white transition-all duration-500">
+                                                        <div className="text-[9px] text-slate-400 group-hover/item:text-white/40 uppercase font-black tracking-widest mb-1">
                                                             {new Date(activity.timeIn).toLocaleDateString('en-US', { weekday: 'short' })}
                                                         </div>
                                                         <div className="text-lg font-black font-outfit">
@@ -163,10 +163,10 @@ export default function AttendanceTab({ user }: AttendanceTabProps) {
                                                         </div>
                                                     </div>
                                                     <div>
-                                                        <div className="text-[10px] font-black text-identity-navy uppercase tracking-widest mb-1 opacity-80">
+                                                        <div className="text-[10px] font-black text-identity-navy uppercase tracking-widest mb-1 opacity-80 italic">
                                                             {new Date(activity.timeIn).toLocaleString('en-US', { month: 'long', year: 'numeric' })}
                                                         </div>
-                                                        <div className="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
+                                                        <div className="flex items-center gap-2 text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">
                                                             <Clock size={12} className="text-identity-sky/50" />
                                                             {new Date(activity.timeIn).toLocaleString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}
                                                         </div>
@@ -175,7 +175,7 @@ export default function AttendanceTab({ user }: AttendanceTabProps) {
 
                                                 <div className="flex items-center gap-4">
                                                     {(activity as any).recognition_method && (
-                                                        <div className="hidden sm:flex items-center gap-2 text-[8px] text-slate-400 bg-white px-3 py-1.5 rounded-full border border-slate-100 font-black uppercase tracking-widest shadow-sm">
+                                                        <div className="hidden sm:flex items-center gap-2 text-[8px] text-slate-500 bg-white/60 px-3 py-1.5 rounded-full border border-identity-sky/10 font-black uppercase tracking-widest shadow-inner">
                                                             {(activity as any).recognition_method.toLowerCase() === 'manual' 
                                                                 ? <><div className="w-1.5 h-1.5 rounded-full bg-amber-400"></div> Manual Entry</> 
                                                                 : <><div className="w-1.5 h-1.5 rounded-full bg-identity-sky animate-pulse"></div> CCTV Sync</>}
@@ -183,10 +183,10 @@ export default function AttendanceTab({ user }: AttendanceTabProps) {
                                                     )}
                                                     <span
                                                         className={`px-5 py-2 rounded-full text-[9px] font-black uppercase tracking-widest border transition-all ${
-                                                            activity.status.toLowerCase() === 'present' ? 'text-emerald-600 bg-emerald-50 border-emerald-100' : 
-                                                            activity.status.toLowerCase() === 'late' ? 'text-amber-600 bg-amber-50 border-amber-100' : 
-                                                            activity.status.toLowerCase() === 'excused' ? 'text-indigo-600 bg-indigo-50 border-indigo-100' : 
-                                                            'text-rose-600 bg-rose-50 border-rose-100'
+                                                            activity.status.toLowerCase() === 'present' ? 'text-emerald-600 bg-emerald-50/50 border-emerald-100/50' : 
+                                                            activity.status.toLowerCase() === 'late' ? 'text-amber-600 bg-amber-50/50 border-amber-100/50' : 
+                                                            activity.status.toLowerCase() === 'excused' ? 'text-indigo-600 bg-indigo-50/50 border-indigo-100/50' : 
+                                                            'text-rose-600 bg-rose-50/50 border-rose-100/50'
                                                         }`}
                                                     >
                                                         {activity.status}
@@ -199,9 +199,9 @@ export default function AttendanceTab({ user }: AttendanceTabProps) {
                             </div>
                         ))
                     ) : (
-                        <div className="text-center py-20 bg-slate-50/50 rounded-[2.5rem] border-2 border-slate-100 border-dashed">
+                        <div className="text-center py-20 bg-white/30 rounded-2xl border-2 border-identity-sky/10 border-dashed">
                             <Calendar size={64} className="mx-auto mb-6 opacity-10 text-identity-navy" />
-                            <p className="text-xl font-black text-slate-300 uppercase tracking-tighter">History Empty</p>
+                            <p className="text-xl font-black text-slate-300 uppercase tracking-tighter italic">History Empty</p>
                             <p className="text-[10px] mt-2 font-black text-slate-200 uppercase tracking-[0.3em]">No node sync records detected in this academic period.</p>
                         </div>
                     )}

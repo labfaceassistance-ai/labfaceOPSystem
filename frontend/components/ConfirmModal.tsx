@@ -36,9 +36,9 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
                 };
             case 'warning':
                 return {
-                    icon: <AlertTriangle className="text-brand-gold" size={24} />,
-                    btn: 'bg-brand-gold hover:bg-black hover:text-brand-gold text-black shadow-brand-gold/20 border border-brand-gold',
-                    bg: 'bg-brand-gold/10 border-brand-gold/20'
+                    icon: <AlertTriangle className="text-identity-sky" size={24} />,
+                    btn: 'bg-identity-navy hover:bg-identity-sky text-white shadow-identity-navy/20 border border-identity-navy',
+                    bg: 'bg-identity-sky/10 border-identity-sky/20'
                 };
             case 'success':
                 return {
@@ -48,9 +48,9 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
                 };
             default:
                 return {
-                    icon: <AlertCircle className="text-brand-gold" size={24} />,
-                    btn: 'bg-brand-gold hover:bg-black hover:text-brand-gold text-black shadow-brand-gold/20 border border-brand-gold',
-                    bg: 'bg-brand-gold/10 border-brand-gold/20'
+                    icon: <AlertCircle className="text-identity-sky" size={24} />,
+                    btn: 'bg-identity-navy hover:bg-identity-sky text-white shadow-identity-navy/20 border border-identity-navy',
+                    bg: 'bg-identity-sky/10 border-identity-sky/20'
                 };
         }
     };
@@ -58,9 +58,9 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
     const colors = getColorClasses();
 
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/95 backdrop-blur-md animate-in fade-in duration-300">
-            <div className="bg-maroon-950 border border-white/10 w-full max-w-md rounded-[40px] shadow-3xl overflow-hidden animate-in zoom-in-95 duration-300 relative">
-                <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-white/5 to-transparent pointer-events-none opacity-20" />
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-identity-navy/20 backdrop-blur-md animate-in fade-in duration-300">
+            <div className="identity-glass border border-identity-sky/10 w-full max-w-md rounded-3xl shadow-3xl overflow-hidden animate-in zoom-in-95 duration-300 relative">
+                <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-white/10 to-transparent pointer-events-none opacity-20" />
                 
                 <div className="p-10 relative z-10">
                     <div className="flex items-start justify-between mb-8">
@@ -69,14 +69,14 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
                         </div>
                         <button
                             onClick={onClose}
-                            className="text-secondary/20 hover:text-white transition-all hover:rotate-90 p-2"
+                            className="text-slate-400 hover:text-identity-navy transition-all hover:rotate-90 p-2"
                         >
                             <X size={24} />
                         </button>
                     </div>
 
-                    <h3 className="text-2xl font-black text-white mb-4 uppercase tracking-tighter leading-tight">{title}</h3>
-                    <p className="text-[10px] font-black text-secondary/40 leading-relaxed uppercase tracking-[0.2em] italic">
+                    <h3 className="text-2xl font-black text-identity-navy mb-4 uppercase tracking-tighter leading-tight italic">{title}</h3>
+                    <p className="text-[10px] font-black text-slate-500 leading-relaxed uppercase tracking-[0.2em]">
                         {message}
                     </p>
                 </div>
@@ -85,7 +85,7 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
                     {!isAlert && (
                         <button
                             onClick={onClose}
-                            className="flex-1 px-8 py-4 rounded-2xl bg-black/40 text-[10px] font-black text-secondary/40 hover:text-white uppercase tracking-widest hover:bg-black transition-all border border-white/10 shadow-inner"
+                            className="flex-1 px-8 py-4 rounded-xl bg-white/40 text-[10px] font-black text-slate-400 hover:text-identity-navy uppercase tracking-widest hover:bg-white/60 transition-all border border-identity-sky/10 shadow-inner"
                         >
                             {cancelText}
                         </button>
@@ -95,13 +95,13 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
                             if (onConfirm) onConfirm();
                             else onClose();
                         }}
-                        className={`flex-1 px-8 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all shadow-2xl active:scale-95 ${colors.btn}`}
+                        className={`flex-1 px-8 py-4 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-2xl active:scale-95 ${colors.btn}`}
                     >
                         {confirmText}
                     </button>
                 </div>
                 
-                <div className="absolute bottom-0 inset-x-0 h-1 bg-gradient-to-r from-transparent via-brand-gold/20 to-transparent opacity-50" />
+                <div className="absolute bottom-0 inset-x-0 h-1 bg-gradient-to-r from-transparent via-identity-sky/20 to-transparent opacity-50" />
             </div>
         </div>
     );

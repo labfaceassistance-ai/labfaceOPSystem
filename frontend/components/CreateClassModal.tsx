@@ -250,57 +250,57 @@ export default function CreateClassModal({ isOpen, onClose, onSuccess, professor
     const maxYearLevel = formData.course === 'DIT' ? 3 : 4;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in">
-            <div className="bg-maroon-950 border border-white/10 rounded-2xl shadow-3xl max-w-lg w-full p-6 relative animate-scale-up max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-identity-navy/20 backdrop-blur-md animate-fade-in">
+            <div className="identity-glass border border-identity-sky/10 rounded-2xl shadow-3xl max-w-lg w-full p-8 relative animate-scale-up max-h-[90vh] overflow-y-auto">
                 <button
                     onClick={onClose}
-                    className="absolute top-4 right-4 text-secondary/40 hover:text-white transition-colors"
+                    className="absolute top-6 right-6 text-slate-400 hover:text-identity-navy transition-all p-2 hover:bg-white/60 rounded-xl"
                 >
                     <X size={24} />
                 </button>
 
-                <h3 className="text-2xl font-black text-white mb-6 uppercase tracking-tight">Create New Class</h3>
+                <h3 className="text-3xl font-black text-identity-navy mb-8 uppercase tracking-tight italic">Create New Class</h3>
 
                 {error && (
-                    <div className="bg-red-500/10 border border-red-500/20 text-red-400 p-3 rounded-lg mb-6 text-[10px] font-black uppercase tracking-widest backdrop-blur-sm">
+                    <div className="bg-rose-50 border border-rose-100 text-rose-500 p-4 rounded-xl mb-8 text-[10px] font-black uppercase tracking-[0.2em] animate-pulse">
                         {error}
                     </div>
                 )}
 
-                <form onSubmit={handleSubmit} className="space-y-4">
+                <form onSubmit={handleSubmit} className="space-y-6">
                     <div>
-                        <label className="block text-[10px] font-black uppercase tracking-widest text-secondary/40 mb-1 ml-1">Subject Code</label>
+                        <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 ml-1 italic">Subject Code</label>
                         <input
                             name="subjectCode"
                             value={formData.subjectCode}
                             onChange={handleInputChange}
                             placeholder="COMP 20133"
                             required
-                            className="w-full px-4 py-2.5 bg-black/40 border border-white/5 rounded-xl text-xs font-bold text-white uppercase tracking-widest focus:outline-none focus:border-brand-gold/50 focus:ring-1 focus:ring-brand-gold/20 placeholder-secondary/20 transition-all shadow-inner"
+                            className="w-full px-5 py-3.5 bg-white/60 border border-identity-sky/10 rounded-2xl text-xs font-bold text-identity-navy uppercase tracking-widest focus:outline-none focus:border-identity-sky/50 focus:ring-4 focus:ring-identity-sky/10 placeholder-slate-300 transition-all shadow-inner"
                         />
                     </div>
 
                     <div>
-                        <label className="block text-[10px] font-black uppercase tracking-widest text-secondary/40 mb-1 ml-1">Subject Name</label>
+                        <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 ml-1 italic">Subject Name</label>
                         <input
                             name="subjectName"
                             value={formData.subjectName}
                             onChange={handleInputChange}
                             placeholder="Data Structures and Algorithms"
                             required
-                            className="w-full px-4 py-2.5 bg-black/40 border border-white/5 rounded-xl text-xs font-bold text-white uppercase tracking-widest focus:outline-none focus:border-brand-gold/50 focus:ring-1 focus:ring-brand-gold/20 placeholder-secondary/20 transition-all shadow-inner"
+                            className="w-full px-5 py-3.5 bg-white/60 border border-identity-sky/10 rounded-2xl text-xs font-bold text-identity-navy uppercase tracking-widest focus:outline-none focus:border-identity-sky/50 focus:ring-4 focus:ring-identity-sky/10 placeholder-slate-300 transition-all shadow-inner"
                         />
                     </div>
 
                     {/* NEW: Course and Year Level */}
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-2 gap-6">
                         <div>
-                            <label className="block text-[10px] font-black uppercase tracking-widest text-secondary/40 mb-1 ml-1">Course</label>
+                            <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 ml-1 italic">Course</label>
                             <select
                                 name="course"
                                 value={formData.course}
                                 onChange={handleInputChange}
-                                className="w-full px-4 py-2.5 bg-black/40 border border-white/5 rounded-xl text-xs font-bold text-white uppercase tracking-widest focus:outline-none focus:border-brand-gold/50 focus:ring-1 focus:ring-brand-gold/20 transition-all shadow-inner"
+                                className="w-full px-5 py-4 bg-white/60 border border-identity-sky/10 rounded-2xl text-xs font-bold text-identity-navy uppercase tracking-widest focus:outline-none focus:border-identity-sky/50 focus:ring-4 focus:ring-identity-sky/10 transition-all shadow-inner appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%230F172A%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22m6%209%206%206%206-6%22%2F%3E%3C%2Fsvg%3E')] bg-[length:1em_1em] bg-[right_1rem_center] bg-no-repeat"
                             >
                                 <option value="BSIT">BSIT</option>
                                 <option value="DIT">DIT</option>
@@ -308,14 +308,14 @@ export default function CreateClassModal({ isOpen, onClose, onSuccess, professor
                             </select>
                         </div>
                         <div>
-                            <label className="block text-[10px] font-black uppercase tracking-widest text-secondary/40 mb-1 ml-1">
-                                Year Level {formData.course === 'DIT' && <span className="text-[10px] text-brand-gold">(MAX: 3RD)</span>}
+                            <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 ml-1 italic">
+                                Year Level {formData.course === 'DIT' && <span className="text-[10px] text-identity-sky">(MAX: 3RD)</span>}
                             </label>
                             <select
                                 name="yearLevel"
                                 value={formData.yearLevel}
                                 onChange={handleInputChange}
-                                className="w-full px-4 py-2.5 bg-black/40 border border-white/5 rounded-xl text-xs font-bold text-white uppercase tracking-widest focus:outline-none focus:border-brand-gold/50 focus:ring-1 focus:ring-brand-gold/20 transition-all shadow-inner"
+                                className="w-full px-5 py-4 bg-white/60 border border-identity-sky/10 rounded-2xl text-xs font-bold text-identity-navy uppercase tracking-widest focus:outline-none focus:border-identity-sky/50 focus:ring-4 focus:ring-identity-sky/10 transition-all shadow-inner appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%230F172A%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22m6%209%206%206%206-6%22%2F%3E%3C%2Fsvg%3E')] bg-[length:1em_1em] bg-[right_1rem_center] bg-no-repeat"
                             >
                                 <option value="1">1st Year</option>
                                 <option value="2">2nd Year</option>
@@ -326,124 +326,131 @@ export default function CreateClassModal({ isOpen, onClose, onSuccess, professor
                     </div>
 
                     <div>
-                        <label className="block text-[10px] font-black uppercase tracking-widest text-secondary/40 mb-1 ml-1">Section</label>
+                        <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 ml-1 italic">Section</label>
                         <input
                             name="section"
                             value={formData.section}
                             readOnly
                             placeholder="Auto-generated"
-                            className="w-full px-4 py-2.5 bg-black/20 border border-white/5 rounded-xl text-xs font-bold text-secondary/40 uppercase tracking-widest cursor-not-allowed shadow-inner"
+                            className="w-full px-5 py-4 bg-white/30 border border-identity-sky/5 rounded-2xl text-xs font-black text-slate-300 uppercase tracking-widest cursor-not-allowed shadow-inner italic"
                         />
-                        <p className="text-[10px] text-secondary/20 mt-1 italic font-bold uppercase tracking-widest">Automatically derived from Course and Year Level.</p>
+                        <p className="text-[9px] text-slate-300 mt-2 italic font-bold uppercase tracking-[0.2em] ml-1">Metadata automatically derived from operational parameters.</p>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-2 gap-6">
                         <div>
-                            <label className="block text-[10px] font-black uppercase tracking-widest text-secondary/40 mb-1 ml-1">School Year</label>
-                            <div className="w-full px-4 py-2 bg-black/20 border border-white/5 rounded-xl text-xs font-black text-brand-gold uppercase tracking-widest shadow-inner flex items-center">
+                            <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 ml-1 italic">School Year</label>
+                            <div className="w-full px-5 py-4 bg-white/40 border border-identity-sky/10 rounded-2xl text-xs font-black text-identity-sky uppercase tracking-widest shadow-inner flex items-center">
                                 <span>{formData.schoolYear}</span>
                             </div>
-                            <p className="text-[10px] text-secondary/20 mt-1 font-bold uppercase tracking-widest">Set by admin</p>
                         </div>
                         <div>
-                            <label className="block text-[10px] font-black uppercase tracking-widest text-secondary/40 mb-1 ml-1">Semester</label>
-                            <div className="w-full px-4 py-2 bg-black/20 border border-white/5 rounded-xl text-xs font-black text-brand-gold uppercase tracking-widest shadow-inner flex items-center">
+                            <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 ml-1 italic">Semester</label>
+                            <div className="w-full px-5 py-4 bg-white/40 border border-identity-sky/10 rounded-2xl text-xs font-black text-identity-sky uppercase tracking-widest shadow-inner flex items-center">
                                 <span>{formData.semester}</span>
                             </div>
-                            <p className="text-[10px] text-secondary/20 mt-1 font-bold uppercase tracking-widest">Set by admin</p>
                         </div>
                     </div>
 
                     {/* ENHANCED: Required Roster Upload with File Preview */}
-                    <div className="p-4 bg-brand-gold/10 border border-brand-gold/20 rounded-xl shadow-inner">
-                        <label className="block text-[10px] font-black text-brand-gold mb-2 flex items-center justify-between uppercase tracking-widest">
-                            <span>Upload Class Roster <span className="text-red-400">*</span></span>
+                    <div className="p-8 bg-identity-sky/5 border border-identity-sky/10 rounded-[2rem] shadow-inner">
+                        <label className="block text-[10px] font-black text-identity-navy mb-4 flex items-center justify-between uppercase tracking-widest">
+                            <span>Upload Class Roster <span className="text-rose-500">*</span></span>
                             <button
                                 type="button"
                                 onClick={downloadTemplate}
-                                className="text-[10px] text-brand-gold hover:text-white flex items-center gap-1 underline transition-colors"
+                                className="text-[10px] text-identity-sky hover:text-identity-navy flex items-center gap-2 underline transition-all font-black"
                             >
                                 <Download size={14} /> Download Template
                             </button>
                         </label>
 
                         {rosterFile ? (
-                            <div className="flex items-center justify-between p-3 bg-black/40 rounded-xl border border-white/5 shadow-inner transition-all">
-                                <div className="flex items-center gap-2 flex-1 min-w-0">
-                                    <Upload size={16} className="text-brand-gold flex-shrink-0" />
-                                    <span className="text-[10px] font-black text-white uppercase tracking-widest truncate">{rosterFile.name}</span>
+                            <div className="flex items-center justify-between p-4 bg-white/80 rounded-2xl border border-identity-sky/10 shadow-sm transition-all animate-in slide-in-from-top-2">
+                                <div className="flex items-center gap-3 flex-1 min-w-0">
+                                    <div className="w-10 h-10 bg-identity-sky/10 rounded-xl flex items-center justify-center text-identity-sky">
+                                        <Upload size={18} />
+                                    </div>
+                                    <span className="text-[10px] font-black text-identity-navy uppercase tracking-widest truncate italic">{rosterFile.name}</span>
                                 </div>
-                                <div className="flex items-center gap-2">
+                                <div className="flex items-center gap-3">
                                     <button
                                         type="button"
                                         onClick={handlePreviewFile}
-                                        className="text-brand-gold hover:text-white p-2 rounded-lg hover:bg-white/5 transition-all"
+                                        className="text-identity-sky hover:text-identity-navy p-3 rounded-xl hover:bg-identity-sky/5 transition-all"
                                         title="Preview Students"
                                     >
-                                        <Eye size={18} />
+                                        <Eye size={20} />
                                     </button>
                                     <button
                                         type="button"
                                         onClick={removeFile}
-                                        className="text-red-400 hover:text-red-300 p-2 rounded-lg hover:bg-white/5 transition-all"
+                                        className="text-rose-500 hover:text-rose-400 p-3 rounded-xl hover:bg-rose-50 transition-all"
                                         title="Remove file"
                                     >
-                                        <X size={18} />
+                                        <X size={20} />
                                     </button>
                                 </div>
                             </div>
                         ) : (
-                            <input
-                                id="roster-file-input"
-                                type="file"
-                                accept=".xlsx, .xls, .csv"
-                                onChange={handleFileChange}
-                                className="block w-full text-[10px] font-black uppercase tracking-widest text-secondary/40 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-[10px] file:font-black file:uppercase file:tracking-widest file:bg-brand-gold file:text-black hover:file:bg-brand-gold/90 cursor-pointer transition-all"
-                            />
+                            <div className="relative group">
+                                <input
+                                    id="roster-file-input"
+                                    type="file"
+                                    accept=".xlsx, .xls, .csv"
+                                    onChange={handleFileChange}
+                                    className="block w-full text-[10px] font-black uppercase tracking-widest text-slate-300 file:mr-6 file:py-4 file:px-8 file:rounded-2xl file:border-0 file:text-[10px] file:font-black file:uppercase file:tracking-[0.3em] file:bg-identity-navy file:text-white hover:file:bg-identity-sky cursor-pointer transition-all file:shadow-lg file:shadow-identity-navy/10"
+                                />
+                                <div className="absolute inset-x-0 bottom-0 py-2 text-center pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <span className="text-[8px] font-black text-identity-sky uppercase tracking-[0.5em]">Spreadsheet Protocol Required</span>
+                                </div>
+                            </div>
                         )}
 
-                        <p className="text-[10px] text-secondary/40 mt-2 font-bold uppercase tracking-widest leading-relaxed">
-                            Upload a spreadsheet with columns "Student Number" and "Name". Students without accounts will be enrolled but marked as "No Account".
+                        <p className="text-[9px] text-slate-300 mt-4 font-bold uppercase tracking-[0.2em] leading-relaxed italic border-t border-identity-sky/5 pt-4">
+                            System accepts .XLSX, .XLS, or .CSV formats. Ensure columns include "Student Number" and "Name" for synchronization.
                         </p>
                     </div>
 
                     <div>
-                        <label className="block text-[10px] font-black uppercase tracking-widest text-secondary/40 mb-2 flex items-center justify-between ml-1">
-                            <span>Class Schedule</span>
-                            <button type="button" onClick={addSchedule} className="text-brand-gold text-[10px] font-black uppercase tracking-widest hover:text-white transition-colors flex items-center gap-1">
-                                <Plus size={14} /> Add Day
+                        <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-4 flex items-center justify-between ml-1 italic">
+                            <span>Class Schedule Protocol</span>
+                            <button type="button" onClick={addSchedule} className="px-4 py-1.5 bg-identity-sky/5 text-identity-sky text-[9px] font-black uppercase tracking-[0.2em] rounded-lg border border-identity-sky/10 hover:bg-identity-sky hover:text-white transition-all">
+                                <Plus size={14} className="inline mr-1" /> Add Matrix Day
                             </button>
                         </label>
-                        <div className="space-y-3">
+                        <div className="space-y-4">
                             {schedules.map((schedule, index) => (
-                                <div key={index} className="flex gap-2 items-center bg-black/40 p-2 rounded-xl border border-white/5 shadow-inner">
+                                <div key={index} className="flex gap-4 items-center bg-white/40 p-3 rounded-2xl border border-identity-sky/10 shadow-inner group/schedule animate-in fade-in">
                                     <select
                                         value={schedule.day}
                                         onChange={(e) => handleScheduleChange(index, 'day', e.target.value)}
-                                        className="p-2 border border-white/5 rounded-lg text-xs font-bold bg-black/40 text-white uppercase tracking-widest focus:outline-none focus:border-brand-gold/50"
+                                        className="p-3 border border-identity-sky/10 rounded-xl text-[10px] font-black bg-white/60 text-identity-navy uppercase tracking-widest focus:outline-none focus:border-identity-sky/50 shadow-sm"
                                     >
                                         {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map(day => (
                                             <option key={day} value={day}>{day}</option>
                                         ))}
                                     </select>
-                                    <input
-                                        type="time"
-                                        value={schedule.startTime}
-                                        onChange={(e) => handleScheduleChange(index, 'startTime', e.target.value)}
-                                        className="flex-1 p-2 border border-white/5 rounded-lg text-xs font-black bg-black/40 text-white uppercase tracking-widest focus:outline-none focus:border-brand-gold/50"
-                                        style={{ colorScheme: 'dark' }}
-                                    />
-                                    <span className="text-secondary/40">-</span>
-                                    <input
-                                        type="time"
-                                        value={schedule.endTime}
-                                        onChange={(e) => handleScheduleChange(index, 'endTime', e.target.value)}
-                                        className="flex-1 p-2 border border-white/5 rounded-lg text-xs font-black bg-black/40 text-white uppercase tracking-widest focus:outline-none focus:border-brand-gold/50"
-                                        style={{ colorScheme: 'dark' }}
-                                    />
+                                    <div className="flex-1 flex gap-2 items-center">
+                                        <input
+                                            type="time"
+                                            value={schedule.startTime}
+                                            onChange={(e) => handleScheduleChange(index, 'startTime', e.target.value)}
+                                            className="flex-1 p-3 border border-identity-sky/10 rounded-xl text-xs font-black bg-white/60 text-identity-navy uppercase tracking-widest focus:outline-none focus:border-identity-sky/50 shadow-sm"
+                                            style={{ colorScheme: 'light' }}
+                                        />
+                                        <span className="text-slate-200 font-black">/</span>
+                                        <input
+                                            type="time"
+                                            value={schedule.endTime}
+                                            onChange={(e) => handleScheduleChange(index, 'endTime', e.target.value)}
+                                            className="flex-1 p-3 border border-identity-sky/10 rounded-xl text-xs font-black bg-white/60 text-identity-navy uppercase tracking-widest focus:outline-none focus:border-identity-sky/50 shadow-sm"
+                                            style={{ colorScheme: 'light' }}
+                                        />
+                                    </div>
                                     {schedules.length > 1 && (
-                                        <button type="button" onClick={() => removeSchedule(index)} className="text-red-400 hover:text-red-600 transition-colors p-1">
-                                            <Trash size={16} />
+                                        <button type="button" onClick={() => removeSchedule(index)} className="text-rose-300 hover:text-rose-500 transition-all p-2 hover:bg-rose-50 rounded-xl">
+                                            <Trash size={18} />
                                         </button>
                                     )}
                                 </div>
@@ -451,12 +458,17 @@ export default function CreateClassModal({ isOpen, onClose, onSuccess, professor
                         </div>
                     </div>
 
-                    <div className="pt-4 flex justify-end gap-3">
-                        <button type="button" onClick={onClose} className="px-6 py-2.5 text-secondary/40 hover:text-white hover:bg-white/5 rounded-xl font-black uppercase tracking-widest transition-all">
-                            Cancel
+                    <div className="pt-10 flex justify-end gap-4 border-t border-identity-sky/5">
+                        <button type="button" onClick={onClose} className="px-8 py-4 text-slate-400 hover:text-identity-navy hover:bg-white/60 rounded-2xl font-black uppercase tracking-[0.3em] text-[10px] transition-all">
+                            Abort
                         </button>
-                        <button type="submit" disabled={loading} className="px-8 py-2.5 bg-brand-gold text-black rounded-xl font-black uppercase tracking-widest hover:bg-brand-gold/90 transition-all shadow-lg shadow-brand-gold/10 disabled:opacity-50 disabled:cursor-not-allowed">
-                            {loading ? 'Creating...' : 'Create Class'}
+                        <button type="submit" disabled={loading} className="px-12 py-4 bg-identity-navy text-white rounded-2xl font-black uppercase tracking-[0.3em] text-[10px] hover:bg-identity-sky transition-all shadow-xl shadow-identity-navy/20 disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center gap-3">
+                            {loading ? (
+                                <>
+                                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                                    Synchronizing...
+                                </>
+                            ) : 'Initialize Class'}
                         </button>
                     </div>
                 </form>
@@ -466,32 +478,32 @@ export default function CreateClassModal({ isOpen, onClose, onSuccess, professor
             {/* Preview Modal */}
             {
                 showPreview && (
-                    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/90 backdrop-blur-xl animate-fade-in">
-                        <div className="bg-maroon-950 border border-white/10 rounded-2xl shadow-3xl max-w-2xl w-full p-6 relative animate-scale-up max-h-[80vh] flex flex-col">
+                    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-identity-navy/40 backdrop-blur-xl animate-fade-in">
+                        <div className="identity-glass border border-identity-sky/10 rounded-[2.5rem] shadow-3xl max-w-2xl w-full p-10 relative animate-scale-up max-h-[85vh] flex flex-col">
                             <button
                                 onClick={() => setShowPreview(false)}
-                                className="absolute top-4 right-4 text-secondary/40 hover:text-white transition-colors"
+                                className="absolute top-6 right-6 text-slate-400 hover:text-identity-navy transition-all p-2 hover:bg-white/60 rounded-xl"
                             >
-                                <X size={24} />
+                                <X size={28} />
                             </button>
-                            <h3 className="text-xl font-black text-white mb-4 uppercase tracking-tight">Class Roster Preview</h3>
-                            <div className="overflow-auto flex-1 border border-white/5 rounded-xl bg-black/40 shadow-inner">
-                                <table className="w-full text-left text-[10px] font-bold text-white uppercase tracking-widest">
-                                    <thead className="bg-black/60 text-brand-gold font-black sticky top-0 border-b border-white/5">
+                            <h3 className="text-2xl font-black text-identity-navy mb-8 uppercase tracking-tight italic">Roster Matrix Preview</h3>
+                            <div className="overflow-auto flex-1 border border-identity-sky/10 rounded-2xl bg-white/60 shadow-inner no-scrollbar">
+                                <table className="w-full text-left text-[10px] font-bold text-identity-navy uppercase tracking-widest">
+                                    <thead className="bg-identity-navy/5 text-identity-sky font-black sticky top-0 border-b border-identity-sky/10 backdrop-blur-md">
                                         <tr>
                                             {previewData.length > 0 && Object.keys(previewData[0]).map((key) => (
-                                                <th key={key} className="p-3 border-r border-white/5 last:border-0">
+                                                <th key={key} className="p-4 bg-white/40">
                                                     {key}
                                                 </th>
                                             ))}
                                         </tr>
                                     </thead>
-                                    <tbody className="divide-y divide-white/5">
+                                    <tbody className="divide-y divide-identity-sky/5">
                                         {previewData.length > 0 ? (
                                             previewData.map((row, i) => (
-                                                <tr key={i} className="hover:bg-white/5 transition-colors">
+                                                <tr key={i} className="hover:bg-identity-sky/5 transition-colors">
                                                     {Object.values(row).map((val: any, j) => (
-                                                        <td key={j} className="p-3 border-r border-white/5 last:border-0 whitespace-nowrap text-secondary/60">
+                                                        <td key={j} className="p-4 whitespace-nowrap text-slate-500 font-bold">
                                                             {val}
                                                         </td>
                                                     ))}
@@ -499,21 +511,22 @@ export default function CreateClassModal({ isOpen, onClose, onSuccess, professor
                                             ))
                                         ) : (
                                             <tr>
-                                                <td colSpan={100} className="p-8 text-center text-secondary/20">
-                                                    No data found in file.
+                                                <td colSpan={100} className="p-16 text-center text-slate-300 italic">
+                                                    <Eye size={48} className="mx-auto mb-4 opacity-10" />
+                                                    No operational data detected.
                                                 </td>
                                             </tr>
                                         )}
                                     </tbody>
                                 </table>
                             </div>
-                            <div className="mt-4 flex justify-end">
+                            <div className="mt-8 flex justify-center">
                                 <button
                                     type="button"
                                     onClick={() => setShowPreview(false)}
-                                    className="px-6 py-2.5 bg-black/40 hover:bg-white/5 text-white border border-white/5 rounded-xl font-black uppercase tracking-widest transition-all shadow-inner"
+                                    className="px-10 py-4 bg-identity-navy text-white rounded-2xl font-black uppercase tracking-[0.3em] text-[10px] transition-all shadow-xl shadow-identity-navy/10 hover:bg-identity-sky"
                                 >
-                                    Close Preview
+                                    Close Matrix View
                                 </button>
                             </div>
                         </div>
@@ -521,6 +534,5 @@ export default function CreateClassModal({ isOpen, onClose, onSuccess, professor
                 )
             }
         </div >
-
     );
 }

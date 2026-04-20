@@ -15,7 +15,12 @@ class AttendanceWarningService {
 
         if (equivalent >= 3) return 'dropout_warning';
         if (equivalent >= 2) return 'absence_warning';
+
+        // 3 lates conversion (3, 6, 9...)
         if (lateCount >= 3 && lateCount % 3 === 0) return 'late_threshold';
+
+        // 2 lates warning (2, 5, 8...)
+        if (lateCount >= 2 && lateCount % 3 === 2) return 'incoming_absence_warning';
 
         return null;
     }
@@ -48,14 +53,11 @@ class AttendanceWarningService {
             // Logic to prevent spam:
             if (existing) {
                 // If we already have this warning, do we need to update?
-                // For dropout, maybe reminder? For now, skip if exists.
                 if (warningType === 'dropout_warning' || warningType === 'absence_warning') {
-                    // Maybe update the counts but don't re-notify immediately?
                     return;
                 }
-                // For late_threshold, we want to warn at 3, 6, 9...
-                // existing.late_count might be 3. current is 6.
-                if (warningType === 'late_threshold') {
+                // For late_threshold and incoming_absence_warning, we want to warn at each cycle
+                if (warningType === 'late_threshold' || warningType === 'incoming_absence_warning') {
                     if (existing.late_count === late_count) return; // Already warned for this count
                 }
             }

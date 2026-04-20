@@ -110,9 +110,9 @@ export default function ActiveSessionPanel({ sessionId, onStopSession }: ActiveS
 
     const getStatusColor = (status: string) => {
         const normalized = status.toLowerCase();
-        if (normalized === 'present') return 'text-emerald-400 bg-emerald-500/20 border-emerald-500/30';
-        if (normalized === 'late') return 'text-amber-400 bg-amber-500/20 border-amber-500/30';
-        return 'text-red-400 bg-red-500/20 border-red-500/30';
+        if (normalized === 'present') return 'text-emerald-600 bg-emerald-50 border-emerald-100';
+        if (normalized === 'late') return 'text-amber-600 bg-amber-50 border-amber-100';
+        return 'text-red-600 bg-red-50 border-red-100';
     };
 
     const getStatusIcon = (status: string) => {
@@ -128,16 +128,16 @@ export default function ActiveSessionPanel({ sessionId, onStopSession }: ActiveS
     };
 
     return (
-        <div className="bg-maroon-950 rounded-2xl border border-white/5 flex flex-col overflow-hidden h-[600px] animate-in fade-in slide-in-from-bottom-4 duration-500 shadow-2xl">
+        <div className="identity-glass rounded-2xl border border-identity-sky/10 flex flex-col overflow-hidden h-[600px] animate-in fade-in slide-in-from-bottom-4 duration-500 shadow-2xl">
             {/* Header */}
-            <div className="p-4 border-b border-white/5 bg-black/20">
+            <div className="p-4 border-b border-identity-sky/5 bg-white/40">
                 <div className="flex items-start justify-between mb-3">
                     <div>
-                        <h3 className="font-bold text-white flex items-center gap-2">
+                        <h3 className="font-bold text-identity-navy flex items-center gap-2">
                             <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
                             Active Session
                         </h3>
-                        <p className="text-sm text-brand-400 font-semibold mt-1">
+                        <p className="text-sm text-identity-sky font-semibold mt-1">
                             {error ? (
                                 <button onClick={fetchSessionInfo} className="flex items-center gap-1 text-red-400 hover:text-red-300 underline">
                                     <RefreshCw size={12} /> Retry Loading
@@ -146,9 +146,9 @@ export default function ActiveSessionPanel({ sessionId, onStopSession }: ActiveS
                                 sessionInfo?.subject_name || 'Loading...'
                             )}
                         </p>
-                        <p className="text-xs text-secondary/50 font-mono mt-0.5">
-                            {sessionInfo?.section}
-                        </p>
+                            <p className="text-xs text-slate-400 font-mono mt-0.5">
+                                {sessionInfo?.section}
+                            </p>
                     </div>
                 </div>
 
@@ -167,19 +167,19 @@ export default function ActiveSessionPanel({ sessionId, onStopSession }: ActiveS
             </div>
 
             {/* Stats Bar */}
-            <div className="bg-black/10 px-4 py-2 border-b border-white/5 flex items-center justify-between text-xs">
-                <div className="flex items-center gap-1.5 text-emerald-400">
+            <div className="bg-white/10 px-4 py-2 border-b border-identity-sky/5 flex items-center justify-between text-xs">
+                <div className="flex items-center gap-1.5 text-emerald-600">
                     <CheckCircle size={12} />
                     <span>{activity.filter(l => l.status.toLowerCase() === 'present').length} Present</span>
                 </div>
-                <div className="flex items-center gap-1.5 text-secondary/60">
+                <div className="flex items-center gap-1.5 text-slate-400">
                     <Clock size={12} />
                     <span>Running</span>
                 </div>
             </div>
 
             {/* Feed */}
-            <div className="flex-1 overflow-y-auto space-y-2 p-3 custom-scrollbar bg-black/5">
+            <div className="flex-1 overflow-y-auto space-y-2 p-3 custom-scrollbar bg-white/5">
                 {loading ? (
                     <div className="flex items-center justify-center h-full text-slate-500">
                         <div className="animate-pulse flex flex-col items-center gap-2">
@@ -201,16 +201,16 @@ export default function ActiveSessionPanel({ sessionId, onStopSession }: ActiveS
                         .map((log) => (
                             <div
                                 key={log.id}
-                                className="bg-maroon-900/60 rounded-lg p-3 border border-white/5 hover:border-brand-gold/20 transition-all animate-fade-in group shadow-sm"
+                                className="bg-white/60 rounded-lg p-3 border border-identity-sky/10 hover:border-identity-sky/20 transition-all animate-fade-in group shadow-sm"
                             >
                                 <div className="flex items-start gap-3">
                                     {/* Student Photo */}
-                                    <div className="w-9 h-9 rounded-full bg-maroon-800 flex-shrink-0 overflow-hidden ring-2 ring-black/20 group-hover:ring-brand-gold/30 transition-all">
+                                    <div className="w-9 h-9 rounded-full bg-slate-100 flex-shrink-0 overflow-hidden ring-2 ring-white group-hover:ring-identity-sky/30 transition-all">
                                         {log.id_photo ? (
                                             <img src={log.id_photo} alt={log.student_name} className="w-full h-full object-cover" />
                                         ) : (
                                             <div className="w-full h-full flex items-center justify-center">
-                                                <User size={16} className="text-secondary/30" />
+                                                <User size={16} className="text-slate-300" />
                                             </div>
                                         )}
                                     </div>
@@ -218,10 +218,10 @@ export default function ActiveSessionPanel({ sessionId, onStopSession }: ActiveS
                                     {/* Activity Info */}
                                     <div className="flex-1 min-w-0">
                                         <div className="flex items-center gap-2 mb-0.5">
-                                            <span className="font-semibold text-white text-xs truncate">
+                                            <span className="font-semibold text-identity-navy text-xs truncate">
                                                 {log.student_name} {log.student_last_name}
                                             </span>
-                                            <span className="text-[10px] text-secondary/40 ml-auto font-mono">
+                                            <span className="text-[10px] text-slate-400 ml-auto font-mono">
                                                 {formatTime(log.created_at)}
                                             </span>
                                         </div>
@@ -229,7 +229,7 @@ export default function ActiveSessionPanel({ sessionId, onStopSession }: ActiveS
                                             <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-[4px] text-[10px] font-medium border ${getStatusColor(log.status)}`}>
                                                 {log.status}
                                             </span>
-                                            <span className="text-[10px] text-secondary/30" title={log.recognition_method}>
+                                            <span className="text-[10px] text-slate-400" title={log.recognition_method}>
                                                 {log.recognition_method === 'CCTV' ? 'Via Camera' : 'Manual'}
                                             </span>
                                         </div>

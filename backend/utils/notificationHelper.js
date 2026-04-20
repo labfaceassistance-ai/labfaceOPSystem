@@ -8,19 +8,28 @@ const templates = {
             category: 'attendance'
         }
     },
+    incoming_absence_warning: {
+        student: {
+            title: '⚠️ Incoming Absence Warning',
+            message: (className) =>
+                `You have accumulated 2 late arrivals in ${className}. A 3rd late arrival will be automatically converted into 1 full absence.`,
+            type: 'warning',
+            category: 'attendance'
+        }
+    },
     late_threshold: {
         student: {
-            title: '⚠️ Late Attendance Alert',
+            title: '🚨 Attendance Conversion Alert',
             message: (className, lateCount) =>
-                `You have ${lateCount} late arrivals in ${className}. 3 lates = 1 absence.`,
-            type: 'warning',
+                `You have reached ${lateCount} late arrivals in ${className}. These have been recorded as 1 equivalent absence in your history.`,
+            type: 'error',
             category: 'attendance'
         },
         professor: {
-            title: '📊 Student Late Pattern',
+            title: '📊 Student Lateness Threshold',
             message: (studentName, className, lateCount) =>
-                `${studentName} has ${lateCount} late arrivals in ${className}.`,
-            type: 'info',
+                `${studentName} has reached ${lateCount} late arrivals in ${className}. The system has recorded 1 equivalent absence due to persistent lateness.`,
+            type: 'warning',
             category: 'attendance'
         }
     },

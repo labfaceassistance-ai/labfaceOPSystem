@@ -205,9 +205,9 @@ function DashboardContent() {
     }, []);
 
     if (!user || loading) return (
-        <div className="min-h-screen bg-maroon-950 flex flex-col items-center justify-center gap-4">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-gold"></div>
-            <div className="text-secondary/40 text-[10px] font-black uppercase tracking-widest animate-pulse">Establishing secure connection...</div>
+        <div className="min-h-screen bg-identity-bg flex flex-col items-center justify-center gap-4">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-identity-navy"></div>
+            <div className="text-identity-navy/40 text-[10px] font-black uppercase tracking-widest animate-pulse">Establishing secure connection...</div>
         </div>
     );
 
@@ -221,7 +221,7 @@ function DashboardContent() {
     ];
 
     return (
-        <div className="min-h-screen bg-maroon-950 font-sans selection:bg-brand-gold/20 selection:text-brand-gold">
+        <div className="min-h-screen bg-identity-bg font-sans selection:bg-identity-sky/20 selection:text-identity-navy">
             <SessionTimeout
                 sessionDuration={30 * 60 * 1000}
                 warningTime={5 * 60 * 1000}
@@ -232,7 +232,7 @@ function DashboardContent() {
             <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-8">
 
                 {/* Tab Navigation */}
-                <div className="sticky top-20 z-40 bg-maroon-950/90 backdrop-blur-xl border-b border-white/5 mb-8 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-0 transition-all duration-300">
+                <div className="sticky top-20 z-40 bg-identity-bg/90 backdrop-blur-xl border-b border-identity-sky/10 mb-8 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-0 transition-all duration-300">
                     <div className="flex gap-2 overflow-x-auto justify-start md:justify-center px-4 no-scrollbar">
                         {tabs.map((tab) => {
                             const Icon = tab.icon;
@@ -241,11 +241,11 @@ function DashboardContent() {
                                     key={tab.id}
                                     onClick={() => handleTabChange(tab.id)}
                                     className={`px-8 py-5 text-[10px] font-black uppercase tracking-[0.2em] transition-all border-b-2 flex items-center gap-3 whitespace-nowrap group ${activeTab === tab.id
-                                        ? 'text-brand-gold border-brand-gold bg-brand-gold/5'
-                                        : 'text-secondary/40 border-transparent hover:text-white hover:bg-white/5'
+                                        ? 'text-identity-navy border-identity-navy bg-identity-navy/5'
+                                        : 'text-slate-400 border-transparent hover:text-identity-navy hover:bg-identity-navy/5'
                                         }`}
                                 >
-                                    <Icon className={`w-4 h-4 transition-transform group-hover:scale-110 ${activeTab === tab.id ? 'text-brand-gold' : 'text-secondary/20'}`} />
+                                    <Icon className={`w-4 h-4 transition-transform group-hover:scale-110 ${activeTab === tab.id ? 'text-identity-navy' : 'text-slate-300'}`} />
                                     {tab.label}
                                 </button>
                             );
@@ -269,9 +269,9 @@ function DashboardContent() {
 export default function ProfessorDashboard() {
     return (
         <Suspense fallback={
-            <div className="min-h-screen bg-maroon-950 flex flex-col items-center justify-center gap-4">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-gold"></div>
-                <div className="text-secondary/40 text-[10px] font-black uppercase tracking-widest animate-pulse">Initializing Interface...</div>
+            <div className="min-h-screen bg-identity-bg flex flex-col items-center justify-center gap-4">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-identity-navy"></div>
+                <div className="text-identity-navy/40 text-[10px] font-black uppercase tracking-widest animate-pulse">Initializing Interface...</div>
             </div>
         }>
             <DashboardContent />
