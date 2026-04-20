@@ -127,7 +127,7 @@ const VideoFeed = ({ src, alt, className, onExpand, label }: VideoFeedProps) => 
                             <div className="animate-spin mb-4 text-identity-sky/40">
                                 <RefreshCw size={40} />
                             </div>
-                            <span className="text-[10px] font-black tracking-[0.3em] uppercase">Checking Neural Link...</span>
+                            <span className="text-[10px] font-black tracking-[0.3em] uppercase">Testing Camera...</span>
                         </>
                     ) : (
                         <>
@@ -138,14 +138,14 @@ const VideoFeed = ({ src, alt, className, onExpand, label }: VideoFeedProps) => 
                             </div>
                             <span className="text-[10px] font-black tracking-[0.3em] uppercase text-rose-500/60">Feed Offline</span>
                             {autoRetryCount < maxAutoRetries ? (
-                                <span className="text-[8px] font-bold text-slate-500 uppercase tracking-widest mt-4">Restoring in 5s... ({autoRetryCount}/{maxAutoRetries})</span>
+                                <span className="text-[8px] font-bold text-slate-500 uppercase tracking-[0.15em] mt-4">Restoring in 5s... ({autoRetryCount}/{maxAutoRetries})</span>
                             ) : (
                                 <button
                                     onClick={handleManualRefresh}
-                                    className="mt-6 px-10 py-3 bg-black/40 hover:bg-white/5 text-white rounded-xl flex items-center gap-3 transition-all border border-white/10 text-[10px] font-black uppercase tracking-widest shadow-inner group/btn"
+                                    className="mt-6 px-10 py-3 bg-black/40 hover:bg-white/5 text-white rounded-xl flex items-center gap-3 transition-all border border-white/10 text-[10px] font-black uppercase tracking-[0.15em] shadow-inner group/btn"
                                 >
                                     <RefreshCw size={14} className="group-hover/btn:rotate-180 transition-transform duration-500 text-identity-sky" />
-                                    <span>Force Sync</span>
+                                    <span>Refresh Feed</span>
                                 </button>
                             )}
                         </>
@@ -176,7 +176,7 @@ const VideoFeed = ({ src, alt, className, onExpand, label }: VideoFeedProps) => 
 
                 {cameraStatus.isOnline && (
                     <div className="flex justify-between items-end opacity-0 group-hover:opacity-100 transition-opacity duration-500">
-                        <div className="text-[9px] font-black uppercase tracking-widest text-slate-400 bg-black/60 px-3 py-1.5 rounded-lg backdrop-blur-md border border-white/5">
+                        <div className="text-[9px] font-black uppercase tracking-[0.15em] text-slate-400 bg-black/60 px-3 py-1.5 rounded-lg backdrop-blur-md border border-white/5">
                             {cameraStatus.resolution} · {cameraStatus.fps} FPS · {cameraStatus.bitrate}
                         </div>
                     </div>

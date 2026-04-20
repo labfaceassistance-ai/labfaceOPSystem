@@ -28,13 +28,13 @@ export default function DeveloperCredits() {
                 {/* Header */}
                 <div className="text-center mb-16">
                     <h3 className="text-3xl font-black text-white mb-2 uppercase tracking-tight">Development Team</h3>
-                    <p className="text-[10px] font-bold text-secondary/40 uppercase tracking-widest leading-relaxed">
+                    <p className="text-[10px] font-bold text-secondary/40 uppercase tracking-[0.15em] leading-relaxed">
                         Polytechnic University of the Philippines - Lopez, Quezon
                     </p>
                 </div>
 
                 {/* Developer Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
                     {developers.map((dev, idx) => (
                         <div
                             key={idx}
@@ -45,9 +45,9 @@ export default function DeveloperCredits() {
                                 <div className="w-20 h-20 rounded-2xl bg-brand-gold/10 flex items-center justify-center text-brand-gold font-black text-2xl mb-6 shadow-2xl border border-brand-gold/20">
                                     {dev.name.split(' ').map(n => n[0]).join('')}
                                 </div>
-                                <h4 className="font-black text-white mb-1 uppercase tracking-widest">{dev.name}</h4>
+                                <h4 className="font-black text-white mb-1 uppercase tracking-[0.15em]">{dev.name}</h4>
                                 <p className="text-[10px] font-black text-brand-gold/80 mb-6 uppercase tracking-[0.2em]">{dev.role}</p>
-                                <div className="space-y-3 text-[10px] font-bold text-secondary/40 w-full uppercase tracking-widest">
+                                <div className="space-y-3 text-[10px] font-bold text-secondary/40 w-full uppercase tracking-[0.15em]">
                                     <div className="flex items-center gap-3 justify-center group-hover:text-white transition-colors">
                                         <Mail size={14} className="text-brand-gold/40" />
                                         <a href={`mailto:${dev.email}`} className="hover:text-brand-gold transition-colors">
@@ -67,7 +67,7 @@ export default function DeveloperCredits() {
                 {/* Footer Info */}
                 <div className="border-t border-white/5 pt-12 text-center">
                     <div className="flex flex-col md:flex-row items-center justify-between gap-8">
-                        <div className="text-[10px] font-bold text-secondary/40 uppercase tracking-widest">
+                        <div className="text-[10px] font-bold text-secondary/40 uppercase tracking-[0.15em]">
                             <p className="mb-2">
                                 © {new Date().getFullYear()} LabFace Index. OS Layer v2.0
                             </p>
@@ -75,7 +75,7 @@ export default function DeveloperCredits() {
                                 Polytechnic University of the Philippines - Lopez Campus
                             </p>
                         </div>
-                        <div className="flex items-center gap-3 text-[10px] font-black text-secondary/40 uppercase tracking-widest">
+                        <div className="flex items-center gap-3 text-[10px] font-black text-secondary/40 uppercase tracking-[0.15em]">
                             <div className="p-2.5 bg-white/5 rounded-xl border border-white/5 shadow-inner">
                                 <Mail size={18} className="text-brand-gold" />
                             </div>

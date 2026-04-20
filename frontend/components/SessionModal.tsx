@@ -447,27 +447,28 @@ export default function SessionModal({ isOpen, onClose, classId, className, onSu
     if (!isOpen || !classId) return null;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-identity-navy/20 backdrop-blur-md animate-fade-in text-identity-navy uppercase tracking-widest">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-identity-navy/20 backdrop-blur-md animate-fade-in text-identity-navy uppercase tracking-[0.15em]">
             <div className={`identity-glass border border-identity-sky/10 rounded-2xl shadow-3xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-8 relative animate-scale-up ${isRedirecting ? 'opacity-90 pointer-events-none' : ''}`}>
                 <button
                     onClick={onClose}
                     disabled={isRedirecting}
-                    className="absolute top-6 right-6 text-secondary/40 hover:text-white transition-colors z-10 disabled:opacity-30"
+                    className="absolute top-6 right-6 p-3 min-h-[44px] min-w-[44px] flex items-center justify-center text-secondary/40 hover:text-white transition-colors z-10 disabled:opacity-30 rounded-xl"
+                    title="Close Modal"
                 >
                     <X size={24} />
                 </button>
 
                 <h3 className="text-3xl font-black text-identity-navy mb-2 uppercase tracking-tight italic">Start Session</h3>
-                <p className="text-[10px] font-bold text-slate-400 mb-8 uppercase tracking-widest">
+                <p className="text-[10px] font-bold text-slate-400 mb-8 uppercase tracking-[0.15em]">
                     Start a new attendance session for <span className="text-identity-sky">{className}</span>
                 </p>
 
                 {/* Session Type Tabs */}
-                <div className="grid grid-cols-3 gap-3 mb-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mb-8">
                     <button
                         onClick={() => setType('regular')}
                         disabled={isRedirecting}
-                        className={`p-4 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all shadow-inner ${type === 'regular'
+                        className={`p-4 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl text-[10px] font-black uppercase tracking-[0.15em] border transition-all shadow-inner ${type === 'regular'
                             ? 'bg-identity-navy text-white border-identity-navy shadow-identity-navy/10'
                             : 'bg-white/40 border-identity-sky/10 text-slate-400 hover:text-identity-navy hover:bg-white/60'
                             }`}
@@ -477,7 +478,7 @@ export default function SessionModal({ isOpen, onClose, classId, className, onSu
                     <button
                         onClick={() => setType('makeup')}
                         disabled={isRedirecting}
-                        className={`p-4 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all shadow-inner ${type === 'makeup'
+                        className={`p-4 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl text-[10px] font-black uppercase tracking-[0.15em] border transition-all shadow-inner ${type === 'makeup'
                             ? 'bg-identity-navy text-white border-identity-navy shadow-identity-navy/10'
                             : 'bg-white/40 border-identity-sky/10 text-slate-400 hover:text-identity-navy hover:bg-white/60'
                             }`}
@@ -487,7 +488,7 @@ export default function SessionModal({ isOpen, onClose, classId, className, onSu
                     <button
                         onClick={() => setType('batch')}
                         disabled={isRedirecting}
-                        className={`p-4 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all shadow-inner ${type === 'batch'
+                        className={`p-4 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl text-[10px] font-black uppercase tracking-[0.15em] border transition-all shadow-inner ${type === 'batch'
                             ? 'bg-identity-navy text-white border-identity-navy shadow-identity-navy/10'
                             : 'bg-white/40 border-identity-sky/10 text-slate-400 hover:text-identity-navy hover:bg-white/60'
                             }`}
@@ -504,19 +505,19 @@ export default function SessionModal({ isOpen, onClose, classId, className, onSu
                                 <Play size={20} />
                             </div>
                             <div className="flex-1">
-                                <p className={`text-[10px] font-black uppercase tracking-widest leading-relaxed ${!isRegularAllowed() ? 'text-red-400' : 'text-identity-navy'}`}>
+                                <p className={`text-[10px] font-black uppercase tracking-[0.15em] leading-relaxed ${!isRegularAllowed() ? 'text-red-400' : 'text-identity-navy'}`}>
                                     <strong>Regular Session:</strong> Start a live class session immediately.
                                 </p>
                                 {!isRegularAllowed() && !fetchingStatus && (
-                                    <div className="mt-4 p-3 bg-red-500/10 border border-red-500/10 rounded-xl text-[10px] font-black uppercase tracking-widest text-red-400 flex items-center gap-2 shadow-inner">
+                                    <div className="mt-4 p-3 bg-red-500/10 border border-red-500/10 rounded-xl text-[10px] font-black uppercase tracking-[0.15em] text-red-400 flex items-center gap-2 shadow-inner">
                                         <AlertCircle size={14} /> Not scheduled for today.
                                     </div>
                                 )}
                                 {fetchingStatus && (
-                                    <div className="mt-4 text-[10px] font-black uppercase tracking-widest text-secondary/20 animate-pulse">Checking schedule...</div>
+                                    <div className="mt-4 text-[10px] font-black uppercase tracking-[0.15em] text-secondary/20 animate-pulse">Checking schedule...</div>
                                 )}
                                 {todayStatus?.isMakeupScheduled && (
-                                    <div className="mt-4 p-3 bg-emerald-500/5 border border-emerald-500/10 rounded-xl text-[10px] font-black uppercase tracking-widest text-emerald-400 flex items-center gap-2 shadow-inner">
+                                    <div className="mt-4 p-3 bg-emerald-500/5 border border-emerald-500/10 rounded-xl text-[10px] font-black uppercase tracking-[0.15em] text-emerald-400 flex items-center gap-2 shadow-inner">
                                         <Calendar size={14} /> Make-up Class Scheduled for Today.
                                     </div>
                                 )}
@@ -524,7 +525,7 @@ export default function SessionModal({ isOpen, onClose, classId, className, onSu
                         </div>
 
                         <div className="mt-8">
-                            <label className="block text-[10px] font-black text-slate-500 mb-3 uppercase tracking-widest ml-1">Late Threshold (Minutes)</label>
+                            <label className="block text-[10px] font-black text-slate-500 mb-3 uppercase tracking-[0.15em] ml-1">Late Threshold (Minutes)</label>
                             <div className="relative group">
                                 <Clock className="absolute left-4 top-3.5 text-slate-300 group-focus-within:text-identity-sky transition-colors" size={18} />
                                 <input
@@ -533,9 +534,9 @@ export default function SessionModal({ isOpen, onClose, classId, className, onSu
                                     max="60"
                                     value={lateThreshold}
                                     onChange={(e) => setLateThreshold(parseInt(e.target.value) || 15)}
-                                    className="w-full pl-12 pr-4 py-3 bg-white/60 border border-identity-sky/10 rounded-xl text-sm font-black text-identity-navy uppercase tracking-widest focus:border-identity-sky/50 focus:outline-none transition-all shadow-inner"
+                                    className="w-full pl-12 pr-4 py-3 bg-white/60 border border-identity-sky/10 rounded-xl text-sm font-black text-identity-navy uppercase tracking-[0.15em] focus:border-identity-sky/50 focus:outline-none transition-all shadow-inner"
                                 />
-                                <p className="text-[10px] text-slate-300 mt-3 font-bold uppercase tracking-widest ml-1">Students arriving after {lateThreshold}m will be marked Late.</p>
+                                <p className="text-[10px] text-slate-300 mt-3 font-bold uppercase tracking-[0.15em] ml-1">Students arriving after {lateThreshold}m will be marked Late.</p>
                             </div>
                         </div>
                     </div>
@@ -545,7 +546,7 @@ export default function SessionModal({ isOpen, onClose, classId, className, onSu
                 {type === 'makeup' && (
                     <div className="space-y-6 mb-8 animate-in fade-in duration-300">
                         <div className="bg-brand-gold/10 border border-brand-gold/20 p-5 rounded-2xl shadow-inner">
-                            <p className="text-[10px] font-black text-brand-gold uppercase tracking-widest leading-relaxed">
+                            <p className="text-[10px] font-black text-brand-gold uppercase tracking-[0.15em] leading-relaxed">
                                 <strong>Make-up Class:</strong> Schedule a session for a different date/time. All enrolled students are naturally notified.
                             </p>
                         </div>
@@ -565,62 +566,62 @@ export default function SessionModal({ isOpen, onClose, classId, className, onSu
                                 }}
                                 className="w-5 h-5 bg-white border-identity-sky/20 rounded text-identity-sky focus:ring-identity-sky transition-all"
                             />
-                            <label htmlFor="makeupByBatch" className="text-[10px] font-black text-identity-navy hover:text-identity-sky cursor-pointer uppercase tracking-widest">
+                            <label htmlFor="makeupByBatch" className="text-[10px] font-black text-identity-navy hover:text-identity-sky cursor-pointer uppercase tracking-[0.15em]">
                                 Split into multiple batches?
                             </label>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-[10px] font-black text-secondary/40 mb-2 uppercase tracking-widest ml-1">Date</label>
+                                <label className="block text-[10px] font-black text-secondary/40 mb-2 uppercase tracking-[0.15em] ml-1">Date</label>
                                 <div className="relative">
                                     <Calendar className="absolute left-4 top-3.5 text-secondary/20" size={18} />
                                     <input
                                         type="date"
                                         value={customDate}
                                         onChange={(e) => setCustomDate(e.target.value)}
-                                        className="w-full pl-12 pr-4 py-3 bg-black/40 border border-white/5 rounded-xl text-sm font-black text-brand-gold uppercase tracking-widest focus:border-brand-gold/50 focus:outline-none shadow-inner"
+                                        className="w-full pl-12 pr-4 py-3 bg-black/40 border border-white/5 rounded-xl text-sm font-black text-brand-gold uppercase tracking-[0.15em] focus:border-brand-gold/50 focus:outline-none shadow-inner"
                                     />
                                 </div>
                             </div>
                             <div>
-                                <label className="block text-[10px] font-black text-secondary/40 mb-2 uppercase tracking-widest ml-1">Start Time</label>
+                                <label className="block text-[10px] font-black text-secondary/40 mb-2 uppercase tracking-[0.15em] ml-1">Start Time</label>
                                 <div className="relative">
                                     <Clock className="absolute left-4 top-3.5 text-secondary/20" size={18} />
                                     <input
                                         type="time"
                                         value={customTime}
                                         onChange={(e) => setCustomTime(e.target.value)}
-                                        className="w-full pl-12 pr-4 py-3 bg-black/40 border border-white/5 rounded-xl text-sm font-black text-brand-gold uppercase tracking-widest focus:border-brand-gold/50 focus:outline-none shadow-inner"
+                                        className="w-full pl-12 pr-4 py-3 bg-black/40 border border-white/5 rounded-xl text-sm font-black text-brand-gold uppercase tracking-[0.15em] focus:border-brand-gold/50 focus:outline-none shadow-inner"
                                     />
                                 </div>
                             </div>
                             <div className="col-span-2">
-                                <label className="block text-[10px] font-black text-secondary/40 mb-2 uppercase tracking-widest ml-1">End Time</label>
+                                <label className="block text-[10px] font-black text-secondary/40 mb-2 uppercase tracking-[0.15em] ml-1">End Time</label>
                                 <div className="relative">
                                     <Clock className="absolute left-4 top-3.5 text-secondary/20" size={18} />
                                     <input
                                         type="time"
                                         value={customEndTime}
                                         onChange={(e) => setCustomEndTime(e.target.value)}
-                                        className="w-full pl-12 pr-4 py-3 bg-black/40 border border-white/5 rounded-xl text-sm font-black text-brand-gold uppercase tracking-widest focus:border-brand-gold/50 focus:outline-none shadow-inner"
+                                        className="w-full pl-12 pr-4 py-3 bg-black/40 border border-white/5 rounded-xl text-sm font-black text-brand-gold uppercase tracking-[0.15em] focus:border-brand-gold/50 focus:outline-none shadow-inner"
                                     />
                                 </div>
                             </div>
                         </div>
                         <div>
-                            <label className="block text-[10px] font-black text-slate-500 mb-2 uppercase tracking-widest ml-1">Reason (Optional)</label>
+                            <label className="block text-[10px] font-black text-slate-500 mb-2 uppercase tracking-[0.15em] ml-1">Reason (Optional)</label>
                             <textarea
                                 value={reason}
                                 onChange={(e) => setReason(e.target.value)}
                                 placeholder="e.g., Missed class due to holiday"
-                                className="w-full p-4 bg-white/60 border border-identity-sky/10 rounded-xl text-[10px] font-black uppercase tracking-widest text-identity-navy placeholder-slate-300 resize-none focus:border-identity-sky/50 focus:outline-none shadow-inner"
+                                className="w-full p-4 bg-white/60 border border-identity-sky/10 rounded-xl text-[10px] font-black uppercase tracking-[0.15em] text-identity-navy placeholder-slate-300 resize-none focus:border-identity-sky/50 focus:outline-none shadow-inner"
                                 rows={2}
                             />
                         </div>
 
                         <div>
-                            <label className="block text-[10px] font-black text-slate-500 mb-3 uppercase tracking-widest ml-1">Late Threshold (Minutes)</label>
+                            <label className="block text-[10px] font-black text-slate-500 mb-3 uppercase tracking-[0.15em] ml-1">Late Threshold (Minutes)</label>
                             <div className="relative">
                                 <Clock className="absolute left-4 top-3.5 text-slate-300" size={18} />
                                 <input
@@ -629,9 +630,9 @@ export default function SessionModal({ isOpen, onClose, classId, className, onSu
                                     max="60"
                                     value={lateThreshold}
                                     onChange={(e) => setLateThreshold(parseInt(e.target.value) || 15)}
-                                    className="w-full pl-12 pr-4 py-3 bg-white/60 border border-identity-sky/10 rounded-xl text-sm font-black text-identity-navy uppercase tracking-widest focus:border-identity-sky/50 focus:outline-none shadow-inner"
+                                    className="w-full pl-12 pr-4 py-3 bg-white/60 border border-identity-sky/10 rounded-xl text-sm font-black text-identity-navy uppercase tracking-[0.15em] focus:border-identity-sky/50 focus:outline-none shadow-inner"
                                 />
-                                <p className="text-[10px] text-slate-300 mt-2 font-bold uppercase tracking-widest ml-1">Students arriving after {lateThreshold}m will be marked Late.</p>
+                                <p className="text-[10px] text-slate-300 mt-2 font-bold uppercase tracking-[0.15em] ml-1">Students arriving after {lateThreshold}m will be marked Late.</p>
                             </div>
                         </div>
 
@@ -645,7 +646,7 @@ export default function SessionModal({ isOpen, onClose, classId, className, onSu
                                     <button
                                         type="button"
                                         onClick={() => setViewMode(viewMode === 'schedule' ? 'create_batch' : 'schedule')}
-                                        className="text-[10px] font-black text-identity-sky hover:text-identity-navy uppercase tracking-widest transition-all"
+                                        className="text-[10px] font-black text-identity-sky hover:text-identity-navy uppercase tracking-[0.15em] transition-all"
                                     >
                                         {viewMode === 'schedule' ? '+ Create New Batch' : '← Back to Schedule'}
                                     </button>
@@ -655,26 +656,26 @@ export default function SessionModal({ isOpen, onClose, classId, className, onSu
                                     // CREATE BATCH VIEW
                                     <div className="space-y-6 animate-fade-in bg-white/40 p-6 rounded-2xl border border-identity-sky/10 shadow-inner">
                                         <div>
-                                            <label className="block text-[10px] font-black text-slate-500 mb-2 uppercase tracking-widest ml-1">Batch Name</label>
+                                            <label className="block text-[10px] font-black text-slate-500 mb-2 uppercase tracking-[0.15em] ml-1">Batch Name</label>
                                             <input
                                                 type="text"
                                                 value={newGroupName}
                                                 onChange={(e) => setNewGroupName(e.target.value)}
                                                 placeholder="e.g., Batch 1"
-                                                className="w-full px-4 py-3 bg-white/60 border border-identity-sky/10 rounded-xl text-sm font-black text-identity-navy uppercase tracking-widest focus:border-identity-sky/50 focus:outline-none shadow-inner"
+                                                className="w-full px-4 py-3 bg-white/60 border border-identity-sky/10 rounded-xl text-sm font-black text-identity-navy uppercase tracking-[0.15em] focus:border-identity-sky/50 focus:outline-none shadow-inner"
                                             />
                                         </div>
 
                                         <div>
                                             <div className="flex items-center justify-between mb-3 ml-1">
-                                                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                                                <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.15em] flex items-center gap-2">
                                                     <Users size={16} />
                                                     Select Students ({selectedStudents.length}/{students.length})
                                                 </label>
                                                 <div className="flex gap-3">
-                                                    <button type="button" onClick={selectAll} className="text-[10px] font-black text-identity-sky uppercase tracking-widest">All</button>
+                                                    <button type="button" onClick={selectAll} className="text-[10px] font-black text-identity-sky uppercase tracking-[0.15em]">All</button>
                                                     <span className="text-slate-200">|</span>
-                                                    <button type="button" onClick={deselectAll} className="text-[10px] font-black text-slate-500 uppercase tracking-widest">None</button>
+                                                    <button type="button" onClick={deselectAll} className="text-[10px] font-black text-slate-500 uppercase tracking-[0.15em]">None</button>
                                                 </div>
                                             </div>
 
@@ -685,15 +686,15 @@ export default function SessionModal({ isOpen, onClose, classId, className, onSu
                                                     value={searchQuery}
                                                     onChange={(e) => setSearchQuery(e.target.value)}
                                                     placeholder="Search students..."
-                                                    className="w-full pl-12 pr-4 py-3 bg-white/60 border border-identity-sky/10 rounded-xl text-[10px] font-black text-identity-navy uppercase tracking-widest focus:border-identity-sky/50 focus:outline-none shadow-inner"
+                                                    className="w-full pl-12 pr-4 py-3 bg-white/60 border border-identity-sky/10 rounded-xl text-[10px] font-black text-identity-navy uppercase tracking-[0.15em] focus:border-identity-sky/50 focus:outline-none shadow-inner"
                                                 />
                                             </div>
 
                                             <div className="bg-white/60 border border-identity-sky/10 rounded-xl max-h-48 overflow-y-auto shadow-inner">
                                                 {loadingStudents ? (
-                                                    <div className="p-12 text-center text-[10px] font-black text-slate-300 uppercase tracking-widest animate-pulse">Loading roster...</div>
+                                                    <div className="p-12 text-center text-[10px] font-black text-slate-300 uppercase tracking-[0.15em] animate-pulse">Loading roster...</div>
                                                 ) : filteredStudents.length === 0 ? (
-                                                    <div className="p-12 text-center text-[10px] font-black text-slate-300 uppercase tracking-widest">No students found</div>
+                                                    <div className="p-12 text-center text-[10px] font-black text-slate-300 uppercase tracking-[0.15em]">No students found</div>
                                                 ) : (
                                                     filteredStudents.map((student) => (
                                                         <label key={student.enrollment_id} className="flex items-center gap-4 px-4 py-3 hover:bg-identity-sky/5 cursor-pointer border-b border-identity-sky/5 last:border-0 transition-colors">
@@ -705,10 +706,10 @@ export default function SessionModal({ isOpen, onClose, classId, className, onSu
                                                             />
                                                             <div className="flex-1 min-w-0">
                                                                 <div className="flex items-center gap-3">
-                                                                    <div className="text-[10px] font-black text-identity-navy uppercase tracking-widest truncate">{student.last_name}, {student.first_name}</div>
+                                                                    <div className="text-[10px] font-black text-identity-navy uppercase tracking-[0.15em] truncate">{student.last_name}, {student.first_name}</div>
                                                                     {!student.is_registered && <span className="px-2 py-0.5 rounded-lg bg-slate-100 text-slate-400 text-[8px] font-black uppercase border border-slate-200">NO ACCOUNT</span>}
                                                                 </div>
-                                                                <div className="text-[8px] font-black text-slate-400 font-mono mt-0.5 uppercase tracking-widest">{student.user_id}</div>
+                                                                <div className="text-[8px] font-black text-slate-400 font-mono mt-0.5 uppercase tracking-[0.15em]">{student.user_id}</div>
                                                             </div>
                                                         </label>
                                                     ))
@@ -720,7 +721,7 @@ export default function SessionModal({ isOpen, onClose, classId, className, onSu
                                             type="button"
                                             onClick={handleSaveGroup}
                                             disabled={!newGroupName || selectedStudents.length === 0 || isSavingGroup}
-                                            className="w-full bg-identity-navy text-white font-black uppercase tracking-widest py-3 rounded-xl hover:bg-identity-navy/90 disabled:opacity-50 transition-all flex items-center justify-center gap-2 shadow-lg shadow-identity-navy/10"
+                                            className="w-full bg-identity-navy text-white font-black uppercase tracking-[0.15em] py-3 rounded-xl hover:bg-identity-navy/90 disabled:opacity-50 transition-all flex items-center justify-center gap-2 shadow-lg shadow-identity-navy/10"
                                         >
                                             <Save size={18} /> {isSavingGroup ? 'Saving Batch...' : 'Save Batch'}
                                         </button>
@@ -729,7 +730,7 @@ export default function SessionModal({ isOpen, onClose, classId, className, onSu
                                     // SCHEDULE VIEW - Show saved batches
                                     <div className="space-y-3 animate-fade-in">
                                         {groups.length === 0 ? (
-                                            <div className="text-center text-secondary/20 font-black uppercase tracking-widest py-12 border-2 border-dashed border-white/5 rounded-2xl bg-black/20">
+                                            <div className="text-center text-secondary/20 font-black uppercase tracking-[0.15em] py-12 border-2 border-dashed border-white/5 rounded-2xl bg-black/20">
                                                 No batches created yet.
                                             </div>
                                         ) : (
@@ -755,13 +756,14 @@ export default function SessionModal({ isOpen, onClose, classId, className, onSu
                                                         className="w-5 h-5 bg-black/60 border-white/10 rounded text-brand-gold focus:ring-brand-gold"
                                                     />
                                                     <div className="flex-1">
-                                                        <div className="text-[10px] font-black text-white uppercase tracking-widest">{group.name}</div>
-                                                        <div className="text-[8px] font-black text-secondary/40 uppercase tracking-widest mt-0.5">{group.student_count} students enrolled</div>
+                                                        <div className="text-[10px] font-black text-white uppercase tracking-[0.15em]">{group.name}</div>
+                                                        <div className="text-[8px] font-black text-secondary/40 uppercase tracking-[0.15em] mt-0.5">{group.student_count} students enrolled</div>
                                                     </div>
                                                     <button
                                                         type="button"
                                                         onClick={() => handleDeleteGroup(group.id)}
-                                                        className="text-secondary/20 hover:text-red-400 p-2 rounded-lg hover:bg-red-500/5 transition-all"
+                                                        className="p-3 min-h-[44px] min-w-[44px] flex items-center justify-center text-secondary/20 hover:text-rose-500 hover:bg-rose-50 rounded-xl transition-all border border-transparent hover:border-rose-100"
+                                                        title="Delete Batch"
                                                     >
                                                         <Trash2 size={18} />
                                                     </button>
@@ -785,11 +787,11 @@ export default function SessionModal({ isOpen, onClose, classId, className, onSu
                                     <Users size={20} />
                                 </div>
                                 <div className="flex-1">
-                                    <p className={`text-[10px] font-black uppercase tracking-widest leading-relaxed ${!isRegularAllowed() ? 'text-red-400' : 'text-white'}`}>
+                                    <p className={`text-[10px] font-black uppercase tracking-[0.15em] leading-relaxed ${!isRegularAllowed() ? 'text-red-400' : 'text-white'}`}>
                                         <strong>Batch Session:</strong> Schedule groups for specific times within the current session.
                                     </p>
                                     {!isRegularAllowed() && !fetchingStatus && (
-                                        <div className="mt-4 p-3 bg-red-500/10 border border-red-500/10 rounded-xl text-[10px] font-black uppercase tracking-widest text-red-400 flex items-center gap-2 shadow-inner">
+                                        <div className="mt-4 p-3 bg-red-500/10 border border-red-500/10 rounded-xl text-[10px] font-black uppercase tracking-[0.15em] text-red-400 flex items-center gap-2 shadow-inner">
                                             <AlertCircle size={14} /> Not scheduled for today.
                                         </div>
                                     )}
@@ -804,7 +806,7 @@ export default function SessionModal({ isOpen, onClose, classId, className, onSu
                             </h4>
                             <button
                                 onClick={() => setViewMode(viewMode === 'schedule' ? 'create_batch' : 'schedule')}
-                                className="text-[10px] font-black text-identity-sky hover:text-identity-navy uppercase tracking-widest transition-all"
+                                className="text-[10px] font-black text-identity-sky hover:text-identity-navy uppercase tracking-[0.15em] transition-all"
                             >
                                 {viewMode === 'schedule' ? '+ Create New Batch' : '← Back to Schedule'}
                             </button>
@@ -814,26 +816,26 @@ export default function SessionModal({ isOpen, onClose, classId, className, onSu
                             // --- CREATE BATCH VIEW ---
                             <div className="space-y-6 animate-fade-in bg-black/20 p-6 rounded-2xl border border-white/5 shadow-inner">
                                 <div>
-                                    <label className="block text-[10px] font-black text-secondary/40 mb-2 uppercase tracking-widest ml-1">Batch Name</label>
+                                    <label className="block text-[10px] font-black text-secondary/40 mb-2 uppercase tracking-[0.15em] ml-1">Batch Name</label>
                                     <input
                                         type="text"
                                         value={newGroupName}
                                         onChange={(e) => setNewGroupName(e.target.value)}
                                         placeholder="e.g., Batch 1"
-                                        className="w-full px-4 py-3 bg-black/40 border border-white/5 rounded-xl text-sm font-black text-brand-gold uppercase tracking-widest focus:border-brand-gold/50 focus:outline-none shadow-inner"
+                                        className="w-full px-4 py-3 bg-black/40 border border-white/5 rounded-xl text-sm font-black text-brand-gold uppercase tracking-[0.15em] focus:border-brand-gold/50 focus:outline-none shadow-inner"
                                     />
                                 </div>
 
                                 <div>
                                     <div className="flex items-center justify-between mb-3 ml-1">
-                                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.15em] flex items-center gap-2">
                                             <Users size={16} />
                                             Select Students ({selectedStudents.length}/{students.length})
                                         </label>
                                         <div className="flex gap-4">
-                                            <button type="button" onClick={selectAll} className="text-[10px] font-black text-identity-sky uppercase tracking-widest">All</button>
+                                            <button type="button" onClick={selectAll} className="text-[10px] font-black text-identity-sky uppercase tracking-[0.15em]">All</button>
                                             <span className="text-slate-200">|</span>
-                                            <button type="button" onClick={deselectAll} className="text-[10px] font-black text-slate-500 uppercase tracking-widest">None</button>
+                                            <button type="button" onClick={deselectAll} className="text-[10px] font-black text-slate-500 uppercase tracking-[0.15em]">None</button>
                                         </div>
                                     </div>
 
@@ -844,15 +846,15 @@ export default function SessionModal({ isOpen, onClose, classId, className, onSu
                                             value={searchQuery}
                                             onChange={(e) => setSearchQuery(e.target.value)}
                                             placeholder="Search students..."
-                                            className="w-full pl-12 pr-4 py-3 bg-white/60 border border-identity-sky/10 rounded-xl text-[10px] font-black text-identity-navy uppercase tracking-widest focus:border-identity-sky/50 focus:outline-none shadow-inner"
+                                            className="w-full pl-12 pr-4 py-3 bg-white/60 border border-identity-sky/10 rounded-xl text-[10px] font-black text-identity-navy uppercase tracking-[0.15em] focus:border-identity-sky/50 focus:outline-none shadow-inner"
                                         />
                                     </div>
 
                                     <div className="bg-white/60 border border-identity-sky/10 rounded-xl max-h-48 overflow-y-auto shadow-inner">
                                         {loadingStudents ? (
-                                            <div className="p-12 text-center text-[10px] font-black text-slate-300 uppercase tracking-widest animate-pulse">Loading roster...</div>
+                                            <div className="p-12 text-center text-[10px] font-black text-slate-300 uppercase tracking-[0.15em] animate-pulse">Loading roster...</div>
                                         ) : filteredStudents.length === 0 ? (
-                                            <div className="p-12 text-center text-[10px] font-black text-slate-300 uppercase tracking-widest">No students found</div>
+                                            <div className="p-12 text-center text-[10px] font-black text-slate-300 uppercase tracking-[0.15em]">No students found</div>
                                         ) : (
                                             filteredStudents.map((student) => (
                                                 <label key={student.enrollment_id} className="flex items-center gap-4 px-4 py-3 hover:bg-identity-sky/5 cursor-pointer border-b border-identity-sky/5 last:border-0 transition-colors">
@@ -864,10 +866,10 @@ export default function SessionModal({ isOpen, onClose, classId, className, onSu
                                                     />
                                                     <div className="flex-1 min-w-0">
                                                         <div className="flex items-center gap-3">
-                                                            <div className="text-[10px] font-black text-identity-navy uppercase tracking-widest truncate">{student.last_name}, {student.first_name}</div>
+                                                            <div className="text-[10px] font-black text-identity-navy uppercase tracking-[0.15em] truncate">{student.last_name}, {student.first_name}</div>
                                                             {!student.is_registered && <span className="px-2 py-0.5 rounded-lg bg-slate-100 text-slate-400 text-[8px] font-black uppercase border border-slate-200">NO ACCOUNT</span>}
                                                         </div>
-                                                        <div className="text-[8px] font-black text-slate-400 font-mono mt-0.5 uppercase tracking-widest">{student.user_id}</div>
+                                                        <div className="text-[8px] font-black text-slate-400 font-mono mt-0.5 uppercase tracking-[0.15em]">{student.user_id}</div>
                                                     </div>
                                                 </label>
                                             ))
@@ -878,7 +880,7 @@ export default function SessionModal({ isOpen, onClose, classId, className, onSu
                                 <button
                                     onClick={handleSaveGroup}
                                     disabled={!newGroupName || selectedStudents.length === 0 || isSavingGroup}
-                                    className="w-full bg-identity-navy text-white font-black uppercase tracking-widest py-3 rounded-xl hover:bg-identity-navy/90 disabled:opacity-50 transition-all flex items-center justify-center gap-2 shadow-lg shadow-identity-navy/10"
+                                    className="w-full bg-identity-navy text-white font-black uppercase tracking-[0.15em] py-3 rounded-xl hover:bg-identity-navy/90 disabled:opacity-50 transition-all flex items-center justify-center gap-2 shadow-lg shadow-identity-navy/10"
                                 >
                                     <Save size={18} /> {isSavingGroup ? 'Saving Batch...' : 'Save Batch'}
                                 </button>
@@ -889,13 +891,13 @@ export default function SessionModal({ isOpen, onClose, classId, className, onSu
                                 <div className="bg-white/40 p-6 rounded-2xl border border-identity-sky/10 shadow-inner">
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                                         <div className="col-span-2">
-                                            <label className="block text-[10px] font-black text-slate-500 mb-2 uppercase tracking-widest ml-1">Select Batch</label>
+                                            <label className="block text-[10px] font-black text-slate-500 mb-2 uppercase tracking-[0.15em] ml-1">Select Batch</label>
                                             <div className="flex gap-2">
                                                 <div className="relative flex-1">
                                                     <select
                                                         value={selectedScheduleGroupId}
                                                         onChange={(e) => setSelectedScheduleGroupId(e.target.value)}
-                                                        className="w-full px-4 py-3 bg-white/60 border border-identity-sky/10 rounded-xl text-[10px] font-black text-identity-navy uppercase tracking-widest appearance-none focus:outline-none focus:border-identity-sky/50 shadow-inner"
+                                                        className="w-full px-4 py-3 bg-white/60 border border-identity-sky/10 rounded-xl text-[10px] font-black text-identity-navy uppercase tracking-[0.15em] appearance-none focus:outline-none focus:border-identity-sky/50 shadow-inner"
                                                     >
                                                         <option value="">Select a batch...</option>
                                                         {groups.map(g => (
@@ -915,16 +917,16 @@ export default function SessionModal({ isOpen, onClose, classId, className, onSu
                                             </div>
                                         </div>
                                         <div>
-                                            <label className="block text-[10px] font-black text-slate-500 mb-2 uppercase tracking-widest ml-1">Start Time</label>
-                                            <input type="time" value={customTime} onChange={(e) => setCustomTime(e.target.value)} className="w-full px-4 py-3 bg-white/60 border border-identity-sky/10 rounded-xl text-sm font-black text-identity-navy uppercase tracking-widest focus:outline-none shadow-inner" style={{ colorScheme: 'light' }} />
+                                            <label className="block text-[10px] font-black text-slate-500 mb-2 uppercase tracking-[0.15em] ml-1">Start Time</label>
+                                            <input type="time" value={customTime} onChange={(e) => setCustomTime(e.target.value)} className="w-full px-4 py-3 bg-white/60 border border-identity-sky/10 rounded-xl text-sm font-black text-identity-navy uppercase tracking-[0.15em] focus:outline-none shadow-inner" style={{ colorScheme: 'light' }} />
                                         </div>
                                         <div>
-                                            <label className="block text-[10px] font-black text-slate-500 mb-2 uppercase tracking-widest ml-1">End Time</label>
-                                            <input type="time" value={customEndTime} onChange={(e) => setCustomEndTime(e.target.value)} className="w-full px-4 py-3 bg-white/60 border border-identity-sky/10 rounded-xl text-sm font-black text-identity-navy uppercase tracking-widest focus:outline-none shadow-inner" style={{ colorScheme: 'light' }} />
+                                            <label className="block text-[10px] font-black text-slate-500 mb-2 uppercase tracking-[0.15em] ml-1">End Time</label>
+                                            <input type="time" value={customEndTime} onChange={(e) => setCustomEndTime(e.target.value)} className="w-full px-4 py-3 bg-white/60 border border-identity-sky/10 rounded-xl text-sm font-black text-identity-navy uppercase tracking-[0.15em] focus:outline-none shadow-inner" style={{ colorScheme: 'light' }} />
                                         </div>
                                     </div>
                                     <div className="mb-6">
-                                        <label className="block text-[10px] font-black text-slate-500 mb-2 uppercase tracking-widest ml-1">Late Threshold (Minutes)</label>
+                                        <label className="block text-[10px] font-black text-slate-500 mb-2 uppercase tracking-[0.15em] ml-1">Late Threshold (Minutes)</label>
                                         <div className="relative">
                                             <Clock className="absolute left-4 top-3.5 text-slate-300" size={18} />
                                             <input
@@ -933,14 +935,14 @@ export default function SessionModal({ isOpen, onClose, classId, className, onSu
                                                 max="60"
                                                 value={lateThreshold}
                                                 onChange={(e) => setLateThreshold(parseInt(e.target.value) || 15)}
-                                                className="w-full pl-12 pr-4 py-3 bg-white/60 border border-identity-sky/10 rounded-xl text-sm font-black text-identity-navy uppercase tracking-widest focus:outline-none shadow-inner"
+                                                className="w-full pl-12 pr-4 py-3 bg-white/60 border border-identity-sky/10 rounded-xl text-sm font-black text-identity-navy uppercase tracking-[0.15em] focus:outline-none shadow-inner"
                                             />
                                         </div>
                                     </div>
                                     <button
                                         onClick={handleAddToSchedule}
                                         disabled={!selectedScheduleGroupId}
-                                        className="w-full bg-white/40 hover:bg-white/60 text-identity-sky border border-identity-sky/10 px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-inner flex items-center justify-center gap-2"
+                                        className="w-full bg-white/40 hover:bg-white/60 text-identity-sky border border-identity-sky/10 px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-[0.15em] transition-all shadow-inner flex items-center justify-center gap-2"
                                     >
                                         + Add Batch to Schedule
                                     </button>
@@ -948,9 +950,9 @@ export default function SessionModal({ isOpen, onClose, classId, className, onSu
 
                                 {/* Scheduled List */}
                                 <div className="space-y-4">
-                                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Scheduled Batches</label>
+                                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.15em] ml-1">Scheduled Batches</label>
                                     {scheduledBatches.length === 0 ? (
-                                        <div className="text-slate-300 text-[10px] font-black uppercase tracking-widest py-12 text-center border-2 border-dashed border-identity-sky/5 rounded-2xl bg-white/40 shadow-inner">
+                                        <div className="text-slate-300 text-[10px] font-black uppercase tracking-[0.15em] py-12 text-center border-2 border-dashed border-identity-sky/5 rounded-2xl bg-white/40 shadow-inner">
                                             No batches scheduled.
                                         </div>
                                     ) : (
@@ -961,8 +963,8 @@ export default function SessionModal({ isOpen, onClose, classId, className, onSu
                                                         <Users size={20} className="text-identity-sky" />
                                                     </div>
                                                     <div>
-                                                        <div className="text-[10px] font-black text-identity-navy uppercase tracking-widest">{batch.groupName}</div>
-                                                        <div className="text-[8px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1 mt-0.5">
+                                                        <div className="text-[10px] font-black text-identity-navy uppercase tracking-[0.15em]">{batch.groupName}</div>
+                                                        <div className="text-[8px] font-black text-slate-400 uppercase tracking-[0.15em] flex items-center gap-1 mt-0.5">
                                                             <Clock size={12} className="text-identity-sky" /> {batch.startTime} - {batch.endTime}
                                                         </div>
                                                     </div>
@@ -989,7 +991,7 @@ export default function SessionModal({ isOpen, onClose, classId, className, onSu
                         (type === 'batch' && (scheduledBatches.length === 0 || !isBatchStartAllowed())) ||
                         (type === 'regular' && !isRegularAllowed())
                     }
-                    className="w-full bg-identity-navy text-white font-black uppercase tracking-widest py-5 rounded-xl transition-all shadow-lg shadow-identity-navy/20 flex items-center justify-center gap-3 disabled:opacity-30 disabled:cursor-not-allowed group relative overflow-hidden active:scale-95"
+                    className="w-full bg-identity-navy text-white font-black uppercase tracking-[0.15em] py-5 rounded-xl transition-all shadow-lg shadow-identity-navy/20 flex items-center justify-center gap-3 disabled:opacity-30 disabled:cursor-not-allowed group relative overflow-hidden active:scale-95"
                 >
                     {loading || isRedirecting ? (
                         <div className="animate-spin rounded-full h-6 w-6 border-2 border-white/30 border-t-white"></div>

@@ -1,18 +1,19 @@
 'use client';
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { CheckCircle, XCircle, AlertCircle, X } from 'lucide-react';
+import { CheckCircle, XCircle, AlertCircle, AlertTriangle, X, Info } from 'lucide-react';
 
-export type ToastType = 'success' | 'error' | 'info';
+export type ToastType = 'success' | 'error' | 'warning' | 'info';
 
 interface ToastData {
     id: string;
-    message: string;
+    title: string;
+    message?: string;
     type: ToastType;
     duration?: number;
 }
 
 interface ToastContextType {
-    showToast: (message: string, type?: ToastType, duration?: number) => void;
+    showToast: (title: string, message?: string, type?: ToastType, duration?: number) => void;
 }
 
 const ToastContext = createContext<ToastContextType | undefined>(undefined);
@@ -28,10 +29,10 @@ export function useToast() {
 export function ToastProvider({ children }: { children: ReactNode }) {
     const [toasts, setToasts] = useState<ToastData[]>([]);
 
-    const showToast = (message: string, type: ToastType = 'info', duration = 3000) => {
-        if (!message) return;
+    const showToast = (title: string, message?: string, type: ToastType = 'info', duration = 4000) => {
+        if (!title) return;
         const id = Math.random().toString(36).substr(2, 9);
-        setToasts((prev) => [...prev, { id, message, type, duration }]);
+        setToasts((prev) => [...prev, { id, title, message, type, duration }]);
     };
 
     const removeToast = (id: string) => {
@@ -41,10 +42,11 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     return (
         <ToastContext.Provider value={{ showToast }}>
             {children}
-            <div className="fixed top-4 right-4 z-[100] flex flex-col gap-2 pointer-events-none">
+            <div className="fixed top-6 right-6 z-[100] flex flex-col gap-3 pointer-events-none">
                 {toasts.map((toast) => (
                     <div key={toast.id} className="pointer-events-auto">
                         <ToastItem
+                            title={toast.title}
                             message={toast.message}
                             type={toast.type}
                             onClose={() => removeToast(toast.id)}
@@ -58,13 +60,14 @@ export function ToastProvider({ children }: { children: ReactNode }) {
 }
 
 interface ToastItemProps {
-    message: string;
+    title: string;
+    message?: string;
     type?: ToastType;
     onClose: () => void;
     duration?: number;
 }
 
-function ToastItem({ message, type = 'info', onClose, duration = 3000 }: ToastItemProps) {
+function ToastItem({ title, message, type = 'info', onClose, duration = 4000 }: ToastItemProps) {
     useEffect(() => {
         const timer = setTimeout(() => {
             onClose();
@@ -72,33 +75,56 @@ function ToastItem({ message, type = 'info', onClose, duration = 3000 }: ToastIt
         return () => clearTimeout(timer);
     }, [duration, onClose]);
 
-    const styles = {
-        success: 'bg-emerald-500/10 border-emerald-500/30 text-emerald-500 shadow-emerald-500/5',
-        error: 'bg-rose-500/10 border-rose-500/30 text-rose-500 shadow-rose-500/5',
-        info: 'bg-brand-gold/10 border-brand-gold/30 text-brand-gold shadow-brand-gold/5'
+    const colors = {
+        success: {
+            bg: 'bg-emerald-50 border-emerald-200 text-emerald-800',
+            icon: <CheckCircle className="text-emerald-500" size={20} />,
+            glow: 'shadow-emerald-500/10'
+        },
+        error: {
+            bg: 'bg-rose-50 border-rose-200 text-rose-800',
+            icon: <XCircle className="text-rose-500" size={20} />,
+            glow: 'shadow-rose-500/10'
+        },
+        warning: {
+            bg: 'bg-amber-50 border-amber-200 text-amber-800',
+            icon: <AlertTriangle className="text-amber-500" size={20} />,
+            glow: 'shadow-amber-500/10'
+        },
+        info: {
+            bg: 'bg-sky-50 border-sky-200 text-sky-800',
+            icon: <Info className="text-sky-500" size={20} />,
+            glow: 'shadow-sky-500/10'
+        }
     };
 
+    const config = colors[type];
+
     return (
-        <div className={`flex items-center gap-4 px-6 py-4 rounded-2xl shadow-2xl border backdrop-blur-xl animate-in slide-in-from-right-4 fade-in duration-300 pointer-events-auto ${styles[type]}`}>
-            <div className={`p-1.5 rounded-lg border border-current border-opacity-20`}>
-                {type === 'success' && <CheckCircle className="w-5 h-5" />}
-                {type === 'error' && <XCircle className="w-5 h-5" />}
-                {type === 'info' && <AlertCircle className="w-5 h-5" />}
+        <div className={`flex gap-4 p-5 rounded-2xl shadow-2xl border backdrop-blur-xl animate-in slide-in-from-right-8 fade-in duration-300 pointer-events-auto max-w-sm ${config.bg} ${config.glow}`}>
+            <div className="flex-shrink-0 mt-0.5">
+                {config.icon}
             </div>
 
-            <p className="font-black text-[10px] uppercase tracking-[0.2em] leading-relaxed">{message}</p>
+            <div className="flex-1 min-w-0">
+                <h4 className="font-black text-[11px] uppercase tracking-wider mb-1">{title}</h4>
+                {message && (
+                    <p className="text-[10px] font-bold opacity-70 uppercase tracking-[0.15em] leading-relaxed">
+                        {message}
+                    </p>
+                )}
+            </div>
 
             <button 
                 onClick={onClose} 
-                className="p-1.5 hover:bg-white/10 rounded-xl transition-all active:scale-95 ml-2"
+                className="flex-shrink-0 self-start p-1.5 hover:bg-black/5 rounded-xl transition-all active:scale-95"
             >
-                <X className="w-4 h-4" />
+                <X size={16} className="opacity-50" />
             </button>
         </div>
     );
 }
 
-// Default export for manual usage (compatible with Admin Dashboard implementation)
 export default function Toast(props: ToastItemProps) {
     return <ToastItem {...props} />;
 }

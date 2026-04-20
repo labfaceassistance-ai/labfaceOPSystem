@@ -254,7 +254,7 @@ export default function CreateClassModal({ isOpen, onClose, onSuccess, professor
             <div className="identity-glass border border-identity-sky/10 rounded-2xl shadow-3xl max-w-lg w-full p-8 relative animate-scale-up max-h-[90vh] overflow-y-auto">
                 <button
                     onClick={onClose}
-                    className="absolute top-6 right-6 text-slate-400 hover:text-identity-navy transition-all p-2 hover:bg-white/60 rounded-xl"
+                    className="absolute top-6 right-6 text-slate-400 hover:text-identity-navy transition-all p-2 min-h-[44px] min-w-[44px] flex items-center justify-center hover:bg-white/60 rounded-xl"
                 >
                     <X size={24} />
                 </button>
@@ -269,38 +269,38 @@ export default function CreateClassModal({ isOpen, onClose, onSuccess, professor
 
                 <form onSubmit={handleSubmit} className="space-y-6">
                     <div>
-                        <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 ml-1 italic">Subject Code</label>
+                        <label className="block text-[10px] font-black uppercase tracking-[0.15em] text-slate-400 mb-2 ml-1 italic">Subject Code</label>
                         <input
                             name="subjectCode"
                             value={formData.subjectCode}
                             onChange={handleInputChange}
                             placeholder="COMP 20133"
                             required
-                            className="w-full px-5 py-3.5 bg-white/60 border border-identity-sky/10 rounded-2xl text-xs font-bold text-identity-navy uppercase tracking-widest focus:outline-none focus:border-identity-sky/50 focus:ring-4 focus:ring-identity-sky/10 placeholder-slate-300 transition-all shadow-inner"
+                            className="w-full px-5 py-3.5 bg-white/60 border border-identity-sky/10 rounded-2xl text-xs font-bold text-identity-navy uppercase tracking-[0.15em] focus:outline-none focus:border-identity-sky/50 focus:ring-4 focus:ring-identity-sky/10 placeholder-slate-300 transition-all shadow-inner"
                         />
                     </div>
 
                     <div>
-                        <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 ml-1 italic">Subject Name</label>
+                        <label className="block text-[10px] font-black uppercase tracking-[0.15em] text-slate-400 mb-2 ml-1 italic">Subject Name</label>
                         <input
                             name="subjectName"
                             value={formData.subjectName}
                             onChange={handleInputChange}
                             placeholder="Data Structures and Algorithms"
                             required
-                            className="w-full px-5 py-3.5 bg-white/60 border border-identity-sky/10 rounded-2xl text-xs font-bold text-identity-navy uppercase tracking-widest focus:outline-none focus:border-identity-sky/50 focus:ring-4 focus:ring-identity-sky/10 placeholder-slate-300 transition-all shadow-inner"
+                            className="w-full px-5 py-3.5 bg-white/60 border border-identity-sky/10 rounded-2xl text-xs font-bold text-identity-navy uppercase tracking-[0.15em] focus:outline-none focus:border-identity-sky/50 focus:ring-4 focus:ring-identity-sky/10 placeholder-slate-300 transition-all shadow-inner"
                         />
                     </div>
 
                     {/* NEW: Course and Year Level */}
-                    <div className="grid grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
-                            <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 ml-1 italic">Course</label>
+                            <label className="block text-[10px] font-black uppercase tracking-[0.15em] text-slate-400 mb-2 ml-1 italic">Course</label>
                             <select
                                 name="course"
                                 value={formData.course}
                                 onChange={handleInputChange}
-                                className="w-full px-5 py-4 bg-white/60 border border-identity-sky/10 rounded-2xl text-xs font-bold text-identity-navy uppercase tracking-widest focus:outline-none focus:border-identity-sky/50 focus:ring-4 focus:ring-identity-sky/10 transition-all shadow-inner appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%230F172A%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22m6%209%206%206%206-6%22%2F%3E%3C%2Fsvg%3E')] bg-[length:1em_1em] bg-[right_1rem_center] bg-no-repeat"
+                                className="w-full px-5 py-4 bg-white/60 border border-identity-sky/10 rounded-2xl text-xs font-bold text-identity-navy uppercase tracking-[0.15em] focus:outline-none focus:border-identity-sky/50 focus:ring-4 focus:ring-identity-sky/10 transition-all shadow-inner appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%230F172A%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22m6%209%206%206%206-6%22%2F%3E%3C%2Fsvg%3E')] bg-[length:1em_1em] bg-[right_1rem_center] bg-no-repeat"
                             >
                                 <option value="BSIT">BSIT</option>
                                 <option value="DIT">DIT</option>
@@ -308,14 +308,14 @@ export default function CreateClassModal({ isOpen, onClose, onSuccess, professor
                             </select>
                         </div>
                         <div>
-                            <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 ml-1 italic">
+                            <label className="block text-[10px] font-black uppercase tracking-[0.15em] text-slate-400 mb-2 ml-1 italic">
                                 Year Level {formData.course === 'DIT' && <span className="text-[10px] text-identity-sky">(MAX: 3RD)</span>}
                             </label>
                             <select
                                 name="yearLevel"
                                 value={formData.yearLevel}
                                 onChange={handleInputChange}
-                                className="w-full px-5 py-4 bg-white/60 border border-identity-sky/10 rounded-2xl text-xs font-bold text-identity-navy uppercase tracking-widest focus:outline-none focus:border-identity-sky/50 focus:ring-4 focus:ring-identity-sky/10 transition-all shadow-inner appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%230F172A%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22m6%209%206%206%206-6%22%2F%3E%3C%2Fsvg%3E')] bg-[length:1em_1em] bg-[right_1rem_center] bg-no-repeat"
+                                className="w-full px-5 py-4 bg-white/60 border border-identity-sky/10 rounded-2xl text-xs font-bold text-identity-navy uppercase tracking-[0.15em] focus:outline-none focus:border-identity-sky/50 focus:ring-4 focus:ring-identity-sky/10 transition-all shadow-inner appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%230F172A%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22m6%209%206%206%206-6%22%2F%3E%3C%2Fsvg%3E')] bg-[length:1em_1em] bg-[right_1rem_center] bg-no-repeat"
                             >
                                 <option value="1">1st Year</option>
                                 <option value="2">2nd Year</option>
@@ -326,27 +326,27 @@ export default function CreateClassModal({ isOpen, onClose, onSuccess, professor
                     </div>
 
                     <div>
-                        <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 ml-1 italic">Section</label>
+                        <label className="block text-[10px] font-black uppercase tracking-[0.15em] text-slate-400 mb-2 ml-1 italic">Section</label>
                         <input
                             name="section"
                             value={formData.section}
                             readOnly
                             placeholder="Auto-generated"
-                            className="w-full px-5 py-4 bg-white/30 border border-identity-sky/5 rounded-2xl text-xs font-black text-slate-300 uppercase tracking-widest cursor-not-allowed shadow-inner italic"
+                            className="w-full px-5 py-4 bg-white/30 border border-identity-sky/5 rounded-2xl text-xs font-black text-slate-300 uppercase tracking-[0.15em] cursor-not-allowed shadow-inner italic"
                         />
-                        <p className="text-[9px] text-slate-300 mt-2 italic font-bold uppercase tracking-[0.2em] ml-1">Metadata automatically derived from operational parameters.</p>
+                        <p className="text-[9px] text-slate-300 mt-2 italic font-bold uppercase tracking-[0.2em] ml-1">Details generated automatically.</p>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
-                            <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 ml-1 italic">School Year</label>
-                            <div className="w-full px-5 py-4 bg-white/40 border border-identity-sky/10 rounded-2xl text-xs font-black text-identity-sky uppercase tracking-widest shadow-inner flex items-center">
+                            <label className="block text-[10px] font-black uppercase tracking-[0.15em] text-slate-400 mb-2 ml-1 italic">School Year</label>
+                            <div className="w-full px-5 py-4 bg-white/40 border border-identity-sky/10 rounded-2xl text-xs font-black text-identity-sky uppercase tracking-[0.15em] shadow-inner flex items-center">
                                 <span>{formData.schoolYear}</span>
                             </div>
                         </div>
                         <div>
-                            <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 ml-1 italic">Semester</label>
-                            <div className="w-full px-5 py-4 bg-white/40 border border-identity-sky/10 rounded-2xl text-xs font-black text-identity-sky uppercase tracking-widest shadow-inner flex items-center">
+                            <label className="block text-[10px] font-black uppercase tracking-[0.15em] text-slate-400 mb-2 ml-1 italic">Semester</label>
+                            <div className="w-full px-5 py-4 bg-white/40 border border-identity-sky/10 rounded-2xl text-xs font-black text-identity-sky uppercase tracking-[0.15em] shadow-inner flex items-center">
                                 <span>{formData.semester}</span>
                             </div>
                         </div>
@@ -354,7 +354,7 @@ export default function CreateClassModal({ isOpen, onClose, onSuccess, professor
 
                     {/* ENHANCED: Required Roster Upload with File Preview */}
                     <div className="p-8 bg-identity-sky/5 border border-identity-sky/10 rounded-[2rem] shadow-inner">
-                        <label className="block text-[10px] font-black text-identity-navy mb-4 flex items-center justify-between uppercase tracking-widest">
+                        <label className="block text-[10px] font-black text-identity-navy mb-4 flex items-center justify-between uppercase tracking-[0.15em]">
                             <span>Upload Class Roster <span className="text-rose-500">*</span></span>
                             <button
                                 type="button"
@@ -371,13 +371,13 @@ export default function CreateClassModal({ isOpen, onClose, onSuccess, professor
                                     <div className="w-10 h-10 bg-identity-sky/10 rounded-xl flex items-center justify-center text-identity-sky">
                                         <Upload size={18} />
                                     </div>
-                                    <span className="text-[10px] font-black text-identity-navy uppercase tracking-widest truncate italic">{rosterFile.name}</span>
+                                    <span className="text-[10px] font-black text-identity-navy uppercase tracking-[0.15em] truncate italic">{rosterFile.name}</span>
                                 </div>
                                 <div className="flex items-center gap-3">
                                     <button
                                         type="button"
                                         onClick={handlePreviewFile}
-                                        className="text-identity-sky hover:text-identity-navy p-3 rounded-xl hover:bg-identity-sky/5 transition-all"
+                                        className="text-identity-sky hover:text-identity-navy p-3 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl hover:bg-identity-sky/5 transition-all"
                                         title="Preview Students"
                                     >
                                         <Eye size={20} />
@@ -385,7 +385,7 @@ export default function CreateClassModal({ isOpen, onClose, onSuccess, professor
                                     <button
                                         type="button"
                                         onClick={removeFile}
-                                        className="text-rose-500 hover:text-rose-400 p-3 rounded-xl hover:bg-rose-50 transition-all"
+                                        className="text-rose-500 hover:text-rose-400 p-3 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl hover:bg-rose-50 transition-all"
                                         title="Remove file"
                                     >
                                         <X size={20} />
@@ -399,10 +399,10 @@ export default function CreateClassModal({ isOpen, onClose, onSuccess, professor
                                     type="file"
                                     accept=".xlsx, .xls, .csv"
                                     onChange={handleFileChange}
-                                    className="block w-full text-[10px] font-black uppercase tracking-widest text-slate-300 file:mr-6 file:py-4 file:px-8 file:rounded-2xl file:border-0 file:text-[10px] file:font-black file:uppercase file:tracking-[0.3em] file:bg-identity-navy file:text-white hover:file:bg-identity-sky cursor-pointer transition-all file:shadow-lg file:shadow-identity-navy/10"
+                                    className="block w-full text-[10px] font-black uppercase tracking-[0.15em] text-slate-300 file:mr-6 file:py-4 file:px-8 file:rounded-2xl file:border-0 file:text-[10px] file:font-black file:uppercase file:tracking-[0.3em] file:bg-identity-navy file:text-white hover:file:bg-identity-sky cursor-pointer transition-all file:shadow-lg file:shadow-identity-navy/10"
                                 />
                                 <div className="absolute inset-x-0 bottom-0 py-2 text-center pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <span className="text-[8px] font-black text-identity-sky uppercase tracking-[0.5em]">Spreadsheet Protocol Required</span>
+                                    <span className="text-[8px] font-black text-identity-sky uppercase tracking-[0.5em]">Spreadsheet Required</span>
                                 </div>
                             </div>
                         )}
@@ -413,10 +413,10 @@ export default function CreateClassModal({ isOpen, onClose, onSuccess, professor
                     </div>
 
                     <div>
-                        <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-4 flex items-center justify-between ml-1 italic">
-                            <span>Class Schedule Protocol</span>
+                        <label className="block text-[10px] font-black uppercase tracking-[0.15em] text-slate-400 mb-4 flex items-center justify-between ml-1 italic">
+                            <span>Class Schedule</span>
                             <button type="button" onClick={addSchedule} className="px-4 py-1.5 bg-identity-sky/5 text-identity-sky text-[9px] font-black uppercase tracking-[0.2em] rounded-lg border border-identity-sky/10 hover:bg-identity-sky hover:text-white transition-all">
-                                <Plus size={14} className="inline mr-1" /> Add Matrix Day
+                                <Plus size={14} className="inline mr-1" /> Add Class Day
                             </button>
                         </label>
                         <div className="space-y-4">
@@ -425,7 +425,7 @@ export default function CreateClassModal({ isOpen, onClose, onSuccess, professor
                                     <select
                                         value={schedule.day}
                                         onChange={(e) => handleScheduleChange(index, 'day', e.target.value)}
-                                        className="p-3 border border-identity-sky/10 rounded-xl text-[10px] font-black bg-white/60 text-identity-navy uppercase tracking-widest focus:outline-none focus:border-identity-sky/50 shadow-sm"
+                                        className="p-3 border border-identity-sky/10 rounded-xl text-[10px] font-black bg-white/60 text-identity-navy uppercase tracking-[0.15em] focus:outline-none focus:border-identity-sky/50 shadow-sm"
                                     >
                                         {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map(day => (
                                             <option key={day} value={day}>{day}</option>
@@ -436,7 +436,7 @@ export default function CreateClassModal({ isOpen, onClose, onSuccess, professor
                                             type="time"
                                             value={schedule.startTime}
                                             onChange={(e) => handleScheduleChange(index, 'startTime', e.target.value)}
-                                            className="flex-1 p-3 border border-identity-sky/10 rounded-xl text-xs font-black bg-white/60 text-identity-navy uppercase tracking-widest focus:outline-none focus:border-identity-sky/50 shadow-sm"
+                                            className="flex-1 p-3 border border-identity-sky/10 rounded-xl text-xs font-black bg-white/60 text-identity-navy uppercase tracking-[0.15em] focus:outline-none focus:border-identity-sky/50 shadow-sm"
                                             style={{ colorScheme: 'light' }}
                                         />
                                         <span className="text-slate-200 font-black">/</span>
@@ -444,12 +444,12 @@ export default function CreateClassModal({ isOpen, onClose, onSuccess, professor
                                             type="time"
                                             value={schedule.endTime}
                                             onChange={(e) => handleScheduleChange(index, 'endTime', e.target.value)}
-                                            className="flex-1 p-3 border border-identity-sky/10 rounded-xl text-xs font-black bg-white/60 text-identity-navy uppercase tracking-widest focus:outline-none focus:border-identity-sky/50 shadow-sm"
+                                            className="flex-1 p-3 border border-identity-sky/10 rounded-xl text-xs font-black bg-white/60 text-identity-navy uppercase tracking-[0.15em] focus:outline-none focus:border-identity-sky/50 shadow-sm"
                                             style={{ colorScheme: 'light' }}
                                         />
                                     </div>
                                     {schedules.length > 1 && (
-                                        <button type="button" onClick={() => removeSchedule(index)} className="text-rose-300 hover:text-rose-500 transition-all p-2 hover:bg-rose-50 rounded-xl">
+                                        <button type="button" onClick={() => removeSchedule(index)} className="text-rose-300 hover:text-rose-500 transition-all p-2 min-h-[44px] min-w-[44px] flex items-center justify-center hover:bg-rose-50 rounded-xl">
                                             <Trash size={18} />
                                         </button>
                                     )}
@@ -466,9 +466,9 @@ export default function CreateClassModal({ isOpen, onClose, onSuccess, professor
                             {loading ? (
                                 <>
                                     <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                                    Synchronizing...
+                                    Processing...
                                 </>
-                            ) : 'Initialize Class'}
+                            ) : 'Create Class'}
                         </button>
                     </div>
                 </form>
@@ -482,13 +482,13 @@ export default function CreateClassModal({ isOpen, onClose, onSuccess, professor
                         <div className="identity-glass border border-identity-sky/10 rounded-[2.5rem] shadow-3xl max-w-2xl w-full p-10 relative animate-scale-up max-h-[85vh] flex flex-col">
                             <button
                                 onClick={() => setShowPreview(false)}
-                                className="absolute top-6 right-6 text-slate-400 hover:text-identity-navy transition-all p-2 hover:bg-white/60 rounded-xl"
+                                className="absolute top-6 right-6 text-slate-400 hover:text-identity-navy transition-all p-2 min-h-[44px] min-w-[44px] flex items-center justify-center hover:bg-white/60 rounded-xl"
                             >
                                 <X size={28} />
                             </button>
-                            <h3 className="text-2xl font-black text-identity-navy mb-8 uppercase tracking-tight italic">Roster Matrix Preview</h3>
-                            <div className="overflow-auto flex-1 border border-identity-sky/10 rounded-2xl bg-white/60 shadow-inner no-scrollbar">
-                                <table className="w-full text-left text-[10px] font-bold text-identity-navy uppercase tracking-widest">
+                            <h3 className="text-2xl font-black text-identity-navy mb-8 uppercase tracking-tight italic">Class Roster Preview</h3>
+                            <div className="overflow-auto flex-1 border border-identity-sky/10 rounded-2xl bg-white/60 shadow-inner no-scrollbar table-responsive-wrapper">
+                                <table className="w-full text-left text-[10px] font-bold text-identity-navy uppercase tracking-[0.15em]">
                                     <thead className="bg-identity-navy/5 text-identity-sky font-black sticky top-0 border-b border-identity-sky/10 backdrop-blur-md">
                                         <tr>
                                             {previewData.length > 0 && Object.keys(previewData[0]).map((key) => (
@@ -526,7 +526,7 @@ export default function CreateClassModal({ isOpen, onClose, onSuccess, professor
                                     onClick={() => setShowPreview(false)}
                                     className="px-10 py-4 bg-identity-navy text-white rounded-2xl font-black uppercase tracking-[0.3em] text-[10px] transition-all shadow-xl shadow-identity-navy/10 hover:bg-identity-sky"
                                 >
-                                    Close Matrix View
+                                    Close View
                                 </button>
                             </div>
                         </div>

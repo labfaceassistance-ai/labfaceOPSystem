@@ -95,11 +95,11 @@ export default function AttendanceInsightsDashboard({ studentId }: { studentId: 
     };
 
     const getTrendMessage = () => {
-        if (!insights) return 'Synchronizing...';
+        if (!insights) return 'Processing...';
         const percentage = Math.abs(displayInsights.trendPercentage);
         switch (displayInsights.trend) {
-            case 'up': return `Matrix Gains: +${percentage}%`;
-            case 'down': return `Matrix Loss: -${percentage}%`;
+            case 'up': return `Attendance Gains: +${percentage}%`;
+            case 'down': return `Attendance Loss: -${percentage}%`;
             default: return `Consistency Lock`;
         }
     };
@@ -114,7 +114,7 @@ export default function AttendanceInsightsDashboard({ studentId }: { studentId: 
         switch (displayInsights.riskLevel) {
             case 'low': return {
                 icon: <ShieldCheck size={20} />,
-                message: 'Operational Baseline Secured',
+                message: 'Active Baseline Secured',
                 color: 'text-emerald-600 bg-emerald-50 border-emerald-100'
             };
             case 'medium': return {
@@ -137,12 +137,12 @@ export default function AttendanceInsightsDashboard({ studentId }: { studentId: 
 
             {/* Overall Summary Card */}
             {overallStats && (
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-6 bg-slate-50/50 p-8 rounded-[2.5rem] border border-slate-100">
+                <div className="grid grid-cols-1 md:grid-cols-2 md:grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 bg-slate-50/50 p-8 rounded-[2.5rem] border border-slate-100">
                     {[
                         { label: 'Total Present', val: overallStats.presentCount, icon: CheckCircle, color: 'text-emerald-500', bg: 'bg-emerald-50' },
                         { label: 'Total Late', val: overallStats.lateCount, icon: Clock, color: 'text-amber-500', bg: 'bg-amber-50' },
                         { label: 'Total Absent', val: overallStats.absentCount, icon: XCircle, color: 'text-rose-500', bg: 'bg-rose-50' },
-                        { label: 'Final Sync Rate', val: `${overallStats.attendanceRate}%`, icon: BarChart3, color: 'text-identity-sky', bg: 'bg-identity-sky/10' }
+                        { label: 'Final Attendance Rate', val: `${overallStats.attendanceRate}%`, icon: BarChart3, color: 'text-identity-sky', bg: 'bg-identity-sky/10' }
                     ].map((stat, i) => (
                         <div key={i} className="flex flex-col items-center text-center">
                             <div className={`w-14 h-14 ${stat.bg} ${stat.color} rounded-2xl flex items-center justify-center mb-4 shadow-sm border border-white`}>
@@ -156,20 +156,20 @@ export default function AttendanceInsightsDashboard({ studentId }: { studentId: 
             )}
 
             {/* Streak Card */}
-            <div className="bg-identity-navy rounded-[3rem] p-10 text-white relative overflow-hidden group">
+            <div className="bg-identity-navy rounded-[2rem] md:rounded-[3rem] p-6 sm:p-8 md:p-10 text-white relative overflow-hidden group">
                 <div className="absolute top-0 right-0 w-80 h-80 bg-identity-sky/20 rounded-full blur-[100px] -translate-y-1/2 translate-x-1/2 opacity-30"></div>
                 <div className="absolute inset-0 bg-blueprint opacity-[0.05] pointer-events-none"></div>
                 
                 <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-10">
                     <div className="text-center md:text-left">
                         <div className="flex items-center gap-3 text-identity-sky/80 mb-4 text-[10px] font-black uppercase tracking-[0.4em]">
-                            <Zap size={16} className="animate-pulse" /> Neural Pulse Active
+                            <Zap size={16} className="animate-pulse" /> Live Suggestions Active
                         </div>
                         <h3 className="text-3xl font-black text-white mb-2 tracking-tighter uppercase font-outfit">Identity Persistence</h3>
-                        <p className="text-identity-sky/60 font-black text-[10px] uppercase tracking-[0.3em]">Keep the matrix synchronized.</p>
+                        <p className="text-identity-sky/60 font-black text-[10px] uppercase tracking-[0.3em]">Keep records up to date.</p>
                         
                         <div className="mt-8 flex items-baseline gap-3">
-                            <span className="text-8xl font-black text-identity-sky font-outfit tracking-tighter drop-shadow-2xl">{displayInsights.streak}</span>
+                            <span className="text-6xl md:text-8xl font-black text-identity-sky font-outfit tracking-tighter drop-shadow-2xl">{displayInsights.streak}</span>
                             <span className="text-xl text-white/40 font-black uppercase tracking-[0.4em]">Nodes</span>
                         </div>
                     </div>
@@ -193,9 +193,9 @@ export default function AttendanceInsightsDashboard({ studentId }: { studentId: 
             </div>
 
             {/* Stats Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {[
-                    { label: 'Matrix Sync Rate', val: `${displayInsights.attendanceRate}%`, icon: Calendar, color: 'text-identity-sky', bg: 'bg-identity-sky/5', trend: true },
+                    { label: 'Attendance Rate', val: `${displayInsights.attendanceRate}%`, icon: Calendar, color: 'text-identity-sky', bg: 'bg-identity-sky/5', trend: true },
                     { label: 'Global Ranking', val: displayInsights.percentile > 0 ? `Top ${100 - displayInsights.percentile}%` : 'Pending', icon: Users, color: 'text-indigo-500', bg: 'bg-indigo-50', sub: displayInsights.percentile > 0 ? `Superior to ${displayInsights.percentile}%` : "Awaiting more sessions" },
                     { label: 'Pass Probability', val: `${displayInsights.predictions.passLikelihood}%`, icon: Target, color: 'text-emerald-500', bg: 'bg-emerald-50', bar: true }
                 ].map((stat, i) => (
@@ -204,18 +204,18 @@ export default function AttendanceInsightsDashboard({ studentId }: { studentId: 
                             <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em]">{stat.label}</span>
                             <stat.icon className={stat.color} size={20} />
                         </div>
-                        <div className="text-4xl font-black text-identity-navy font-outfit mb-2 tracking-tighter uppercase">
+                        <div className="text-3xl md:text-4xl font-black text-identity-navy font-outfit mb-2 tracking-tighter uppercase">
                             {stat.val}
                         </div>
                         {stat.trend && (
-                            <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest mt-4 pt-4 border-t border-slate-50">
+                            <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.15em] mt-4 pt-4 border-t border-slate-50">
                                 {getTrendIcon()}
                                 <span className={displayInsights.trend === 'up' ? 'text-emerald-500' : displayInsights.trend === 'down' ? 'text-rose-500' : 'text-slate-400'}>
                                     {getTrendMessage()}
                                 </span>
                             </div>
                         )}
-                        {stat.sub && <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest mt-4 pt-4 border-t border-slate-50">{stat.sub}</p>}
+                        {stat.sub && <p className="text-[10px] font-black text-slate-300 uppercase tracking-[0.15em] mt-4 pt-4 border-t border-slate-50">{stat.sub}</p>}
                         {stat.bar && (
                             <div className="mt-6 pt-6 border-t border-slate-50">
                                 <div className="w-full bg-slate-100 rounded-full h-2 mb-2 shadow-inner">
@@ -238,7 +238,7 @@ export default function AttendanceInsightsDashboard({ studentId }: { studentId: 
                         {riskInfo.icon}
                     </div>
                     <div>
-                        <h4 className="font-black uppercase tracking-widest text-sm mb-2">{riskInfo.message}</h4>
+                        <h4 className="font-black uppercase tracking-[0.15em] text-sm mb-2">{riskInfo.message}</h4>
                         {displayInsights.riskLevel !== 'low' && (
                             <p className="text-[10px] font-black uppercase tracking-[0.2em] opacity-60 leading-relaxed">
                                 Current attendance trajectory indicates a high probability of system failure. Stabilize immediately.
@@ -255,7 +255,7 @@ export default function AttendanceInsightsDashboard({ studentId }: { studentId: 
 
             {/* Recommendations */}
             {displayInsights.recommendations.length > 0 && (
-                <div className="bg-white border border-slate-100 rounded-[3rem] p-10 shadow-2xl relative overflow-hidden">
+                <div className="bg-white border border-slate-100 rounded-[2rem] md:rounded-[3rem] p-6 sm:p-8 md:p-10 shadow-2xl relative overflow-hidden">
                     <div className="absolute top-0 left-0 w-2 h-full bg-identity-sky"></div>
                     <h3 className="text-[11px] font-black text-identity-navy uppercase tracking-[0.4em] mb-8 flex items-center gap-4">
                         <Brain className="text-identity-sky" size={24} />
@@ -268,7 +268,7 @@ export default function AttendanceInsightsDashboard({ studentId }: { studentId: 
                                 <span className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-identity-navy font-black group-hover:bg-identity-sky group-hover:text-white transition-all shadow-sm">
                                     {index + 1}
                                 </span>
-                                <span className="text-[11px] font-black text-slate-500 uppercase tracking-widest leading-relaxed pt-2 group-hover:text-identity-navy transition-colors">{rec}</span>
+                                <span className="text-[11px] font-black text-slate-500 uppercase tracking-[0.15em] leading-relaxed pt-2 group-hover:text-identity-navy transition-colors">{rec}</span>
                             </li>
                         ))}
                     </ul>
@@ -276,10 +276,10 @@ export default function AttendanceInsightsDashboard({ studentId }: { studentId: 
             )}
 
             {/* Monthly Trend Chart */}
-            <div className="bg-white border border-slate-100 rounded-[3rem] p-10 shadow-2xl">
+            <div className="bg-white border border-slate-100 rounded-[2rem] md:rounded-[3rem] p-6 sm:p-8 md:p-10 shadow-2xl">
                 <h3 className="text-[11px] font-black text-identity-navy uppercase tracking-[0.4em] mb-12 flex items-center gap-4">
                     <BarChart3 className="text-identity-sky" size={24} />
-                    Monthly Sync Trajectory
+                    Monthly Attendance Trend
                     <span className="h-px bg-slate-100 flex-1"></span>
                 </h3>
 
@@ -297,13 +297,13 @@ export default function AttendanceInsightsDashboard({ studentId }: { studentId: 
 
                     return hasAnyData ? (
                         <div className="space-y-12">
-                            <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 md:grid-cols-6 gap-4">
                                 {completeMonthData.map((data, index) => (
                                     <div key={index} className={`rounded-[1.8rem] p-5 border transition-all ${data.isPlaceholder ? 'bg-slate-50/50 border-slate-50 opacity-40' : 'bg-slate-50 border-slate-100 hover:shadow-xl hover:bg-white'}`}>
-                                        <div className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-3">{data.month}</div>
+                                        <div className="text-[8px] font-black text-slate-400 uppercase tracking-[0.15em] mb-3">{data.month}</div>
                                         <div className="text-xl font-black font-outfit text-identity-navy">{data.isPlaceholder ? '---' : `${data.rate}%`}</div>
-                                        <div className="text-[7px] text-slate-300 font-black uppercase tracking-widest mt-1">
-                                            {data.isPlaceholder ? 'Sync Locked' : `${data.attended}/${data.total} SESSIONS`}
+                                        <div className="text-[7px] text-slate-300 font-black uppercase tracking-[0.15em] mt-1">
+                                            {data.isPlaceholder ? 'Not Tracked' : `${data.attended}/${data.total} SESSIONS`}
                                         </div>
                                     </div>
                                 ))}
@@ -322,7 +322,7 @@ export default function AttendanceInsightsDashboard({ studentId }: { studentId: 
                                                 </>
                                             )}
                                         </div>
-                                        <span className={`text-[9px] font-black uppercase tracking-widest ${data.isPlaceholder ? 'text-slate-200' : 'text-slate-400 group-hover:text-identity-sky'}`}>
+                                        <span className={`text-[9px] font-black uppercase tracking-[0.15em] ${data.isPlaceholder ? 'text-slate-200' : 'text-slate-400 group-hover:text-identity-sky'}`}>
                                             {data.month}
                                         </span>
                                     </div>
@@ -332,27 +332,27 @@ export default function AttendanceInsightsDashboard({ studentId }: { studentId: 
                     ) : (
                         <div className="h-64 flex flex-col items-center justify-center text-slate-200 border-2 border-dashed border-slate-100 rounded-[3rem]">
                             <Calendar className="mb-6" size={48} />
-                            <p className="text-[10px] font-black uppercase tracking-[0.4em]">Historical Matrix Empty</p>
+                            <p className="text-[10px] font-black uppercase tracking-[0.4em]">No History Found</p>
                         </div>
                     );
                 })()}
             </div>
 
             {/* Goal Setting */}
-            <div className="bg-identity-sky/5 border border-identity-sky/20 rounded-[3rem] p-10 flex flex-col md:flex-row items-center justify-between gap-10">
+            <div className="bg-identity-sky/5 border border-identity-sky/20 rounded-[2rem] md:rounded-[3rem] p-6 sm:p-8 md:p-10 flex flex-col md:flex-row items-center justify-between gap-10">
                 <div className="flex-1">
                     <h3 className="text-xl font-black text-identity-navy uppercase tracking-tighter font-outfit mb-4 flex items-center gap-4">
                         <Target className="text-identity-sky" size={28} />
-                        Matrix Objective: {goal ? `${goal}% Sync` : 'Unassigned'}
+                        Attendance Goal: {goal ? `${goal}% Attendance` : 'Unassigned'}
                     </h3>
                     {goal ? (
-                        <p className="text-[11px] font-black text-slate-500 uppercase tracking-widest leading-relaxed">
+                        <p className="text-[11px] font-black text-slate-500 uppercase tracking-[0.15em] leading-relaxed">
                             Current performance: <span className="text-identity-sky">{displayInsights.attendanceRate}%</span>. 
-                            {displayInsights.attendanceRate >= goal ? ' Matrix objective secured.' : ` Matrix stabilization requires +${goal - displayInsights.attendanceRate}% gain.`}
+                            {displayInsights.attendanceRate >= goal ? ' Goal achieved.' : ` Reaching goal requires +${goal - displayInsights.attendanceRate}% gain.`}
                         </p>
                     ) : (
-                        <p className="text-[11px] font-black text-slate-500 uppercase tracking-widest leading-relaxed">
-                            Define your operational attendance target to enable Neural Optimization.
+                        <p className="text-[11px] font-black text-slate-500 uppercase tracking-[0.15em] leading-relaxed">
+                            Set your attendance goal for personal recommendations.
                         </p>
                     )}
                 </div>
@@ -361,7 +361,7 @@ export default function AttendanceInsightsDashboard({ studentId }: { studentId: 
                     onClick={() => setIsGoalModalOpen(true)}
                     className="px-12 py-5 bg-identity-navy text-white hover:bg-identity-sky hover:shadow-2xl rounded-2xl font-black text-[10px] uppercase tracking-[0.4em] transition-all shadow-xl shadow-identity-navy/20 active:scale-95 whitespace-nowrap"
                 >
-                    {goal ? 'Update Objective' : 'Initialize Goal'}
+                    {goal ? 'Update Goal' : 'Set My Goal'}
                 </button>
             </div>
 
@@ -369,8 +369,8 @@ export default function AttendanceInsightsDashboard({ studentId }: { studentId: 
             {isGoalModalOpen && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center bg-identity-navy/40 backdrop-blur-xl p-4 animate-in fade-in duration-300">
                     <div className="bg-white border border-identity-sky/10 rounded-[3rem] w-full max-w-md p-10 shadow-3xl transform transition-all animate-in zoom-in-95 duration-300">
-                        <h3 className="text-2xl font-black text-identity-navy mb-4 uppercase tracking-tighter font-outfit italic">Set Matrix Objective</h3>
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] leading-relaxed mb-10 italic">Select your operational target for the current academic period.</p>
+                        <h3 className="text-2xl font-black text-identity-navy mb-4 uppercase tracking-tighter font-outfit italic">Course Description</h3>
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] leading-relaxed mb-10 italic">Choose your overall goal for the semester.</p>
 
                         <div className="space-y-4 mb-10">
                             {[90, 95, 100].map((target) => (

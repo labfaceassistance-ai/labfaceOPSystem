@@ -21,9 +21,9 @@ export default function ConsentStep({
 
     const consentContent = {
         registration: {
-            title: 'Biometric Matrix Sync',
-            subtitle: 'Data Privacy Act · Identity Vault Encryption',
-            description: 'We will capture and archive 5 perspective biometric matrix signatures for continuous identity verification.',
+            title: 'Face Registration Consent',
+            subtitle: 'Data Privacy Act · Data Privacy Security',
+            description: 'We will capture and archive 5 perspective face registration photos for continuous identity verification.',
             details: [
                 {
                     icon: <Zap size={20} className="text-identity-sky" />,
@@ -33,7 +33,7 @@ export default function ConsentStep({
                 {
                     icon: <Lock size={20} className="text-identity-sky" />,
                     title: 'Vector Generation',
-                    text: 'Encrypted 512-dimensional neural signatures'
+                    text: 'Encrypted 512-dimensional face profiles'
                 },
                 {
                     icon: <CheckCircle size={20} className="text-identity-sky" />,
@@ -53,19 +53,19 @@ export default function ConsentStep({
             ]
         },
         cctv: {
-            title: 'Neural CCTV Consent',
-            subtitle: 'Continuous Authentication Matrix',
+            title: 'CCTV Consent',
+            subtitle: 'Continuous Verification',
             description: 'Intelligent CCTV nodes will analyze your presence in real-time for automated logging.',
             details: [
                 {
                     icon: <Zap size={20} className="text-identity-sky" />,
-                    title: 'Real-time Sync',
+                    title: 'Real-time Detection',
                     text: 'Laboratory nodes maintain persistent connection'
                 },
                 {
                     icon: <Shield size={20} className="text-identity-sky" />,
                     title: 'FaceNet Logic',
-                    text: 'High-fidelity Recognition (99.2% Matrix Accuracy)'
+                    text: 'High-fidelity Recognition (99.2% System Accuracy)'
                 },
                 {
                     icon: <CheckCircle size={20} className="text-identity-sky" />,
@@ -80,18 +80,18 @@ export default function ConsentStep({
             ],
             risks: [
                 'Continuous monitoring during laboratory sessions',
-                'Minimal matrix drift may occur in fluctuating light',
+                'Minimal detection variance may occur in fluctuating light',
                 'Unauthorized presence triggers administrative alerts'
             ]
         },
         data_processing: {
-            title: 'Neural Layer Policy',
+            title: 'Data Retention Policy',
             subtitle: 'Persistence & Governance',
             description: 'Your biometric and academic signatures will be processed for secure laboratory oversight.',
             details: [
                 {
                     icon: <Lock size={20} className="text-identity-sky" />,
-                    title: 'Vault Security',
+                    title: 'Data Security',
                     text: 'Military-grade persistence using hardware HSM'
                 },
                 {
@@ -101,13 +101,13 @@ export default function ConsentStep({
                 },
                 {
                     icon: <CheckCircle size={20} className="text-identity-sky" />,
-                    title: 'Retention Matrix',
+                    title: 'Data Retention',
                     text: 'Purged 5 years after academic cycle completion'
                 },
                 {
                     icon: <Shield size={20} className="text-identity-sky" />,
                     title: 'Digital Sovereignty',
-                    text: 'Right to request full matrix deletion'
+                    text: 'Right to request full account deletion'
                 }
             ],
             risks: [
@@ -156,8 +156,8 @@ export default function ConsentStep({
                         <div className="flex gap-6">
                             <AlertCircle className="text-identity-sky flex-shrink-0 mt-1" size={24} />
                             <div>
-                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-3">Sync Framework Policy</p>
-                                <p className="text-identity-navy text-xs font-black uppercase tracking-widest leading-relaxed">
+                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-3">Data Privacy Policy</p>
+                                <p className="text-identity-navy text-xs font-black uppercase tracking-[0.15em] leading-relaxed">
                                     {content.description}
                                 </p>
                             </div>
@@ -168,7 +168,7 @@ export default function ConsentStep({
                     <div className="space-y-6">
                         <h3 className="text-[11px] font-black text-identity-navy uppercase tracking-[0.25em] flex items-center gap-3">
                             <span className="w-8 h-px bg-identity-sky/30"></span>
-                            Neural Layer Details
+                            Privacy Details
                         </h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {content.details.map((detail, idx) => (
@@ -177,8 +177,8 @@ export default function ConsentStep({
                                         {detail.icon}
                                     </div>
                                     <div>
-                                        <p className="font-black text-identity-navy text-[10px] uppercase tracking-widest">{detail.title}</p>
-                                        <p className="text-slate-500 text-[9px] font-bold uppercase tracking-widest mt-2 leading-relaxed">{detail.text}</p>
+                                        <p className="font-black text-identity-navy text-[10px] uppercase tracking-[0.15em]">{detail.title}</p>
+                                        <p className="text-slate-500 text-[9px] font-bold uppercase tracking-[0.15em] mt-2 leading-relaxed">{detail.text}</p>
                                     </div>
                                 </div>
                             ))}
@@ -187,13 +187,13 @@ export default function ConsentStep({
 
                     {/* Risks */}
                     <div className="bg-rose-50 border border-rose-100 rounded-2xl p-8">
-                        <h3 className="text-[10px] font-black text-rose-600 mb-5 flex items-center gap-3 uppercase tracking-widest">
+                        <h3 className="text-[10px] font-black text-rose-600 mb-5 flex items-center gap-3 uppercase tracking-[0.15em]">
                             <AlertCircle size={14} />
                             Strategic Risks
                         </h3>
                         <ul className="space-y-4">
                             {content.risks.map((risk, idx) => (
-                                <li key={idx} className="flex gap-4 text-[9px] font-black text-slate-500 uppercase tracking-widest leading-relaxed">
+                                <li key={idx} className="flex gap-4 text-[9px] font-black text-slate-500 uppercase tracking-[0.15em] leading-relaxed">
                                     <span className="text-rose-500 shrink-0">⚠</span>
                                     <span>{risk}</span>
                                 </li>
@@ -203,13 +203,13 @@ export default function ConsentStep({
 
                     {/* Your Rights */}
                     <div className="bg-white border border-slate-200 rounded-2xl p-8 shadow-sm">
-                        <h3 className="text-[10px] font-black mb-6 text-identity-navy uppercase tracking-widest">Digital Sovereignty Rights</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-8 text-[9px] font-black uppercase tracking-widest text-slate-400">
+                        <h3 className="text-[10px] font-black mb-6 text-identity-navy uppercase tracking-[0.15em]">Digital Sovereignty Rights</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-8 text-[9px] font-black uppercase tracking-[0.15em] text-slate-400">
                             {[
                                 { text: "Right to Vector Access", icon: <CheckCircle size={14} className="text-identity-sky/40" /> },
                                 { text: "Right to Rectification", icon: <CheckCircle size={14} className="text-identity-sky/40" /> },
-                                { text: "Right to Matrix Erasure", icon: <CheckCircle size={14} className="text-identity-sky/40" /> },
-                                { text: "Right to Revoke Sync", icon: <CheckCircle size={14} className="text-identity-sky/40" /> },
+                                { text: "Right to Data Deletion", icon: <CheckCircle size={14} className="text-identity-sky/40" /> },
+                                { text: "Right to Revoke Consent", icon: <CheckCircle size={14} className="text-identity-sky/40" /> },
                                 { text: "Right to Data Portability", icon: <CheckCircle size={14} className="text-identity-sky/40" /> },
                                 { text: "Right to File Governance", icon: <CheckCircle size={14} className="text-identity-sky/40" /> }
                             ].map((right, i) => (
@@ -247,9 +247,9 @@ export default function ConsentStep({
                         </div>
                         <label
                             htmlFor="understood"
-                            className={`text-[10px] font-black uppercase tracking-widest leading-relaxed cursor-pointer select-none transition-colors ${readToEnd ? 'text-identity-navy' : 'text-slate-300'}`}
+                            className={`text-[10px] font-black uppercase tracking-[0.15em] leading-relaxed cursor-pointer select-none transition-colors ${readToEnd ? 'text-identity-navy' : 'text-slate-300'}`}
                         >
-                            I have meticulously evaluated the synchronization policy. I voluntarily grant persistent authorization for the collection and archival of my biometric signatures.
+                            I have read the policy and agree to the collection of my photos for attendance.
                         </label>
                     </div>
 
@@ -257,7 +257,7 @@ export default function ConsentStep({
                         <button
                             type="button"
                             onClick={onDecline}
-                            className="flex-1 px-8 py-5 bg-slate-50 border border-slate-200 rounded-2xl transition-all font-black text-[10px] uppercase tracking-widest text-slate-400 hover:text-identity-navy hover:bg-white hover:border-identity-navy/20 active:scale-95"
+                            className="flex-1 px-8 py-5 bg-slate-50 border border-slate-200 rounded-2xl transition-all font-black text-[10px] uppercase tracking-[0.15em] text-slate-400 hover:text-identity-navy hover:bg-white hover:border-identity-navy/20 active:scale-95"
                         >
                             Decline
                         </button>
@@ -267,12 +267,12 @@ export default function ConsentStep({
                             disabled={!understood || !readToEnd}
                             className="flex-1 px-10 py-5 bg-identity-sky text-white rounded-2xl transition-all font-black text-[10px] uppercase tracking-[0.2em] shadow-2xl shadow-identity-sky/20 hover:brightness-110 disabled:opacity-20 disabled:grayscale active:scale-95 border border-identity-sky"
                         >
-                            Authorize Sync
+                            I Agree
                         </button>
                     </div>
 
                     <p className="text-[8px] font-black text-slate-300 mt-8 text-center uppercase tracking-[0.3em]">
-                        POL-ID-SYNC v{CONSENT_VERSION} · CRYPTOGRAPHIC LOG ESTABLISHED
+                        POL-ID-LOG v{CONSENT_VERSION} · CRYPTOGRAPHIC LOG ESTABLISHED
                     </p>
                 </div>
             </div>

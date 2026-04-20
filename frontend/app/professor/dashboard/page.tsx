@@ -4,6 +4,8 @@ import { useState, useEffect, useCallback, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import axios from 'axios';
 import Navbar from '@/components/Navbar';
+import DashboardTabs from '@/components/ui/DashboardTabs';
+import Breadcrumbs from '@/components/ui/Breadcrumbs';
 import { logout, getToken, getUser } from '@/utils/auth';
 import SessionTimeout from '@/components/SessionTimeout';
 import { Home, BookOpen, Monitor, BarChart3, Calendar } from 'lucide-react';
@@ -22,6 +24,17 @@ interface Class {
     student_count: number;
     is_archived: number;
 }
+
+const IdentityNode = ({ className = "", size = 120 }) => (
+    <div className={`identity-node opacity-[0.15] ${className}`} style={{ width: size, height: size }}>
+        <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
+            <path d="M50 5L95 27.5V72.5L50 95L5 72.5V27.5L50 5Z" stroke="currentColor" strokeWidth="0.5" />
+            <path d="M50 25L71.6506 37.5V62.5L50 75L28.3494 62.5V37.5L50 25Z" stroke="currentColor" strokeWidth="0.5" />
+            <circle cx="50" cy="50" r="2" fill="currentColor" />
+            <path d="M50 5V25M95 27.5L71.6506 37.5M95 72.5L71.6506 62.5M50 95V75M5 72.5L28.3494 62.5M5 27.5L28.3494 37.5" stroke="currentColor" strokeWidth="0.5" />
+        </svg>
+    </div>
+);
 
 type TabType = 'home' | 'classes' | 'schedule' | 'monitor' | 'analytics';
 
@@ -205,9 +218,20 @@ function DashboardContent() {
     }, []);
 
     if (!user || loading) return (
-        <div className="min-h-screen bg-identity-bg flex flex-col items-center justify-center gap-4">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-identity-navy"></div>
-            <div className="text-identity-navy/40 text-[10px] font-black uppercase tracking-widest animate-pulse">Establishing secure connection...</div>
+        <div className="min-h-screen bg-identity-navy flex flex-col items-center justify-center gap-8 relative overflow-hidden">
+            {/* Background layers for loading state */}
+            <div className="absolute inset-0 opacity-20">
+                <IdentityNode className="absolute top-10 left-10 text-identity-sky animate-pulse" size={200} />
+                <IdentityNode className="absolute bottom-10 right-10 text-identity-sky animate-pulse" size={240} />
+            </div>
+            
+            <div className="relative z-10 flex flex-col items-center">
+                <div className="w-24 h-24 mb-6 relative">
+                    <div className="absolute inset-0 border-4 border-identity-sky/20 rounded-full"></div>
+                    <div className="absolute inset-0 border-4 border-identity-sky border-t-transparent rounded-full animate-spin"></div>
+                </div>
+                <div className="text-identity-sky text-[10px] font-black uppercase tracking-[0.2em] animate-pulse font-outfit">Synchronizing Credentials...</div>
+            </div>
         </div>
     );
 
@@ -221,7 +245,24 @@ function DashboardContent() {
     ];
 
     return (
-        <div className="min-h-screen bg-identity-bg font-sans selection:bg-identity-sky/20 selection:text-identity-navy">
+        <div className="min-h-screen bg-identity-navy text-slate-200 relative overflow-hidden font-outfit">
+            {/* LAYER 1: Core Blueprints */}
+            <div className="absolute inset-0 pointer-events-none overflow-hidden">
+                <div className="absolute inset-0 bg-[url('/grid.svg')] bg-[length:40px_40px] opacity-[0.05]" />
+                <div className="absolute inset-0 bg-gradient-to-tr from-identity-navy via-transparent to-identity-navy/20" />
+            </div>
+
+            {/* LAYER 2: Identity Nodes */}
+            <div className="absolute inset-0 pointer-events-none">
+                <IdentityNode className="absolute -top-20 -left-20 text-identity-sky" size={400} />
+                <IdentityNode className="absolute top-1/3 -right-32 text-identity-navy" size={500} />
+                <IdentityNode className="absolute -bottom-40 left-1/4 text-identity-sky" size={600} />
+            </div>
+
+            {/* LAYER 3: Mesh Glows */}
+            <div className="absolute inset-x-0 top-0 h-[50vh] bg-gradient-to-b from-identity-sky/5 to-transparent pointer-events-none" />
+            <div className="absolute top-0 right-0 w-[40vw] h-[40vw] bg-identity-sky/5 blur-[120px] rounded-full pointer-events-none" />
+
             <SessionTimeout
                 sessionDuration={30 * 60 * 1000}
                 warningTime={5 * 60 * 1000}
@@ -229,32 +270,20 @@ function DashboardContent() {
                 onLogout={handleLogout}
             />
             <Navbar />
-            <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-8">
+            <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-28 md:pb-8">
+                <Breadcrumbs />
 
                 {/* Tab Navigation */}
-                <div className="sticky top-20 z-40 bg-identity-bg/90 backdrop-blur-xl border-b border-identity-sky/10 mb-8 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-0 transition-all duration-300">
-                    <div className="flex gap-2 overflow-x-auto justify-start md:justify-center px-4 no-scrollbar">
-                        {tabs.map((tab) => {
-                            const Icon = tab.icon;
-                            return (
-                                <button
-                                    key={tab.id}
-                                    onClick={() => handleTabChange(tab.id)}
-                                    className={`px-8 py-5 text-[10px] font-black uppercase tracking-[0.2em] transition-all border-b-2 flex items-center gap-3 whitespace-nowrap group ${activeTab === tab.id
-                                        ? 'text-identity-navy border-identity-navy bg-identity-navy/5'
-                                        : 'text-slate-400 border-transparent hover:text-identity-navy hover:bg-identity-navy/5'
-                                        }`}
-                                >
-                                    <Icon className={`w-4 h-4 transition-transform group-hover:scale-110 ${activeTab === tab.id ? 'text-identity-navy' : 'text-slate-300'}`} />
-                                    {tab.label}
-                                </button>
-                            );
-                        })}
-                    </div>
+                <div className="mb-8">
+                    <DashboardTabs 
+                        tabs={tabs} 
+                        activeTab={activeTab} 
+                        onTabChange={(tabId) => handleTabChange(tabId as TabType)} 
+                    />
                 </div>
 
                 {/* Tab Content */}
-                <div key={activeTab} className="tab-content-fade min-h-[60vh]">
+                <div key={activeTab} className="tab-content-fade min-h-[60vh] mt-8">
                     {activeTab === 'home' && <HomeTab user={user} classes={classes} error={error} />}
                     {activeTab === 'classes' && <ClassesTab user={user} classes={classes} loading={loading} onRefresh={handleRefresh} onTabChange={handleTabChange} />}
                     {activeTab === 'schedule' && <ScheduleTab user={user} classes={classes} />}
@@ -269,9 +298,18 @@ function DashboardContent() {
 export default function ProfessorDashboard() {
     return (
         <Suspense fallback={
-            <div className="min-h-screen bg-identity-bg flex flex-col items-center justify-center gap-4">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-identity-navy"></div>
-                <div className="text-identity-navy/40 text-[10px] font-black uppercase tracking-widest animate-pulse">Initializing Interface...</div>
+            <div className="min-h-screen bg-identity-navy flex flex-col items-center justify-center gap-8 relative overflow-hidden">
+                <div className="absolute inset-0 opacity-20">
+                    <IdentityNode className="absolute top-10 left-10 text-identity-sky animate-pulse" size={200} />
+                    <IdentityNode className="absolute bottom-10 right-10 text-identity-sky animate-pulse" size={240} />
+                </div>
+                <div className="relative z-10 flex flex-col items-center">
+                    <div className="w-24 h-24 mb-6 relative">
+                        <div className="absolute inset-0 border-4 border-identity-sky/20 rounded-full"></div>
+                        <div className="absolute inset-0 border-4 border-identity-sky border-t-transparent rounded-full animate-spin"></div>
+                    </div>
+                    <div className="text-identity-sky text-[10px] font-black uppercase tracking-[0.2em] animate-pulse font-outfit">Loading Workspace...</div>
+                </div>
             </div>
         }>
             <DashboardContent />

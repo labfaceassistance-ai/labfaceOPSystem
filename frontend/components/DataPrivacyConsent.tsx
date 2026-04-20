@@ -33,7 +33,7 @@ export default function DataPrivacyConsent({ isOpen, onClose, onAccept }: DataPr
                 {/* Scrollable Content */}
                 <div className="flex-1 overflow-y-auto p-8 space-y-10 relative z-10 custom-scrollbar">
                     <div className="bg-brand-gold/10 border border-brand-gold/20 rounded-2xl p-5 shadow-inner">
-                        <p className="text-[11px] text-brand-gold font-black uppercase tracking-widest leading-relaxed">
+                        <p className="text-[11px] text-brand-gold font-black uppercase tracking-[0.15em] leading-relaxed">
                             Please read this Data Privacy Notice carefully before proceeding with your registration. Your privacy is protected by the Persistence Layer.
                         </p>
                     </div>
@@ -60,7 +60,7 @@ export default function DataPrivacyConsent({ isOpen, onClose, onAccept }: DataPr
                             <p className="text-xs leading-relaxed text-secondary/40 font-medium uppercase tracking-wide mb-4">
                                 We collect the following types of personal information:
                             </p>
-                            <ul className="space-y-3 text-[10px] font-bold text-secondary/40 uppercase tracking-widest ml-4">
+                            <ul className="space-y-3 text-[10px] font-bold text-secondary/40 uppercase tracking-[0.15em] ml-4">
                                 <li className="flex items-center gap-3"><div className="w-1 h-1 bg-brand-gold rounded-full"></div>Personal Identification: Name, Student/Professor ID, Email Address</li>
                                 <li className="flex items-center gap-3"><div className="w-1 h-1 bg-brand-gold rounded-full"></div>Academic Information: Course, Year Level, Section, Class Enrollment</li>
                                 <li className="flex items-center gap-3"><div className="w-1 h-1 bg-brand-gold rounded-full"></div>Biometric Data: Facial recognition images (5 angles) for attendance verification</li>
@@ -77,7 +77,7 @@ export default function DataPrivacyConsent({ isOpen, onClose, onAccept }: DataPr
                             <p className="text-xs leading-relaxed text-secondary/40 font-medium uppercase tracking-wide mb-4">
                                 Your personal data will be processed for the following purposes:
                             </p>
-                            <ul className="space-y-3 text-[10px] font-bold text-secondary/40 uppercase tracking-widest ml-4">
+                            <ul className="space-y-3 text-[10px] font-bold text-secondary/40 uppercase tracking-[0.15em] ml-4">
                                 <li className="flex items-center gap-3"><div className="w-1 h-1 bg-brand-gold rounded-full"></div>Automated attendance monitoring using facial recognition technology</li>
                                 <li className="flex items-center gap-3"><div className="w-1 h-1 bg-brand-gold rounded-full"></div>Class enrollment and academic record management</li>
                                 <li className="flex items-center gap-3"><div className="w-1 h-1 bg-brand-gold rounded-full"></div>Communication regarding class schedules and attendance</li>
@@ -96,7 +96,7 @@ export default function DataPrivacyConsent({ isOpen, onClose, onAccept }: DataPr
                                 Your personal data is stored securely in encrypted databases and object storage systems.
                                 We implement industry-standard security measures including:
                             </p>
-                            <ul className="space-y-3 text-[10px] font-bold text-secondary/40 uppercase tracking-widest ml-4 mt-4">
+                            <ul className="space-y-3 text-[10px] font-bold text-secondary/40 uppercase tracking-[0.15em] ml-4 mt-4">
                                 <li className="flex items-center gap-3"><div className="w-1 h-1 bg-brand-gold rounded-full"></div>Encrypted password storage using bcrypt hashing</li>
                                 <li className="flex items-center gap-3"><div className="w-1 h-1 bg-brand-gold rounded-full"></div>Secure HTTPS connections for all data transmission</li>
                                 <li className="flex items-center gap-3"><div className="w-1 h-1 bg-brand-gold rounded-full"></div>Access controls limiting data access to authorized personnel only</li>
@@ -114,7 +114,7 @@ export default function DataPrivacyConsent({ isOpen, onClose, onAccept }: DataPr
                                 <p className="text-[10px] font-black uppercase tracking-[0.2em] text-brand-gold mb-4 leading-relaxed">
                                     Special Notice: By providing your facial biometric data, you explicitly consent to:
                                 </p>
-                                <ul className="space-y-3 text-[9px] font-bold text-brand-gold/70 uppercase tracking-widest ml-4">
+                                <ul className="space-y-3 text-[9px] font-bold text-brand-gold/70 uppercase tracking-[0.15em] ml-4">
                                     <li className="flex items-center gap-3"><div className="w-1 h-1 bg-brand-gold/40 rounded-full"></div>Capture and storage of your facial images from 5 different angles</li>
                                     <li className="flex items-center gap-3"><div className="w-1 h-1 bg-brand-gold/40 rounded-full"></div>Processing of these images into encrypted vector embeddings</li>
                                     <li className="flex items-center gap-3"><div className="w-1 h-1 bg-brand-gold/40 rounded-full"></div>Use of facial recognition technology for automated attendance</li>
@@ -130,7 +130,7 @@ export default function DataPrivacyConsent({ isOpen, onClose, onAccept }: DataPr
                                 9. Final Acknowledgment
                             </h3>
                             <div className="bg-white/5 border-l-4 border-brand-gold rounded-r-xl p-5">
-                                <p className="text-[10px] font-bold leading-relaxed text-white uppercase tracking-widest">
+                                <p className="text-[10px] font-bold leading-relaxed text-white uppercase tracking-[0.15em]">
                                     By clicking "I Accept" below, you acknowledge that you have read, understood, and agree to
                                     this Data Privacy Notice. You consent to the collection, processing, and storage of your
                                     personal information, including biometric data, as described above.

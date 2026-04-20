@@ -85,7 +85,7 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
                     {!isAlert && (
                         <button
                             onClick={onClose}
-                            className="flex-1 px-8 py-4 rounded-xl bg-white/40 text-[10px] font-black text-slate-400 hover:text-identity-navy uppercase tracking-widest hover:bg-white/60 transition-all border border-identity-sky/10 shadow-inner"
+                            className="flex-1 px-8 py-4 rounded-xl bg-white/40 text-[10px] font-black text-slate-400 hover:text-identity-navy uppercase tracking-[0.15em] hover:bg-white/60 transition-all border border-identity-sky/10 shadow-inner"
                         >
                             {cancelText}
                         </button>
@@ -95,7 +95,7 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
                             if (onConfirm) onConfirm();
                             else onClose();
                         }}
-                        className={`flex-1 px-8 py-4 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-2xl active:scale-95 ${colors.btn}`}
+                        className={`flex-1 px-8 py-4 rounded-xl text-[10px] font-black uppercase tracking-[0.15em] transition-all shadow-2xl active:scale-95 ${colors.btn}`}
                     >
                         {confirmText}
                     </button>

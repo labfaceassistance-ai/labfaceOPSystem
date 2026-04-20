@@ -1,0 +1,482 @@
+[
+  {
+    "file": "\\app\\admin\\ai-analytics\\page.tsx",
+    "text": "Anomaly Score"
+  },
+  {
+    "file": "\\app\\admin\\ai-analytics\\page.tsx",
+    "text": "Entities with &lt; 40% attendance"
+  },
+  {
+    "file": "\\app\\admin\\ai-analytics\\page.tsx",
+    "text": "Initializing Neural Analytics..."
+  },
+  {
+    "file": "\\app\\admin\\ai-analytics\\page.tsx",
+    "text": "Resolve Critical Outliers"
+  },
+  {
+    "file": "\\app\\admin\\ai-analytics\\page.tsx",
+    "text": "Neural Network Prediction Confidence"
+  },
+  {
+    "file": "\\app\\admin\\ai-analytics\\page.tsx",
+    "text": "Stable Signatures"
+  },
+  {
+    "file": "\\app\\admin\\analytics\\page.tsx",
+    "text": "Cloud Sync Buffer"
+  },
+  {
+    "file": "\\app\\admin\\analytics\\page.tsx",
+    "text": "Neural Recognition Conf."
+  },
+  {
+    "file": "\\app\\admin\\analytics\\page.tsx",
+    "text": "Initializing Data Stream Data..."
+  },
+  {
+    "file": "\\app\\admin\\camera-test\\page.tsx",
+    "text": "Operational"
+  },
+  {
+    "file": "\\app\\admin\\camera-test\\page.tsx",
+    "text": "Diagnostic Engine Paused"
+  },
+  {
+    "file": "\\app\\admin\\camera-test\\page.tsx",
+    "text": "Purge History"
+  },
+  {
+    "file": "\\app\\admin\\camera-test\\page.tsx",
+    "text": "Records Synchronized"
+  },
+  {
+    "file": "\\app\\admin\\camera-test\\page.tsx",
+    "text": "Awaiting Neural Signature..."
+  },
+  {
+    "file": "\\app\\admin\\camera-test\\page.tsx",
+    "text": "Face Recognition Diagnostic"
+  },
+  {
+    "file": "\\app\\admin\\dashboard\\page.tsx",
+    "text": "Run Face Diagnostic"
+  },
+  {
+    "file": "\\app\\admin\\dashboard\\page.tsx",
+    "text": "ENTITY NOT FOUND IN ACTIVE DATABASE. POSSIBLE DATA CORRUPTION OR DELETION."
+  },
+  {
+    "file": "\\app\\admin\\dashboard\\page.tsx",
+    "text": "Confirmed fraudulent identity usage"
+  },
+  {
+    "file": "\\app\\admin\\dashboard\\page.tsx",
+    "text": "Primary Link"
+  },
+  {
+    "file": "\\app\\admin\\dashboard\\page.tsx",
+    "text": "Contact Link"
+  },
+  {
+    "file": "\\app\\admin\\dashboard\\page.tsx",
+    "text": "Neural Signature"
+  },
+  {
+    "file": "\\app\\admin\\dashboard\\page.tsx",
+    "text": "Evidence: COR Proof"
+  },
+  {
+    "file": "\\app\\admin\\dashboard\\page.tsx",
+    "text": "Evidence: ID Profile"
+  },
+  {
+    "file": "\\app\\admin\\dashboard\\page.tsx",
+    "text": "Target Identification"
+  },
+  {
+    "file": "\\app\\admin\\dashboard\\page.tsx",
+    "text": "Target Neural Signature"
+  },
+  {
+    "file": "\\app\\admin\\dashboard\\page.tsx",
+    "text": "Permanently Purge Fraudulent Account"
+  },
+  {
+    "file": "\\app\\admin\\dashboard\\page.tsx",
+    "text": "Student Identification"
+  },
+  {
+    "file": "\\app\\admin\\dashboard\\page.tsx",
+    "text": "Reported Entity Details"
+  },
+  {
+    "file": "\\app\\admin\\dashboard\\page.tsx",
+    "text": "Neural Link (Email)"
+  },
+  {
+    "file": "\\app\\admin\\dashboard\\page.tsx",
+    "text": "Anomaly Description"
+  },
+  {
+    "file": "\\app\\admin\\login\\page.tsx",
+    "text": "All Neural Interfaces Are Logged"
+  },
+  {
+    "file": "\\app\\admin\\profile\\page.tsx",
+    "text": "Identification"
+  },
+  {
+    "file": "\\app\\forgot-password\\page.tsx",
+    "text": "Send Sync Code"
+  },
+  {
+    "file": "\\app\\professor\\camera-test\\page.tsx",
+    "text": "Operational"
+  },
+  {
+    "file": "\\app\\professor\\camera-test\\page.tsx",
+    "text": "start the diagnostic engine."
+  },
+  {
+    "file": "\\app\\professor\\camera-test\\page.tsx",
+    "text": "Diagnostic Engine Paused"
+  },
+  {
+    "file": "\\app\\professor\\camera-test\\page.tsx",
+    "text": "Face Recognition Diagnostic"
+  },
+  {
+    "file": "\\app\\professor\\dashboard\\page.tsx",
+    "text": "Initializing Interface..."
+  },
+  {
+    "file": "\\app\\professor\\dashboard\\tabs\\HomeTab.tsx",
+    "text": "Current Session"
+  },
+  {
+    "file": "\\app\\professor\\dashboard\\tabs\\MonitorTab.tsx",
+    "text": "Run Diagnostic"
+  },
+  {
+    "file": "\\app\\professor\\dashboard\\tabs\\ScheduleTab.tsx",
+    "text": "Cancel Session"
+  },
+  {
+    "file": "\\app\\register\\professor\\page.tsx",
+    "text": "Faculty accounts require manual administrative validation."
+  },
+  {
+    "file": "\\app\\register\\student\\page.tsx",
+    "text": "Registry Validation"
+  },
+  {
+    "file": "\\app\\register\\student\\page.tsx",
+    "text": "Neural Syncing..."
+  },
+  {
+    "file": "\\app\\student\\dashboard\\page.tsx",
+    "text": "Neural Insights"
+  },
+  {
+    "file": "\\app\\student\\dashboard\\tabs\\AttendanceTab.tsx",
+    "text": "CCTV Sync"
+  },
+  {
+    "file": "\\app\\student\\dashboard\\tabs\\AttendanceTab.tsx",
+    "text": "Operational Logs \u2022 Academic Classes"
+  },
+  {
+    "file": "\\app\\student\\dashboard\\tabs\\ClassesTab.tsx",
+    "text": "Operational Environment: Lab 1"
+  },
+  {
+    "file": "\\app\\student\\dashboard\\tabs\\HomeTab.tsx",
+    "text": "Special Session"
+  },
+  {
+    "file": "\\app\\student\\dashboard\\tabs\\HomeTab.tsx",
+    "text": "Sync Rate"
+  },
+  {
+    "file": "\\app\\student\\dashboard\\tabs\\HomeTab.tsx",
+    "text": "Sync Error Detected"
+  },
+  {
+    "file": "\\app\\student\\dashboard\\tabs\\ScheduleTab.tsx",
+    "text": "No nodes synchronized"
+  },
+  {
+    "file": "\\app\\student\\dashboard\\tabs\\ScheduleTab.tsx",
+    "text": "Operational Schedule \u2022 Lab 1"
+  },
+  {
+    "file": "\\app\\student\\profile\\page.tsx",
+    "text": "Neural Pattern"
+  },
+  {
+    "file": "\\app\\student\\profile\\page.tsx",
+    "text": "Contribute to the evolution of the LabFace neural ecosystem. Your feedback is synchronized directly with our core developers."
+  },
+  {
+    "file": "\\app\\student\\profile\\page.tsx",
+    "text": "Purge Identity"
+  },
+  {
+    "file": "\\app\\student\\profile\\page.tsx",
+    "text": "Initializing Neural Optic Array..."
+  },
+  {
+    "file": "\\app\\student\\profile\\page.tsx",
+    "text": "Academic Sync Required"
+  },
+  {
+    "file": "\\app\\student\\profile\\page.tsx",
+    "text": "Ensure your biometric signatures are current to maintain high recognition accuracy throughout campus operational hours."
+  },
+  {
+    "file": "\\app\\student\\profile\\page.tsx",
+    "text": "Neural signals are encrypted end-to-end."
+  },
+  {
+    "file": "\\components\\AcademicSettingsTab.tsx",
+    "text": "Operational Period"
+  },
+  {
+    "file": "\\components\\AcademicSettingsTab.tsx",
+    "text": "Sync Registry"
+  },
+  {
+    "file": "\\components\\AttendanceInsights.tsx",
+    "text": "Neural Pulse Active"
+  },
+  {
+    "file": "\\components\\AttendanceInsights.tsx",
+    "text": "Define your operational attendance target to enable Neural Optimization."
+  },
+  {
+    "file": "\\components\\AttendanceInsights.tsx",
+    "text": "Select your operational target for the current academic period."
+  },
+  {
+    "file": "\\components\\AttendanceInsights.tsx",
+    "text": "Current performance is within optimal operational range."
+  },
+  {
+    "file": "\\components\\AttendanceInsights.tsx",
+    "text": "Monthly Sync Trajectory"
+  },
+  {
+    "file": "\\components\\AuthGuard.tsx",
+    "text": "Neural Link Status"
+  },
+  {
+    "file": "\\components\\CancelSessionModal.tsx",
+    "text": "Reference Session"
+  },
+  {
+    "file": "\\components\\CancelSessionModal.tsx",
+    "text": "Cancel Session"
+  },
+  {
+    "file": "\\components\\CancelSessionModal.tsx",
+    "text": "Retain Session"
+  },
+  {
+    "file": "\\components\\ClassDetailsModal.tsx",
+    "text": "Session Log Depth"
+  },
+  {
+    "file": "\\components\\ClassDetailsModal.tsx",
+    "text": "This action will formally notify all enrolled cohorts of the session archival status."
+  },
+  {
+    "file": "\\components\\ClassDetailsModal.tsx",
+    "text": "Validation Documentation"
+  },
+  {
+    "file": "\\components\\ClassDetailsModal.tsx",
+    "text": "Session Archival"
+  },
+  {
+    "file": "\\components\\ClassDetailsModal.tsx",
+    "text": "Optical Evidence Fragment"
+  },
+  {
+    "file": "\\components\\ClassDetailsModal.tsx",
+    "text": "Update Ledger"
+  },
+  {
+    "file": "\\components\\ConsentStep.tsx",
+    "text": "I have meticulously evaluated the synchronization policy. I voluntarily grant persistent authorization for the collection and archival of my biometric signatures."
+  },
+  {
+    "file": "\\components\\ConsentStep.tsx",
+    "text": "Sync Framework Policy"
+  },
+  {
+    "file": "\\components\\ConsentStep.tsx",
+    "text": "Neural Layer Details"
+  },
+  {
+    "file": "\\components\\ConsentStep.tsx",
+    "text": "Authorize Sync"
+  },
+  {
+    "file": "\\components\\CreateClassModal.tsx",
+    "text": "No operational data detected."
+  },
+  {
+    "file": "\\components\\DataPrivacyConsent.tsx",
+    "text": "Personal Identification: Name, Student/Professor ID, Email Address"
+  },
+  {
+    "file": "\\components\\DeletionRequestsTab.tsx",
+    "text": "Authorize Purge"
+  },
+  {
+    "file": "\\components\\DeletionRequestsTab.tsx",
+    "text": "Initiating permanent identity purge for"
+  },
+  {
+    "file": "\\components\\DeletionRequestsTab.tsx",
+    "text": "CRITICAL: ALL NEURAL RECORDS WILL BE DESTROYED."
+  },
+  {
+    "file": "\\components\\EditClassModal.tsx",
+    "text": "TERMINATE"
+  },
+  {
+    "file": "\\components\\EditClassModal.tsx",
+    "text": "Synchronized Entries:"
+  },
+  {
+    "file": "\\components\\FaceEnrollmentScanner.tsx",
+    "text": "Sync Optimized"
+  },
+  {
+    "file": "\\components\\FaceEnrollmentScanner.tsx",
+    "text": "Re-Sync"
+  },
+  {
+    "file": "\\components\\FaceEnrollmentScanner.tsx",
+    "text": "Multi-Angle Identity Calibration"
+  },
+  {
+    "file": "\\components\\FaceEnrollmentScanner.tsx",
+    "text": "Biometric Sync"
+  },
+  {
+    "file": "\\components\\FaceEnrollmentScanner.tsx",
+    "text": "Initialize Secure Stream"
+  },
+  {
+    "file": "\\components\\FaceEnrollmentScanner.tsx",
+    "text": "Initializing Neural Logic"
+  },
+  {
+    "file": "\\components\\FaceReScan.tsx",
+    "text": "Biometric Re-Sync"
+  },
+  {
+    "file": "\\components\\FaceReScan.tsx",
+    "text": "Biometric Re-Sync"
+  },
+  {
+    "file": "\\components\\Navbar.tsx",
+    "text": "Choose your operational role"
+  },
+  {
+    "file": "\\components\\NotificationCenter.tsx",
+    "text": "Sync"
+  },
+  {
+    "file": "\\components\\NotificationCenter.tsx",
+    "text": "Operational Updates"
+  },
+  {
+    "file": "\\components\\NotificationCenter.tsx",
+    "text": "Purge"
+  },
+  {
+    "file": "\\components\\Personalization.tsx",
+    "text": "Neural Push Notifications"
+  },
+  {
+    "file": "\\components\\SessionModal.tsx",
+    "text": "Batch Session:"
+  },
+  {
+    "file": "\\components\\SessionModal.tsx",
+    "text": "Schedule groups for specific times within the current session."
+  },
+  {
+    "file": "\\components\\SessionModal.tsx",
+    "text": "Schedule a session for a different date/time. All enrolled students are naturally notified."
+  },
+  {
+    "file": "\\components\\SessionModal.tsx",
+    "text": "Start a live class session immediately."
+  },
+  {
+    "file": "\\components\\SessionModal.tsx",
+    "text": "Regular Session:"
+  },
+  {
+    "file": "\\components\\SessionModal.tsx",
+    "text": "Start Session"
+  },
+  {
+    "file": "\\components\\SessionModal.tsx",
+    "text": "Start a new attendance session for"
+  },
+  {
+    "file": "\\components\\SessionTimeout.tsx",
+    "text": "Automatic Terminate in"
+  },
+  {
+    "file": "\\components\\SessionTimeout.tsx",
+    "text": "Stabilize Link"
+  },
+  {
+    "file": "\\components\\SessionTimeout.tsx",
+    "text": "Security protocols require periodic re-authentication. Extend to maintain your active session or terminate securely."
+  },
+  {
+    "file": "\\components\\SessionTimeout.tsx",
+    "text": "Terminate"
+  },
+  {
+    "file": "\\components\\SessionTimeout.tsx",
+    "text": "Session Expiry"
+  },
+  {
+    "file": "\\components\\SmartSearch.tsx",
+    "text": "Accessing Neural Registry..."
+  },
+  {
+    "file": "\\components\\TermsAndConditions.tsx",
+    "text": "Logging out after each session, especially on shared devices"
+  },
+  {
+    "file": "\\components\\TermsAndConditions.tsx",
+    "text": "Attendance disputes must be raised within 24 hours with supporting evidence"
+  },
+  {
+    "file": "\\components\\TermsAndConditions.tsx",
+    "text": "LabFace System - Operational Guidelines"
+  },
+  {
+    "file": "\\components\\TermsAndConditions.tsx",
+    "text": "Not detected during the entire session"
+  },
+  {
+    "file": "\\components\\VideoFeed.tsx",
+    "text": "Force Sync"
+  },
+  {
+    "file": "\\components\\VideoFeed.tsx",
+    "text": "Checking Neural Link..."
+  }
+]

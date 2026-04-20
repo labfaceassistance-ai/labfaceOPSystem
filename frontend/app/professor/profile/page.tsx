@@ -1,9 +1,10 @@
-"use client";
+﻿"use client";
 import { useState, useEffect, useRef } from 'react';
 import Navbar from '../../../components/Navbar';
 import Link from 'next/link';
 import { User, Mail, MapPin, Save, Camera, Lock, Shield, Image as ImageIcon, CheckCircle, AlertCircle, X, Eye, EyeOff, ArrowLeft, FileText, AlertTriangle, CheckCircle2, XCircle, Download, Trash2, MessageSquare, ExternalLink } from 'lucide-react';
 import axios from 'axios';
+import ConfirmModal from '../../../components/ConfirmModal';
 import { useToast } from '../../../components/Toast';
 import { API_URL, getBackendUrl, createAuthAxios, logout, getToken, getProfilePictureUrl } from '../../../utils/auth';
 
@@ -36,6 +37,22 @@ export default function ProfessorProfile() {
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
     const { showToast } = useToast();
+
+    // Confirm Modal State
+    const [confirmModal, setConfirmModal] = useState<{
+        isOpen: boolean;
+        title: string;
+        message: string;
+        type: 'danger' | 'warning' | 'success' | 'info';
+        onConfirm: () => void;
+        confirmText?: string;
+    }>({
+        isOpen: false,
+        title: '',
+        message: '',
+        type: 'info',
+        onConfirm: () => { }
+    });
 
     useEffect(() => {
         const fetchUserData = async () => {
@@ -108,7 +125,7 @@ export default function ProfessorProfile() {
         setIsEditing(false);
     };
 
-    // useSwipe removed — hook deleted in Phase 2 cleanup; tab buttons remain fully functional
+    // useSwipe removed â€” hook deleted in Phase 2 cleanup; tab buttons remain fully functional
 
     const fetchLatestUserData = async (userId: number) => {
         try {
@@ -285,7 +302,7 @@ export default function ProfessorProfile() {
                                 />
                                 <button
                                     onClick={triggerFileInput}
-                                    className="absolute bottom-0 right-0 bg-gray-900 text-white p-2 rounded-full hover:bg-gray-700 transition-colors shadow-md z-10"
+                                    className="tracking-[0.15em] font-black uppercase rounded-2xl absolute bottom-0 right-0 bg-gray-900 text-white p-3 min-h-[44px] min-w-[44px] flex items-center justify-center hover:bg-gray-700 transition-colors shadow-md z-10"
                                 >
                                     <Camera size={16} />
                                 </button>
@@ -440,7 +457,7 @@ export default function ProfessorProfile() {
                                                 <button
                                                     type="button"
                                                     onClick={() => setShowNewPassword(!showNewPassword)}
-                                                    className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-200"
+                                                    className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-200 min-h-[44px] min-w-[44px] flex items-center justify-center transition-all"
                                                 >
                                                     {showNewPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                                                 </button>
@@ -466,7 +483,7 @@ export default function ProfessorProfile() {
                                                 <button
                                                     type="button"
                                                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                                                    className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-200"
+                                                    className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-200 min-h-[44px] min-w-[44px] flex items-center justify-center transition-all"
                                                 >
                                                     {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                                                 </button>
@@ -480,7 +497,7 @@ export default function ProfessorProfile() {
                                         </div>
                                         <button
                                             type="submit"
-                                            className="w-full bg-brand-500 text-white font-bold py-2 rounded-lg hover:bg-brand-400 transition-colors shadow-md"
+                                            className="tracking-[0.15em] font-black uppercase rounded-2xl w-full bg-brand-500 text-white font-bold py-2 rounded-lg hover:bg-brand-400 transition-colors shadow-md"
                                         >
                                             Update Password
                                         </button>
@@ -491,7 +508,7 @@ export default function ProfessorProfile() {
                             {/* Privacy & Consent Tab */}
                             {activeTab === 'privacy' && (
                                 <div className="space-y-6">
-                                    <div className="bg-blue-500/10 border border-blue-500/20 text-blue-400 p-4 rounded-lg flex items-center gap-3">
+                                    <div className="bg-blue-500/10 border border-blue-500/20 text-blue-400 p-4 rounded-lg flex items-center gap-4">
                                         <Shield size={20} />
                                         <div className="text-sm">
                                             <strong>Philippine Data Privacy Act Compliance</strong>
@@ -542,6 +559,7 @@ export default function ProfessorProfile() {
                                         <h3 className="text-lg font-bold text-white mb-4">Consent History</h3>
                                         {consentHistory.length > 0 ? (
                                             <div className="overflow-x-auto">
+                                            <div className="table-responsive-wrapper">
                                                 <table className="w-full text-sm">
                                                     <thead>
                                                         <tr className="border-b border-slate-700">
@@ -577,6 +595,7 @@ export default function ProfessorProfile() {
                                                     </tbody>
                                                 </table>
                                             </div>
+                                        </div>
                                         ) : (
                                             <p className="text-slate-400">No history</p>
                                         )}
@@ -585,7 +604,7 @@ export default function ProfessorProfile() {
                                     <div className="bg-slate-800 rounded-lg p-6 border border-slate-700">
                                         <h3 className="text-lg font-bold text-white mb-4">Your Data Rights</h3>
                                         <p className="text-slate-400 mb-4 text-sm">Under the Philippine Data Privacy Act:</p>
-                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                             <button
                                                 onClick={async () => {
                                                     try {
@@ -612,16 +631,26 @@ export default function ProfessorProfile() {
                                                 <span className="font-medium">Privacy Policy</span>
                                             </Link>
                                             <button
-                                                onClick={async () => {
-                                                    if (confirm('Request data deletion? This cannot be undone.')) {
-                                                        try {
-                                                            const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
-                                                            await axios.post(`${API_URL}/api/data-rights/delete`, { userId: user?.userId, reason: 'User requested' });
-                                                            showToast('Deletion request submitted (30 days)', 'success');
-                                                        } catch (error) {
-                                                            showToast('Request failed', 'error');
+                                                onClick={() => {
+                                                    setConfirmModal({
+                                                        isOpen: true,
+                                                        title: 'Data Deletion Request',
+                                                        message: 'Request data deletion? This action will initiate a 30-day queue for permanent removal and cannot be undone once processed.',
+                                                        type: 'danger',
+                                                        confirmText: 'Request Deletion',
+                                                        onConfirm: async () => {
+                                                            try {
+                                                                const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
+                                                                const token = getToken();
+                                                                await axios.post(`${API_URL}/api/data-rights/delete`, { userId: user?.userId, reason: 'User requested' }, { headers: { Authorization: `Bearer ${token}` } });
+                                                                showToast('Action Successful', 'Deletion request submitted (30-day queue initiated)', 'success');
+                                                                setConfirmModal(prev => ({ ...prev, isOpen: false }));
+                                                            } catch (error) {
+                                                                showToast('Action Failed', 'Request failed', 'error');
+                                                                setConfirmModal(prev => ({ ...prev, isOpen: false }));
+                                                            }
                                                         }
-                                                    }
+                                                    });
                                                 }}
                                                 className="flex items-center justify-center gap-2 p-4 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
                                             >
@@ -646,7 +675,7 @@ export default function ProfessorProfile() {
                                         </p>
                                     </div>
 
-                                    <div className="bg-white p-6 rounded-xl inline-block shadow-lg mx-auto">
+                                    <div className="bg-white p-6 rounded-2xl inline-block shadow-lg mx-auto">
                                         <img
                                             src="/feedback-qr.png"
                                             alt="Scan to provide feedback"
@@ -671,6 +700,16 @@ export default function ProfessorProfile() {
                     </div>
                 </div>
             </main>
+
+            <ConfirmModal
+                isOpen={confirmModal.isOpen}
+                onClose={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+                onConfirm={confirmModal.onConfirm}
+                title={confirmModal.title}
+                message={confirmModal.message}
+                type={confirmModal.type}
+                confirmText={confirmModal.confirmText}
+            />
         </div>
     );
 }

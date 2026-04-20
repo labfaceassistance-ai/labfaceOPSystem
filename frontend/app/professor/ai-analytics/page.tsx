@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
@@ -188,7 +188,7 @@ export default function ProfessorAIPage() {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 {/* Header */}
                 <div className="mb-8">
-                    <h1 className="text-3xl font-bold text-white mb-2 flex items-center gap-3">
+                    <h1 className="text-3xl font-bold text-white mb-2 flex items-center gap-4">
                         <Brain className="text-purple-400" size={32} />
                         AI Analytics for Professors
                     </h1>
@@ -212,7 +212,7 @@ export default function ProfessorAIPage() {
                 </div>
 
                 {/* Attendance Forecast */}
-                <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-xl p-6 mb-8">
+                <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-2xl p-6 mb-8">
                     <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
                         <Calendar className="text-blue-400" size={24} />
                         7-Day Attendance Forecast
@@ -227,7 +227,7 @@ export default function ProfessorAIPage() {
                 </div>
 
                 {/* At-Risk Students */}
-                <div className="bg-slate-800/50 backdrop-blur-sm border border-red-900/50 rounded-xl p-6">
+                <div className="bg-slate-800/50 backdrop-blur-sm border border-red-900/50 rounded-2xl p-6">
                     <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
                         <AlertTriangle className="text-red-400" size={24} />
                         At-Risk Students

@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useRef, useState, useEffect, useCallback } from 'react';
 import Webcam from 'react-webcam';
@@ -203,8 +203,13 @@ export default function CameraTestPage() {
             const scaledW = Math.floor(w * scaleX);
             const scaledH = Math.floor(h * scaleY);
 
-            const color = face.match ? '#10b981' : '#f43f5e';
-            const glow = face.match ? 'rgba(16, 185, 129, 0.4)' : 'rgba(244, 63, 94, 0.4)';
+            const colorSky = 'rgb(92, 180, 228)'; // identity-sky
+            const colorRose = 'rgb(244, 63, 94)'; // identity-rose
+            const glowSky = 'rgba(92, 180, 228, 0.4)';
+            const glowRose = 'rgba(244, 63, 94, 0.4)';
+
+            const color = face.match ? colorSky : colorRose;
+            const glow = face.match ? glowSky : glowRose;
 
             ctx.shadowColor = glow;
             ctx.shadowBlur = 15;
@@ -216,13 +221,13 @@ export default function CameraTestPage() {
             ctx.shadowBlur = 0;
 
             const text = `${face.name} (${Math.round(face.confidence)}%)`;
-            ctx.font = 'bold 16px "Inter", sans-serif';
+            ctx.font = 'black 16px "Outfit", sans-serif';
             const textWidth = ctx.measureText(text).width;
             
             ctx.fillStyle = color;
             ctx.fillRect(scaledX - 2, scaledY - 32, textWidth + 16, 32);
 
-            ctx.fillStyle = '#ffffff';
+            ctx.fillStyle = 'white';
             ctx.fillText(text, scaledX + 6, scaledY - 10);
         });
     }, [displayFaces]);
@@ -245,13 +250,13 @@ export default function CameraTestPage() {
                             >
                                 <ArrowLeft size={20} />
                             </Link>
-                            <div className="p-3 bg-brand-500/10 rounded-xl border border-brand-500/20">
-                                <ShieldCheck className="w-8 h-8 text-brand-400" />
+                            <div className="p-3 bg-identity-sky/10 rounded-2xl border border-identity-sky/20">
+                                <ShieldCheck className="w-8 h-8 text-identity-sky" />
                             </div>
                             <div>
                                 <h1 className="text-2xl font-bold tracking-tight text-white flex items-center gap-2">
-                                    Face Recognition Diagnostic
-                                    <span className="px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-400 text-[10px] font-bold uppercase tracking-widest border border-indigo-500/30">
+                                    Face Recognition Test
+                                    <span className="px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-400 text-[10px] font-bold uppercase tracking-[0.15em] border border-indigo-500/30">
                                         Professor Mode
                                     </span>
                                 </h1>
@@ -260,18 +265,18 @@ export default function CameraTestPage() {
                                 </p>
                             </div>
                         </div>
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-4">
                         <div className="hidden lg:flex flex-col items-end mr-4">
-                            <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">System Engine</span>
-                            <span className="text-emerald-400 text-sm font-semibold flex items-center gap-1.5">
+                            <span className="text-[10px] text-slate-500 font-bold uppercase tracking-[0.15em]">System Engine</span>
+                            <span className="text-emerald-400 text-sm font-semibold flex items-center gap-2">
                                 <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                                Operational
+                                Active
                             </span>
                         </div>
                         <button 
                             onClick={() => setIsTesting(!isTesting)}
-                            className={`flex items-center gap-2 px-6 py-2.5 font-bold rounded-xl transition-all shadow-lg hover:scale-[1.02] active:scale-[0.98] ${
-                                isTesting ? 'bg-red-500/10 text-red-500 border border-red-500/30 hover:bg-red-500/20' : 'bg-brand-500 text-white hover:bg-brand-600'
+                            className={`flex items-center gap-2 px-6 py-2.5 font-bold rounded-2xl transition-all shadow-lg hover:scale-[1.02] active:scale-[0.98] ${
+                                isTesting ? 'bg-red-500/10 text-red-500 border border-red-500/30 hover:bg-red-500/20' : 'bg-identity-sky text-white hover:bg-identity-sky/90'
                             }`}
                         >
                             {isTesting ? (
@@ -284,7 +289,7 @@ export default function CameraTestPage() {
                 </div>
 
                 {error && (
-                    <div className="bg-red-500/10 border border-red-500/20 text-red-400 rounded-xl p-4 flex items-center gap-3 animate-in fade-in slide-in-from-top-2 duration-300">
+                    <div className="bg-red-500/10 border border-red-500/20 text-red-400 rounded-2xl p-4 flex items-center gap-4 animate-in fade-in slide-in-from-top-2 duration-300">
                         <AlertCircle className="w-5 h-5 flex-shrink-0" />
                         <span className="font-semibold text-sm">{error}</span>
                     </div>
@@ -322,7 +327,7 @@ export default function CameraTestPage() {
                                         <div className="w-16 h-16 bg-slate-800 rounded-full flex items-center justify-center mx-auto text-slate-500">
                                             <StopCircle size={32} />
                                         </div>
-                                        <p className="text-slate-200 font-bold text-xl tracking-tight">Diagnostic Engine Paused</p>
+                                        <p className="text-slate-200 font-bold text-xl tracking-tight">Camera Testing Paused</p>
                                         <p className="text-slate-500 text-sm">Click the button above to begin detection</p>
                                     </div>
                                 </div>
@@ -330,11 +335,11 @@ export default function CameraTestPage() {
 
                             {/* HUD In-camera Stats */}
                             <div className="absolute bottom-4 left-4 flex gap-4">
-                                <div className="bg-black/60 backdrop-blur-md border border-white/10 px-3 py-1.5 rounded-lg text-[10px] font-mono text-white/80 flex items-center gap-2">
+                                <div className="bg-black/60 backdrop-blur-md border border-white/10 px-3 py-2 rounded-lg text-[10px] font-mono text-white/80 flex items-center gap-2">
                                     <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                                     FPS: {stats.fps}
                                 </div>
-                                <div className="bg-black/60 backdrop-blur-md border border-white/10 px-3 py-1.5 rounded-lg text-[10px] font-mono text-white/80 flex items-center gap-2">
+                                <div className="bg-black/60 backdrop-blur-md border border-white/10 px-3 py-2 rounded-lg text-[10px] font-mono text-white/80 flex items-center gap-2">
                                     <Clock size={10} />
                                     LATENCY: {stats.latency}ms
                                 </div>
@@ -352,7 +357,7 @@ export default function CameraTestPage() {
                             </h3>
                             <button 
                                 onClick={() => setHistory([])}
-                                className="p-1.5 hover:bg-slate-800 rounded-lg text-slate-500 hover:text-red-400 transition-colors"
+                                className="p-2 hover:bg-slate-800 rounded-lg text-slate-500 hover:text-red-400 transition-colors"
                                 title="Clear History"
                             >
                                 <Trash2 size={16} />
@@ -360,12 +365,12 @@ export default function CameraTestPage() {
                         </div>
 
                         {/* Summary Bar */}
-                        <div className="bg-slate-950/50 px-4 py-2 border-b border-slate-800 flex items-center justify-between text-[10px] font-bold uppercase tracking-widest">
-                            <div className="flex items-center gap-1.5 text-brand-400">
+                        <div className="bg-slate-950/50 px-4 py-2 border-b border-slate-800 flex items-center justify-between text-[10px] font-bold uppercase tracking-[0.15em]">
+                            <div className="flex items-center gap-2 text-identity-sky">
                                 <CheckCircle size={10} />
                                 <span>{history.filter(h => h.match).length} Matches</span>
                             </div>
-                            <div className="flex items-center gap-1.5 text-red-400">
+                            <div className="flex items-center gap-2 text-identity-rose">
                                 <XCircle size={10} />
                                 <span>{history.filter(h => !h.match).length} Unknown</span>
                             </div>
@@ -377,7 +382,7 @@ export default function CameraTestPage() {
                                 <div className="flex flex-col items-center justify-center h-full text-center p-8">
                                     <Camera className="w-12 h-12 text-slate-800 mb-4" />
                                     <p className="text-slate-500 text-sm font-medium leading-relaxed">
-                                        Logs will appear here once you<br />start the diagnostic engine.
+                                        Logs will appear here once you<br />start camera testing.
                                     </p>
                                 </div>
                             ) : history.length === 0 ? (
@@ -392,13 +397,13 @@ export default function CameraTestPage() {
                                 history.map((log, idx) => (
                                     <div 
                                         key={`${log.timestamp}-${idx}`} 
-                                        className={`p-3 rounded-xl border transition-all animate-in fade-in slide-in-from-right-4 duration-300 ${
+                                        className={`p-3 rounded-2xl border transition-all animate-in fade-in slide-in-from-right-4 duration-300 ${
                                             log.match 
                                                 ? 'bg-emerald-500/5 border-emerald-500/20 hover:border-emerald-500/40' 
                                                 : 'bg-slate-800/50 border-slate-700/50 hover:border-slate-600'
                                         }`}
                                     >
-                                        <div className="flex items-center gap-3">
+                                        <div className="flex items-center gap-4">
                                             {/* Face Thumbnail */}
                                             <div className="relative flex-shrink-0">
                                                 <div className="w-12 h-12 rounded-lg bg-slate-800 overflow-hidden border border-slate-700">
@@ -426,7 +431,7 @@ export default function CameraTestPage() {
                                                     </span>
                                                 </div>
                                                 <div className="flex items-center justify-between">
-                                                    <div className={`flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider border ${
+                                                    <div className={`flex items-center gap-2 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider border ${
                                                         log.match 
                                                             ? 'text-emerald-400 border-emerald-500/30' 
                                                             : 'text-slate-500 border-slate-700'
@@ -466,11 +471,11 @@ export default function CameraTestPage() {
                     background: transparent;
                 }
                 .custom-scrollbar::-webkit-scrollbar-thumb {
-                    background: #1e293b;
+                    background: var(--identity-navy);
                     border-radius: 10px;
                 }
                 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-                    background: #334155;
+                    background: var(--identity-sky);
                 }
             `}</style>
         </div>

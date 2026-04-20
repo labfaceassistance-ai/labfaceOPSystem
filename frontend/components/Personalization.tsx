@@ -109,7 +109,7 @@ export function ThemeSwitcher() {
                 <button
                     key={value}
                     onClick={() => updatePreference('theme', value)}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all text-[10px] font-black uppercase tracking-widest ${preferences.theme === value
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all text-[10px] font-black uppercase tracking-[0.15em] ${preferences.theme === value
                             ? 'bg-brand-gold text-black shadow-lg shadow-brand-gold/10'
                             : 'text-secondary/40 hover:text-white hover:bg-white/5'
                         }`}
@@ -131,7 +131,7 @@ export function LanguageSwitcher() {
         <select
             value={preferences.language}
             onChange={(e) => updatePreference('language', e.target.value as Language)}
-            className="px-4 py-2 bg-black/40 border border-white/5 rounded-xl text-white text-[10px] font-black uppercase tracking-widest outline-none focus:border-brand-gold/50 transition-all shadow-inner"
+            className="px-4 py-2 bg-black/40 border border-white/5 rounded-xl text-white text-[10px] font-black uppercase tracking-[0.15em] outline-none focus:border-brand-gold/50 transition-all shadow-inner"
         >
             <option value="en" className="bg-maroon-950">English</option>
             <option value="fil" className="bg-maroon-950">Filipino</option>
@@ -149,23 +149,23 @@ export function PreferencesPanel() {
 
             {/* Theme */}
             <div className="space-y-3">
-                <label className="block text-[10px] font-black text-secondary/40 uppercase tracking-widest">Visual Theme</label>
+                <label className="block text-[10px] font-black text-secondary/40 uppercase tracking-[0.15em]">Visual Theme</label>
                 <ThemeSwitcher />
             </div>
 
             {/* Language */}
             <div className="space-y-3">
-                <label className="block text-[10px] font-black text-secondary/40 uppercase tracking-widest">System Language</label>
+                <label className="block text-[10px] font-black text-secondary/40 uppercase tracking-[0.15em]">System Language</label>
                 <LanguageSwitcher />
             </div>
 
             {/* Dashboard Layout */}
             <div className="space-y-3">
-                <label className="block text-[10px] font-black text-secondary/40 uppercase tracking-widest">Dashboard Layout</label>
+                <label className="block text-[10px] font-black text-secondary/40 uppercase tracking-[0.15em]">Dashboard Layout</label>
                 <div className="flex gap-3">
                     <button
                         onClick={() => updatePreference('dashboardLayout', 'compact')}
-                        className={`flex-1 px-6 py-3 rounded-xl transition-all text-[10px] font-black uppercase tracking-widest border shadow-inner ${preferences.dashboardLayout === 'compact'
+                        className={`flex-1 px-6 py-3 rounded-xl transition-all text-[10px] font-black uppercase tracking-[0.15em] border shadow-inner ${preferences.dashboardLayout === 'compact'
                                 ? 'bg-brand-gold text-black border-brand-gold'
                                 : 'bg-black/40 text-secondary/40 border-white/5 hover:text-white hover:bg-white/5'
                             }`}
@@ -174,7 +174,7 @@ export function PreferencesPanel() {
                     </button>
                     <button
                         onClick={() => updatePreference('dashboardLayout', 'detailed')}
-                        className={`flex-1 px-6 py-3 rounded-xl transition-all text-[10px] font-black uppercase tracking-widest border shadow-inner ${preferences.dashboardLayout === 'detailed'
+                        className={`flex-1 px-6 py-3 rounded-xl transition-all text-[10px] font-black uppercase tracking-[0.15em] border shadow-inner ${preferences.dashboardLayout === 'detailed'
                                 ? 'bg-brand-gold text-black border-brand-gold'
                                 : 'bg-black/40 text-secondary/40 border-white/5 hover:text-white hover:bg-white/5'
                             }`}
@@ -186,7 +186,7 @@ export function PreferencesPanel() {
 
             {/* Notifications */}
             <div className="space-y-4">
-                <label className="block text-[10px] font-black text-secondary/40 uppercase tracking-widest">Alert Channels</label>
+                <label className="block text-[10px] font-black text-secondary/40 uppercase tracking-[0.15em]">Alert Channels</label>
                 <div className="space-y-4">
                     <label className="flex items-center gap-3 cursor-pointer group">
                         <div className="relative flex items-center">
@@ -200,7 +200,7 @@ export function PreferencesPanel() {
                                 <div className="w-2 h-2 bg-black rounded-sm opacity-0 peer-checked:opacity-100 transition-opacity"></div>
                             </div>
                         </div>
-                        <span className="text-[10px] font-black text-white uppercase tracking-widest group-hover:text-brand-gold transition-colors">Email Alerts</span>
+                        <span className="text-[10px] font-black text-white uppercase tracking-[0.15em] group-hover:text-brand-gold transition-colors">Email Alerts</span>
                     </label>
                     <label className="flex items-center gap-3 cursor-pointer group">
                         <div className="relative flex items-center">
@@ -214,18 +214,18 @@ export function PreferencesPanel() {
                                 <div className="w-2 h-2 bg-black rounded-sm opacity-0 peer-checked:opacity-100 transition-opacity"></div>
                             </div>
                         </div>
-                        <span className="text-[10px] font-black text-white uppercase tracking-widest group-hover:text-brand-gold transition-colors">Neural Push Notifications</span>
+                        <span className="text-[10px] font-black text-white uppercase tracking-[0.15em] group-hover:text-brand-gold transition-colors">Push Notifications</span>
                     </label>
                 </div>
             </div>
 
             {/* Notification Frequency */}
             <div className="space-y-3">
-                <label className="block text-[10px] font-black text-secondary/40 uppercase tracking-widest">Update Frequency</label>
+                <label className="block text-[10px] font-black text-secondary/40 uppercase tracking-[0.15em]">Update Frequency</label>
                 <select
                     value={preferences.notificationFrequency}
                     onChange={(e) => updatePreference('notificationFrequency', e.target.value as any)}
-                    className="w-full px-4 py-2 bg-black/40 border border-white/5 rounded-xl text-white text-[10px] font-black uppercase tracking-widest outline-none focus:border-brand-gold/50 transition-all shadow-inner"
+                    className="w-full px-4 py-2 bg-black/40 border border-white/5 rounded-xl text-white text-[10px] font-black uppercase tracking-[0.15em] outline-none focus:border-brand-gold/50 transition-all shadow-inner"
                 >
                     <option value="all" className="bg-maroon-950">Intensive (All)</option>
                     <option value="important" className="bg-maroon-950">Selective (Important)</option>

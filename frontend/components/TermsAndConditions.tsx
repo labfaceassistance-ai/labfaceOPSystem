@@ -17,7 +17,7 @@ export default function TermsAndConditions({ isOpen, onClose, onAccept }: TermsA
                 <div className="p-8 bg-slate-50/50 border-b border-slate-100 flex items-center justify-between">
                     <div>
                         <h2 className="text-2xl font-black text-identity-navy uppercase tracking-tight italic">Terms and Conditions</h2>
-                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">LabFace System - Operational Guidelines</p>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.15em] mt-1">LabFace System - Active Guidelines</p>
                     </div>
                     <button
                         onClick={onClose}
@@ -30,7 +30,7 @@ export default function TermsAndConditions({ isOpen, onClose, onAccept }: TermsA
                 {/* Scrollable Content */}
                 <div className="flex-1 overflow-y-auto p-8 space-y-10 text-slate-500">
                     <div className="bg-identity-sky/5 border border-identity-sky/10 rounded-2xl p-6 shadow-inner">
-                        <p className="text-[10px] font-black text-identity-navy uppercase tracking-widest leading-relaxed italic">
+                        <p className="text-[10px] font-black text-identity-navy uppercase tracking-[0.15em] leading-relaxed italic">
                             Please read these Terms and Conditions carefully before using the LabFace System.
                         </p>
                     </div>
@@ -62,7 +62,7 @@ export default function TermsAndConditions({ isOpen, onClose, onAccept }: TermsA
                         <p className="text-sm leading-relaxed mb-2">As a user of the System, you agree to:</p>
                         <ul className="list-disc list-inside space-y-1 text-sm ml-4">
                             <li>Provide accurate and truthful information during registration</li>
-                            <li>Maintain the confidentiality of your account credentials</li>
+                            <li>Keep your login details safe</li>
                             <li>Use the System only for its intended academic purposes</li>
                             <li>Comply with all university policies and regulations</li>
                             <li>Report any unauthorized access or security breaches immediately</li>
@@ -203,15 +203,15 @@ export default function TermsAndConditions({ isOpen, onClose, onAccept }: TermsA
                     </section>
 
                     <section>
-                        <h3 className="text-lg font-black text-identity-navy mb-4 uppercase tracking-widest italic">14. Contact Information</h3>
-                        <p className="text-[10px] font-bold uppercase tracking-widest leading-relaxed mb-4">
+                        <h3 className="text-lg font-black text-identity-navy mb-4 uppercase tracking-[0.15em] italic">14. Contact Information</h3>
+                        <p className="text-[10px] font-bold uppercase tracking-[0.15em] leading-relaxed mb-4">
                             For questions or concerns regarding these Terms and Conditions:
                         </p>
                         <div className="bg-slate-50 border border-slate-100 rounded-2xl p-6 shadow-inner">
-                            <p className="text-[10px] font-black text-identity-navy uppercase tracking-widest mb-2 italic">LabFace System Support</p>
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Email: support@labface.site</p>
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Polytechnic University of the Philippines - Lopez Campus</p>
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Computer Laboratory</p>
+                            <p className="text-[10px] font-black text-identity-navy uppercase tracking-[0.15em] mb-2 italic">LabFace System Support</p>
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.15em]">Email: support@labface.site</p>
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.15em]">Polytechnic University of the Philippines - Lopez Campus</p>
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.15em]">Computer Laboratory</p>
                         </div>
                     </section>
 

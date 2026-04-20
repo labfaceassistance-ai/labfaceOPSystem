@@ -91,7 +91,7 @@ export default function SessionTimeout({
 
     return (
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-xl z-[100] flex items-center justify-center p-4 animate-in fade-in duration-300">
-            <div className="bg-white rounded-[3rem] p-10 shadow-3xl border border-slate-200 max-w-md w-full animate-in zoom-in-95 duration-300 relative overflow-hidden">
+            <div className="bg-white rounded-[2rem] md:rounded-[3rem] p-6 sm:p-8 md:p-10 shadow-3xl border border-slate-200 max-w-md w-full animate-in zoom-in-95 duration-300 relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-identity-sky/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
                 
                 <div className="flex items-center gap-5 mb-10 relative z-10">
@@ -100,12 +100,12 @@ export default function SessionTimeout({
                     </div>
                     <div>
                         <h3 className="text-2xl font-black text-identity-navy uppercase tracking-tighter font-outfit">Session Expiry</h3>
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mt-1">Automatic Terminate in</p>
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mt-1">Auto Log Out in</p>
                     </div>
                 </div>
 
                 <div className="bg-slate-50 rounded-[2rem] p-10 mb-8 text-center border border-slate-100 shadow-inner relative group">
-                    <div className="text-7xl font-black text-identity-navy mb-2 font-outfit tabular-nums tracking-tighter">
+                    <div className="text-5xl md:text-7xl font-black text-identity-navy mb-2 font-outfit tabular-nums tracking-tighter">
                         {formatTime(timeLeft)}
                     </div>
                     <p className="text-[10px] font-black text-slate-300 uppercase tracking-[0.4em] text-center">Seconds Remaining</p>
@@ -115,9 +115,9 @@ export default function SessionTimeout({
                     <div className="flex items-start gap-4">
                         <ShieldAlert size={20} className="text-identity-sky mt-1 flex-shrink-0" />
                         <div className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 leading-relaxed">
-                            <p className="mb-2 text-identity-navy font-black tracking-widest text-[11px]">Identity Lock Active</p>
+                            <p className="mb-2 text-identity-navy font-black tracking-[0.15em] text-[11px]">Identity Lock Active</p>
                             <p className="opacity-60 text-[9px] leading-relaxed">
-                                Security protocols require periodic re-authentication. Extend to maintain your active node link or terminate securely.
+                                Your session will expire soon to protect your account. Choose an action below.
                             </p>
                         </div>
                     </div>
@@ -129,7 +129,7 @@ export default function SessionTimeout({
                         className="flex-1 px-8 py-5 bg-white hover:bg-rose-50 text-slate-300 hover:text-rose-500 rounded-2xl transition-all font-black uppercase tracking-[0.3em] text-[10px] border border-slate-100 shadow-sm flex items-center justify-center gap-3"
                     >
                         <LogOut size={18} />
-                        Terminate
+                        Log Out
                     </button>
                     <button
                         onClick={handleExtend}
@@ -144,7 +144,7 @@ export default function SessionTimeout({
                         ) : (
                             <>
                                 <RefreshCw size={18} className="group-hover:rotate-180 transition-transform duration-700" />
-                                Stabilize Link
+                                Stay Logged In
                             </>
                         )}
                     </button>

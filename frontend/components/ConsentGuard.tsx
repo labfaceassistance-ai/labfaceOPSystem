@@ -61,16 +61,16 @@ export default function ConsentGuard({ userId, onConsentAccepted }: ConsentGuard
 
             if (response.ok) {
                 setShowConsentModal(false);
-                showToast('Data Privacy Policy accepted successfully', 'success', 6000);
+                showToast('Protocol Synchronized', 'Data Privacy Policy accepted successfully', 'success', 6000);
                 if (onConsentAccepted) onConsentAccepted();
             } else {
                 const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
                 console.error('[ConsentGuard] Failed to record consent:', errorData);
-                showToast('Failed to save consent. Please try again or contact support.', 'error', 6000);
+                showToast('Action Required', 'Failed to save consent. Please try again or contact support.', 'error', 6000);
             }
         } catch (error) {
             console.error('[ConsentGuard] Error recording consent:', error);
-            showToast('An error occurred while saving your consent. Please try again.', 'error', 6000);
+            showToast('System Error', 'An error occurred while saving your consent. Please try again.', 'error', 6000);
         }
     };
 
@@ -84,7 +84,7 @@ export default function ConsentGuard({ userId, onConsentAccepted }: ConsentGuard
             isOpen={showConsentModal}
             onClose={() => {
                 // Don't allow closing without accepting
-                showToast('You must accept the Data Privacy Policy to continue using the system.', 'error');
+                showToast('Access Denied', 'You must accept the Data Privacy Policy to continue using the system.', 'error');
             }}
             onAccept={handleAcceptConsent}
         />

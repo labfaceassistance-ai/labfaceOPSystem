@@ -4,7 +4,7 @@
  */
 
 import { useState } from 'react';
-import { Check, Download, CheckCircle, XCircle, Eye } from 'lucide-react'; // Removing unused imports if any, but keeping Lucide icons used
+import { Check, Download, CheckCircle, XCircle, Eye, Users } from 'lucide-react';
 import axios from 'axios';
 import { getToken } from '../utils/auth';
 import ConfirmModal from './ConfirmModal';
@@ -67,9 +67,6 @@ export default function BulkActions({ users, onRefresh, onView }: BulkActionsPro
         setConfirmModal(prev => ({ ...prev, isOpen: false }));
 
         const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:5000';
-        let successful = 0;
-        let failed = 0;
-
         for (const userId of Array.from(selectedUsers)) {
             try {
                 await axios.post(
@@ -81,18 +78,14 @@ export default function BulkActions({ users, onRefresh, onView }: BulkActionsPro
                         }
                     }
                 );
-                successful++;
             } catch (error) {
                 console.error(`Failed to approve user ${userId}:`, error);
-                failed++;
             }
             setProgress(prev => ({ ...prev, current: prev.current + 1 }));
         }
 
         setIsProcessing(false);
         setSelectedUsers(new Set());
-        // Alert can be replaced with a toast if available, but staying minimal for now as per instructions
-        // alert(`Bulk approval complete!\nSuccessful: ${successful}\nFailed: ${failed}`);
         onRefresh();
     };
 
@@ -100,8 +93,8 @@ export default function BulkActions({ users, onRefresh, onView }: BulkActionsPro
         if (selectedUsers.size === 0) return;
         setConfirmModal({
             isOpen: true,
-            title: 'Approve Users',
-            message: `Are you sure you want to approve ${selectedUsers.size} users?`,
+            title: 'Authorize Collective',
+            message: `Verify and approve ${selectedUsers.size} nodes within the system?`,
             type: 'success',
             onConfirm: executeBulkApprove
         });
@@ -113,9 +106,6 @@ export default function BulkActions({ users, onRefresh, onView }: BulkActionsPro
         setConfirmModal(prev => ({ ...prev, isOpen: false }));
 
         const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:5000';
-        let successful = 0;
-        let failed = 0;
-
         for (const userId of Array.from(selectedUsers)) {
             try {
                 await axios.post(
@@ -127,29 +117,26 @@ export default function BulkActions({ users, onRefresh, onView }: BulkActionsPro
                         }
                     }
                 );
-                successful++;
             } catch (error) {
                 console.error(`Failed to reject user ${userId}:`, error);
-                failed++;
             }
             setProgress(prev => ({ ...prev, current: prev.current + 1 }));
         }
 
         setIsProcessing(false);
         setSelectedUsers(new Set());
-        // alert(`Bulk rejection complete!\nSuccessful: ${successful}\nFailed: ${failed}`);
         onRefresh();
     };
 
     const bulkReject = () => {
         if (selectedUsers.size === 0) return;
-        const reason = prompt('Enter rejection reason (will apply to all selected):');
+        const reason = prompt('State rejection rationale (applies to all selected nodes):');
         if (!reason) return;
 
         setConfirmModal({
             isOpen: true,
-            title: 'Reject Users',
-            message: `Are you sure you want to reject ${selectedUsers.size} users with reason: "${reason}"?`,
+            title: 'Revoke Permissions',
+            message: `Permanently reject ${selectedUsers.size} nodes from system access?`,
             type: 'danger',
             onConfirm: () => executeBulkReject(reason)
         });
@@ -172,53 +159,56 @@ export default function BulkActions({ users, onRefresh, onView }: BulkActionsPro
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `users_export_${new Date().toISOString().split('T')[0]}.csv`;
+        a.download = `registry_export_${new Date().toISOString().split('T')[0]}.csv`;
         a.click();
         URL.revokeObjectURL(url);
     };
 
     return (
-        <>
+        <div className="font-outfit">
             {/* Selection Bar */}
-            <div className="bg-blue-500/10 border-2 border-blue-500/50 rounded-lg p-4 mb-4">
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
+            <div className="identity-glass p-6 rounded-2xl md:rounded-3xl border border-identity-sky/10 mb-8 shadow-xl">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                    <div className="flex items-center gap-6">
                         <button
                             onClick={selectAll}
-                            className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg transition-colors flex items-center gap-2"
+                            className="bg-identity-navy hover:bg-identity-sky text-white px-6 py-3 rounded-2xl transition-all font-black uppercase tracking-[0.2em] text-[10px] flex items-center gap-3 shadow-lg shadow-identity-navy/10 active:scale-95 italic"
                         >
-                            <Check size={18} />
-                            {selectedUsers.size === users.length ? 'Deselect All' : 'Select All'}
+                            <Check size={16} />
+                            {selectedUsers.size === users.length ? 'Deselect Collective' : 'Select Collective'}
                         </button>
-                        <span className="text-white font-medium">
-                            {selectedUsers.size} user{selectedUsers.size !== 1 ? 's' : ''} selected
-                        </span>
+                        <div className="flex items-center gap-3">
+                            <div className="w-1.5 h-1.5 rounded-full bg-identity-sky animate-pulse shadow-[0_0_8px_rgba(92,180,228,0.5)]" />
+                            <span className="text-identity-navy font-black text-xs uppercase tracking-[0.15em] italic">
+                                {selectedUsers.size} Nodes Targeted
+                            </span>
+                        </div>
                     </div>
 
                     {selectedUsers.size > 0 && (
-                        <div className="flex gap-2">
+                        <div className="flex flex-wrap gap-3">
                             <button
                                 onClick={bulkApprove}
                                 disabled={isProcessing}
-                                className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-all font-semibold flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="px-6 py-3 bg-identity-sky hover:bg-identity-navy text-white rounded-2xl transition-all font-black uppercase tracking-[0.2em] text-[10px] flex items-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed shadow-xl shadow-identity-sky/10 active:scale-95 italic"
                             >
-                                <CheckCircle size={18} />
-                                Approve Selected
+                                <CheckCircle size={16} />
+                                Authorize
                             </button>
                             <button
                                 onClick={bulkReject}
                                 disabled={isProcessing}
-                                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-all font-semibold flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="px-6 py-3 bg-rose-500 hover:bg-rose-600 text-white rounded-2xl transition-all font-black uppercase tracking-[0.2em] text-[10px] flex items-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed shadow-xl shadow-rose-900/10 active:scale-95 italic"
                             >
-                                <XCircle size={18} />
-                                Reject Selected
+                                <XCircle size={16} />
+                                Revoke
                             </button>
                             <button
                                 onClick={bulkExport}
                                 disabled={isProcessing}
-                                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all font-semibold flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="px-6 py-3 bg-white border border-identity-sky/20 text-identity-navy hover:bg-identity-sky hover:text-white rounded-2xl transition-all font-black uppercase tracking-[0.2em] text-[10px] flex items-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm active:scale-95 italic"
                             >
-                                <Download size={18} />
+                                <Download size={16} />
                                 Export
                             </button>
                         </div>
@@ -228,16 +218,16 @@ export default function BulkActions({ users, onRefresh, onView }: BulkActionsPro
 
             {/* Progress Bar */}
             {isProcessing && (
-                <div className="bg-slate-900 border border-slate-800 rounded-lg p-4 mb-4">
-                    <div className="flex items-center justify-between mb-2">
-                        <span className="text-white font-medium">Processing...</span>
-                        <span className="text-slate-400 text-sm">
-                            {progress.current} / {progress.total}
+                <div className="identity-glass border border-identity-sky/10 rounded-2xl p-8 mb-8 shadow-xl">
+                    <div className="flex items-center justify-between mb-4">
+                        <span className="text-identity-navy font-black uppercase tracking-[0.2em] text-[10px] italic">Operation Sequencing...</span>
+                        <span className="text-identity-sky font-black uppercase tracking-[0.2em] text-[10px]">
+                            {progress.current} / {progress.total} NODES
                         </span>
                     </div>
-                    <div className="w-full bg-slate-800 rounded-full h-2">
+                    <div className="w-full bg-identity-sky/5 rounded-full h-3 border border-identity-sky/10">
                         <div
-                            className="bg-blue-500 h-2 rounded-full transition-all duration-300"
+                            className="bg-identity-sky h-full rounded-full transition-all duration-300 shadow-[0_0_12px_rgba(92,180,228,0.4)]"
                             style={{ width: `${(progress.current / progress.total) * 100}%` }}
                         />
                     </div>
@@ -245,40 +235,50 @@ export default function BulkActions({ users, onRefresh, onView }: BulkActionsPro
             )}
 
             {/* User List with Checkboxes */}
-            <div className="space-y-2">
+            <div className="space-y-4">
                 {users.map(user => (
                     <div
                         key={user.id}
-                        className={`bg-slate-900 border rounded-lg p-4 transition-all ${selectedUsers.has(user.id)
-                            ? 'border-blue-500 bg-blue-500/10'
-                            : 'border-slate-800 hover:border-slate-700'
+                        onClick={() => toggleUser(user.id)}
+                        className={`identity-glass border rounded-[2rem] p-6 transition-all cursor-pointer group hover:scale-[1.01] active:scale-100 ${selectedUsers.has(user.id)
+                            ? 'border-identity-sky bg-identity-sky/5 shadow-identity-sky/5'
+                            : 'border-identity-sky/5 hover:border-identity-sky/20'
                             }`}
                     >
-                        <div className="flex items-center gap-4">
-                            <input
-                                type="checkbox"
-                                checked={selectedUsers.has(user.id)}
-                                onChange={() => toggleUser(user.id)}
-                                className="w-5 h-5 text-blue-600 bg-slate-800 border-slate-700 rounded focus:ring-blue-500"
-                            />
+                        <div className="flex items-center gap-6">
+                            <div className="relative flex items-center justify-center">
+                                <input
+                                    type="checkbox"
+                                    checked={selectedUsers.has(user.id)}
+                                    onChange={(e) => {
+                                        e.stopPropagation();
+                                        toggleUser(user.id);
+                                    }}
+                                    className="w-6 h-6 text-identity-sky bg-white border-identity-sky/20 rounded-lg focus:ring-identity-sky cursor-pointer appearance-none checked:bg-identity-sky checked:border-transparent transition-all border-2"
+                                />
+                                {selectedUsers.has(user.id) && <Check size={14} className="absolute text-white pointer-events-none" />}
+                            </div>
                             <div className="flex-1">
-                                <h4 className="text-white font-medium">{user.name}</h4>
-                                <p className="text-sm text-slate-400">
+                                <h4 className="text-identity-navy font-black uppercase tracking-tight italic">{user.name}</h4>
+                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mt-1 italic">
                                     {user.student_id || user.professor_id} • {user.email}
                                 </p>
                             </div>
-                            <div className="flex items-center gap-2">
-                                <span className={`px-3 py-1 rounded-full text-xs font-medium ${user.approval_status === 'pending'
-                                    ? 'bg-yellow-500/20 text-yellow-400'
+                            <div className="flex items-center gap-6">
+                                <span className={`px-4 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-[0.2em] border shadow-sm ${user.approval_status === 'pending'
+                                    ? 'bg-amber-500/10 text-amber-600 border-amber-500/20'
                                     : user.approval_status === 'approved'
-                                        ? 'bg-green-500/20 text-green-400'
-                                        : 'bg-red-500/20 text-red-400'
+                                        ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20'
+                                        : 'bg-rose-500/10 text-rose-600 border-rose-500/20'
                                     }`}>
                                     {user.approval_status}
                                 </span>
                                 <button
-                                    onClick={() => onView(user.id)}
-                                    className="p-2 hover:bg-slate-800 rounded-full text-slate-400 hover:text-white transition-colors"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        onView(user.id);
+                                    }}
+                                    className="p-3 bg-white border border-identity-sky/10 rounded-2xl text-identity-sky hover:bg-identity-navy hover:text-white transition-all shadow-sm active:scale-90"
                                     title="View Details"
                                 >
                                     <Eye size={20} />
@@ -297,6 +297,7 @@ export default function BulkActions({ users, onRefresh, onView }: BulkActionsPro
                 message={confirmModal.message}
                 type={confirmModal.type}
             />
-        </>
+        </div>
     );
 }
+

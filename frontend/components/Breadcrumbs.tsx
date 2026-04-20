@@ -54,14 +54,14 @@ export default function Breadcrumbs() {
                             <ChevronRight size={14} className="text-secondary/20 mx-2" />
                         )}
                         {isLast ? (
-                            <span className="text-white font-black text-[10px] uppercase tracking-widest flex items-center gap-2 px-3 py-1.5 bg-white/5 rounded-lg border border-white/5 shadow-inner">
+                            <span className="text-white font-black text-[10px] uppercase tracking-[0.15em] flex items-center gap-2 px-3 py-1.5 bg-white/5 rounded-lg border border-white/5 shadow-inner">
                                 {isFirst && <Home size={14} className="text-brand-gold" />}
                                 {crumb.label}
                             </span>
                         ) : (
                             <Link
                                 href={crumb.href}
-                                className="text-secondary/40 hover:text-white transition-colors flex items-center gap-2 text-[10px] font-black uppercase tracking-widest px-2 py-1 hover:bg-white/2 rounded-lg"
+                                className="text-secondary/40 hover:text-white transition-colors flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.15em] px-2 py-1 hover:bg-white/2 rounded-lg"
                             >
                                 {isFirst && <Home size={14} className="text-brand-gold/60" />}
                                 {crumb.label}

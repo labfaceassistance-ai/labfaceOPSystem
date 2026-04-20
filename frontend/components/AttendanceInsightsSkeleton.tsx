@@ -7,7 +7,7 @@ export default function AttendanceInsightsSkeleton() {
     return (
         <div className="space-y-6 animate-pulse">
             {/* Overall Summary Card Skeleton */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 bg-slate-900/50 p-6 rounded-2xl border border-slate-800">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 bg-slate-900/50 p-6 rounded-2xl border border-slate-800">
                 {[1, 2, 3, 4].map((i) => (
                     <div key={i} className="flex items-center gap-3">
                         <div className="w-12 h-12 bg-slate-800 rounded-xl" />
@@ -35,7 +35,7 @@ export default function AttendanceInsightsSkeleton() {
             </div>
 
             {/* Stats Grid Skeleton */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {[1, 2, 3].map((i) => (
                     <div key={i} className="bg-slate-900 border border-slate-800 rounded-lg p-6">
                         <div className="flex items-center justify-between mb-2">
@@ -80,7 +80,7 @@ export default function AttendanceInsightsSkeleton() {
                 <div className="h-6 bg-slate-800 rounded w-56 mb-6" />
 
                 {/* Summary Cards */}
-                <div className="grid grid-cols-3 gap-4 mb-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
                     {[1, 2, 3, 4, 5, 6].map((i) => (
                         <div key={i} className="rounded-lg p-4 border bg-slate-800/50 border-slate-700">
                             <div className="h-3 bg-slate-700 rounded w-12 mb-2" />

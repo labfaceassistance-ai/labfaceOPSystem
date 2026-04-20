@@ -1,13 +1,14 @@
-'use client';
+﻿'use client';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
 import {
     Brain, Users, AlertTriangle, TrendingUp, Target,
-    Activity, CheckCircle, XCircle
+    Activity, CheckCircle, XCircle, ChevronLeft
 } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import { getToken, getUser } from '@/utils/auth';
+import Link from 'next/link';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
 
@@ -47,7 +48,7 @@ export default function AdminAIPage() {
         const userData = getUser();
 
         if (!token || !userData) {
-            router.push('/login');
+            router.push('/admin/login');
             return;
         }
 
@@ -110,7 +111,7 @@ export default function AdminAIPage() {
             const highRisk = studentsWithRisk.filter(s => s.risk_level === 'high');
             const mediumRisk = studentsWithRisk.filter(s => s.risk_level === 'medium');
             const lowRisk = studentsWithRisk.filter(s => s.risk_level === 'low');
-            const avgSuccess = studentsWithRisk.reduce((sum, s) => sum + (s.success_probability || 0), 0) / studentsWithRisk.length;
+            const avgSuccess = studentsWithRisk.reduce((sum, s) => sum + (s.success_probability || 0), 0) / (studentsWithRisk.length || 1);
             const predictedDropouts = studentsWithRisk.filter(s => s.success_probability < 0.4).length;
 
             setInsights({
@@ -132,189 +133,199 @@ export default function AdminAIPage() {
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
-                <Navbar />
-                <div className="flex items-center justify-center h-screen">
-                    <div className="text-white text-xl">Loading AI insights...</div>
-                </div>
+            <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center gap-6">
+                <div className="w-16 h-16 border-4 border-identity-sky/20 border-t-identity-sky rounded-full animate-spin"></div>
+                <p className="text-identity-navy/40 text-[10px] font-black uppercase tracking-[0.4em] animate-pulse">Loading Analytics...</p>
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+        <div className="min-h-screen bg-slate-50 font-sans selection:bg-identity-sky/20">
             <Navbar />
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                {/* Header */}
+            <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-20">
+                
                 <div className="mb-8">
-                    <h1 className="text-3xl font-bold text-white mb-2 flex items-center gap-3">
-                        <Brain className="text-purple-400" size={32} />
-                        System-Wide AI Analytics
-                    </h1>
-                    <p className="text-slate-400">Predictive insights across all students</p>
+                    <Link href="/admin/dashboard" className="inline-flex items-center text-slate-400 hover:text-identity-navy font-black uppercase text-[10px] tracking-[0.15em] transition-colors group bg-white/50 px-5 py-3 rounded-2xl border border-slate-200">
+                        <ChevronLeft size={16} className="mr-3 group-hover:-translate-x-1 transition-transform" />
+                        Back to Admin Portal
+                    </Link>
                 </div>
 
-                {/* Overview Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-                    {/* Total Students */}
-                    <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-xl p-6">
-                        <div className="flex items-center justify-between mb-4">
-                            <Users className="text-blue-400" size={32} />
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12 animate-fade-in">
+                    <div>
+                        <h1 className="text-3xl md:text-4xl font-black text-identity-navy mb-3 uppercase tracking-tighter italic flex items-center gap-4">
+                            <div className="bg-identity-sky/10 p-3 rounded-2xl">
+                                <Brain className="text-identity-sky w-8 h-8" />
+                            </div>
+                            Monitor Predictive Analytics
+                        </h1>
+                        <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.4em] ml-2">Behavioral Insights Engine</p>
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8 animate-fade-in">
+                    <div className="identity-glass p-8 rounded-[32px] shadow-xl border border-identity-sky/10 relative overflow-hidden group">
+                        <div className="absolute inset-0 bg-gradient-to-br from-identity-sky/5 via-transparent to-transparent opacity-50" />
+                        <div className="flex items-center justify-between mb-6 relative z-10">
+                            <div className="p-4 bg-identity-navy/5 rounded-2xl text-identity-navy">
+                                <Users size={28} />
+                            </div>
                             <div className="text-right">
-                                <div className="text-3xl font-bold text-white">{insights.totalStudents}</div>
-                                <div className="text-sm text-slate-400">Total Students</div>
+                                <div className="text-3xl md:text-4xl font-black text-identity-navy tracking-tighter">{insights.totalStudents}</div>
+                                <div className="text-[10px] font-bold uppercase tracking-[0.15em] text-slate-400 mt-1">Monitored Nodes</div>
                             </div>
                         </div>
                     </div>
 
-                    {/* High Risk */}
-                    <div className="bg-red-900/20 backdrop-blur-sm border border-red-900/50 rounded-xl p-6">
-                        <div className="flex items-center justify-between mb-4">
-                            <AlertTriangle className="text-red-400" size={32} />
+                    <div className="identity-glass p-8 rounded-[32px] shadow-xl border border-rose-500/10 relative overflow-hidden group">
+                        <div className="absolute inset-0 bg-gradient-to-br from-rose-500/5 via-transparent to-transparent opacity-50" />
+                        <div className="flex items-center justify-between mb-6 relative z-10">
+                            <div className="p-4 bg-rose-500/10 rounded-2xl text-rose-500">
+                                <AlertTriangle size={28} />
+                            </div>
                             <div className="text-right">
-                                <div className="text-3xl font-bold text-red-400">{insights.highRiskCount}</div>
-                                <div className="text-sm text-slate-400">High Risk</div>
+                                <div className="text-3xl md:text-4xl font-black text-rose-500 tracking-tighter">{insights.highRiskCount}</div>
+                                <div className="text-[10px] font-bold uppercase tracking-[0.15em] text-slate-400 mt-1">Critical Anomalies</div>
                             </div>
                         </div>
-                        <div className="text-xs text-slate-400">
-                            {((insights.highRiskCount / insights.totalStudents) * 100).toFixed(1)}% of total
+                        <div className="text-[9px] font-black uppercase tracking-[0.15em] text-rose-400 mt-2 relative z-10 bg-rose-500/5 px-4 py-2 rounded-2xl inline-block">
+                            {insights.totalStudents > 0 ? ((insights.highRiskCount / insights.totalStudents) * 100).toFixed(1) : 0}% OF ALL STUDENTS
                         </div>
                     </div>
 
-                    {/* Medium Risk */}
-                    <div className="bg-yellow-900/20 backdrop-blur-sm border border-yellow-900/50 rounded-xl p-6">
-                        <div className="flex items-center justify-between mb-4">
-                            <Activity className="text-yellow-400" size={32} />
+                    <div className="identity-glass p-8 rounded-[32px] shadow-xl border border-emerald-500/10 relative overflow-hidden group">
+                        <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 via-transparent to-transparent opacity-50" />
+                        <div className="flex items-center justify-between mb-6 relative z-10">
+                            <div className="p-4 bg-emerald-500/10 rounded-2xl text-emerald-500">
+                                <CheckCircle size={28} />
+                            </div>
                             <div className="text-right">
-                                <div className="text-3xl font-bold text-yellow-400">{insights.mediumRiskCount}</div>
-                                <div className="text-sm text-slate-400">Medium Risk</div>
+                                <div className="text-3xl md:text-4xl font-black text-emerald-500 tracking-tighter">{insights.lowRiskCount}</div>
+                                <div className="text-[10px] font-bold uppercase tracking-[0.15em] text-slate-400 mt-1">Stable Records</div>
                             </div>
                         </div>
-                        <div className="text-xs text-slate-400">
-                            {((insights.mediumRiskCount / insights.totalStudents) * 100).toFixed(1)}% of total
-                        </div>
-                    </div>
-
-                    {/* Low Risk */}
-                    <div className="bg-green-900/20 backdrop-blur-sm border border-green-900/50 rounded-xl p-6">
-                        <div className="flex items-center justify-between mb-4">
-                            <CheckCircle className="text-green-400" size={32} />
-                            <div className="text-right">
-                                <div className="text-3xl font-bold text-green-400">{insights.lowRiskCount}</div>
-                                <div className="text-sm text-slate-400">Low Risk</div>
-                            </div>
-                        </div>
-                        <div className="text-xs text-slate-400">
-                            {((insights.lowRiskCount / insights.totalStudents) * 100).toFixed(1)}% of total
-                        </div>
-                    </div>
-
-                    {/* Avg Success Rate */}
-                    <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-xl p-6">
-                        <div className="flex items-center justify-between mb-4">
-                            <Target className="text-purple-400" size={32} />
-                            <div className="text-right">
-                                <div className="text-3xl font-bold text-white">{insights.avgSuccessProbability.toFixed(1)}%</div>
-                                <div className="text-sm text-slate-400">Avg Success Rate</div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Predicted Dropouts */}
-                    <div className="bg-red-900/20 backdrop-blur-sm border border-red-900/50 rounded-xl p-6">
-                        <div className="flex items-center justify-between mb-4">
-                            <XCircle className="text-red-400" size={32} />
-                            <div className="text-right">
-                                <div className="text-3xl font-bold text-red-400">{insights.predictedDropouts}</div>
-                                <div className="text-sm text-slate-400">Predicted Dropouts</div>
-                            </div>
-                        </div>
-                        <div className="text-xs text-slate-400">
-                            Success probability &lt; 40%
+                        <div className="text-[9px] font-black uppercase tracking-[0.15em] text-emerald-500 mt-2 relative z-10 bg-emerald-500/5 px-4 py-2 rounded-2xl inline-block">
+                            {insights.totalStudents > 0 ? ((insights.lowRiskCount / insights.totalStudents) * 100).toFixed(1) : 0}% OF ALL STUDENTS
                         </div>
                     </div>
                 </div>
 
-                {/* Risk Distribution */}
-                <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-xl p-6 mb-8">
-                    <h2 className="text-xl font-bold text-white mb-4">Risk Distribution</h2>
-                    <div className="space-y-4">
-                        {/* High Risk Bar */}
-                        <div>
-                            <div className="flex justify-between text-sm mb-1">
-                                <span className="text-red-400">High Risk</span>
-                                <span className="text-white">{insights.highRiskCount} students</span>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12 animate-fade-in">
+                    <div className="identity-glass p-8 rounded-[32px] shadow-xl border border-slate-200">
+                         <div className="flex items-center gap-4 mb-6">
+                            <div className="p-3 bg-identity-sky/10 rounded-2xl text-identity-sky">
+                                <Target size={24} />
                             </div>
-                            <div className="w-full bg-slate-700 rounded-full h-4">
-                                <div
-                                    className="bg-red-400 h-4 rounded-full transition-all duration-1000"
-                                    style={{ width: `${(insights.highRiskCount / insights.totalStudents) * 100}%` }}
-                                />
-                            </div>
+                            <h3 className="text-sm font-black text-identity-navy uppercase tracking-[0.15em]">System Reliability Coefficient</h3>
                         </div>
+                        <div className="flex items-end gap-4 mt-4">
+                            <span className="text-4xl md:text-5xl font-black text-identity-navy tracking-tighter italic">{insights.avgSuccessProbability.toFixed(1)}%</span>
+                        </div>
+                        <p className="text-[10px] font-bold text-slate-400 mt-3 uppercase tracking-[0.15em]">AI Prediction Confidence</p>
+                    </div>
 
-                        {/* Medium Risk Bar */}
-                        <div>
-                            <div className="flex justify-between text-sm mb-1">
-                                <span className="text-yellow-400">Medium Risk</span>
-                                <span className="text-white">{insights.mediumRiskCount} students</span>
+                    <div className="identity-glass p-8 rounded-[32px] shadow-xl border border-rose-200 bg-rose-50/30">
+                        <div className="flex items-center gap-4 mb-6">
+                            <div className="p-3 bg-rose-500/10 rounded-2xl text-rose-500">
+                                <XCircle size={24} />
                             </div>
-                            <div className="w-full bg-slate-700 rounded-full h-4">
-                                <div
-                                    className="bg-yellow-400 h-4 rounded-full transition-all duration-1000"
-                                    style={{ width: `${(insights.mediumRiskCount / insights.totalStudents) * 100}%` }}
-                                />
-                            </div>
+                            <h3 className="text-sm font-black text-rose-500 uppercase tracking-[0.15em]">Forecasted Deregistrations</h3>
                         </div>
-
-                        {/* Low Risk Bar */}
-                        <div>
-                            <div className="flex justify-between text-sm mb-1">
-                                <span className="text-green-400">Low Risk</span>
-                                <span className="text-white">{insights.lowRiskCount} students</span>
-                            </div>
-                            <div className="w-full bg-slate-700 rounded-full h-4">
-                                <div
-                                    className="bg-green-400 h-4 rounded-full transition-all duration-1000"
-                                    style={{ width: `${(insights.lowRiskCount / insights.totalStudents) * 100}%` }}
-                                />
-                            </div>
+                        <div className="flex items-end gap-4 mt-4">
+                            <span className="text-4xl md:text-5xl font-black text-rose-500 tracking-tighter italic">{insights.predictedDropouts}</span>
                         </div>
+                        <p className="text-[10px] font-bold text-rose-400 mt-3 uppercase tracking-[0.15em]">Students with &lt; 40% attendance</p>
                     </div>
                 </div>
 
-                {/* High Risk Students Table */}
-                <div className="bg-slate-800/50 backdrop-blur-sm border border-red-900/50 rounded-xl p-6">
-                    <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-                        <AlertTriangle className="text-red-400" size={24} />
-                        Critical: High Risk Students
+                <div className="identity-glass p-6 sm:p-8 md:p-10 rounded-[2rem] md:rounded-[3rem] shadow-2xl border border-identity-sky/10 mb-12 bg-white/40 animate-fade-in">
+                    <h2 className="text-xl font-black text-identity-navy mb-8 uppercase tracking-tighter italic flex items-center gap-4">
+                        <Activity className="text-identity-sky w-6 h-6" />
+                        Analyze Threat Distribution
                     </h2>
+                    
+                    <div className="space-y-6">
+                        <div>
+                            <div className="flex justify-between items-end mb-2">
+                                <span className="text-[10px] font-black text-rose-500 uppercase tracking-[0.15em]">Critical Risk Threshold</span>
+                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.15em]">{insights.highRiskCount} Identities</span>
+                            </div>
+                            <div className="w-full bg-slate-100 rounded-full h-3 border border-slate-200 overflow-hidden shadow-inner">
+                                <div
+                                    className="bg-rose-500 h-full rounded-full transition-all duration-1000 shadow-[0_0_10px_rgba(244,63,94,0.6)]"
+                                    style={{ width: `${insights.totalStudents > 0 ? (insights.highRiskCount / insights.totalStudents) * 100 : 0}%` }}
+                                />
+                            </div>
+                        </div>
+
+                        <div>
+                            <div className="flex justify-between items-end mb-2">
+                                <span className="text-[10px] font-black text-amber-500 uppercase tracking-[0.15em]">Moderate Instability</span>
+                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.15em]">{insights.mediumRiskCount} Identities</span>
+                            </div>
+                            <div className="w-full bg-slate-100 rounded-full h-3 border border-slate-200 overflow-hidden shadow-inner">
+                                <div
+                                    className="bg-amber-400 h-full rounded-full transition-all duration-1000"
+                                    style={{ width: `${insights.totalStudents > 0 ? (insights.mediumRiskCount / insights.totalStudents) * 100 : 0}%` }}
+                                />
+                            </div>
+                        </div>
+
+                        <div>
+                            <div className="flex justify-between items-end mb-2">
+                                <span className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.15em]">Secure Status</span>
+                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.15em]">{insights.lowRiskCount} Identities</span>
+                            </div>
+                            <div className="w-full bg-slate-100 rounded-full h-3 border border-slate-200 overflow-hidden shadow-inner">
+                                <div
+                                    className="bg-emerald-400 h-full rounded-full transition-all duration-1000"
+                                    style={{ width: `${insights.totalStudents > 0 ? (insights.lowRiskCount / insights.totalStudents) * 100 : 0}%` }}
+                                />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="identity-glass p-6 sm:p-8 md:p-10 rounded-[2rem] md:rounded-[3rem] shadow-2xl border border-rose-500/20 bg-white/40 animate-fade-in relative overflow-hidden">
+                    <div className="absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-rose-50 to-transparent pointer-events-none opacity-50" />
+                    <h2 className="text-xl font-black text-rose-500 mb-8 uppercase tracking-tighter italic flex items-center gap-4 relative z-10">
+                        <AlertTriangle className="text-rose-500 w-6 h-6" />
+                        Review At-Risk Students
+                    </h2>
+
                     {highRiskStudents.length > 0 ? (
-                        <div className="overflow-x-auto">
-                            <table className="w-full">
+                        <div className="table-responsive-wrapper relative z-10">
+                            <table className="w-full text-left border-collapse">
                                 <thead>
-                                    <tr className="border-b border-slate-700">
-                                        <th className="text-left py-3 px-4 text-slate-400 font-medium">Student ID</th>
-                                        <th className="text-left py-3 px-4 text-slate-400 font-medium">Name</th>
-                                        <th className="text-center py-3 px-4 text-slate-400 font-medium">Attendance</th>
-                                        <th className="text-center py-3 px-4 text-slate-400 font-medium">Risk Score</th>
-                                        <th className="text-center py-3 px-4 text-slate-400 font-medium">Status</th>
+                                    <tr className="bg-slate-50/80 border-b border-slate-200">
+                                        <th className="px-6 py-5 text-identity-navy font-black uppercase tracking-[0.15em] text-[10px]">Course Code</th>
+                                        <th className="px-6 py-5 text-identity-navy font-black uppercase tracking-[0.15em] text-[10px]">Target Name</th>
+                                        <th className="px-6 py-5 text-identity-navy font-black uppercase tracking-[0.15em] text-[10px] text-center">Compliance Rate</th>
+                                        <th className="px-6 py-5 text-identity-navy font-black uppercase tracking-[0.15em] text-[10px] text-center">Risk Score</th>
+                                        <th className="px-6 py-5 text-identity-navy font-black uppercase tracking-[0.15em] text-[10px] text-center">System Flag</th>
                                     </tr>
                                 </thead>
-                                <tbody>
+                                <tbody className="divide-y divide-slate-100">
                                     {highRiskStudents.map((student, index) => (
-                                        <tr key={index} className="border-b border-slate-700/50 hover:bg-slate-700/30">
-                                            <td className="py-3 px-4 text-white">{student.student_id}</td>
-                                            <td className="py-3 px-4 text-white">{student.name}</td>
-                                            <td className="py-3 px-4 text-center">
-                                                <span className="text-yellow-400">{student.attendance_rate}%</span>
+                                        <tr key={index} className="hover:bg-slate-50/50 transition-colors group">
+                                            <td className="px-6 py-5">
+                                                <code className="text-[10px] bg-white px-3 py-1.5 rounded-2xl text-identity-navy font-mono border border-slate-200 font-bold tracking-[0.15em]">
+                                                    {student.student_id}
+                                                </code>
                                             </td>
-                                            <td className="py-3 px-4 text-center">
-                                                <span className="text-red-400 font-bold">{student.risk_score?.toFixed(0) || 'N/A'}</span>
+                                            <td className="px-6 py-5 text-identity-navy font-black text-xs uppercase tracking-[0.15em] italic">
+                                                {student.name}
                                             </td>
-                                            <td className="py-3 px-4 text-center">
-                                                <span className="px-3 py-1 bg-red-900/30 border border-red-900/50 text-red-400 rounded-full text-sm">
-                                                    HIGH RISK
+                                            <td className="px-6 py-5 text-center">
+                                                <span className="text-amber-500 font-black text-xs">{student.attendance_rate}%</span>
+                                            </td>
+                                            <td className="px-6 py-5 text-center">
+                                                <span className="text-rose-500 font-black text-sm">{student.risk_score?.toFixed(0) || 'N/A'}</span>
+                                            </td>
+                                            <td className="px-6 py-5 text-center">
+                                                <span className="px-4 py-2 bg-rose-50 text-rose-500 border border-rose-100 rounded-2xl text-[9px] font-black uppercase tracking-[0.15em]">
+                                                    CRITICAL ALERT
                                                 </span>
                                             </td>
                                         </tr>
@@ -323,10 +334,14 @@ export default function AdminAIPage() {
                             </table>
                         </div>
                     ) : (
-                        <p className="text-green-400">No high-risk students identified. Excellent!</p>
+                        <div className="bg-emerald-50 border border-emerald-100 rounded-2xl p-6 text-emerald-600 text-xs flex items-center gap-4 font-black uppercase tracking-[0.15em] shadow-inner relative z-10">
+                            <CheckCircle className="w-5 h-5 shrink-0" />
+                            NO AT-RISK STUDENTS DETECTED.
+                        </div>
                     )}
                 </div>
-            </div>
+
+            </main>
         </div>
     );
 }

@@ -1,8 +1,10 @@
-"use client";
+﻿"use client";
 import { useState } from 'react';
-import { Calendar, Clock, MapPin, User as UserIcon, AlertCircle, XCircle, Briefcase, Coffee, PartyPopper, CheckCircle, BookOpen, TrendingUp, User, Brain, ChevronLeft, ChevronRight, Zap } from 'lucide-react';
+import { Calendar, Clock, MapPin, User as UserIcon, AlertCircle, XCircle, Briefcase, Coffee, PartyPopper, CheckCircle, BookOpen, TrendingUp, Zap, ChevronRight } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { isHoliday } from '@/utils/holidays';
+import Skeleton from '@/components/ui/Skeleton';
+import EmptyState from '@/components/ui/EmptyState';
 
 interface HomeTabProps {
     user: any;
@@ -13,274 +15,202 @@ interface HomeTabProps {
 export default function HomeTab({ user, dashboardData, error }: HomeTabProps) {
     const router = useRouter();
 
+    if (!dashboardData && !error) {
+        return (
+            <div className="space-y-8 animate-fade-in">
+                <Skeleton variant="card" height="200px" />
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <div className="space-y-8">
+                        <Skeleton variant="card" height="150px" />
+                        <div className="grid grid-cols-2 gap-4">
+                            <Skeleton variant="card" height="100px" />
+                            <Skeleton variant="card" height="100px" />
+                        </div>
+                    </div>
+                    <div className="lg:col-span-2 space-y-8">
+                        <Skeleton variant="card" height="200px" />
+                        <Skeleton variant="card" height="300px" />
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="space-y-8 animate-fade-in">
             {/* Welcome Header */}
-            <div className="identity-glass rounded-2xl shadow-sm border border-identity-sky/10 backdrop-blur-sm p-8 flex flex-col md:flex-row items-center justify-between relative overflow-hidden group">
-                <div className="absolute top-0 left-0 w-1.5 h-full bg-identity-sky opacity-80"></div>
-                <div className="text-center md:text-left relative z-10 font-outfit">
-                    <h1 className="text-3xl font-black text-identity-navy uppercase tracking-tight italic">Identity:</h1>
-                    <h2 className="text-4xl font-black text-identity-sky uppercase tracking-tighter">{user.firstName || 'User'}</h2>
-                    <p className="text-slate-500 mt-2 font-bold uppercase tracking-widest text-[10px]">Portal synchronization active • Lab 1</p>
+            <div className="identity-glass p-6 sm:p-8 md:p-10 rounded-[2rem] md:rounded-[3rem] shadow-xl border border-identity-sky/10 backdrop-blur-md flex flex-col md:flex-row items-center justify-between relative overflow-hidden group font-outfit">
+                <div className="absolute top-0 left-0 w-2 h-full bg-identity-sky/20"></div>
+                <div className="text-center md:text-left relative z-10">
+                    <h1 className="text-2xl font-black text-identity-navy uppercase tracking-tight italic opacity-40">Identity Terminal:</h1>
+                    <h2 className="text-4xl md:text-5xl font-black text-identity-navy uppercase tracking-tighter">{user?.firstName || 'User'}</h2>
+                    <p className="text-identity-sky mt-3 font-black uppercase tracking-[0.2em] text-[10px]">Registry Status: <span className="text-emerald-500 animate-pulse">Secure</span> â€¢ Tracking Active</p>
                 </div>
-                <div className="mt-6 md:mt-0 flex items-center gap-6 bg-identity-sky/10 px-8 py-4 rounded-xl border border-identity-sky/20 shadow-lg shadow-identity-sky/5 relative z-10 transition-all hover:bg-white group-hover:scale-[1.02]">
+                <div className="mt-8 md:mt-0 flex items-center gap-6 bg-white/40 px-6 py-4 rounded-3xl border border-identity-sky/10 shadow-lg relative z-10 transition-all hover:bg-white group-hover:scale-[1.02]">
                     <div className="text-right">
-                        <div className="text-[10px] font-black text-identity-navy uppercase tracking-widest">{new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</div>
+                        <div className="text-[10px] font-black text-identity-navy uppercase tracking-[0.2em]">
+                            {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+                        </div>
                         <div className="flex items-center justify-end gap-2 mt-2">
                             {(() => {
                                 const today = new Date();
-                                const dayOfWeek = today.getDay();
                                 const dateStr = today.toISOString().split('T')[0];
                                 const holidayName = isHoliday(dateStr);
-
-                                if (holidayName) {
-                                    return (
-                                        <>
-                                            <PartyPopper size={14} className="text-rose-500" />
-                                            <span className="text-[9px] font-black text-rose-500 uppercase tracking-widest">Holiday Status</span>
-                                        </>
-                                    );
-                                } else if (dayOfWeek === 0 || dayOfWeek === 6) {
-                                    return (
-                                        <>
-                                            <Coffee size={14} className="text-identity-sky" />
-                                            <span className="text-[9px] font-black text-identity-sky uppercase tracking-widest">Weekend Mode</span>
-                                        </>
-                                    );
-                                } else {
-                                    return (
-                                        <>
-                                            <Briefcase size={14} className="text-identity-sky" />
-                                            <span className="text-[9px] font-black text-identity-sky uppercase tracking-widest">Active Operations</span>
-                                        </>
-                                    );
-                                }
+                                if (holidayName) return <><PartyPopper size={14} className="text-rose-500" /><span className="text-[9px] font-black text-rose-500 uppercase tracking-[0.15em]">Holiday Loop</span></>;
+                                if (today.getDay() === 0 || today.getDay() === 6) return <><Coffee size={14} className="text-identity-sky" /><span className="text-[9px] font-black text-identity-sky uppercase tracking-[0.15em]">Standby Mode</span></>;
+                                return <><Zap size={14} className="text-identity-sky" /><span className="text-[9px] font-black text-identity-sky uppercase tracking-[0.15em]">Active Operations</span></>;
                             })()}
                         </div>
                     </div>
-                    <div className="p-3 bg-white shadow-inner rounded-xl text-identity-sky border border-identity-sky/5">
+                    <div className="p-4 bg-identity-sky text-white rounded-2xl shadow-xl shadow-identity-sky/20 border border-identity-sky/20">
                         <Calendar size={24} />
                     </div>
                 </div>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                {/* Left Column - Stats */}
-                <div className="space-y-8">
-                    {/* Quick Stats */}
-                    <div className="grid grid-cols-2 gap-4">
-                        {/* Attendance Rate - Hero Stat */}
-                        <div className="col-span-2 identity-glass p-8 rounded-2xl shadow-lg border border-identity-sky/5 relative overflow-hidden group">
-                            <div className="absolute top-0 right-0 w-40 h-40 bg-identity-sky/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 group-hover:bg-identity-sky/20 transition-all duration-700"></div>
-                            <div className="relative z-10 flex items-center justify-between mb-8">
-                                <div>
-                                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] mb-2">Sync Rate</p>
-                                    <div className="text-5xl font-black text-identity-navy tracking-tighter uppercase font-outfit">{dashboardData?.stats?.attendanceRate || 0}%</div>
-                                </div>
-                                <div className="w-14 h-14 bg-identity-sky/10 rounded-xl flex items-center justify-center text-identity-sky border border-identity-sky/20 group-hover:scale-110 transition-transform shadow-sm">
-                                    <TrendingUp size={28} />
-                                </div>
+                {/* Stats Matrix */}
+                <div className="space-y-8 font-outfit">
+                    <div className="identity-glass p-8 rounded-[2rem] md:rounded-[3rem] shadow-xl border border-identity-sky/10 relative overflow-hidden group h-full">
+                        <div className="relative z-10 flex items-center justify-between mb-8">
+                            <div>
+                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2">Success Velocity</p>
+                                <div className="text-5xl font-black text-identity-navy italic tracking-tighter">{dashboardData?.stats?.attendanceRate || 0}%</div>
                             </div>
-                            {/* Progress Bar */}
-                            <div className="mt-8 h-2.5 w-full bg-slate-100/50 rounded-full overflow-hidden shadow-inner border border-slate-50">
-                                <div
-                                    className="h-full bg-identity-sky rounded-full transition-all duration-1000 ease-out shadow-[0_0_15px_rgba(14,165,233,0.3)]"
-                                    style={{ width: `${dashboardData?.stats?.attendanceRate || 0}%` }}
-                                ></div>
+                            <div className="w-16 h-16 bg-emerald-500/10 text-emerald-500 rounded-2xl flex items-center justify-center border border-emerald-500/20 shadow-xl group-hover:scale-110 transition-transform duration-500">
+                                <TrendingUp size={32} />
                             </div>
                         </div>
-
-                        {/* Status Grid */}
-                        {[
-                            { label: 'Present', val: dashboardData?.stats?.present || 0, icon: UserIcon, color: 'text-emerald-500', bg: 'hover:border-emerald-500/30' },
-                            { label: 'Late', val: dashboardData?.stats?.late || 0, icon: Clock, color: 'text-amber-500', bg: 'hover:border-amber-500/30' },
-                            { label: 'Excused', val: dashboardData?.stats?.excused || 0, icon: AlertCircle, color: 'text-identity-sky', bg: 'hover:border-identity-sky/30' },
-                            { label: 'Absences', val: dashboardData?.stats?.absences || 0, icon: XCircle, color: 'text-rose-500', bg: 'hover:border-rose-500/30' }
-                        ].map((stat, i) => (
-                            <div key={i} className={`identity-glass p-6 rounded-2xl shadow-sm border border-identity-sky/10 backdrop-blur-sm transition-all group ${stat.bg} hover:shadow-xl`}>
-                                <div className="flex items-start justify-between mb-4">
-                                    <div className="text-[9px] font-black text-slate-500 uppercase tracking-[0.2em]">{stat.label}</div>
-                                    <stat.icon size={18} className={`${stat.color} opacity-40 group-hover:opacity-100 transition-opacity`} />
+                        <div className="mt-8 h-3 w-full bg-slate-100 rounded-full overflow-hidden shadow-inner p-[2px]">
+                            <div
+                                className="h-full bg-emerald-500 rounded-full transition-all duration-1000 ease-out shadow-[0_0_20px_rgba(16,185,129,0.4)]"
+                                style={{ width: `${dashboardData?.stats?.attendanceRate || 0}%` }}
+                            ></div>
+                        </div>
+                        
+                        <div className="grid grid-cols-2 gap-4 mt-12">
+                            {[
+                                { label: 'Present', val: dashboardData?.stats?.present || 0, color: 'text-emerald-500', bg: 'bg-emerald-500/5' },
+                                { label: 'Late', val: dashboardData?.stats?.late || 0, color: 'text-amber-500', bg: 'bg-amber-500/5' },
+                                { label: 'Excused', val: dashboardData?.stats?.excused || 0, color: 'text-identity-sky', bg: 'bg-identity-sky/5' },
+                                { label: 'Absences', val: dashboardData?.stats?.absences || 0, color: 'text-rose-500', bg: 'bg-rose-500/5' }
+                            ].map((stat, i) => (
+                                <div key={i} className={`p-6 rounded-[2rem] border border-identity-sky/5 hover:border-identity-sky/20 transition-all ${stat.bg} group/item`}>
+                                    <div className="text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 group-hover/item:text-identity-sky">{stat.label}</div>
+                                    <div className={`text-2xl font-black font-outfit ${stat.color}`}>{stat.val}</div>
                                 </div>
-                                <div className="text-3xl font-black text-identity-navy font-outfit">{stat.val}</div>
-                            </div>
-                        ))}
+                            ))}
+                        </div>
                     </div>
                 </div>
 
-                {/* Right Column - Schedule & Recent Activity */}
-                <div className="lg:col-span-2 space-y-8">
-                    {/* Next Class */}
-                    <div className="identity-glass rounded-2xl shadow-lg p-10 text-identity-navy relative overflow-hidden border border-identity-sky/10 group">
-                        <div className="absolute top-0 right-0 w-80 h-80 bg-identity-sky/5 rounded-full blur-[100px] -translate-y-1/2 translate-x-1/2 opacity-30 group-hover:opacity-50 transition-opacity duration-1000"></div>
-                        
-                        <div className="relative z-10">
-                            <div className="flex items-center gap-2 text-identity-sky mb-6 text-[10px] font-black uppercase tracking-[0.4em]">
-                                <Zap size={16} className="text-identity-sky" /> Next Priority Node
+                {/* Priority Queue & Activity */}
+                <div className="lg:col-span-2 space-y-8 font-outfit">
+                    {/* Active Session */}
+                    <div className="identity-glass rounded-[2rem] md:rounded-[3rem] shadow-2xl overflow-hidden border border-identity-sky/10 group relative h-fit">
+                        <div className="p-8 md:p-14 relative z-10">
+                            <div className="flex items-center gap-4 text-identity-sky mb-8 text-[10px] font-black uppercase tracking-[0.15em]">
+                                <Zap size={18} className="animate-pulse" /> Active Protocol Node
                             </div>
+                            
                             {dashboardData?.nextClass ? (
-                                <>
-                                    <div className="flex justify-between items-start mb-4">
-                                        <h2 className="text-4xl md:text-5xl font-black text-identity-navy tracking-tighter uppercase font-outfit leading-none italic">{dashboardData.nextClass.subject}</h2>
-                                        {dashboardData.nextClass.type && dashboardData.nextClass.type.toLowerCase().includes('makeup') && (
-                                            <span className="bg-identity-sky/10 text-identity-sky border border-identity-sky/20 px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-[0.2em]">
-                                                Special Session
-                                            </span>
+                                <div className="space-y-10">
+                                    <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+                                        <div className="flex-1">
+                                            <h2 className="text-4xl md:text-6xl font-black text-identity-navy tracking-tighter uppercase font-outfit leading-none mb-3 italic">{dashboardData.nextClass.subject}</h2>
+                                            <p className="text-slate-400 font-bold text-xs uppercase tracking-[0.15em]">{dashboardData.nextClass.professor} â€¢ Lab Terminal {dashboardData.nextClass.room}</p>
+                                        </div>
+                                        {dashboardData.nextClass.type && (
+                                            <div className="px-6 py-2 bg-identity-navy text-white rounded-full text-[10px] font-black uppercase tracking-[0.15em] shadow-xl">
+                                                {dashboardData.nextClass.type}
+                                            </div>
                                         )}
                                     </div>
-                                    <p className="text-slate-500 font-bold text-[10px] mb-10 uppercase tracking-[0.3em]">{dashboardData.nextClass.professor} • Portal {dashboardData.nextClass.room}</p>
 
-                                    <div className="flex flex-wrap items-center gap-4">
+                                    <div className="flex flex-wrap gap-4">
                                         {[
-                                            { label: 'Sync Date', val: dashboardData.nextClass.date || 'Today' },
                                             { label: 'Time Window', val: dashboardData.nextClass.time },
-                                            { label: 'Matrix Status', val: dashboardData.nextClass.status, special: dashboardData.nextClass.status === 'Cancelled' }
+                                            { label: 'Status', val: dashboardData.nextClass.status, alert: dashboardData.nextClass.status === 'Cancelled' }
                                         ].map((item, i) => (
-                                            <div key={i} className={`bg-white/40 backdrop-blur-md px-6 py-4 rounded-2xl border border-identity-sky/5 shadow-inner ${item.special ? 'border-rose-500/20' : ''}`}>
-                                                <span className="block text-[8px] font-black uppercase tracking-[0.3em] text-slate-400 mb-1">{item.label}</span>
-                                                <span className={`font-black text-sm tracking-widest uppercase ${item.special ? 'text-rose-500' : 'text-identity-navy'}`}>{item.val}</span>
+                                            <div key={i} className={`px-8 py-5 rounded-2xl border ${item.alert ? 'bg-rose-500/10 border-rose-500/20 shadow-rose-500/5' : 'bg-white/40 border-identity-sky/10 font-black tracking-[0.15em]'} shadow-sm`}>
+                                                <span className="block text-[8px] font-black uppercase tracking-[0.22em] text-slate-400 mb-2">{item.label}</span>
+                                                <span className={`font-black text-sm uppercase ${item.alert ? 'text-rose-500' : 'text-identity-navy'}`}>{item.val}</span>
                                             </div>
                                         ))}
                                     </div>
 
                                     {dashboardData.nextClass.reason && (
-                                        <div className="mt-8 bg-rose-50 border border-rose-100 rounded-2xl p-6 backdrop-blur-sm shadow-inner shadow-rose-100/50">
-                                            <div className="flex items-center gap-3 mb-2">
-                                                <AlertCircle size={14} className="text-rose-500" />
-                                                <p className="text-[9px] text-rose-500 uppercase font-black tracking-[0.3em]">System Interruption Log</p>
+                                        <div className="bg-rose-500/5 border border-rose-500/10 rounded-[2rem] p-8 flex items-start gap-6">
+                                            <div className="p-3 bg-rose-500/10 rounded-2xl text-rose-500">
+                                                <AlertCircle size={24} />
                                             </div>
-                                            <p className="text-rose-900 font-bold text-xs uppercase tracking-widest leading-relaxed opacity-80">{dashboardData.nextClass.reason}</p>
+                                            <div>
+                                                <p className="text-[10px] text-rose-500 uppercase font-black tracking-[0.3em] mb-2">Interruption Log</p>
+                                                <p className="text-rose-900 font-black text-xs tracking-[0.15em] mt-1 uppercase leading-loose opacity-80">{dashboardData.nextClass.reason}</p>
+                                            </div>
                                         </div>
                                     )}
-                                </>
-                            ) : (
-                                <div className="py-10">
-                                    <h2 className="text-3xl font-black mb-4 tracking-tighter uppercase font-outfit italic text-slate-300">Matrix Idle</h2>
-                                    <p className="text-slate-400 text-xs font-black uppercase tracking-widest">No active sessions scheduled for this node.</p>
                                 </div>
+                            ) : (
+                                <EmptyState
+                                    icon={Coffee}
+                                    title="System on Standby"
+                                    description="No active attendance sessions detected in your current schedule window."
+                                    className="py-12"
+                                />
                             )}
                         </div>
                     </div>
 
-                    {/* Performance Overview (Classes Summary) */}
-                    {dashboardData?.classesSummary && dashboardData.classesSummary.length > 0 && (
-                        <div className="identity-glass rounded-2xl shadow-sm border border-identity-sky/10 backdrop-blur-sm p-8 shadow-inner">
-                            <h3 className="text-[10px] font-black tracking-[0.4em] text-identity-navy mb-8 uppercase flex items-center gap-4">
-                                <TrendingUp size={18} className="text-identity-sky" /> 
-                                Performance Matrix
-                                <span className="h-px bg-identity-sky/10 flex-1"></span>
+                    {/* Activity Registry */}
+                    <div className="identity-glass p-10 rounded-[2rem] md:rounded-[3rem] shadow-xl border border-identity-sky/5 shadow-inner">
+                        <div className="flex items-center justify-between mb-10">
+                            <h3 className="text-[11px] font-black tracking-[0.2em] text-identity-navy uppercase flex items-center gap-4">
+                                <div className="p-2 bg-identity-sky/10 rounded-2xl">
+                                    <BookOpen size={20} className="text-identity-sky" />
+                                </div>
+                                Activity Registry
                             </h3>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                {(() => {
-                                    const sortedClasses = [...(dashboardData.classesSummary || [])].sort((a: any, b: any) => b.attendanceRate - a.attendanceRate);
-                                    let displayClasses = sortedClasses.length >= 2 ? [sortedClasses[0], sortedClasses[sortedClasses.length - 1]] : sortedClasses;
-
-                                    return displayClasses.map((cls: any, index: number) => {
-                                        const isHighest = sortedClasses.length >= 2 && index === 0;
-                                        const isLowest = sortedClasses.length >= 2 && index === 1;
-
-                                        return (
-                                            <div
-                                                onClick={() => router.push(`/student/classes/${cls.id}`)}
-                                                key={cls.id}
-                                                className="block h-full group relative z-10 cursor-pointer"
-                                            >
-                                                <div className="p-6 bg-white/40 border border-identity-sky/10 hover:border-identity-sky/50 rounded-2xl transition-all duration-500 relative overflow-hidden h-full shadow-sm hover:shadow-2xl">
-                                                    {(isHighest || isLowest) && (
-                                                        <div className={`absolute top-0 right-0 px-4 py-2 text-[8px] font-black uppercase rounded-bl-xl border-b border-l tracking-widest ${isHighest
-                                                            ? 'bg-emerald-50 text-emerald-600 border-emerald-100/50'
-                                                            : 'bg-rose-50 text-rose-600 border-rose-100/50'
-                                                            }`}>
-                                                            {isHighest ? 'Optimal Performance' : 'Recovery Required'}
-                                                        </div>
-                                                    )}
-
-                                                    <div className="mb-6">
-                                                        <span className="bg-white/60 text-slate-400 text-[8px] font-black tracking-widest uppercase px-3 py-1 rounded-lg border border-slate-100 mb-4 inline-block font-outfit">
-                                                            {cls.subjectCode}
-                                                        </span>
-                                                        <h4 className="font-black text-identity-navy group-hover:text-identity-sky transition-colors text-base uppercase tracking-tighter pr-12 line-clamp-2 italic">
-                                                            {cls.subjectName}
-                                                        </h4>
-                                                    </div>
-
-                                                    <div className="flex items-end justify-between mb-4">
-                                                        <div className={`text-4xl font-black font-outfit ${cls.attendanceRate >= 90 ? 'text-emerald-500' : cls.attendanceRate >= 75 ? 'text-amber-500' : 'text-rose-500'}`}>
-                                                            {cls.attendanceRate}<span className="text-xl opacity-40">%</span>
-                                                        </div>
-                                                    </div>
-
-                                                    <div className="h-2 w-full bg-slate-100/50 rounded-full overflow-hidden mb-6 shadow-inner border border-slate-50">
-                                                        <div
-                                                            className={`h-full rounded-full transition-all duration-700 ${cls.attendanceRate >= 90 ? 'bg-emerald-500' : cls.attendanceRate >= 75 ? 'bg-amber-500' : 'bg-rose-500'}`}
-                                                            style={{ width: `${cls.attendanceRate}%` }}
-                                                        ></div>
-                                                    </div>
-
-                                                    <div className="grid grid-cols-4 gap-3">
-                                                        {[
-                                                            { val: cls.present, label: 'PR', color: 'text-emerald-500' },
-                                                            { val: cls.late, label: 'LT', color: 'text-amber-500' },
-                                                            { val: cls.excused, label: 'EX', color: 'text-identity-sky' },
-                                                            { val: cls.absent, label: 'AB', color: 'text-rose-500' }
-                                                        ].map((s, i) => (
-                                                            <div key={i} className="bg-white/60 rounded-xl py-2 border border-identity-sky/5 shadow-sm text-center">
-                                                                <span className={`block font-black text-[13px] ${s.color}`}>{s.val}</span>
-                                                                <span className="text-slate-400 text-[8px] font-black uppercase tracking-widest">{s.label}</span>
-                                                            </div>
-                                                        ))}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        );
-                                    })
-                                })()}
-                            </div>
+                            <button onClick={() => router.push('/student/attendance')} className="text-[9px] font-black text-identity-sky uppercase tracking-[0.2em] hover:text-identity-navy transition-all flex items-center gap-2 group/btn">
+                                Access Full Logs <ChevronRight size={14} className="group-hover/btn:translate-x-1 transition-transform" />
+                            </button>
                         </div>
-                    )}
 
-                    {/* Recent Sync Logs */}
-                    <div className="identity-glass rounded-2xl shadow-sm border border-identity-sky/10 backdrop-blur-sm p-8 shadow-inner">
-                        <h3 className="text-[10px] font-black tracking-[0.4em] text-identity-navy mb-8 uppercase flex items-center gap-4">
-                            <BookOpen size={18} className="text-identity-sky" /> 
-                            Recent Node Syncs
-                            <span className="h-px bg-identity-sky/10 flex-1"></span>
-                        </h3>
                         <div className="space-y-4">
                             {error ? (
-                                <div className="bg-rose-50/50 border border-rose-100/50 rounded-2xl p-10 text-center">
+                                <div className="p-12 text-center bg-rose-50 rounded-[3rem] border border-rose-100">
                                     <XCircle className="mx-auto mb-4 text-rose-400" size={48} />
-                                    <p className="text-rose-900 font-black text-sm uppercase tracking-widest mb-2">Sync Error Detected</p>
-                                    <p className="text-rose-600/60 text-[10px] uppercase font-black tracking-widest leading-relaxed">{error}</p>
+                                    <p className="text-rose-900 font-black text-xs uppercase tracking-[0.15em] mb-2">Registry Link Broken</p>
+                                    <p className="text-rose-600/60 text-[10px] uppercase font-black tracking-[0.15em]">{error}</p>
                                 </div>
                             ) : dashboardData?.recentActivities && dashboardData.recentActivities.length > 0 ? (
                                 dashboardData.recentActivities.map((item: any, i: number) => (
-                                    <div key={i} className="flex items-center justify-between p-5 bg-white/40 hover:bg-white rounded-2xl transition-all border border-transparent hover:border-identity-sky/30 hover:shadow-lg group">
-                                        <div className="flex items-center gap-5">
-                                            <div className="w-12 h-12 rounded-2xl bg-white border border-identity-sky/5 flex items-center justify-center text-identity-navy font-black shadow-sm group-hover:bg-identity-navy group-hover:text-white transition-all duration-500 uppercase tracking-tighter">
+                                    <div key={i} className="flex items-center justify-between p-6 bg-white/40 hover:bg-white rounded-[2rem] transition-all border border-identity-sky/5 hover:border-identity-sky/10 hover:shadow-2xl group cursor-pointer active:scale-95">
+                                        <div className="flex items-center gap-6">
+                                            <div className="w-14 h-14 rounded-2xl bg-white border border-identity-sky/10 flex items-center justify-center text-identity-navy font-black shadow-sm group-hover:bg-identity-navy group-hover:text-white transition-all duration-500 uppercase italic">
                                                 {item.subject[0]}
                                             </div>
                                             <div>
-                                                <div className="font-black text-identity-navy text-xs uppercase tracking-widest mb-1">{item.subject}</div>
-                                                <div className="text-[9px] font-black uppercase tracking-[0.3em] text-slate-400 group-hover:text-identity-sky transition-colors">{item.date}</div>
+                                                <div className="font-black text-identity-navy text-xs uppercase tracking-tight mb-2 group-hover:text-identity-sky transition-colors">{item.subject}</div>
+                                                <div className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400 opacity-60">{item.date}</div>
                                             </div>
                                         </div>
-                                        <span className={`px-5 py-2 rounded-full text-[9px] font-black tracking-widest uppercase border transition-all ${
-                                            item.status === 'Present' ? 'bg-emerald-50/50 text-emerald-600 border-emerald-100/50' :
-                                            item.status === 'Late' ? 'bg-amber-50/50 text-amber-600 border-amber-100/50' :
-                                            'bg-rose-50/50 text-rose-600 border-rose-100/50'
+                                        <div className={`px-5 py-2 rounded-full text-[8px] font-black tracking-[0.2em] uppercase border transition-all ${
+                                            item.status === 'Present' ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20' :
+                                            item.status === 'Late' ? 'bg-amber-500/10 text-amber-600 border-amber-500/20' :
+                                            'bg-rose-500/10 text-rose-600 border-rose-500/20'
                                         }`}>
                                             {item.status}
-                                        </span>
+                                        </div>
                                     </div>
                                 ))
                             ) : (
-                                <div className="text-center py-12">
-                                    <div className="w-14 h-14 bg-white border border-identity-sky/5 rounded-2xl flex items-center justify-center text-slate-200 mx-auto mb-6 shadow-inner">
-                                        <Clock size={28} />
-                                    </div>
-                                    <p className="font-black text-[9px] text-slate-300 uppercase tracking-[0.4em]">Matrix History Empty</p>
-                                </div>
+                                <EmptyState
+                                    icon={Clock}
+                                    title="No Recent History"
+                                    description="Your attendance activity logs will manifest here once processing begins."
+                                    className="py-12"
+                                />
                             )}
                         </div>
                     </div>

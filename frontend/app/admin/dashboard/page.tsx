@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -13,6 +13,30 @@ import SmartSearch from '@/components/SmartSearch';
 import VideoFeed from '@/components/VideoFeed';
 import AcademicSettingsTab from '@/components/AcademicSettingsTab';
 import DeletionRequestsTab from '@/components/DeletionRequestsTab';
+import DashboardTabs from '@/components/ui/DashboardTabs';
+import Skeleton from '@/components/ui/Skeleton';
+import EmptyState from '@/components/ui/EmptyState';
+import InputField from '@/components/ui/InputField';
+
+const IdentityNode = ({ className = "", size = 120 }) => (
+    <div className={`identity-node opacity-[0.15] ${className}`} style={{ width: size, height: size }}>
+       <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
+          <g>
+             <path d="M100,30 Q60,30 50,80 T100,170 T150,80 Q140,30 100,30 Z" fill="none" stroke="currentColor" className="text-identity-sky" strokeWidth="2" />
+             <line x1="100" y1="30" x2="100" y2="170" stroke="currentColor" className="text-identity-navy" strokeWidth="1" />
+             <line x1="60" y1="80" x2="140" y2="80" stroke="currentColor" className="text-identity-navy" strokeWidth="1" />
+             <line x1="55" y1="110" x2="145" y2="110" stroke="currentColor" className="text-identity-navy" strokeWidth="1" />
+             <circle cx="75" cy="80" r="3" fill="currentColor" className="text-identity-sky" />
+             <circle cx="125" cy="80" r="3" fill="currentColor" className="text-identity-sky" />
+             <circle cx="100" cy="110" r="3" fill="currentColor" className="text-identity-sky" />
+             <circle cx="100" cy="30" r="2" fill="currentColor" className="text-identity-navy" />
+             <circle cx="100" cy="170" r="2" fill="currentColor" className="text-identity-navy" />
+             <line x1="75" y1="80" x2="100" y2="110" stroke="currentColor" className="text-identity-sky" strokeWidth="1" strokeDasharray="3 2" />
+             <line x1="125" y1="80" x2="100" y2="110" stroke="currentColor" className="text-identity-sky" strokeWidth="1" strokeDasharray="3 2" />
+          </g>
+       </svg>
+    </div>
+ );
 
 interface PendingProfessor {
     id: number;
@@ -461,7 +485,7 @@ export default function AdminDashboard() {
         }
     };
 
-    // useSwipe removed — hook was deleted in Phase 2 cleanup
+    // useSwipe removed â€” hook was deleted in Phase 2 cleanup
 
     const handleLogout = () => {
         logout('/admin/login');
@@ -474,8 +498,16 @@ export default function AdminDashboard() {
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-maroon-950 flex items-center justify-center">
-                <div className="text-secondary/60 animate-pulse uppercase tracking-[0.3em] font-bold text-xs">Loading LabFace System...</div>
+            <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-6 relative overflow-hidden">
+                <div className="fixed inset-0 pointer-events-none z-0 opacity-10">
+                    <IdentityNode className="top-[10%] left-[5%]" size={160} />
+                    <IdentityNode className="bottom-[10%] right-[5%]" size={220} />
+                    <div className="absolute inset-0 bg-blueprint opacity-[0.05]"></div>
+                </div>
+                <div className="relative z-10 text-center">
+                    <div className="w-16 h-16 border-4 border-identity-sky/20 border-t-identity-sky rounded-full animate-spin mx-auto mb-6 shadow-2xl shadow-identity-sky/10"></div>
+                    <p className="text-identity-navy font-black text-[10px] uppercase tracking-[0.15em] animate-pulse">Initializing LabFace System...</p>
+                </div>
             </div>
         );
     }
@@ -494,8 +526,33 @@ export default function AdminDashboard() {
 
     const activeSessionsCount = stats?.activeSessions || 0;
 
+    const tabs = [
+        { id: 'dashboard', label: 'Home', icon: Home },
+        { id: 'users', label: 'Users', icon: Users },
+        { id: 'academic', label: 'Academic', icon: GraduationCap },
+        { id: 'sessions', label: 'Monitor', icon: Monitor },
+        { id: 'reports', label: 'Reports', icon: AlertTriangle },
+        { id: 'privacy', label: 'Privacy', icon: Shield },
+    ];
+
+    const handleTabChange = (tabId: string) => {
+        setActiveTab(tabId as any);
+        if (tabId === 'users') fetchUsers();
+        else if (tabId === 'sessions') fetchSessions();
+        else if (tabId === 'reports') fetchReports();
+    };
+
     return (
-        <div className="min-h-screen bg-maroon-950 font-sans selection:bg-brand-gold/30">
+        <div className="min-h-screen bg-slate-50 font-sans text-slate-900 relative selection:bg-identity-sky/10 selection:text-identity-navy page-transition transition-colors duration-500">
+             {/* System Identity Nodes - 4 Layer Background */}
+             <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+                <div className="absolute top-[-10%] right-[-5%] w-[500px] h-[500px] bg-identity-sky/5 rounded-full blur-[120px] animate-pulse" />
+                <div className="absolute bottom-[-10%] left-[-5%] w-[500px] h-[500px] bg-identity-navy/5 rounded-full blur-[120px] animate-pulse" />
+                <IdentityNode className="top-[10%] left-[5%]" size={160} />
+                <IdentityNode className="bottom-[10%] right-[5%]" size={220} />
+                <div className="absolute inset-0 bg-blueprint opacity-[0.05] pointer-events-none"></div>
+            </div>
+
             <SessionTimeout
                 sessionDuration={30 * 60 * 1000}
                 warningTime={5 * 60 * 1000}
@@ -504,80 +561,24 @@ export default function AdminDashboard() {
             />
             <Navbar />
 
-            <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-8">
-                <div className="sticky top-20 z-40 bg-maroon-950/90 backdrop-blur-md border-b border-white/5 mb-8 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-3 transition-all duration-300">
-                    <div className="flex gap-4 overflow-x-auto justify-start md:justify-center px-4 no-scrollbar">
-                        <button
-                            onClick={() => setActiveTab('dashboard')}
-                            className={`px-6 py-4 font-bold transition-colors border-b-2 flex items-center gap-2 whitespace-nowrap uppercase tracking-widest text-[11px] ${activeTab === 'dashboard'
-                                ? 'text-brand-gold border-brand-gold'
-                                : 'text-secondary/50 border-transparent hover:text-brand-cream'
-                                }`}
-                        >
-                            <Home className="w-4 h-4" />
-                            Home
-                        </button>
-                        <button
-                            onClick={() => {
-                                setActiveTab('users');
-                                fetchUsers();
-                            }}
-                            className={`px-6 py-4 font-bold transition-colors border-b-2 flex items-center gap-2 whitespace-nowrap uppercase tracking-widest text-[11px] ${activeTab === 'users'
-                                ? 'text-brand-gold border-brand-gold'
-                                : 'text-secondary/50 border-transparent hover:text-brand-cream'
-                                }`}
-                        >
-                            <Users className="w-4 h-4" />
-                            Users
-                        </button>
-                        <button
-                            onClick={() => setActiveTab('academic')}
-                            className={`px-6 py-4 font-bold transition-colors border-b-2 flex items-center gap-2 whitespace-nowrap uppercase tracking-widest text-[11px] ${activeTab === 'academic'
-                                ? 'text-brand-gold border-brand-gold'
-                                : 'text-secondary/50 border-transparent hover:text-brand-cream'
-                                }`}
-                        >
-                            <GraduationCap className="w-4 h-4" />
-                            Academic
-                        </button>
-                        <button
-                            onClick={() => {
-                                setActiveTab('sessions');
-                                fetchSessions();
-                            }}
-                            className={`px-6 py-4 font-bold transition-colors border-b-2 flex items-center gap-2 whitespace-nowrap uppercase tracking-widest text-[11px] ${activeTab === 'sessions'
-                                ? 'text-brand-gold border-brand-gold'
-                                : 'text-secondary/50 border-transparent hover:text-brand-cream'
-                                }`}
-                        >
-                            <Monitor className="w-4 h-4" />
-                            Monitor
-                        </button>
-                        <button
-                            onClick={() => {
-                                setActiveTab('reports');
-                                fetchReports();
-                            }}
-                            className={`px-6 py-4 font-bold transition-colors border-b-2 flex items-center gap-2 whitespace-nowrap uppercase tracking-widest text-[11px] ${activeTab === 'reports'
-                                ? 'text-brand-gold border-brand-gold'
-                                : 'text-secondary/50 border-transparent hover:text-brand-cream'
-                                }`}
-                        >
-                            <AlertTriangle className="w-4 h-4" />
-                            Reports
-                        </button>
-                        <button
-                            onClick={() => setActiveTab('privacy')}
-                            className={`px-6 py-4 font-bold transition-colors border-b-2 flex items-center gap-2 whitespace-nowrap uppercase tracking-widest text-[11px] ${activeTab === 'privacy'
-                                ? 'text-brand-gold border-brand-gold'
-                                : 'text-secondary/50 border-transparent hover:text-brand-cream'
-                                }`}
-                        >
-                            <Shield className="w-4 h-4" />
-                            Data Privacy
-                        </button>
+            <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-28 pb-12 relative z-10">
+                {/* Standard Page Header */}
+                <div className="flex items-center gap-6 mb-12 animate-fade-up">
+                    <div className="p-4 bg-identity-sky/10 text-identity-navy rounded-2xl border border-identity-sky/10 shadow-inner group">
+                        <LayoutDashboard size={32} className="group-hover:scale-110 transition-transform duration-500" />
+                    </div>
+                    <div>
+                        <h1 className="text-3xl font-black text-identity-navy tracking-tighter uppercase font-outfit italic">Control Center</h1>
+                        <p className="text-[10px] font-black text-identity-sky uppercase tracking-[0.4em] mt-1">High-Authority System Administration</p>
                     </div>
                 </div>
+
+                {/* Standardized Tabs */}
+                <DashboardTabs 
+                    tabs={tabs} 
+                    activeTab={activeTab} 
+                    onTabChange={handleTabChange} 
+                />
 
                 <div key={activeTab} className="tab-content-fade">
                     {activeTab === 'dashboard' ? (
@@ -589,15 +590,15 @@ export default function AdminDashboard() {
                                         setUserRoleFilter('professor');
                                         setUserStatusFilter('pending');
                                     }}
-                                    className="bg-maroon-900/40 backdrop-blur-xl border border-white/5 rounded-xl p-6 hover:border-brand-gold/50 transition-all cursor-pointer hover:scale-[1.02] active:scale-95 group shadow-xl"
+                                    className="identity-glass p-6 sm:p-8 md:p-10 rounded-[2rem] md:rounded-[3rem] shadow-xl border border-identity-sky/5 relative overflow-hidden group hover:scale-[1.02] active:scale-95 transition-all cursor-pointer bg-white/40"
                                 >
-                                    <div className="flex items-center gap-4">
-                                        <div className="bg-brand-gold/10 p-3 rounded-lg group-hover:bg-brand-gold/20 transition-colors">
-                                            <Clock className="w-6 h-6 text-brand-gold" />
+                                    <div className="flex items-center gap-4 relative z-10">
+                                        <div className="w-12 h-12 bg-identity-sky/10 rounded-2xl flex items-center justify-center text-identity-sky border border-identity-sky/20 group-hover:scale-110 transition-transform">
+                                            <Clock size={24} />
                                         </div>
                                         <div>
-                                            <p className="text-secondary/60 text-xs uppercase font-bold tracking-widest">Pending</p>
-                                            <p className="text-2xl font-black text-white">{stats?.pendingProfessors || 0}</p>
+                                            <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.2em] italic">Pending</p>
+                                            <p className="text-2xl font-black text-identity-navy tracking-tighter italic">{stats?.pendingProfessors || 0}</p>
                                         </div>
                                     </div>
                                 </div>
@@ -608,15 +609,15 @@ export default function AdminDashboard() {
                                         setUserRoleFilter('admin');
                                         setUserStatusFilter('all');
                                     }}
-                                    className="bg-maroon-900/40 backdrop-blur-xl border border-white/5 rounded-xl p-6 hover:border-red-500/50 transition-all cursor-pointer hover:scale-[1.02] active:scale-95 group shadow-xl"
+                                    className="identity-glass p-6 sm:p-8 md:p-10 rounded-[2rem] md:rounded-[3rem] shadow-xl border border-identity-sky/5 relative overflow-hidden group hover:scale-[1.02] active:scale-95 transition-all cursor-pointer bg-white/40"
                                 >
-                                    <div className="flex items-center gap-4">
-                                        <div className="bg-red-500/10 p-3 rounded-lg group-hover:bg-red-500/20 transition-colors">
-                                            <Shield className="w-6 h-6 text-red-500" />
+                                    <div className="flex items-center gap-4 relative z-10">
+                                        <div className="w-12 h-12 bg-rose-500/10 rounded-2xl flex items-center justify-center text-rose-500 border border-rose-500/20 group-hover:scale-110 transition-transform">
+                                            <Shield size={24} />
                                         </div>
                                         <div>
-                                            <p className="text-secondary/60 text-xs uppercase font-bold tracking-widest">Admins</p>
-                                            <p className="text-2xl font-black text-white">{totalAdmins}</p>
+                                            <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.2em] italic">Admins</p>
+                                            <p className="text-2xl font-black text-identity-navy tracking-tighter italic">{totalAdmins}</p>
                                         </div>
                                     </div>
                                 </div>
@@ -627,15 +628,15 @@ export default function AdminDashboard() {
                                         setUserRoleFilter('student');
                                         setUserStatusFilter('all');
                                     }}
-                                    className="bg-maroon-900/40 backdrop-blur-xl border border-white/5 rounded-xl p-6 hover:border-emerald-500/50 transition-all cursor-pointer hover:scale-[1.02] active:scale-95 group shadow-xl"
+                                    className="identity-glass p-6 sm:p-8 md:p-10 rounded-[2rem] md:rounded-[3rem] shadow-xl border border-identity-sky/5 relative overflow-hidden group hover:scale-[1.02] active:scale-95 transition-all cursor-pointer bg-white/40"
                                 >
-                                    <div className="flex items-center gap-4">
-                                        <div className="bg-emerald-500/10 p-3 rounded-lg group-hover:bg-emerald-500/20 transition-colors">
-                                            <Users className="w-6 h-6 text-emerald-500" />
+                                    <div className="flex items-center gap-4 relative z-10">
+                                        <div className="w-12 h-12 bg-emerald-500/10 rounded-2xl flex items-center justify-center text-emerald-500 border border-emerald-500/20 group-hover:scale-110 transition-transform">
+                                            <Users size={24} />
                                         </div>
                                         <div>
-                                            <p className="text-secondary/60 text-xs uppercase font-bold tracking-widest">Students</p>
-                                            <p className="text-2xl font-black text-white">{totalStudents}</p>
+                                            <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.2em] italic">Students</p>
+                                            <p className="text-2xl font-black text-identity-navy tracking-tighter italic">{totalStudents}</p>
                                         </div>
                                     </div>
                                 </div>
@@ -646,15 +647,15 @@ export default function AdminDashboard() {
                                         setUserRoleFilter('professor');
                                         setUserStatusFilter('all');
                                     }}
-                                    className="bg-maroon-900/40 backdrop-blur-xl border border-white/5 rounded-xl p-6 hover:border-blue-500/50 transition-all cursor-pointer hover:scale-[1.02] active:scale-95 group shadow-xl"
+                                    className="identity-glass p-6 sm:p-8 md:p-10 rounded-[2rem] md:rounded-[3rem] shadow-xl border border-identity-sky/5 relative overflow-hidden group hover:scale-[1.02] active:scale-95 transition-all cursor-pointer bg-white/40"
                                 >
-                                    <div className="flex items-center gap-4">
-                                        <div className="bg-blue-500/10 p-3 rounded-lg group-hover:bg-blue-500/20 transition-colors">
-                                            <Briefcase className="w-6 h-6 text-blue-500" />
+                                    <div className="flex items-center gap-4 relative z-10">
+                                        <div className="w-12 h-12 bg-identity-sky/10 rounded-2xl flex items-center justify-center text-identity-sky border border-identity-sky/20 group-hover:scale-110 transition-transform">
+                                            <Briefcase size={24} />
                                         </div>
                                         <div>
-                                            <p className="text-secondary/60 text-xs uppercase font-bold tracking-widest">Professors</p>
-                                            <p className="text-2xl font-black text-white">{totalProfessors}</p>
+                                            <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.2em] italic">Professors</p>
+                                            <p className="text-2xl font-black text-identity-navy tracking-tighter italic">{totalProfessors}</p>
                                         </div>
                                     </div>
                                 </div>
@@ -664,40 +665,39 @@ export default function AdminDashboard() {
                                         setActiveTab('sessions');
                                         fetchSessions();
                                     }}
-                                    className="bg-maroon-900/40 backdrop-blur-xl border border-white/5 rounded-xl p-6 hover:border-purple-500/50 transition-all cursor-pointer hover:scale-[1.02] active:scale-95 group shadow-xl"
+                                    className="identity-glass p-6 sm:p-8 md:p-10 rounded-[2rem] md:rounded-[3rem] shadow-xl border border-identity-sky/5 relative overflow-hidden group hover:scale-[1.02] active:scale-95 transition-all cursor-pointer bg-white/40"
                                 >
-                                    <div className="flex items-center gap-4">
-                                        <div className="bg-purple-500/10 p-3 rounded-lg group-hover:bg-purple-500/20 transition-colors">
-                                            <Activity className="w-6 h-6 text-purple-500" />
+                                    <div className="flex items-center gap-4 relative z-10">
+                                        <div className="w-12 h-12 bg-purple-500/10 rounded-2xl flex items-center justify-center text-purple-500 border border-purple-500/20 group-hover:scale-110 transition-transform">
+                                            <Activity size={24} />
                                         </div>
                                         <div>
-                                            <p className="text-secondary/60 text-xs uppercase font-bold tracking-widest">Active Sessions</p>
-                                            <p className="text-2xl font-black text-white">{activeSessionsCount}</p>
+                                            <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.2em] italic">Sessions</p>
+                                            <p className="text-2xl font-black text-identity-navy tracking-tighter italic">{activeSessionsCount}</p>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                             <div className="bg-black/40 backdrop-blur-xl border border-white/10 rounded-[32px] p-10 mb-8 shadow-2xl relative overflow-hidden">
-                                <div className="absolute inset-0 bg-gradient-to-br from-brand-gold/5 via-transparent to-transparent pointer-events-none" />
-                                <h2 className="text-2xl font-black text-white mb-8 flex items-center gap-4 uppercase tracking-tight relative z-10">
-                                    <div className="bg-brand-gold/10 p-2 rounded-lg">
-                                        <Clock className="w-6 h-6 text-brand-gold" />
+                            <div className="identity-glass p-6 sm:p-8 md:p-10 rounded-[2rem] md:rounded-[3rem] shadow-xl border border-identity-sky/10 backdrop-blur-sm p-8 mb-8">
+                                <h2 className="text-2xl font-black text-identity-navy mb-8 flex items-center gap-4 uppercase tracking-tighter italic font-outfit">
+                                    <div className="bg-identity-sky/10 p-3 rounded-2xl border border-identity-sky/10">
+                                        <Clock className="w-6 h-6 text-identity-sky" />
                                     </div>
-                                    Pending Professor Approvals
+                                    Pending Approvals
                                     {filteredProfessors.length > 0 && (
-                                        <span className="bg-brand-gold text-black px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ml-auto">
+                                        <span className="bg-identity-sky/10 text-identity-sky border border-identity-sky/20 px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-[0.15em] ml-auto">
                                             {filteredProfessors.length} PENDING
                                         </span>
                                     )}
                                 </h2>
 
                                 {filteredProfessors.length === 0 ? (
-                                    <div className="text-center py-20 bg-black/20 rounded-[24px] border border-white/5">
-                                        <div className="bg-white/5 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
-                                            <UserCheck className="w-10 h-10 text-secondary/20" />
+                                    <div className="text-center py-20 bg-slate-50/50 rounded-[24px] border border-slate-100">
+                                        <div className="bg-slate-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
+                                            <UserCheck className="w-10 h-10 text-slate-300" />
                                         </div>
-                                        <p className="text-white text-lg font-black uppercase tracking-tight">Queue Depleted</p>
-                                        <p className="text-secondary/40 text-[10px] mt-3 uppercase tracking-[0.3em] font-black">All credentials have been processed</p>
+                                        <p className="text-identity-navy text-lg font-black uppercase tracking-tight italic">Queue Depleted</p>
+                                        <p className="text-slate-400 text-[10px] mt-3 uppercase tracking-[0.15em] font-black">All requests processed</p>
                                     </div>
                                 ) : (
                                     <BulkActions
@@ -718,90 +718,88 @@ export default function AdminDashboard() {
                                 )}
                             </div>
                              <div className="flex justify-between items-center mt-16 mb-8">
-                                <h2 className="text-2xl font-black text-white flex items-center gap-4 uppercase tracking-tight">
-                                    <div className="bg-brand-gold/10 p-2 rounded-lg">
-                                        <Camera className="w-6 h-6 text-brand-gold" />
+                                <h2 className="text-2xl font-black text-identity-navy flex items-center gap-4 uppercase tracking-tighter italic font-outfit">
+                                    <div className="bg-identity-sky/10 p-3 rounded-2xl border border-identity-sky/10">
+                                        <Camera className="w-6 h-6 text-identity-sky" />
                                     </div>
-                                    Live Security Matrix
+                                    Live Security Feed
                                 </h2>
                                 <Link 
                                     href="/admin/camera-test" 
-                                    className="bg-brand-gold text-black px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center gap-3 transition-all hover:scale-105 active:scale-95 shadow-2xl shadow-brand-gold/20"
+                                    className="bg-identity-navy text-white px-8 py-4 rounded-2xl text-[10px] font-black uppercase tracking-[0.15em] flex items-center gap-4 transition-all hover:bg-identity-sky hover:scale-[1.02] active:scale-95 shadow-xl shadow-identity-navy/10"
                                 >
-                                    <Monitor className="w-4 h-4" />
-                                    Run Face Diagnostic
+                                    <Monitor className="w-4 h-4 text-white" />
+                                    Test Face Recognition
                                 </Link>
-                            </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-16">
-                                <div className="bg-black/60 rounded-[32px] border border-white/10 p-2 shadow-2xl group overflow-hidden relative">
-                                    <div className="absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-brand-gold/5 to-transparent pointer-events-none opacity-50" />
+                            </div>                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-16">
+                                <div className="identity-glass rounded-[2rem] md:rounded-[3rem] border border-identity-sky/10 p-4 shadow-xl group overflow-hidden relative overflow-hidden transition-all hover:shadow-2xl">
+                                    <div className="absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-identity-sky/5 to-transparent pointer-events-none opacity-50" />
                                     <div className="px-6 py-4 flex justify-between items-center relative z-10">
-                                        <h3 className="text-[10px] font-black text-white flex items-center gap-3 uppercase tracking-widest">
-                                            <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
-                                            NODE 01 <span className="text-secondary/40 font-bold ml-2">MAIN ENTRANCE</span>
+                                        <h3 className="text-[10px] font-black text-identity-navy flex items-center gap-4 uppercase tracking-[0.15em] italic font-outfit">
+                                            <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse shadow-[0_0_8px_rgba(244,63,94,0.4)]" />
+                                            CAMERA 01 <span className="text-identity-sky/60 font-bold ml-2">MAIN ENTRANCE</span>
                                         </h3>
-                                        <div className="text-[8px] font-black text-secondary/30 tracking-[0.2em] font-mono">192.168.1.220:554</div>
+                                        <div className="text-[8px] font-black text-slate-300 tracking-[0.15em] font-mono">192.168.1.220:554</div>
                                     </div>
                                     <div className="aspect-video w-full relative">
                                         <VideoFeed
                                             src="/api/ai/video_feed/1"
                                             alt="Camera 1"
                                             label="MAIN ENTRANCE"
-                                            className="w-full h-full rounded-[24px]"
+                                            className="w-full h-full rounded-[2rem]"
                                         />
                                     </div>
                                 </div>
-                                <div className="bg-black/60 rounded-[32px] border border-white/10 p-2 shadow-2xl group overflow-hidden relative">
-                                    <div className="absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-brand-gold/5 to-transparent pointer-events-none opacity-50" />
+                                <div className="identity-glass rounded-[2rem] md:rounded-[3rem] border border-identity-sky/10 p-4 shadow-xl group overflow-hidden relative overflow-hidden transition-all hover:shadow-2xl">
+                                    <div className="absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-identity-sky/5 to-transparent pointer-events-none opacity-50" />
                                     <div className="px-6 py-4 flex justify-between items-center relative z-10">
-                                        <h3 className="text-[10px] font-black text-white flex items-center gap-3 uppercase tracking-widest">
-                                            <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
-                                            NODE 02 <span className="text-secondary/40 font-bold ml-2">EXIT CORRIDOR</span>
+                                        <h3 className="text-[10px] font-black text-identity-navy flex items-center gap-4 uppercase tracking-[0.15em] italic font-outfit">
+                                            <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse shadow-[0_0_8px_rgba(244,63,94,0.4)]" />
+                                            CAMERA 02 <span className="text-identity-sky/60 font-bold ml-2">EXIT CORRIDOR</span>
                                         </h3>
-                                        <div className="text-[8px] font-black text-secondary/30 tracking-[0.2em] font-mono">192.168.1.221:554</div>
+                                        <div className="text-[8px] font-black text-slate-300 tracking-[0.15em] font-mono">192.168.1.221:554</div>
                                     </div>
                                     <div className="aspect-video w-full relative">
                                         <VideoFeed
                                             src="/api/ai/video_feed/2"
                                             alt="Camera 2"
                                             label="EXIT CORRIDOR"
-                                            className="w-full h-full rounded-[24px]"
+                                            className="w-full h-full rounded-[2rem]"
                                         />
                                     </div>
                                 </div>
                             </div>
-                             <h2 className="text-2xl font-black text-white mb-8 flex items-center gap-4 uppercase tracking-tight mt-16">
-                                <div className="bg-brand-gold/10 p-2 rounded-lg">
-                                    <UserCheck className="w-6 h-6 text-brand-gold" />
+
+                             <h2 className="text-2xl font-black text-identity-navy mb-8 flex items-center gap-4 uppercase tracking-tighter italic mt-16 font-outfit">
+                                <div className="bg-identity-sky/10 p-3 rounded-2xl border border-identity-sky/10">
+                                    <History className="w-6 h-6 text-identity-sky" />
                                 </div>
                                 System Audit Log
                             </h2>
-
-                            <div className="bg-black/40 border border-white/10 rounded-[32px] overflow-hidden shadow-2xl relative">
-                                <div className="absolute inset-0 bg-gradient-to-br from-brand-gold/5 via-transparent to-transparent pointer-events-none" />
+                             <div className="identity-glass border border-identity-sky/10 rounded-[2rem] md:rounded-[3rem] overflow-hidden shadow-xl relative bg-white/40">
                                 {stats?.recentActions && stats.recentActions.length > 0 ? (
-                                    <div className="divide-y divide-white/5 relative z-10">
+                                    <div className="divide-y divide-slate-100 relative z-10">
                                         {stats.recentActions.slice(0, 10).map((action) => (
-                                            <div key={action.id} className="p-6 flex items-center justify-between hover:bg-white/5 transition-colors group">
+                                            <div key={action.id} className="p-6 flex items-center justify-between hover:bg-identity-navy/[0.02] transition-colors group">
                                                 <div className="flex items-center gap-6">
-                                                    <div className="w-12 h-12 rounded-2xl bg-maroon-900 flex items-center justify-center text-brand-gold border border-white/10 shadow-inner group-hover:border-brand-gold/50 transition-all font-black uppercase text-xs">
+                                                    <div className="w-12 h-12 rounded-2xl bg-identity-sky/10 flex items-center justify-center text-identity-sky border border-identity-sky/20 group-hover:bg-identity-navy group-hover:text-identity-navy transition-all font-black uppercase text-xs">
                                                         {action.action_type[0]}
                                                     </div>
                                                     <div>
-                                                        <p className="text-white font-black text-xs uppercase tracking-widest group-hover:text-brand-gold transition-colors">
+                                                        <p className="text-identity-navy font-black text-xs uppercase tracking-[0.15em] group-hover:text-identity-sky transition-colors">
                                                             {action.action_type.replace('_', ' ')}
                                                         </p>
-                                                        <p className="text-[10px] font-bold text-secondary/40 uppercase tracking-widest mt-1">
+                                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.15em] mt-1">
                                                             MODERATOR: {action.first_name} {action.last_name}
                                                         </p>
                                                     </div>
                                                 </div>
                                                 <div className="text-right">
-                                                    <p className="text-[9px] font-black text-secondary/30 uppercase tracking-[0.2em]">
+                                                    <p className="text-[9px] font-black text-slate-300 uppercase tracking-[0.15em]">
                                                         {new Date(action.created_at).toLocaleString()}
                                                     </p>
                                                     {action.details && (
-                                                        <p className="text-[9px] font-bold text-secondary/40 mt-2 max-w-xs truncate uppercase tracking-widest">
+                                                        <p className="text-[9px] font-bold text-slate-400 mt-2 max-w-xs truncate uppercase tracking-[0.15em]">
                                                             {action.details}
                                                         </p>
                                                     )}
@@ -811,14 +809,15 @@ export default function AdminDashboard() {
                                     </div>
                                 ) : (
                                     <div className="p-20 text-center relative z-10">
-                                        <div className="bg-white/5 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
-                                            <History className="w-10 h-10 text-secondary/20" />
+                                        <div className="bg-slate-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
+                                            <History className="w-10 h-10 text-slate-200" />
                                         </div>
-                                        <p className="text-white text-lg font-black uppercase tracking-tight">Log Purged</p>
-                                        <p className="text-secondary/40 text-[10px] mt-3 uppercase tracking-[0.3em] font-black">No recent system interactions found</p>
+                                        <p className="text-identity-navy text-lg font-black uppercase tracking-tight italic">System Log is Empty</p>
+                                        <p className="text-slate-400 text-[10px] mt-3 uppercase tracking-[0.15em] font-black">No recent system interactions found</p>
                                     </div>
                                 )}
                             </div>
+
                         </>
                     ) : activeTab === 'privacy' ? (
                         <DeletionRequestsTab />
@@ -826,15 +825,15 @@ export default function AdminDashboard() {
                         <div className="space-y-6">
                             <div className="space-y-8 animate-fade-in">
                                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-                                    <h2 className="text-2xl font-black text-white flex items-center gap-4 uppercase tracking-tight">
-                                        <div className="bg-brand-gold/10 p-2 rounded-lg">
-                                            <Users className="w-6 h-6 text-brand-gold" />
+                                    <h2 className="text-2xl font-black text-identity-navy flex items-center gap-4 uppercase tracking-tighter italic font-outfit">
+                                        <div className="bg-identity-sky/10 p-3 rounded-2xl border border-identity-sky/10">
+                                            <Users className="w-6 h-6 text-identity-sky" />
                                         </div>
-                                        Registered Matrix
+                                        Registered Accounts
                                     </h2>
                                     <div className="flex flex-wrap items-center gap-4">
-                                        <div className="relative group">
-                                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-gold/40 group-focus-within:text-brand-gold transition-colors" />
+                                        <div className="relative group min-w-[280px]">
+                                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-identity-sky transition-colors" />
                                             <input
                                                 type="text"
                                                 placeholder="Search Signature..."
@@ -845,7 +844,7 @@ export default function AdminDashboard() {
                                                 onKeyDown={(e) => {
                                                     if (e.key === 'Enter') fetchUsers(userRoleFilter, userSearch);
                                                 }}
-                                                className="bg-black/40 border border-white/10 text-white pl-12 pr-10 py-3 rounded-2xl focus:outline-none focus:border-brand-gold w-full md:w-72 placeholder:text-secondary/20 font-black uppercase text-[10px] tracking-widest transition-all shadow-inner"
+                                                className="bg-white/60 border border-slate-100 text-identity-navy pl-12 pr-10 py-4 rounded-2xl focus:outline-none focus:border-identity-sky w-full placeholder:text-slate-200 font-bold uppercase text-[10px] tracking-[0.15em] transition-all shadow-sm"
                                             />
                                             {userSearch && (
                                                 <button
@@ -853,7 +852,7 @@ export default function AdminDashboard() {
                                                         setUserSearch('');
                                                         fetchUsers(userRoleFilter, '');
                                                     }}
-                                                    className="absolute right-4 top-1/2 -translate-y-1/2 text-secondary/40 hover:text-white transition-colors"
+                                                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-300 hover:text-identity-navy transition-colors p-2 min-h-[44px] min-w-[44px] flex items-center justify-center"
                                                 >
                                                     <XCircle className="w-4 h-4" />
                                                 </button>
@@ -862,7 +861,7 @@ export default function AdminDashboard() {
                                         <select
                                             value={userRoleFilter}
                                             onChange={(e) => setUserRoleFilter(e.target.value)}
-                                            className="bg-black/40 border border-white/10 text-white px-6 py-3 rounded-2xl focus:outline-none focus:border-brand-gold font-black uppercase text-[10px] tracking-widest transition-all appearance-none cursor-pointer hover:bg-black/60 shadow-inner min-w-[140px]"
+                                            className="bg-white/60 border border-slate-100 text-identity-navy px-6 py-4 rounded-2xl focus:outline-none focus:border-identity-sky font-black uppercase text-[10px] tracking-[0.15em] transition-all appearance-none cursor-pointer hover:bg-white shadow-sm min-w-[140px]"
                                         >
                                             <option value="all">All Roles</option>
                                             <option value="student">Students</option>
@@ -872,7 +871,7 @@ export default function AdminDashboard() {
                                         <select
                                             value={userStatusFilter}
                                             onChange={(e) => setUserStatusFilter(e.target.value)}
-                                            className="bg-black/40 border border-white/10 text-white px-6 py-3 rounded-2xl focus:outline-none focus:border-brand-gold font-black uppercase text-[10px] tracking-widest transition-all appearance-none cursor-pointer hover:bg-black/60 shadow-inner min-w-[140px]"
+                                            className="bg-white/60 border border-slate-100 text-identity-navy px-6 py-4 rounded-2xl focus:outline-none focus:border-identity-sky font-black uppercase text-[10px] tracking-[0.15em] transition-all appearance-none cursor-pointer hover:bg-white shadow-sm min-w-[140px]"
                                         >
                                             <option value="all">All Status</option>
                                             <option value="approved">Approved</option>
@@ -881,7 +880,7 @@ export default function AdminDashboard() {
                                         </select>
                                         <button
                                             onClick={() => fetchUsers()}
-                                            className="bg-brand-gold hover:bg-black hover:text-brand-gold text-black p-3 rounded-2xl transition-all shadow-2xl shadow-brand-gold/10 border border-brand-gold active:scale-95 flex items-center justify-center group"
+                                            className="bg-identity-navy hover:bg-identity-sky text-white p-4 min-h-[44px] min-w-[44px] rounded-2xl transition-all shadow-xl shadow-identity-navy/10 active:scale-95 flex items-center justify-center group"
                                             title="Refresh List"
                                         >
                                             <RefreshCw className={`w-5 h-5 transition-transform group-hover:rotate-180 ${loadingUsers ? 'animate-spin' : ''}`} />
@@ -889,75 +888,78 @@ export default function AdminDashboard() {
                                     </div>
                                 </div>
 
-                                <div className="bg-black/40 backdrop-blur-xl border border-white/10 rounded-[32px] overflow-hidden shadow-3xl relative">
-                                    <div className="absolute inset-0 bg-gradient-to-br from-brand-gold/5 via-transparent to-transparent pointer-events-none opacity-30" />
+                                <div className="identity-glass border border-slate-100 rounded-[2rem] md:rounded-[3rem] overflow-hidden shadow-xl relative bg-white/40">
+                                    <div className="absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-identity-sky/5 to-transparent pointer-events-none opacity-30" />
                                     {loadingUsers ? (
-                                        <div className="p-32 text-center relative z-10">
-                                            <div className="animate-spin w-12 h-12 border-[3px] border-brand-gold border-t-transparent rounded-full mx-auto mb-6 shadow-2xl"></div>
-                                            <p className="text-secondary/40 font-black uppercase tracking-[0.3em] text-[10px]">Accessing Identity Vault...</p>
+                                        <div className="p-20 relative z-10 space-y-4">
+                                            <Skeleton className="h-16 w-full rounded-2xl" />
+                                            <Skeleton className="h-16 w-full rounded-2xl" />
+                                            <Skeleton className="h-16 w-full rounded-2xl" />
+                                            <Skeleton className="h-16 w-full rounded-2xl" />
+                                            <Skeleton className="h-16 w-full rounded-2xl" />
                                         </div>
                                     ) : systemUsers.length === 0 ? (
-                                        <div className="p-32 text-center relative z-10">
-                                            <div className="bg-white/5 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
-                                                <Users className="w-10 h-10 text-secondary/10" />
-                                            </div>
-                                            <p className="text-white text-lg font-black uppercase tracking-tight">Zero Signatures</p>
-                                            <p className="text-secondary/30 text-[10px] mt-3 uppercase tracking-[0.3em] font-black italic">Search criteria returned no validated records.</p>
+                                        <div className="p-20 text-center relative z-10">
+                                            <EmptyState
+                                                icon={Users}
+                                                title="No Match Found"
+                                                description="Search criteria returned no validated records."
+                                            />
                                         </div>
                                     ) : (
-                                        <div className="overflow-x-auto relative z-10">
+                                        <div className="overflow-x-auto relative z-10 table-responsive-wrapper">
                                             <table className="w-full text-left border-collapse">
                                                 <thead>
-                                                    <tr className="bg-black/60 border-b border-white/10">
-                                                        <th className="px-8 py-6 text-brand-gold font-black uppercase tracking-[0.2em] text-[10px]">Subject Identity</th>
-                                                        <th className="px-8 py-6 text-brand-gold font-black uppercase tracking-[0.2em] text-[10px]">Matrix Code</th>
-                                                        <th className="px-8 py-6 text-brand-gold font-black uppercase tracking-[0.2em] text-[10px]">Role Node</th>
-                                                        <th className="px-8 py-6 text-brand-gold font-black uppercase tracking-[0.2em] text-[10px]">Verification Status</th>
-                                                        <th className="px-8 py-6 text-brand-gold font-black uppercase tracking-[0.2em] text-[10px]">Establishment Date</th>
+                                                    <tr className="bg-slate-50/80 border-b border-identity-sky/10 italic">
+                                                        <th className="px-8 py-6 text-identity-navy font-black uppercase tracking-[0.15em] text-[10px] font-outfit">Subject Identity</th>
+                                                        <th className="px-8 py-6 text-identity-navy font-black uppercase tracking-[0.15em] text-[10px]">Course Code</th>
+                                                        <th className="px-8 py-6 text-identity-navy font-black uppercase tracking-[0.15em] text-[10px]">User Role</th>
+                                                        <th className="px-8 py-6 text-identity-navy font-black uppercase tracking-[0.15em] text-[10px]">Verification Status</th>
+                                                        <th className="px-8 py-6 text-identity-navy font-black uppercase tracking-[0.15em] text-[10px]">Establishment Date</th>
                                                     </tr>
                                                 </thead>
-                                                <tbody className="divide-y divide-white/5">
+                                                <tbody className="divide-y divide-slate-50">
                                                     {systemUsers.map((u) => (
-                                                        <tr key={u.id} className="hover:bg-white/5 transition-colors group">
+                                                        <tr key={u.id} className="hover:bg-identity-navy/[0.02] transition-colors group">
                                                             <td className="px-8 py-6">
                                                                 <div className="flex items-center gap-5">
-                                                                    <div className="w-12 h-12 rounded-2xl bg-maroon-900 flex items-center justify-center text-brand-gold border border-white/10 font-black group-hover:border-brand-gold/50 transition-all shadow-inner uppercase text-xs">
+                                                                    <div className="w-12 h-12 rounded-2xl bg-identity-sky/10 flex items-center justify-center text-identity-sky border border-identity-sky/20 font-black group-hover:bg-identity-navy group-hover:text-identity-navy transition-all shadow-sm uppercase text-xs">
                                                                         {u.first_name?.[0] || 'U'}{u.last_name?.[0] || 'N'}
                                                                     </div>
                                                                     <div>
-                                                                        <p className="text-white font-black text-xs uppercase tracking-widest">{u.first_name} {u.last_name}</p>
-                                                                        <p className="text-[9px] font-bold text-secondary/40 uppercase tracking-[0.2em] mt-1.5">{u.email}</p>
+                                                                        <p className="text-identity-navy font-black text-xs uppercase tracking-[0.15em] italic">{u.first_name} {u.last_name}</p>
+                                                                        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-[0.15em] mt-1.5">{u.email}</p>
                                                                     </div>
                                                                 </div>
                                                             </td>
                                                             <td className="px-8 py-6">
-                                                                <code className="text-[10px] bg-black/40 px-3 py-1.5 rounded-xl text-brand-gold font-mono border border-white/5 font-black tracking-widest group-hover:border-brand-gold/30 transition-colors">
+                                                                <code className="text-[10px] bg-slate-50 px-3 py-1.5 rounded-2xl text-identity-sky font-mono border border-slate-100 font-bold tracking-[0.15em] group-hover:border-identity-sky/30 transition-colors">
                                                                     {u.user_id}
                                                                 </code>
                                                             </td>
-                                                            <td className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em]">
+                                                            <td className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.15em]">
                                                                 <div className="flex items-center gap-2">
                                                                     <div className={`w-1.5 h-1.5 rounded-full ${u.role === 'admin' ? 'bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.5)]' :
-                                                                        u.role === 'professor' ? 'bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]' :
-                                                                            'bg-brand-gold shadow-[0_0_8px_rgba(212,175,55,0.5)]'
+                                                                        u.role === 'professor' ? 'bg-identity-sky shadow-[0_0_8px_rgba(92,180,228,0.5)]' :
+                                                                            'bg-slate-400'
                                                                         }`} />
-                                                                    <span className={`${u.role === 'admin' ? 'text-rose-400' :
-                                                                        u.role === 'professor' ? 'text-blue-400' :
-                                                                            'text-brand-gold'
+                                                                    <span className={`${u.role === 'admin' ? 'text-rose-500' :
+                                                                        u.role === 'professor' ? 'text-identity-sky' :
+                                                                            'text-slate-400'
                                                                         }`}>
                                                                         {u.role}
                                                                     </span>
                                                                 </div>
                                                             </td>
                                                             <td className="px-8 py-6">
-                                                                <span className={`px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-[0.2em] border shadow-sm ${u.approval_status === 'approved' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
-                                                                    u.approval_status === 'pending' ? 'bg-brand-gold/10 text-brand-gold border-brand-gold/20' :
+                                                                <span className={`px-4 py-1.5 rounded-2xl text-[9px] font-black uppercase tracking-[0.2em] border shadow-sm italic ${u.approval_status === 'approved' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
+                                                                    u.approval_status === 'pending' ? 'bg-identity-sky/10 text-identity-sky border-identity-sky/20' :
                                                                         'bg-red-500/10 text-red-500 border-red-500/20'
                                                                     }`}>
                                                                     {u.approval_status}
                                                                 </span>
                                                             </td>
-                                                            <td className="px-8 py-6 text-[10px] font-black text-secondary/40 uppercase tracking-widest">
+                                                            <td className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.15em]">
                                                                 {new Date(u.created_at).toLocaleDateString('en-PH', { month: 'short', day: '2-digit', year: 'numeric' })}
                                                             </td>
                                                         </tr>
@@ -966,10 +968,10 @@ export default function AdminDashboard() {
                                             </table>
                                         </div>
                                     )}
-                                    <div className="px-8 py-6 bg-black/60 border-t border-white/10 flex justify-between items-center relative z-10">
-                                        <p className="text-[9px] text-secondary/30 italic font-black uppercase tracking-[0.3em]">Identity Vault · Integrity Confirmed</p>
-                                        <p className="text-[10px] text-secondary/50 font-black uppercase tracking-[0.2em] flex items-center gap-2">
-                                            <span className="w-1.5 h-1.5 rounded-full bg-brand-gold animate-pulse" />
+                                    <div className="px-8 py-6 bg-identity-navy/[0.02] border-t border-identity-sky/10 flex justify-between items-center relative z-10">
+                                        <p className="text-[9px] text-slate-300 italic font-black uppercase tracking-[0.15em]">Database Â· Secure</p>
+                                        <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.15em] flex items-center gap-2">
+                                            <span className="w-1.5 h-1.5 rounded-full bg-identity-sky animate-pulse" />
                                             {systemUsers.length} Validated Signatures
                                         </p>
                                     </div>
@@ -981,75 +983,74 @@ export default function AdminDashboard() {
                     ) : activeTab === 'sessions' ? (
                         <div className="space-y-8 animate-fade-in">
                             <div className="flex items-center justify-between">
-                                <h2 className="text-2xl font-black text-white flex items-center gap-4 uppercase tracking-tight">
-                                    <div className="bg-brand-gold/10 p-2 rounded-lg">
-                                        <Activity className="w-6 h-6 text-brand-gold" />
+                                <h2 className="text-2xl font-black text-identity-navy flex items-center gap-4 uppercase tracking-tighter italic font-outfit">
+                                    <div className="bg-identity-sky/10 p-3 rounded-2xl border border-identity-sky/10">
+                                        <Activity className="w-6 h-6 text-identity-sky" />
                                     </div>
-                                    Live Matrix Monitoring
+                                    Live Monitoring
                                 </h2>
                                 <button
                                     onClick={() => fetchSessions()}
-                                    className="bg-brand-gold hover:bg-black hover:text-brand-gold text-black p-3 rounded-2xl transition-all shadow-2xl shadow-brand-gold/10 border border-brand-gold active:scale-95 flex items-center justify-center group"
+                                    className="bg-identity-navy hover:bg-identity-navy/90 text-identity-navy p-3 min-h-[44px] min-w-[44px] rounded-2xl transition-all shadow-xl shadow-identity-navy/10 active:scale-95 flex items-center justify-center group"
                                     title="Refresh List"
                                 >
                                     <RefreshCw className={`w-5 h-5 transition-transform group-hover:rotate-180 ${loadingSessions ? 'animate-spin' : ''}`} />
                                 </button>
                             </div>
 
-                            <div className="bg-black/40 backdrop-blur-xl border border-white/10 rounded-[32px] overflow-hidden shadow-3xl relative">
-                                <div className="absolute inset-0 bg-gradient-to-br from-brand-gold/5 via-transparent to-transparent pointer-events-none opacity-30" />
+                            <div className="identity-glass border border-identity-sky/10 rounded-[2rem] md:rounded-[3rem] overflow-hidden shadow-xl relative bg-white/40">
                                 {loadingSessions ? (
-                                    <div className="p-32 text-center relative z-10">
-                                        <div className="animate-spin w-12 h-12 border-[3px] border-brand-gold border-t-transparent rounded-full mx-auto mb-6 shadow-2xl"></div>
-                                        <p className="text-secondary/40 font-black uppercase tracking-[0.3em] text-[10px]">Synchronizing Active Nodes...</p>
+                                    <div className="p-20 relative z-10 space-y-4">
+                                        <Skeleton className="h-16 w-full rounded-2xl" />
+                                        <Skeleton className="h-16 w-full rounded-2xl" />
+                                        <Skeleton className="h-16 w-full rounded-2xl" />
                                     </div>
                                 ) : activeSessions.length === 0 ? (
-                                    <div className="p-32 text-center relative z-10">
-                                        <div className="bg-white/5 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
-                                            <Activity className="w-10 h-10 text-secondary/10" />
-                                        </div>
-                                        <p className="text-white text-lg font-black uppercase tracking-tight">Static Environment</p>
-                                        <p className="text-secondary/30 text-[10px] mt-3 uppercase tracking-[0.3em] font-black italic">No active attendance protocols are currently running.</p>
+                                    <div className="p-20 text-center relative z-10">
+                                        <EmptyState
+                                            icon={Activity}
+                                            title="No Active Sessions"
+                                            description="No active attendance protocols are currently running."
+                                        />
                                     </div>
                                 ) : (
-                                    <div className="overflow-x-auto relative z-10">
+                                    <div className="overflow-x-auto relative z-10 table-responsive-wrapper">
                                         <table className="w-full text-left border-collapse">
                                             <thead>
-                                                <tr className="bg-black/60 border-b border-white/10">
-                                                    <th className="px-8 py-6 text-brand-gold font-black uppercase tracking-[0.2em] text-[10px]">Academic Node</th>
-                                                    <th className="px-8 py-6 text-brand-gold font-black uppercase tracking-[0.2em] text-[10px]">Authorized Proctor</th>
-                                                    <th className="px-8 py-6 text-brand-gold font-black uppercase tracking-[0.2em] text-[10px]">Protocol Type</th>
-                                                    <th className="px-8 py-6 text-brand-gold font-black uppercase tracking-[0.2em] text-[10px]">Initialization</th>
-                                                    <th className="px-8 py-6 text-brand-gold font-black uppercase tracking-[0.2em] text-[10px]">Active Units</th>
+                                                <tr className="bg-identity-navy/[0.02] border-b border-identity-sky/10">
+                                                    <th className="px-8 py-6 text-identity-navy font-black uppercase tracking-[0.15em] text-[10px]">Class Name</th>
+                                                    <th className="px-8 py-6 text-identity-navy font-black uppercase tracking-[0.15em] text-[10px]">Authorized Proctor</th>
+                                                    <th className="px-8 py-6 text-identity-navy font-black uppercase tracking-[0.15em] text-[10px]">Type</th>
+                                                    <th className="px-8 py-6 text-identity-navy font-black uppercase tracking-[0.15em] text-[10px]">Initialization</th>
+                                                    <th className="px-8 py-6 text-identity-navy font-black uppercase tracking-[0.15em] text-[10px]">Active Units</th>
                                                 </tr>
                                             </thead>
-                                            <tbody className="divide-y divide-white/5">
+                                            <tbody className="divide-y divide-slate-100">
                                                 {activeSessions.map((session) => (
-                                                    <tr key={session.id} className="hover:bg-white/5 transition-colors group">
+                                                    <tr key={session.id} className="hover:bg-identity-navy/[0.02] transition-colors group">
                                                         <td className="px-8 py-6">
                                                             <div>
-                                                                <p className="text-white font-black text-xs uppercase tracking-widest">{session.subject_code}</p>
-                                                                <p className="text-[9px] font-bold text-secondary/40 uppercase tracking-[0.2em] mt-1.5">{session.subject_name} — SECTION {session.section}</p>
+                                                                <p className="text-identity-navy font-black text-xs uppercase tracking-[0.15em] italic">{session.subject_code}</p>
+                                                                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-[0.15em] mt-1.5">{session.subject_name} â€” SECTION {session.section}</p>
                                                             </div>
                                                         </td>
                                                         <td className="px-8 py-6">
-                                                            <p className="text-white text-xs font-black uppercase tracking-widest">{session.professor_name}</p>
+                                                            <p className="text-identity-navy text-xs font-black uppercase tracking-[0.15em]">{session.professor_name}</p>
                                                         </td>
                                                         <td className="px-8 py-6">
-                                                            <span className={`px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-[0.2em] border shadow-sm ${session.session_type === 'regular' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' :
-                                                                session.session_type === 'makeup' ? 'bg-brand-gold/10 text-brand-gold border-brand-gold/20' :
-                                                                    'bg-brand-gold/10 text-brand-gold border-brand-gold/20'
+                                                            <span className={`px-4 py-1.5 rounded-2xl text-[9px] font-black uppercase tracking-[0.2em] border shadow-sm italic ${session.session_type === 'regular' ? 'bg-identity-sky/10 text-identity-sky border-identity-sky/20' :
+                                                                'bg-amber-100 text-amber-600 border-amber-200'
                                                                 }`}>
                                                                 {(session.session_name || session.session_type).toUpperCase()}
                                                             </span>
                                                         </td>
-                                                        <td className="px-8 py-6 text-[10px] font-black text-secondary/40 uppercase tracking-widest">
+                                                        <td className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.15em]">
                                                             {new Date(session.start_time).toLocaleString('en-PH', { timeZone: 'Asia/Manila', hour: '2-digit', minute: '2-digit', hour12: true })}
                                                         </td>
                                                         <td className="px-8 py-6">
-                                                            <div className="flex items-center gap-3">
-                                                                <div className="w-1.5 h-1.5 rounded-full bg-brand-gold animate-pulse" />
-                                                                <span className="text-white font-black text-xs uppercase tracking-widest">{session.student_count} NODES</span>
+                                                            <div className="flex items-center gap-4">
+                                                                <div className="w-1.5 h-1.5 rounded-full bg-identity-sky animate-pulse shadow-[0_0_8px_rgba(92,180,228,0.5)]" />
+                                                                <span className="text-identity-navy font-black text-xs uppercase tracking-[0.15em]">{session.student_count} NODES</span>
                                                             </div>
                                                         </td>
                                                     </tr>
@@ -1058,10 +1059,10 @@ export default function AdminDashboard() {
                                         </table>
                                     </div>
                                 )}
-                                <div className="px-8 py-6 bg-black/60 border-t border-white/10 flex justify-between items-center relative z-10">
-                                    <p className="text-[9px] text-secondary/30 italic font-black uppercase tracking-[0.3em]">Live Feed Matrix · Access Grade A</p>
-                                    <p className="text-[10px] text-secondary/50 font-black uppercase tracking-[0.2em] flex items-center gap-2">
-                                        <span className="w-1.5 h-1.5 rounded-full bg-brand-gold animate-pulse" />
+                                <div className="px-8 py-6 bg-identity-navy/[0.02] border-t border-identity-sky/10 flex justify-between items-center relative z-10">
+                                    <p className="text-[9px] text-slate-300 italic font-black uppercase tracking-[0.15em]">Live Camera Feed</p>
+                                    <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.15em] flex items-center gap-2">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-identity-sky animate-pulse" />
                                         {activeSessions.length} MONITORING NODES
                                     </p>
                                 </div>
@@ -1070,11 +1071,11 @@ export default function AdminDashboard() {
                     ) : (
                         <div className="space-y-8 animate-fade-in">
                             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-                                <h2 className="text-2xl font-black text-white flex items-center gap-4 uppercase tracking-tight">
-                                    <div className="bg-rose-500/10 p-2 rounded-lg">
+                                <h2 className="text-2xl font-black text-identity-navy flex items-center gap-4 uppercase tracking-tighter italic font-outfit">
+                                    <div className="bg-rose-500/10 p-3 rounded-2xl border border-rose-500/20">
                                         <AlertTriangle className="w-6 h-6 text-rose-500" />
                                     </div>
-                                    Identity Verification Reports
+                                    Identity Verification Logs
                                 </h2>
                                 <div className="flex items-center gap-4">
                                     <select
@@ -1083,9 +1084,9 @@ export default function AdminDashboard() {
                                             setReportStatusFilter(e.target.value);
                                             setTimeout(() => fetchReports(), 100);
                                         }}
-                                        className="bg-black/40 border border-white/10 text-white px-6 py-3 rounded-2xl focus:outline-none focus:border-brand-gold font-black uppercase text-[10px] tracking-widest transition-all"
+                                        className="bg-white/60 border border-slate-100 text-identity-navy px-6 py-3 rounded-2xl focus:outline-none focus:border-identity-sky font-black uppercase text-[10px] tracking-[0.15em] transition-all appearance-none cursor-pointer shadow-sm min-w-[200px]"
                                     >
-                                        <option value="all">Display All Matrix</option>
+                                        <option value="all">Display All Cameras</option>
                                         <option value="pending">Awaiting Review</option>
                                         <option value="investigating">Under Investigation</option>
                                         <option value="resolved">Resolved / Secure</option>
@@ -1094,53 +1095,52 @@ export default function AdminDashboard() {
                                 </div>
                             </div>
 
-                            <div className="bg-black/40 backdrop-blur-xl border border-white/10 rounded-[32px] p-10 shadow-3xl relative overflow-hidden">
-                                <div className="absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-rose-500/5 to-transparent pointer-events-none opacity-50" />
+                            <div className="identity-glass border border-identity-sky/10 rounded-[2rem] md:rounded-[3rem] p-10 shadow-xl relative overflow-hidden bg-white/40">
+                                <div className="absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-rose-50 to-transparent pointer-events-none opacity-50" />
                                 {reports.length === 0 ? (
                                     <div className="text-center py-24 relative z-10">
-                                        <div className="bg-white/5 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
-                                            <AlertTriangle className="w-10 h-10 text-secondary/20" />
-                                        </div>
-                                        <p className="text-white text-lg font-black uppercase tracking-tight">No Anomalies Detected</p>
-                                        <p className="text-secondary/40 text-[10px] mt-3 uppercase tracking-[0.3em] font-black italic">The Identity Vault currently reports zero security violations.</p>
+                                        <EmptyState
+                                            icon={Shield}
+                                            title="No Anomalies Detected"
+                                            description="There are no security violations to report."
+                                        />
                                     </div>
                                 ) : (
                                     <div className="space-y-6 relative z-10">
                                         {reports.map((report) => (
-                                            <div key={report.id} className="bg-black/40 border border-white/5 rounded-3xl p-8 hover:border-rose-500/30 transition-all group shadow-inner relative overflow-hidden">
-                                                <div className="absolute inset-0 bg-gradient-to-r from-rose-500/0 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+                                            <div key={report.id} className="identity-glass border border-identity-sky/10 rounded-[1.5rem] md:rounded-[2rem] p-8 hover:border-identity-sky/30 transition-all group shadow-xl relative overflow-hidden bg-white/50 backdrop-blur-sm">
                                                 <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative z-10">
                                                     <div className="flex-1">
                                                         <div className="flex items-center gap-4 mb-4">
-                                                            <div className="bg-rose-500/10 text-rose-500 px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border border-rose-500/20">
-                                                                REPORT ID #{report.id}
+                                                            <div className="bg-rose-500/5 text-rose-500 px-4 py-1.5 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] border border-rose-500/10 italic">
+                                                                LOG_ENTRY #{report.id}
                                                             </div>
-                                                            <span className={`px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-[0.2em] border shadow-sm ${
-                                                                report.status === 'pending' ? 'bg-brand-gold/10 text-brand-gold border-brand-gold/20' :
-                                                                report.status === 'investigating' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' :
-                                                                report.status === 'resolved' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
-                                                                'bg-white/5 text-secondary/40 border-white/10'
+                                                            <span className={`px-4 py-1.5 rounded-2xl text-[9px] font-black uppercase tracking-[0.2em] border shadow-sm italic ${
+                                                                report.status === 'pending' ? 'bg-amber-500/10 text-amber-600 border-amber-500/20' :
+                                                                report.status === 'investigating' ? 'bg-identity-sky/10 text-identity-sky border-identity-sky/20' :
+                                                                report.status === 'resolved' ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20' :
+                                                                'bg-slate-500/10 text-slate-400 border-slate-500/20'
                                                             }`}>
-                                                                {report.status === 'pending' ? 'AWAITING_REVIEW' : report.status.toUpperCase()}
+                                                                {report.status === 'pending' ? 'LOG_AWAITING' : `LOG_${report.status.toUpperCase()}`}
                                                             </span>
                                                         </div>
-                                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
+                                                        <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 gap-8">
                                                             <div>
-                                                                <p className="text-secondary/30 text-[9px] font-black uppercase tracking-[0.2em] mb-2">Target Neural Signature</p>
-                                                                <p className="text-brand-gold font-mono bg-black/40 px-3 py-1.5 rounded-xl border border-white/5 inline-block text-xs font-black">{report.reported_user_id}</p>
+                                                                <p className="text-slate-400 text-[9px] font-black uppercase tracking-[0.15em] mb-2">Target Face Profile</p>
+                                                                <p className="text-identity-sky font-mono bg-slate-50 px-3 py-1.5 rounded-2xl border border-slate-100 inline-block text-xs font-bold font-mono tracking-[0.15em]">{report.reported_user_id}</p>
                                                             </div>
                                                             <div>
-                                                                <p className="text-secondary/30 text-[9px] font-black uppercase tracking-[0.2em] mb-2">Claimant Profile</p>
-                                                                <p className="text-white font-black text-xs uppercase tracking-widest">{report.reporter_name}</p>
+                                                                <p className="text-slate-400 text-[9px] font-black uppercase tracking-[0.15em] mb-2">Claimant Profile</p>
+                                                                <p className="text-identity-navy font-black text-xs uppercase tracking-[0.15em] italic">{report.reporter_name}</p>
                                                             </div>
                                                         </div>
                                                     </div>
                                                     <button
                                                         onClick={() => setSelectedReport(report)}
-                                                        className="w-full md:w-auto bg-maroon-900 hover:bg-black text-white px-8 py-4 rounded-2xl transition-all font-black uppercase tracking-widest text-[10px] border border-white/10 hover:border-brand-gold/50 flex items-center justify-center gap-3 group active:scale-95 shadow-2xl"
+                                                        className="w-full md:w-auto bg-identity-navy hover:bg-identity-sky text-white px-8 py-4 rounded-2xl transition-all font-black uppercase tracking-[0.15em] text-[10px] flex items-center justify-center gap-4 group active:scale-95 shadow-xl shadow-identity-navy/10"
                                                     >
-                                                        <Eye className="w-4 h-4 text-brand-gold" />
-                                                        Manage Protocol
+                                                        <Eye className="w-4 h-4 text-identity-sky transition-transform group-hover:scale-125" />
+                                                        Verify Case
                                                     </button>
                                                 </div>
                                             </div>
@@ -1153,86 +1153,88 @@ export default function AdminDashboard() {
                 </div>
 
                 {selectedReport && (
-                    <div className="fixed inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center p-6 z-50 animate-in fade-in zoom-in duration-300">
-                        <div className="bg-maroon-950 border border-white/10 rounded-[40px] p-10 max-w-2xl w-full shadow-3xl relative overflow-hidden">
-                            <div className="absolute inset-0 bg-gradient-to-br from-rose-500/5 via-transparent to-transparent pointer-events-none" />
+                    <div className="fixed inset-0 bg-identity-navy/60 backdrop-blur-md flex items-center justify-center p-6 z-50 animate-in fade-in zoom-in duration-300">
+                        <div className="bg-white border border-identity-sky/10 rounded-[2rem] md:rounded-[3rem] p-10 max-w-4xl w-full shadow-2xl relative overflow-hidden">
+                            <div className="absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-rose-50 to-transparent pointer-events-none opacity-50" />
                             
                             <div className="flex justify-between items-start mb-10 relative z-10">
-                                <h3 className="text-3xl font-black text-rose-500 flex items-center gap-4 uppercase tracking-tighter">
-                                    <AlertTriangle className="w-8 h-8" />
-                                    Anomaly Protocol
-                                    <span className="text-white/20 text-sm ml-4 font-mono tracking-widest text-[10px]">#{selectedReport.id}</span>
+                                <h3 className="text-3xl font-black text-rose-500 flex items-center gap-4 uppercase tracking-tighter italic">
+                                    <div className="bg-rose-500/10 p-3 rounded-2xl border border-rose-500/20">
+                                        <AlertTriangle className="w-8 h-8" />
+                                    </div>
+                                    Anomalous Flag
+                                    <span className="text-slate-200 text-sm ml-4 font-mono tracking-[0.15em] text-[10px]">#{selectedReport.id}</span>
                                 </h3>
-                                <button onClick={() => setSelectedReport(null)} className="text-secondary/40 hover:text-white transition-colors">
+                                <button onClick={() => setSelectedReport(null)} className="text-slate-300 hover:text-identity-navy transition-all hover:rotate-90">
                                     <XCircle className="w-8 h-8" />
                                 </button>
                             </div>
 
                             <div className="space-y-8 mb-10 relative z-10">
-                                <div className="bg-black/40 rounded-[32px] p-8 border border-white/5 shadow-inner">
-                                    <h4 className="text-brand-gold font-black uppercase tracking-[0.3em] text-[10px] mb-6 flex items-center gap-3">
-                                        <div className="w-1.5 h-1.5 bg-brand-gold rounded-full" />
-                                        Target Identification
+                                <div className="bg-slate-50 rounded-[2rem] p-8 border border-identity-sky/5 shadow-inner">
+                                    <h4 className="text-slate-400 font-black uppercase tracking-[0.15em] text-[9px] mb-6 flex items-center gap-4 italic">
+                                        <div className="w-1.5 h-1.5 bg-identity-sky rounded-full" />
+                                        Student Search
                                     </h4>
-                                    <div className="grid grid-cols-2 gap-10 text-[10px] uppercase tracking-[0.2em] font-black">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 text-[9px] uppercase tracking-[0.15em] font-black italic">
                                         <div>
-                                            <p className="text-secondary/40 mb-2.5">Neural Signature</p>
-                                            <p className="text-brand-gold font-mono bg-black/40 px-3 py-1.5 rounded-xl border border-white/5 inline-block text-xs">{selectedReport.reported_user_id}</p>
+                                            <p className="text-slate-300 mb-2.5">Face Profile</p>
+                                            <p className="text-identity-sky font-mono bg-white px-3 py-1.5 rounded-2xl border border-slate-100 inline-block text-xs font-bold">{selectedReport.reported_user_id}</p>
                                         </div>
                                         <div>
-                                            <p className="text-secondary/40 mb-2.5">Current Status</p>
-                                            <p className="text-white bg-white/5 px-3 py-1.5 rounded-xl border border-white/5 inline-block text-xs">{selectedReport.status.toUpperCase()}</p>
+                                            <p className="text-slate-300 mb-2.5">Current Status</p>
+                                            <p className="text-identity-navy bg-white px-3 py-1.5 rounded-2xl border border-slate-100 inline-block text-xs font-bold">{selectedReport.status.toUpperCase()}</p>
                                         </div>
                                         <div>
-                                            <p className="text-secondary/40 mb-2.5">Claimant Profile</p>
-                                            <p className="text-white text-xs">{selectedReport.reporter_name}</p>
+                                            <p className="text-slate-300 mb-2.5">Claimant Profile</p>
+                                            <p className="text-identity-navy text-xs font-bold">{selectedReport.reporter_name}</p>
                                         </div>
                                         <div>
-                                            <p className="text-secondary/40 mb-2.5">Contact Link</p>
-                                            <p className="text-white text-xs lowercase">{selectedReport.reporter_email}</p>
+                                            <p className="text-slate-300 mb-2.5">Contact Link</p>
+                                            <p className="text-identity-navy text-xs font-bold lowercase">{selectedReport.reporter_email}</p>
                                         </div>
                                     </div>
 
                                     <div className="mt-10 pt-10 border-t border-white/5">
-                                        <h4 className="text-rose-500 font-black uppercase tracking-[0.3em] text-[10px] mb-6 flex items-center gap-3">
+                                        <h4 className="text-rose-500 font-black uppercase tracking-[0.15em] text-[10px] mb-6 flex items-center gap-4">
                                             <div className="w-1.5 h-1.5 bg-rose-500 rounded-full" />
-                                            Reported Entity Details
+                                            Reported Student Details
                                         </h4>
                                         {(selectedReport.user_primary_id || selectedReport.first_name) ? (
-                                            <div className="grid grid-cols-2 gap-10 text-[10px] uppercase tracking-[0.2em] font-black">
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-10 text-[10px] uppercase tracking-[0.15em] font-black">
                                                 <div>
-                                                    <p className="text-secondary/40 mb-2.5">Legal Name</p>
-                                                    <p className="text-white text-xs">{selectedReport.first_name} {selectedReport.last_name}</p>
+                                                    <p className="text-slate-400 mb-2.5">Legal Name</p>
+                                                    <p className="text-identity-navy text-xs font-bold italic tracking-tight">{selectedReport.first_name} {selectedReport.last_name}</p>
                                                 </div>
                                                 <div>
-                                                    <p className="text-secondary/40 mb-2.5">Protocol Access</p>
-                                                    <span className={`inline-block px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-[0.2em] border shadow-sm ${selectedReport.role === 'admin' ? 'bg-rose-500/10 text-rose-400 border-rose-500/20' :
-                                                        selectedReport.role === 'professor' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' :
-                                                            'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                                                    <p className="text-slate-400 mb-2.5">Class Access</p>
+                                                    <span className={`inline-block px-3 py-1.5 rounded-2xl text-[9px] font-black uppercase tracking-[0.15em] border shadow-sm ${selectedReport.role === 'admin' ? 'bg-rose-50 text-rose-500 border-rose-100' :
+                                                        selectedReport.role === 'professor' ? 'bg-identity-sky/10 text-identity-sky border-identity-sky/20' :
+                                                            'bg-emerald-50 text-emerald-600 border-emerald-100'
                                                         }`}>
                                                         {selectedReport.role?.toUpperCase()}
                                                     </span>
                                                 </div>
                                                 <div>
-                                                    <p className="text-secondary/40 mb-2.5">Primary Link</p>
-                                                    <p className="text-white text-xs lowercase">{selectedReport.email}</p>
+                                                    <p className="text-slate-400 mb-2.5">Main Contact</p>
+                                                    <p className="text-identity-navy text-xs lowercase font-bold italic tracking-tight">{selectedReport.email}</p>
                                                 </div>
                                                 <div>
-                                                    <p className="text-secondary/40 mb-2.5">Database ID</p>
-                                                    <p className="text-secondary/20 font-mono text-xs">#{selectedReport.user_primary_id}</p>
+                                                    <p className="text-slate-400 mb-2.5">Database ID</p>
+                                                    <p className="text-slate-200 font-mono text-xs">#{selectedReport.user_primary_id}</p>
                                                 </div>
                                             </div>
                                         ) : (
-                                            <div className="bg-rose-500/10 border border-rose-500/20 rounded-2xl p-6 text-rose-500 text-[10px] flex items-center gap-4 font-black uppercase tracking-widest shadow-inner">
+                                            <div className="bg-rose-500/10 border border-rose-500/20 rounded-2xl p-6 text-rose-500 text-[10px] flex items-center gap-4 font-black uppercase tracking-[0.15em] shadow-inner">
                                                 <AlertTriangle className="w-6 h-6 shrink-0" />
-                                                ENTITY NOT FOUND IN ACTIVE DATABASE. POSSIBLE DATA CORRUPTION OR DELETION.
+                                                Student not found in the database. The account may have been deleted.
                                             </div>
                                         )}
                                     </div>
                                     {selectedReport.description && (
-                                        <div className="mt-8 pt-8 border-t border-white/5">
-                                            <p className="text-secondary/40 text-[9px] uppercase font-black tracking-[0.3em] mb-4">Anomaly Description</p>
-                                            <div className="bg-black/20 p-6 rounded-2xl border border-white/5 italic text-white/80 text-xs leading-relaxed">
+                                        <div className="mt-8 pt-8 border-t border-slate-100">
+                                            <p className="text-slate-400 text-[9px] uppercase font-black tracking-[0.15em] mb-4">Report Description</p>
+                                            <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100 italic text-identity-navy text-xs leading-relaxed font-bold">
                                                 "{selectedReport.description}"
                                             </div>
                                         </div>
@@ -1240,83 +1242,83 @@ export default function AdminDashboard() {
                                 </div>
                                 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div className="bg-black/40 rounded-[32px] p-6 border border-white/5 shadow-inner">
-                                        <h4 className="text-white font-black uppercase tracking-[0.3em] text-[9px] mb-4">Evidence: COR Proof</h4>
+                                    <div className="bg-slate-50 rounded-[2rem] p-6 border border-identity-sky/5 shadow-inner">
+                                        <h4 className="text-slate-400 font-black uppercase tracking-[0.15em] text-[9px] mb-4 italic">Evidence: COR Proof</h4>
                                         {selectedReport.certificate_of_registration ? (
-                                            <div className="aspect-video bg-black/60 rounded-2xl border border-white/5 overflow-hidden relative group">
+                                            <div className="aspect-video bg-white rounded-2xl border border-identity-sky/10 overflow-hidden relative group shadow-sm">
                                                 {isPDF(selectedReport.certificate_of_registration) ? (
-                                                    <div className="w-full h-full flex flex-col items-center justify-center text-brand-gold">
+                                                    <div className="w-full h-full flex flex-col items-center justify-center text-identity-sky bg-slate-50">
                                                         <FileText size={40} className="mb-3" />
-                                                        <span className="text-[9px] font-black uppercase tracking-[0.3em]">PDF ARCHIVE</span>
+                                                        <span className="text-[9px] font-black uppercase tracking-[0.15em]">PDF ARCHIVE</span>
                                                     </div>
                                                 ) : (
                                                     <img
                                                         src={getProfilePictureUrl(selectedReport.certificate_of_registration) || ''}
                                                         alt="COR"
-                                                        className="w-full h-full object-contain"
+                                                        className="w-full h-full object-contain grayscale brightness-90 transition-all group-hover:grayscale-0 group-hover:brightness-100"
                                                     />
                                                 )}
                                                 <a href={getProfilePictureUrl(selectedReport.certificate_of_registration) || '#'} target="_blank" rel="noopener noreferrer" 
-                                                   className="absolute inset-0 bg-black/80 opacity-0 group-hover:opacity-100 transition-all flex flex-col items-center justify-center gap-3 text-brand-gold">
+                                                   className="absolute inset-0 bg-identity-navy/80 opacity-0 group-hover:opacity-100 transition-all flex flex-col items-center justify-center gap-4 text-identity-navy backdrop-blur-sm">
                                                     <ExternalLink size={24} />
-                                                    <span className="text-[9px] font-black uppercase tracking-widest">EXPAND SOURCE</span>
+                                                    <span className="text-[9px] font-black uppercase tracking-[0.15em]">EXPAND SOURCE</span>
                                                 </a>
                                             </div>
                                         ) : (
-                                            <div className="aspect-video flex items-center justify-center border border-white/5 border-dashed rounded-2xl text-secondary/20 text-[9px] font-black uppercase tracking-[0.3em]">MISSING_COR</div>
+                                            <div className="aspect-video flex items-center justify-center border border-slate-100 border-dashed rounded-2xl text-slate-200 text-[9px] font-black uppercase tracking-[0.15em] italic">MISSING_COR</div>
                                         )}
                                     </div>
-                                    <div className="bg-black/40 rounded-[32px] p-6 border border-white/5 shadow-inner">
-                                        <h4 className="text-white font-black uppercase tracking-[0.3em] text-[9px] mb-4">Evidence: ID Profile</h4>
+                                    <div className="bg-slate-50 rounded-[2rem] p-6 border border-identity-sky/5 shadow-inner">
+                                        <h4 className="text-slate-400 font-black uppercase tracking-[0.15em] text-[9px] mb-4 italic">Evidence: ID Profile</h4>
                                         {selectedReport.id_photo ? (
-                                            <div className="aspect-video bg-black/60 rounded-2xl border border-white/5 overflow-hidden relative group">
+                                            <div className="aspect-video bg-white rounded-2xl border border-identity-sky/10 overflow-hidden relative group shadow-sm">
                                                 {isPDF(selectedReport.id_photo) ? (
-                                                    <div className="w-full h-full flex flex-col items-center justify-center text-brand-gold">
+                                                    <div className="w-full h-full flex flex-col items-center justify-center text-identity-sky bg-slate-50">
                                                         <FileText size={40} className="mb-3" />
-                                                        <span className="text-[9px] font-black uppercase tracking-[0.3em]">PDF ARCHIVE</span>
+                                                        <span className="text-[9px] font-black uppercase tracking-[0.15em]">PDF ARCHIVE</span>
                                                     </div>
                                                 ) : (
                                                     <img
                                                         src={getProfilePictureUrl(selectedReport.id_photo) || ''}
                                                         alt="ID"
-                                                        className="w-full h-full object-contain"
+                                                        className="w-full h-full object-contain grayscale brightness-90 transition-all group-hover:grayscale-0 group-hover:brightness-100"
                                                     />
                                                 )}
                                                 <a href={getProfilePictureUrl(selectedReport.id_photo) || '#'} target="_blank" rel="noopener noreferrer" 
-                                                   className="absolute inset-0 bg-black/80 opacity-0 group-hover:opacity-100 transition-all flex flex-col items-center justify-center gap-3 text-brand-gold">
+                                                   className="absolute inset-0 bg-identity-navy/80 opacity-0 group-hover:opacity-100 transition-all flex flex-col items-center justify-center gap-4 text-identity-navy backdrop-blur-sm">
                                                     <ExternalLink size={24} />
-                                                    <span className="text-[9px] font-black uppercase tracking-widest">EXPAND SOURCE</span>
+                                                    <span className="text-[9px] font-black uppercase tracking-[0.15em]">EXPAND SOURCE</span>
                                                 </a>
                                             </div>
                                         ) : (
-                                            <div className="aspect-video flex items-center justify-center border border-white/5 border-dashed rounded-2xl text-secondary/20 text-[9px] font-black uppercase tracking-[0.3em]">MISSING_ID</div>
+                                            <div className="aspect-video flex items-center justify-center border border-slate-100 border-dashed rounded-2xl text-slate-200 text-[9px] font-black uppercase tracking-[0.15em] italic">MISSING_ID</div>
                                         )}
                                     </div>
                                 </div>
                             </div>
 
-                            <div className="flex flex-wrap gap-4 relative z-10 pt-4 border-t border-white/10">
+                            <div className="flex flex-wrap gap-4 relative z-10 pt-4 border-t border-slate-100">
                                 <button
-                                    onClick={() => handleInitiateStatusUpdate(selectedReport.id, 'investigating')}
-                                    className="flex-1 bg-brand-gold hover:bg-black hover:text-brand-gold text-black px-6 py-4 rounded-2xl transition-all font-black uppercase tracking-widest text-[10px] border border-brand-gold shadow-2xl active:scale-95"
+                                    onClick={() => handleInitiateStatusUpdate(selectedReport.id, 'resolved')}
+                                    className="flex-1 bg-identity-navy hover:bg-identity-sky text-white px-6 py-4 rounded-2xl transition-all font-black uppercase tracking-[0.15em] text-[10px] shadow-xl shadow-identity-navy/10 active:scale-95 italic"
                                 >
                                     Initiate Investigation
                                 </button>
                                 <button
                                     onClick={() => handleInitiateStatusUpdate(selectedReport.id, 'resolved')}
-                                    className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white px-6 py-4 rounded-2xl transition-all font-black uppercase tracking-widest text-[10px] shadow-2xl shadow-emerald-900/40 active:scale-95"
+                                    className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-4 rounded-2xl transition-all font-black uppercase tracking-[0.15em] text-[10px] shadow-xl shadow-emerald-900/10 active:scale-95 italic"
                                 >
                                     Resolve & Close
                                 </button>
                                 <button
                                     onClick={() => handleInitiateStatusUpdate(selectedReport.id, 'dismissed')}
-                                    className="flex-1 bg-maroon-900 hover:bg-rose-900 text-white px-6 py-4 rounded-2xl transition-all font-black uppercase tracking-widest text-[10px] border border-white/10 active:scale-95 shadow-2xl"
+                                    className="flex-1 bg-rose-500 hover:bg-rose-600 text-white px-6 py-4 rounded-2xl transition-all font-black uppercase tracking-[0.15em] text-[10px] active:scale-95 shadow-xl shadow-rose-900/10 italic"
                                 >
                                     Void Report
                                 </button>
                                 <button
                                     onClick={() => setSelectedReport(null)}
-                                    className="bg-black/80 hover:bg-black text-secondary/40 px-8 py-4 rounded-2xl transition-all font-black uppercase tracking-widest text-[10px] border border-white/10 hover:text-white"
+                                    className="bg-slate-50 hover:bg-slate-100 text-slate-400 px-8 py-4 rounded-2xl transition-all font-black uppercase tracking-[0.15em] text-[10px] border border-slate-100 hover:text-identity-navy italic"
                                 >
                                     Exit
                                 </button>
@@ -1326,36 +1328,36 @@ export default function AdminDashboard() {
                 )}
 
                 {actionModal.isOpen && (
-                    <div className="fixed inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center p-6 z-[60] animate-in fade-in zoom-in duration-300">
-                        <div className="bg-maroon-950 border border-white/10 rounded-[40px] p-10 max-w-md w-full shadow-3xl relative overflow-hidden">
-                            <div className="absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-brand-gold/5 to-transparent pointer-events-none opacity-30" />
+                    <div className="fixed inset-0 bg-identity-navy/60 backdrop-blur-md flex items-center justify-center p-6 z-[60] animate-in fade-in zoom-in duration-300">
+                        <div className="bg-white border border-identity-sky/10 rounded-[2rem] md:rounded-[3rem] p-10 max-w-md w-full shadow-2xl relative overflow-hidden">
+                            <div className="absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-identity-sky/5 to-transparent pointer-events-none opacity-30" />
                             
-                            <h3 className="text-2xl font-black text-white mb-8 uppercase tracking-tighter relative z-10 flex items-center gap-4">
-                                <div className="w-2 h-8 bg-brand-gold rounded-full" />
+                            <h3 className="text-2xl font-black text-identity-navy mb-8 uppercase tracking-tighter relative z-10 flex items-center gap-4 italic">
+                                <div className="w-2 h-8 bg-identity-sky rounded-full" />
                                 {actionModal.type === 'resolved' ? 'Resolution Protocol' : 'Dismissal Protocol'}
                             </h3>
 
                             <div className="space-y-8 relative z-10">
                                 <div>
-                                    <label className="block text-secondary/40 text-[9px] font-black uppercase tracking-[0.3em] mb-4">
+                                    <label className="block text-slate-400 text-[9px] font-black uppercase tracking-[0.15em] mb-4">
                                         {actionModal.type === 'resolved' ? 'Resolution Dispatch (Email Content)' : 'Rejection Rationale (Email Content)'}
                                     </label>
                                     <textarea
                                         value={actionNote}
                                         onChange={(e) => setActionNote(e.target.value)}
-                                        className="w-full bg-black/40 border border-white/10 text-white rounded-3xl p-6 focus:outline-none focus:border-brand-gold h-40 placeholder:text-secondary/10 font-black uppercase text-[10px] tracking-widest leading-relaxed shadow-inner"
+                                        className="w-full bg-slate-50 border border-slate-100 text-identity-navy rounded-[2rem] p-8 focus:outline-none focus:border-identity-sky h-40 placeholder:text-slate-200 font-bold uppercase text-[10px] tracking-[0.2em] leading-relaxed shadow-inner italic"
                                         placeholder={actionModal.type === 'resolved' ? 'Define the mitigation steps taken...' : 'State the reason for voiding this claim...'}
                                     />
                                 </div>
 
                                 {actionModal.type === 'resolved' && (
                                     <>
-                                        <div className="bg-black/40 border border-white/5 rounded-[32px] p-8 shadow-inner">
-                                            <label className="block text-secondary/40 text-[9px] font-black uppercase tracking-[0.3em] mb-6">
+                                        <div className="bg-slate-50 border border-identity-sky/5 rounded-[2rem] p-8 shadow-inner">
+                                            <label className="block text-slate-400 text-[9px] font-black uppercase tracking-[0.15em] mb-6">
                                                 Classification Outcome
                                             </label>
                                             <div className="space-y-4">
-                                                <div className="flex items-start gap-4 p-4 bg-black/60 border border-white/5 rounded-2xl hover:border-brand-gold/50 transition-all cursor-pointer group">
+                                                <div className="flex items-start gap-4 p-4 bg-white border border-slate-100 rounded-2xl hover:border-identity-sky/50 transition-all cursor-pointer group">
                                                     <input
                                                         type="radio"
                                                         id="outcome-reported"
@@ -1363,14 +1365,14 @@ export default function AdminDashboard() {
                                                         value="reported_is_impostor"
                                                         checked={resolutionOutcome === 'reported_is_impostor'}
                                                         onChange={(e) => setResolutionOutcome(e.target.value)}
-                                                        className="w-5 h-5 mt-0.5 text-brand-gold bg-maroon-950 border-white/10 focus:ring-brand-gold cursor-pointer"
+                                                        className="w-5 h-5 mt-0.5 text-identity-sky bg-white border-slate-200 focus:ring-identity-sky cursor-pointer"
                                                     />
                                                     <label htmlFor="outcome-reported" className="cursor-pointer">
-                                                        <div className="font-black uppercase tracking-widest text-[10px] text-white">Target is Impostor</div>
-                                                        <div className="text-[8px] text-secondary/30 font-bold uppercase tracking-[0.2em] mt-1 italic">Confirmed fraudulent identity usage</div>
+                                                        <div className="font-bold uppercase tracking-[0.15em] text-[10px] text-identity-navy italic">Target is Impostor</div>
+                                                        <div className="text-[8px] text-slate-300 font-bold uppercase tracking-[0.15em] mt-1 italic">Confirmed account misuse</div>
                                                     </label>
                                                 </div>
-                                                <div className="flex items-start gap-4 p-4 bg-black/60 border border-white/5 rounded-2xl hover:border-brand-gold/50 transition-all cursor-pointer group">
+                                                <div className="flex items-start gap-4 p-4 bg-white border border-slate-100 rounded-2xl hover:border-identity-sky/50 transition-all cursor-pointer group">
                                                     <input
                                                         type="radio"
                                                         id="outcome-reporter"
@@ -1378,44 +1380,44 @@ export default function AdminDashboard() {
                                                         value="reporter_is_impostor"
                                                         checked={resolutionOutcome === 'reporter_is_impostor'}
                                                         onChange={(e) => setResolutionOutcome(e.target.value)}
-                                                        className="w-5 h-5 mt-0.5 text-brand-gold bg-maroon-950 border-white/10 focus:ring-brand-gold cursor-pointer"
+                                                        className="w-5 h-5 mt-0.5 text-identity-sky bg-white border-slate-200 focus:ring-identity-sky cursor-pointer"
                                                     />
                                                     <label htmlFor="outcome-reporter" className="cursor-pointer">
-                                                        <div className="font-black uppercase tracking-widest text-[10px] text-white">False Claim Detected</div>
-                                                        <div className="text-[8px] text-secondary/30 font-bold uppercase tracking-[0.2em] mt-1 italic">Claimant filed unfounded report</div>
+                                                        <div className="font-bold uppercase tracking-[0.15em] text-[10px] text-identity-navy italic">False Claim Detected</div>
+                                                        <div className="text-[8px] text-slate-300 font-bold uppercase tracking-[0.15em] mt-1 italic">Claimant filed unfounded report</div>
                                                     </label>
                                                 </div>
                                             </div>
                                         </div>
 
-                                        <div className="flex items-center gap-4 p-5 bg-rose-500/5 border border-rose-500/20 rounded-2xl group cursor-pointer hover:bg-rose-500/10 transition-all">
+                                        <div className="flex items-center gap-4 p-5 bg-rose-50 border border-rose-100 rounded-2xl group cursor-pointer hover:bg-rose-100 transition-all shadow-sm">
                                             <input
                                                 type="checkbox"
                                                 id="deleteUser"
                                                 checked={deleteUser}
                                                 onChange={(e) => setDeleteUser(e.target.checked)}
-                                                className="w-6 h-6 rounded-lg border-white/10 bg-maroon-950 text-rose-600 focus:ring-rose-500 cursor-pointer shadow-inner"
+                                                className="w-6 h-6 rounded-lg border-slate-300 bg-white text-rose-500 focus:ring-rose-500 cursor-pointer transition-all"
                                             />
-                                            <label htmlFor="deleteUser" className="text-rose-500 font-black uppercase tracking-[0.2em] text-[9px] cursor-pointer group-hover:text-rose-400">
-                                                Permanently Purge Fraudulent Node
+                                            <label htmlFor="deleteUser" className="text-rose-500 font-black uppercase tracking-[0.15em] text-[9px] cursor-pointer group-hover:text-rose-600 italic">
+                                                Permanently Delete Fraudulent Account
                                             </label>
                                         </div>
                                     </>
                                 )}
                             </div>
 
-                            <div className="flex gap-4 mt-10 relative z-10 pt-6 border-t border-white/10">
+                            <div className="flex gap-4 mt-10 relative z-10 pt-6 border-t border-slate-100">
                                 <button
                                     onClick={closeActionModal}
-                                    className="flex-1 bg-black/80 hover:bg-black text-secondary/40 px-6 py-4 rounded-2xl transition-all font-black uppercase tracking-widest text-[10px] border border-white/10 hover:text-white"
+                                    className="flex-1 bg-slate-50 hover:bg-slate-100 text-slate-400 px-6 py-4 rounded-2xl transition-all font-black uppercase tracking-[0.15em] text-[10px] border border-slate-100 hover:text-identity-navy italic"
                                 >
                                     Abort
                                 </button>
                                 <button
                                     onClick={confirmAction}
-                                    className={`flex-1 px-6 py-4 rounded-2xl text-black transition-all font-black uppercase tracking-widest text-[10px] shadow-2xl active:scale-95 ${actionModal.type === 'resolved'
-                                        ? 'bg-emerald-500 hover:bg-emerald-400 shadow-emerald-900/40'
-                                        : 'bg-rose-600 hover:bg-rose-500 text-white shadow-rose-900/40'
+                                    className={`flex-1 px-6 py-4 rounded-2xl text-white transition-all font-black uppercase tracking-[0.15em] text-[10px] shadow-xl active:scale-95 italic ${actionModal.type === 'resolved'
+                                        ? 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-900/10'
+                                        : 'bg-rose-500 hover:bg-rose-600 shadow-rose-900/10'
                                         }`}
                                 >
                                     Execute {actionModal.type === 'resolved' ? 'Resolution' : 'Dismissal'}
@@ -1426,47 +1428,47 @@ export default function AdminDashboard() {
                 )}
 
                 {selectedProfessor && (
-                    <div className="fixed inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center p-6 z-50 animate-in fade-in zoom-in duration-300">
-                        <div className="bg-maroon-950 border border-white/10 rounded-[40px] p-10 max-w-3xl w-full shadow-3xl relative overflow-hidden">
-                            <div className="absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-brand-gold/10 to-transparent pointer-events-none opacity-50" />
+                    <div className="fixed inset-0 bg-identity-navy/60 backdrop-blur-md flex items-center justify-center p-6 z-50 animate-in fade-in zoom-in duration-300">
+                        <div className="bg-white border border-identity-sky/10 rounded-[2rem] md:rounded-[3rem] p-10 max-w-3xl w-full shadow-2xl relative overflow-hidden">
+                            <div className="absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-identity-sky/5 to-transparent pointer-events-none opacity-50" />
                             
                             <div className="flex justify-between items-start mb-10 relative z-10">
-                                <h3 className="text-3xl font-black text-white flex items-center gap-4 uppercase tracking-tighter">
-                                    <div className="bg-brand-gold/20 p-2 rounded-xl">
-                                        <UserCheck className="w-8 h-8 text-brand-gold" />
+                                <h3 className="text-3xl font-black text-identity-navy flex items-center gap-4 uppercase tracking-tighter italic">
+                                    <div className="bg-identity-sky/10 p-3 rounded-2xl border border-identity-sky/10">
+                                        <UserCheck className="w-8 h-8 text-identity-sky" />
                                     </div>
-                                    Credential Audit
+                                    Identity Verification
                                 </h3>
-                                <button onClick={() => setSelectedProfessor(null)} className="text-secondary/40 hover:text-white transition-all hover:rotate-90">
+                                <button onClick={() => setSelectedProfessor(null)} className="text-slate-300 hover:text-identity-navy transition-all hover:rotate-90">
                                     <XCircle className="w-8 h-8" />
                                 </button>
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-12 gap-10 relative z-10">
                                 <div className="md:col-span-4 lg:col-span-3 space-y-6">
-                                    <div className="aspect-[3/4] bg-black/60 rounded-[32px] overflow-hidden border border-white/10 relative group shadow-inner">
+                                    <div className="aspect-[3/4] bg-slate-50 rounded-[2rem] overflow-hidden border border-identity-sky/5 relative group shadow-inner">
                                         {selectedProfessor.id_photo ? (
                                             <>
                                                 {isPDF(selectedProfessor.id_photo) ? (
-                                                    <div className="w-full h-full flex flex-col items-center justify-center bg-maroon-900/20 text-brand-gold p-4 border border-white/5 rounded-[24px]">
+                                                    <div className="w-full h-full flex flex-col items-center justify-center bg-slate-100 text-identity-sky p-4 border border-slate-100 rounded-[24px]">
                                                         <FileText size={48} className="mb-3" />
-                                                        <span className="text-[9px] font-black uppercase tracking-[0.3em] text-center">PDF ENCRYPTED ARCHIVE</span>
+                                                        <span className="text-[9px] font-black uppercase tracking-[0.15em] text-center">PDF ENCRYPTED ARCHIVE</span>
                                                     </div>
                                                 ) : (
                                                     <img
                                                         src={getProfilePictureUrl(selectedProfessor.id_photo) || ''}
                                                         alt="Identity Badge"
-                                                        className="w-full h-full object-cover grayscale brightness-75 transition-all group-hover:grayscale-0 group-hover:brightness-100 group-hover:scale-105"
+                                                        className="w-full h-full object-cover grayscale brightness-90 transition-all group-hover:grayscale-0 group-hover:brightness-100 group-hover:scale-105"
                                                     />
                                                 )}
                                                 <a href={getProfilePictureUrl(selectedProfessor.id_photo) || '#'} target="_blank" rel="noopener noreferrer" 
-                                                   className="absolute inset-0 bg-black/80 opacity-0 group-hover:opacity-100 transition-all flex flex-col items-center justify-center gap-3 text-brand-gold backdrop-blur-sm">
+                                                   className="absolute inset-0 bg-identity-navy/80 opacity-0 group-hover:opacity-100 transition-all flex flex-col items-center justify-center gap-4 text-identity-navy backdrop-blur-sm">
                                                     <ExternalLink size={24} />
-                                                    <span className="text-[9px] font-black uppercase tracking-widest">VERIFY SOURCE</span>
+                                                    <span className="text-[9px] font-black uppercase tracking-[0.15em]">VERIFY SOURCE</span>
                                                 </a>
                                             </>
                                         ) : (
-                                            <div className="w-full h-full flex flex-col items-center justify-center text-secondary/10 bg-black/40">
+                                            <div className="w-full h-full flex flex-col items-center justify-center text-slate-200 bg-slate-50">
                                                 <Camera className="w-12 h-12 mb-3" />
                                                 <span className="text-[8px] font-black uppercase tracking-[0.4rem]">NO_DATA</span>
                                             </div>
@@ -1475,29 +1477,29 @@ export default function AdminDashboard() {
                                 </div>
 
                                 <div className="md:col-span-8 lg:col-span-9 space-y-8">
-                                    <div className="bg-black/40 border border-white/5 rounded-[32px] p-8 shadow-inner">
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-10">
+                                    <div className="bg-slate-50 border border-identity-sky/10 rounded-[2rem] p-8 shadow-inner">
+                                        <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 gap-10">
                                             <div className="space-y-6">
                                                 <div>
-                                                    <p className="text-secondary/30 text-[9px] font-black uppercase tracking-[0.3em] mb-2">Subject Header</p>
-                                                    <p className="text-white font-black text-xl uppercase tracking-tighter leading-none">{selectedProfessor.first_name} {selectedProfessor.last_name}</p>
-                                                    <p className="text-secondary/40 text-[9px] font-black uppercase tracking-[0.4em] mt-3">PROCTOR LEVEL ACCESS</p>
+                                                    <p className="text-slate-300 text-[9px] font-black uppercase tracking-[0.15em] mb-2 italic">Subject Header</p>
+                                                    <p className="text-identity-navy font-black text-xl uppercase tracking-tighter leading-none italic">{selectedProfessor.first_name} {selectedProfessor.last_name}</p>
+                                                    <p className="text-slate-400 text-[9px] font-black uppercase tracking-[0.15em] mt-3 italic">PROCTOR LEVEL ACCESS</p>
                                                 </div>
                                                 <div>
-                                                    <p className="text-secondary/30 text-[9px] font-black uppercase tracking-[0.3em] mb-2">Matrix Identification</p>
-                                                    <code className="text-brand-gold font-mono bg-black/40 px-4 py-2 rounded-xl border border-white/5 inline-block text-xs font-black tracking-widest">
+                                                    <p className="text-slate-300 text-[9px] font-black uppercase tracking-[0.15em] mb-2 italic">Student Identification</p>
+                                                    <code className="text-identity-sky font-mono bg-white px-4 py-2 rounded-2xl border border-slate-100 inline-block text-xs font-bold tracking-[0.15em]">
                                                         {selectedProfessor.user_id}
                                                     </code>
                                                 </div>
                                             </div>
                                             <div className="space-y-6">
                                                 <div>
-                                                    <p className="text-secondary/30 text-[9px] font-black uppercase tracking-[0.3em] mb-2">Neural Link (Email)</p>
-                                                    <p className="text-white font-black text-xs uppercase tracking-widest lowercase">{selectedProfessor.email}</p>
+                                                    <p className="text-slate-300 text-[9px] font-black uppercase tracking-[0.15em] mb-2 italic">Email Address</p>
+                                                    <p className="text-identity-navy font-bold text-xs uppercase tracking-[0.15em] lowercase">{selectedProfessor.email}</p>
                                                 </div>
                                                 <div>
-                                                    <p className="text-secondary/30 text-[9px] font-black uppercase tracking-[0.3em] mb-2">Initialization Timestamp</p>
-                                                    <p className="text-white/60 font-black text-[10px] uppercase tracking-widest">
+                                                    <p className="text-slate-300 text-[9px] font-black uppercase tracking-[0.15em] mb-2 italic">Initialization Timestamp</p>
+                                                    <p className="text-slate-400 font-black text-[10px] uppercase tracking-[0.15em] italic">
                                                         {new Date(selectedProfessor.created_at).toLocaleString('en-PH', { month: 'short', day: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                                                     </p>
                                                 </div>
@@ -1506,31 +1508,31 @@ export default function AdminDashboard() {
                                     </div>
 
                                     <div className="pt-6">
-                                        <p className="text-secondary/40 text-[9px] font-black uppercase tracking-[0.3em] mb-6 flex items-center gap-3">
-                                            <div className="w-1 h-1 bg-brand-gold rounded-full" />
+                                        <p className="text-slate-400 text-[9px] font-black uppercase tracking-[0.15em] mb-6 flex items-center gap-4 italic">
+                                            <div className="w-1 h-1 bg-identity-sky rounded-full" />
                                             Manual Verification Override
                                         </p>
                                         <div className="flex flex-col sm:flex-row gap-4">
                                             <button
                                                 onClick={() => handleApprove(selectedProfessor)}
                                                 disabled={actionLoading}
-                                                className="flex-[2] bg-emerald-600 hover:bg-emerald-500 text-white px-8 py-5 rounded-2xl font-black uppercase tracking-widest text-[10px] transition-all shadow-2xl shadow-emerald-900/40 flex items-center justify-center gap-3 active:scale-95 disabled:opacity-50"
+                                                className="flex-[2] bg-identity-sky hover:bg-identity-navy text-white px-8 py-5 rounded-2xl font-black uppercase tracking-[0.15em] text-[10px] transition-all shadow-xl shadow-identity-sky/10 flex items-center justify-center gap-4 active:scale-95 disabled:opacity-50 italic"
                                             >
                                                 <CheckCircle className="w-5 h-5" />
-                                                Ratify Credentials
+                                                Verify Account
                                             </button>
-                                            <div className="flex-[3] flex gap-3">
+                                            <div className="flex-[3] flex gap-4">
                                                 <input
                                                     type="text"
                                                     value={rejectReason}
                                                     onChange={(e) => setRejectReason(e.target.value)}
                                                     placeholder="State rejection rationale..."
-                                                    className="flex-1 bg-black/40 border border-white/10 text-white px-6 py-4 rounded-2xl focus:outline-none focus:border-rose-500 font-black uppercase text-[10px] tracking-widest placeholder:text-secondary/10 transition-all shadow-inner"
+                                                    className="flex-1 bg-white border border-slate-200 text-identity-navy px-6 py-4 rounded-2xl focus:outline-none focus:border-rose-500 font-black uppercase text-[10px] tracking-[0.15em] placeholder:text-slate-300 transition-all shadow-sm italic"
                                                 />
                                                 <button
                                                     onClick={handleRejectClick}
                                                     disabled={actionLoading || !rejectReason}
-                                                    className="bg-rose-600 hover:bg-rose-500 text-white px-6 py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] transition-all shadow-2xl shadow-rose-900/40 disabled:opacity-50 active:scale-95 border border-rose-500/20"
+                                                    className="bg-rose-500 hover:bg-rose-600 text-white px-6 py-4 rounded-2xl font-black uppercase tracking-[0.15em] text-[10px] transition-all shadow-xl shadow-rose-900/10 disabled:opacity-50 active:scale-95 border border-rose-400/20"
                                                 >
                                                     <XCircle className="w-5 h-5" />
                                                 </button>

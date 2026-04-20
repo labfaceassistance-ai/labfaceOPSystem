@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+﻿import { useState, useEffect, useRef } from 'react';
 import { Camera, RefreshCw, Activity, ShieldCheck, Server, Wifi, AlertTriangle, Maximize2, X } from 'lucide-react';
 import axios from 'axios';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
@@ -86,22 +86,23 @@ const VideoFeed = ({ src, alt, className, onExpand, label, onStatusChange }: Vid
     const currentSrc = `${src}${src.includes('?') ? '&' : '?'}retry=${retryKey}`;
 
     return (
-        <div className={`relative bg-black group overflow-hidden rounded-xl border border-white/5 shadow-2xl ${className}`}>
+        <div className={`relative bg-black group overflow-hidden rounded-2xl border border-white/5 shadow-2xl ${className}`}>
             {!error ? (
                 <>
                     {isLoading && (
-                        <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/80 z-20 backdrop-blur-md text-center p-6">
+                        <div className="absolute inset-0 flex flex-col items-center justify-center bg-identity-navy/80 z-20 backdrop-blur-md text-center p-6 font-outfit">
                             <div className="relative mb-6">
                                 <div className="absolute inset-0 rounded-full bg-identity-sky/20 animate-ping blur-xl"></div>
-                                <div className="relative animate-spin text-identity-sky">
-                                    <RefreshCw size={48} strokeWidth={1.5} />
+                                <div className="w-16 h-16 relative">
+                                    <div className="absolute inset-0 border-4 border-identity-sky/20 rounded-full"></div>
+                                    <div className="absolute inset-0 border-4 border-identity-sky border-t-transparent rounded-full animate-spin"></div>
                                 </div>
                             </div>
                             <div className="space-y-2">
-                                <span className="block text-lg font-bold tracking-[0.2em] uppercase text-identity-navy drop-shadow-md">
+                                <span className="block text-lg font-black tracking-[0.2em] uppercase text-identity-sky animate-pulse">
                                     Initializing Feed
                                 </span>
-                                <span className="block text-[10px] font-mono tracking-widest uppercase text-slate-500">
+                                <span className="block text-[8px] font-black tracking-[0.3em] uppercase text-slate-400">
                                     Establishing Secure Connection...
                                 </span>
                             </div>
@@ -124,7 +125,7 @@ const VideoFeed = ({ src, alt, className, onExpand, label, onStatusChange }: Vid
                     {/* Manual Refresh Button */}
                     <button
                         onClick={handleRefresh}
-                        className="absolute bottom-4 right-4 p-2 bg-identity-navy/80 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-identity-navy"
+                        className="absolute bottom-4 right-4 p-3 min-h-[44px] min-w-[44px] flex items-center justify-center bg-identity-navy/80 text-identity-navy rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-identity-navy"
                         title="Reset Feed"
                     >
                         <RefreshCw size={16} />
@@ -135,7 +136,7 @@ const VideoFeed = ({ src, alt, className, onExpand, label, onStatusChange }: Vid
                     <div className="animate-spin mb-2 text-slate-500">
                         <RefreshCw size={32} />
                     </div>
-                    <span className="text-sm font-mono tracking-widest uppercase">Signal Lost • Reconnecting</span>
+                    <span className="text-sm font-mono tracking-[0.15em] uppercase">Signal Lost â€¢ Reconnecting</span>
                 </div>
             )}
 
@@ -151,7 +152,7 @@ const VideoFeed = ({ src, alt, className, onExpand, label, onStatusChange }: Vid
                     {!error && onExpand && (
                         <button
                             onClick={onExpand}
-                            className="pointer-events-auto bg-black/40 hover:bg-identity-sky/80 text-white p-2 rounded-lg backdrop-blur-md border border-white/10 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0"
+                            className="pointer-events-auto bg-black/40 hover:bg-identity-sky/80 text-identity-navy p-3 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg backdrop-blur-md border border-white/10 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0"
                         >
                             <Maximize2 size={18} />
                         </button>
@@ -161,7 +162,7 @@ const VideoFeed = ({ src, alt, className, onExpand, label, onStatusChange }: Vid
                 {!error && (
                     <div className="flex justify-between items-end opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                         <div className="text-[10px] text-secondary/60 font-mono bg-black/60 px-2 py-1 rounded backdrop-blur-md border border-white/5">
-                            FHD • 30 FPS • NET: STABLE
+                            FHD â€¢ 30 FPS â€¢ NET: STABLE
                         </div>
                     </div>
                 )}
@@ -268,16 +269,16 @@ export default function MonitorTab() {
         <>
             <div className="space-y-6">
                 <div className="flex items-center justify-between">
-                    <div>
-                        <h2 className="text-2xl font-bold text-identity-navy flex items-center gap-2">
-                            <div className="p-1.5 bg-identity-sky/10 rounded-lg">
+                    <div className="font-outfit">
+                        <h2 className="text-2xl font-black text-identity-navy flex items-center gap-4 uppercase tracking-tight italic">
+                            <div className="p-3 bg-identity-sky/10 rounded-2xl border border-identity-sky/10">
                                 <Camera className="w-6 h-6 text-identity-sky" />
                             </div>
                             {currentSessionId ? (
-                                <span className="flex items-center gap-2">
+                                <span className="flex items-center gap-4">
                                     <span className="text-identity-sky">Live:</span>
                                     {sessionDetails?.subject_name || 'Class Monitor'}
-                                    <span className="text-xs font-normal text-slate-500 bg-white px-2 py-0.5 rounded border border-identity-sky/10 ml-2">
+                                    <span className="text-[10px] font-black text-slate-500 bg-white/40 px-3 py-1 rounded-full border border-identity-sky/10 ml-2 uppercase tracking-[0.15em]">
                                         {sessionDetails?.section || 'Active'}
                                     </span>
                                 </span>
@@ -285,26 +286,26 @@ export default function MonitorTab() {
                                 'Security Monitoring'
                             )}
                         </h2>
-                        <p className="text-slate-500 text-sm mt-1">Real-time surveillance and attendance tracking</p>
+                        <p className="text-slate-500 text-[10px] font-bold uppercase tracking-[0.2em] mt-2 ml-16">Real-time surveillance and attendance tracking</p>
                     </div>
-                    <div className="flex flex-wrap items-center gap-4">
+                    <div className="flex flex-wrap items-center gap-4 font-outfit">
                         <Link 
                             href="/professor/camera-test" 
-                            className="bg-identity-navy hover:bg-identity-navy/90 text-white px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-2 transition-colors shadow-lg shadow-identity-navy/10"
+                            className="bg-identity-sky hover:bg-identity-navy text-white px-6 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-[0.15em] flex items-center gap-2 transition-all shadow-xl shadow-identity-sky/10 active:scale-95"
                         >
                             <Activity className="w-4 h-4" />
                             Run Diagnostic
                         </Link>
-                        <div className={`flex items-center gap-2 px-4 py-2 bg-white rounded-lg border ${overallSystemOnline ? 'border-emerald-500/30 shadow-emerald-500/5' : 'border-red-500/30'}`}>
-                            <Wifi size={16} className={overallSystemOnline ? "text-emerald-500" : "text-red-500"} />
-                            <span className={`text-xs font-mono ${overallSystemOnline ? "text-emerald-500" : "text-red-400"}`}>
+                        <div className={`flex items-center gap-2 px-4 py-2.5 bg-white/40 rounded-2xl border ${overallSystemOnline ? 'border-emerald-500/30' : 'border-rose-500/30'} backdrop-blur-md`}>
+                            <Wifi size={16} className={overallSystemOnline ? "text-emerald-500" : "text-rose-500"} />
+                            <span className={`text-[10px] font-black tracking-[0.15em] ${overallSystemOnline ? "text-emerald-500" : "text-rose-400"}`}>
                                 {overallSystemOnline ? "SYSTEM ONLINE" : "SYSTEM OFFLINE"}
                             </span>
                         </div>
                         {overallSystemOnline && (
                             <div className="flex items-center gap-2 px-4 py-2 bg-identity-sky/10 text-identity-sky rounded-lg border border-identity-sky/20 animate-pulse">
                                 <div className="w-2 h-2 bg-identity-sky rounded-full"></div>
-                                <span className="text-xs font-bold tracking-wider">LIVE</span>
+                                <span className="text-xs font-bold tracking-[0.15em]">LIVE</span>
                             </div>
                         )}
                     </div>
@@ -313,17 +314,17 @@ export default function MonitorTab() {
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     <div className="lg:col-span-2 space-y-6">
                         {/* Primary Entrance Terminal (Single Camera Focus) */}
-                        <div className="identity-glass rounded-2xl border border-identity-sky/10 p-1 shadow-2xl backdrop-blur-sm overflow-hidden">
-                            <div className="px-6 py-4 flex justify-between items-center bg-white/40 border-b border-identity-sky/5">
-                                <div className="flex items-center gap-3">
-                                    <div className={`w-3 h-3 rounded-full ${cam1Online ? 'bg-emerald-500 animate-pulse' : 'bg-red-500'}`}></div>
-                                    <h3 className="font-bold text-lg text-identity-navy">
+                        <div className="identity-glass rounded-[2rem] md:rounded-[3rem] border border-identity-sky/10 shadow-3xl backdrop-blur-sm overflow-hidden font-outfit">
+                            <div className="px-8 py-6 flex justify-between items-center bg-white/40 border-b border-identity-sky/5">
+                                <div className="flex items-center gap-4">
+                                    <div className={`w-3 h-3 rounded-full ${cam1Online ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'}`}></div>
+                                    <h3 className="font-black text-lg text-identity-navy uppercase tracking-tighter italic">
                                         ENTRANCE TERMINAL
-                                        <span className="ml-3 text-xs font-mono text-slate-400 tracking-tighter">CAM-01 • PRIMARY</span>
+                                        <span className="ml-4 text-[10px] font-black text-slate-400 tracking-[0.15em]">CAM-01 â€¢ PRIMARY</span>
                                     </h3>
                                 </div>
-                                <div className="text-[10px] font-mono text-secondary/40 bg-black/30 px-2 py-1 rounded">
-                                    IP: 192.168.1.220:554
+                                <div className="text-[10px] font-black text-identity-sky/60 bg-identity-sky/5 border border-identity-sky/10 px-4 py-1.5 rounded-full uppercase tracking-[0.15em]">
+                                    SECURE NODE: 220
                                 </div>
                             </div>
                             <div className="aspect-video w-full bg-black relative">
@@ -336,63 +337,63 @@ export default function MonitorTab() {
                                     onStatusChange={setCam1Online}
                                 />
                             </div>
-                            <div className="px-6 py-4 bg-white/10 flex items-center justify-between transition-colors">
-                                <div className="flex items-center gap-4">
+                            <div className="px-8 py-6 bg-white/20 flex items-center justify-between">
+                                <div className="flex items-center gap-6">
                                     <div className="flex flex-col">
-                                        <span className="text-[10px] text-slate-400 uppercase font-bold tracking-widest">Signal Quality</span>
-                                        <span className="text-xs text-emerald-500 font-mono">98% STABLE</span>
+                                        <span className="text-[9px] text-slate-400 uppercase font-black tracking-[0.2em]">Signal Quality</span>
+                                        <span className="text-xs text-emerald-500 font-bold tracking-tight">98% STABLE</span>
                                     </div>
                                     <div className="w-px h-8 bg-identity-sky/10"></div>
                                     <div className="flex flex-col">
-                                        <span className="text-[10px] text-slate-400 uppercase font-bold tracking-widest">Protocol</span>
-                                        <span className="text-xs text-slate-600 font-mono">RTSP / FFMPEG</span>
+                                        <span className="text-[9px] text-slate-400 uppercase font-black tracking-[0.2em]">Protocol</span>
+                                        <span className="text-xs text-identity-navy font-bold tracking-tight">RTSP / FFMPEG</span>
                                     </div>
                                 </div>
-                                <div className="text-[10px] text-slate-400 font-medium">
-                                    Security Node: <span className="text-identity-sky">LN-01-ENTRANCE</span>
+                                <div className="text-[9px] text-slate-400 font-black uppercase tracking-[0.2em]">
+                                    Camera: <span className="text-identity-sky">LN-01-ENTRANCE</span>
                                 </div>
                             </div>
                         </div>
                     </div>
 
                     <div className="space-y-6">
-                        <div className="identity-glass rounded-2xl border border-identity-sky/10 p-6 shadow-2xl">
-                            <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-6">System Status</h3>
+                        <div className="identity-glass p-8 rounded-[2rem] md:rounded-[3rem] border border-identity-sky/10 shadow-3xl font-outfit">
+                            <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-8 ml-1 italic">Surveillance Node Status</h3>
 
-                            <div className="space-y-4">
-                                <div className={`flex items-center justify-between p-3 bg-white/40 rounded-xl border ${overallSystemOnline ? 'border-identity-sky/10' : 'border-red-500/30'}`}>
-                                    <div className="flex items-center gap-3">
-                                        <div className={`p-2 rounded-lg ${overallSystemOnline ? 'bg-emerald-500/10 text-emerald-500' : 'bg-red-500/10 text-red-500'}`}>
-                                            <Server size={18} />
+                            <div className="space-y-5">
+                                <div className={`flex items-center justify-between p-4 bg-white/40 rounded-2xl border ${overallSystemOnline ? 'border-identity-sky/10 shadow-sm' : 'border-rose-500/30'}`}>
+                                    <div className="flex items-center gap-4">
+                                        <div className={`p-3 rounded-2xl ${overallSystemOnline ? 'bg-identity-sky/10 text-identity-sky border border-identity-sky/10' : 'bg-rose-500/10 text-rose-500 border border-rose-500/10'}`}>
+                                            <Server size={20} />
                                         </div>
                                         <div>
-                                            <div className="text-sm font-semibold text-identity-navy">AI Engine</div>
-                                            <div className={`text-xs ${overallSystemOnline ? 'text-slate-400' : 'text-red-500'}`}>
-                                                {loadingStatus ? 'Checking...' : (overallSystemOnline ? 'Operational' : 'Unreachable')}
+                                            <div className="text-sm font-black text-identity-navy uppercase tracking-tight">AI Engine</div>
+                                            <div className={`text-[10px] font-bold uppercase tracking-[0.15em] ${overallSystemOnline ? 'text-slate-400' : 'text-rose-500'}`}>
+                                                {loadingStatus ? 'Verifying...' : (overallSystemOnline ? 'Operational' : 'Node Unreachable')}
                                             </div>
                                         </div>
                                     </div>
                                     {overallSystemOnline ? (
-                                        <div className="h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]"></div>
+                                        <div className="h-3 w-3 rounded-full bg-emerald-500 shadow-[0_0_12px_rgba(16,185,129,0.5)]"></div>
                                     ) : (
-                                        <AlertTriangle size={16} className="text-red-500" />
+                                        <AlertTriangle size={18} className="text-rose-500" />
                                     )}
                                 </div>
 
-                                <div className="flex items-center justify-between p-3 bg-white/40 rounded-xl border border-identity-sky/10">
-                                    <div className="flex items-center gap-3">
-                                        <div className={`p-2 rounded-lg ${overallSystemOnline ? 'bg-purple-500/10 text-purple-500' : 'bg-white/5 text-slate-300'}`}>
-                                            <ShieldCheck size={18} />
+                                <div className="flex items-center justify-between p-4 bg-white/40 rounded-2xl border border-identity-sky/10 shadow-sm">
+                                    <div className="flex items-center gap-4">
+                                        <div className={`p-3 rounded-2xl ${overallSystemOnline ? 'bg-identity-sky/10 text-identity-sky border border-identity-sky/10' : 'bg-white/5 text-slate-300 border border-identity-sky/5'}`}>
+                                            <ShieldCheck size={20} />
                                         </div>
                                         <div>
-                                            <div className="text-sm font-semibold text-identity-navy">Recognition</div>
-                                            <div className="text-xs text-slate-400">
-                                                {overallSystemOnline ? 'Active Mode' : 'Inactive'}
+                                            <div className="text-sm font-black text-identity-navy uppercase tracking-tight">Neural Sync</div>
+                                            <div className={`text-[10px] font-bold uppercase tracking-[0.15em] ${overallSystemOnline ? 'text-slate-400' : 'text-slate-300'}`}>
+                                                {overallSystemOnline ? 'High Authority' : 'Paused'}
                                             </div>
                                         </div>
                                     </div>
-                                    <span className={`text-xs font-mono ${overallSystemOnline ? 'text-purple-500' : 'text-slate-300'}`}>
-                                        {overallSystemOnline ? 'ON' : 'OFF'}
+                                    <span className={`text-[10px] font-black uppercase tracking-[0.22em] ${overallSystemOnline ? 'text-identity-sky' : 'text-slate-300'}`}>
+                                        {overallSystemOnline ? 'ACTIVE' : 'VOID'}
                                     </span>
                                 </div>
                             </div>
@@ -421,25 +422,25 @@ export default function MonitorTab() {
                         <div className="absolute top-4 right-4 z-50">
                             <button
                                 onClick={() => setExpandedCamera(null)}
-                                className="bg-black/50 hover:bg-white/20 text-white p-3 rounded-full backdrop-blur-md border border-white/10 transition-colors"
+                                className="bg-black/50 hover:bg-white/20 text-identity-navy p-3 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-full backdrop-blur-md border border-white/10 transition-colors"
                             >
                                 <X size={24} />
                             </button>
                         </div>
 
                         <div className="flex-1 relative flex items-center justify-center p-4 md:p-10">
-                            <div className="w-full h-full flex items-center justify-center identity-glass rounded-2xl border border-identity-sky/20 overflow-hidden shadow-2xl relative">
+                            <div className="w-full h-full flex items-center justify-center identity-glass p-6 sm:p-8 md:p-10 rounded-[2rem] md:rounded-[3rem] border border-identity-sky/20 overflow-hidden shadow-2xl relative">
                                 <VideoFeed
                                     src={`/api/ai/video_feed/${expandedCamera}`}
                                     alt={`Camera ${expandedCamera} Full View`}
                                     label="ENTRANCE TERMINAL - FULL VIEW"
                                     className="h-full w-full object-contain"
                                 />
-                                <div className="absolute bottom-8 left-1/2 -translate-x-1/2 bg-black/80 text-white pl-4 pr-6 py-3 rounded-full backdrop-blur-xl border border-white/10 flex items-center gap-3 shadow-2xl">
+                                <div className="absolute bottom-8 left-1/2 -translate-x-1/2 bg-black/80 text-identity-navy pl-4 pr-6 py-3 rounded-full backdrop-blur-xl border border-white/10 flex items-center gap-4 shadow-2xl">
                                     <div className="w-3 h-3 bg-red-600 rounded-full animate-pulse shadow-[0_0_10px_rgba(220,38,38,0.5)]"></div>
                                     <div className="flex flex-col">
-                                        <span className="text-sm font-bold tracking-wider">LIVE MONITORING</span>
-                                        <span className="text-[10px] text-slate-400 font-mono">CAM 0{expandedCamera} • 1080p Stream</span>
+                                        <span className="text-sm font-bold tracking-[0.15em]">LIVE MONITORING</span>
+                                        <span className="text-[10px] text-slate-400 font-mono">CAM 0{expandedCamera} â€¢ 1080p Stream</span>
                                     </div>
                                 </div>
                             </div>

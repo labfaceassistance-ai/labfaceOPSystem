@@ -143,7 +143,7 @@ export default function NotificationCenter() {
             {/* Bell Icon */}
             <button
                 onClick={() => setIsOpen(!isOpen)}
-                className="relative p-3 text-identity-navy/40 hover:text-identity-navy transition-all hover:bg-slate-50 rounded-2xl shadow-inner active:scale-95 border border-transparent hover:border-slate-100"
+                className="relative p-3 min-h-[44px] min-w-[44px] flex items-center justify-center text-identity-navy/40 hover:text-identity-navy transition-all hover:bg-slate-50 rounded-2xl shadow-inner active:scale-95 border border-transparent hover:border-slate-100"
             >
                 <Bell size={24} className={unreadCount > 0 ? 'text-identity-sky' : ''} />
                 {unreadCount > 0 && (
@@ -163,11 +163,11 @@ export default function NotificationCenter() {
                             <div className="flex items-center justify-between mb-6">
                                 <div>
                                     <h3 className="text-2xl font-black text-identity-navy uppercase tracking-tighter font-outfit leading-none">Notifications</h3>
-                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mt-2">Operational Updates</p>
+                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mt-2">Active Updates</p>
                                 </div>
                                 <button
                                     onClick={() => setIsOpen(false)}
-                                    className="p-3 text-slate-400 hover:text-identity-navy transition-colors hover:bg-white rounded-2xl shadow-sm border border-slate-100"
+                                    className="p-3 min-h-[44px] min-w-[44px] flex items-center justify-center text-slate-400 hover:text-identity-navy transition-colors hover:bg-white rounded-2xl shadow-sm border border-slate-100"
                                 >
                                     <X size={20} />
                                 </button>
@@ -177,7 +177,7 @@ export default function NotificationCenter() {
                             <div className="flex gap-3 mb-6">
                                 <button
                                     onClick={() => setFilter('all')}
-                                    className={`flex-1 px-4 py-3 rounded-2xl text-[9px] font-black uppercase tracking-widest transition-all shadow-sm border ${filter === 'all'
+                                    className={`flex-1 px-4 py-3 rounded-2xl text-[9px] font-black uppercase tracking-[0.15em] transition-all shadow-sm border ${filter === 'all'
                                         ? 'bg-identity-navy text-white border-identity-navy'
                                         : 'bg-white text-slate-400 border-slate-200 hover:text-identity-navy'
                                         }`}
@@ -186,7 +186,7 @@ export default function NotificationCenter() {
                                 </button>
                                 <button
                                     onClick={() => setFilter('unread')}
-                                    className={`flex-1 px-4 py-3 rounded-2xl text-[9px] font-black uppercase tracking-widest transition-all shadow-sm border ${filter === 'unread'
+                                    className={`flex-1 px-4 py-3 rounded-2xl text-[9px] font-black uppercase tracking-[0.15em] transition-all shadow-sm border ${filter === 'unread'
                                         ? 'bg-identity-navy text-white border-identity-navy'
                                         : 'bg-white text-slate-400 border-slate-200 hover:text-identity-navy'
                                         }`}
@@ -199,11 +199,11 @@ export default function NotificationCenter() {
                             <select
                                 value={categoryFilter}
                                 onChange={(e) => setCategoryFilter(e.target.value)}
-                                className="w-full px-5 py-4 bg-white border border-slate-200 rounded-2xl text-identity-sky font-black text-[10px] uppercase tracking-widest focus:outline-none focus:border-identity-sky/50 shadow-inner appearance-none cursor-pointer"
+                                className="w-full px-5 py-4 bg-white border border-slate-200 rounded-2xl text-identity-sky font-black text-[10px] uppercase tracking-[0.15em] focus:outline-none focus:border-identity-sky/50 shadow-inner appearance-none cursor-pointer"
                             >
                                 <option value="all">All Categories</option>
                                 <option value="attendance">Attendance Nodes</option>
-                                <option value="class">Academic Matrix</option>
+                                <option value="class">Academic Classes</option>
                                 <option value="system">Core System</option>
                                 <option value="security">Identity Security</option>
                             </select>
@@ -211,7 +211,7 @@ export default function NotificationCenter() {
                             {unreadCount > 0 && (
                                 <button
                                     onClick={markAllAsRead}
-                                    className="w-full mt-4 px-4 py-3 bg-white hover:bg-slate-50 text-identity-navy rounded-2xl text-[9px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 border border-slate-100 shadow-sm"
+                                    className="w-full mt-4 px-4 py-3 bg-white hover:bg-slate-50 text-identity-navy rounded-2xl text-[9px] font-black uppercase tracking-[0.15em] transition-all flex items-center justify-center gap-2 border border-slate-100 shadow-sm"
                                 >
                                     <Check size={16} className="text-emerald-500" />
                                     Synchronize All
@@ -240,15 +240,15 @@ export default function NotificationCenter() {
                                                 </div>
                                                 <div className="flex-1 min-w-0">
                                                     <div className="flex items-start justify-between gap-3 mb-2">
-                                                        <h4 className="text-identity-navy font-black text-[11px] uppercase tracking-widest group-hover:text-identity-sky transition-colors line-clamp-1">{notif.title}</h4>
+                                                        <h4 className="text-identity-navy font-black text-[11px] uppercase tracking-[0.15em] group-hover:text-identity-sky transition-colors line-clamp-1">{notif.title}</h4>
                                                         {!notif.is_read && (
                                                             <div className="w-2.5 h-2.5 bg-identity-sky rounded-full flex-shrink-0 mt-1 shadow-lg shadow-identity-sky/20 animate-pulse"></div>
                                                         )}
                                                     </div>
-                                                    <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest leading-relaxed mb-5 line-clamp-3">{notif.message}</p>
+                                                    <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.15em] leading-relaxed mb-5 line-clamp-3">{notif.message}</p>
                                                     
                                                     <div className="flex items-center justify-between border-t border-slate-100 pt-4">
-                                                        <span className="text-[8px] font-black text-slate-300 uppercase tracking-widest">
+                                                        <span className="text-[8px] font-black text-slate-300 uppercase tracking-[0.15em]">
                                                             {notif.created_at ? new Date(notif.created_at).toLocaleString('en-US', {
                                                                 month: 'short',
                                                                 day: 'numeric',
@@ -260,24 +260,24 @@ export default function NotificationCenter() {
                                                             {!notif.is_read && (
                                                                 <button
                                                                     onClick={() => markAsRead(notif.id)}
-                                                                    className="text-[9px] font-black text-emerald-500 hover:text-emerald-600 uppercase tracking-widest transition-colors flex items-center gap-1"
+                                                                    className="text-[9px] font-black text-emerald-500 hover:text-emerald-600 uppercase tracking-[0.15em] transition-colors flex items-center gap-1"
                                                                 >
-                                                                    <Check size={12} /> Sync
+                                                                    <Check size={12} /> Info
                                                                 </button>
                                                             )}
                                                             <button
                                                                 onClick={() => snoozeNotification(notif.id, 1)}
-                                                                className="text-[9px] font-black text-slate-300 hover:text-identity-navy flex items-center gap-1.5 uppercase tracking-widest transition-colors"
+                                                                className="text-[9px] font-black text-slate-300 hover:text-identity-navy flex items-center gap-1.5 uppercase tracking-[0.15em] transition-colors"
                                                             >
                                                                 <Clock size={12} />
                                                                 Delay
                                                             </button>
                                                             <button
                                                                 onClick={() => deleteNotification(notif.id)}
-                                                                className="text-[9px] font-black text-rose-500 hover:text-rose-600 flex items-center gap-1.5 uppercase tracking-widest transition-colors"
+                                                                className="text-[9px] font-black text-rose-500 hover:text-rose-600 flex items-center gap-1.5 uppercase tracking-[0.15em] transition-colors"
                                                             >
                                                                 <Trash2 size={12} />
-                                                                Purge
+                                                                Delete
                                                             </button>
                                                         </div>
                                                     </div>
@@ -291,8 +291,8 @@ export default function NotificationCenter() {
                                     <div className="w-20 h-20 bg-slate-50 rounded-[2rem] flex items-center justify-center mx-auto mb-6 text-slate-200">
                                         <Bell size={40} />
                                     </div>
-                                    <p className="text-[11px] font-black text-identity-navy uppercase tracking-[0.4em]">Node Logs Empty</p>
-                                    <p className="text-[8px] font-black text-slate-300 uppercase tracking-[0.3em] mt-3">All parameters synchronized.</p>
+                                    <p className="text-[11px] font-black text-identity-navy uppercase tracking-[0.4em]">No Activity Logs</p>
+                                    <p className="text-[8px] font-black text-slate-300 uppercase tracking-[0.3em] mt-3">All settings saved successfully.</p>
                                 </div>
                             )}
                         </div>

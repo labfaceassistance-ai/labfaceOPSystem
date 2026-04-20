@@ -101,7 +101,7 @@ export default function NotificationsPage() {
                             {notifications.some(n => !n.is_read) && (
                                 <button
                                     onClick={markAllAsRead}
-                                    className="text-sm text-brand-400 hover:text-brand-300 font-bold flex items-center gap-1"
+                                    className="tracking-[0.15em] font-black uppercase rounded-2xl text-sm text-brand-400 hover:text-brand-300 font-bold flex items-center gap-1"
                                 >
                                     <Check size={16} /> Mark all as read
                                 </button>

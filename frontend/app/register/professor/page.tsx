@@ -1,15 +1,17 @@
-"use client";
-import { useState, useRef, useEffect } from 'react';
-import Navbar from '../../../components/Navbar';
+﻿"use client";
+import { useState, useEffect } from 'react';
+import Navbar from '@/components/Navbar';
 import axios from 'axios';
-import { User, Mail, Lock, ShieldCheck, ArrowRight, Eye, EyeOff, X, CheckCircle, AlertCircle, Image as ImageIcon, Upload, ChevronLeft, ChevronRight, Shield, Clock, FileText, RefreshCw, GraduationCap, Check } from 'lucide-react';
+import { User, ShieldCheck, Lock, Eye, EyeOff, X, CheckCircle, Upload, ChevronLeft, ChevronRight, RefreshCw, Check } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { getToken, fetchCurrentUser } from '../../../utils/auth';
-import ConsentStep, { CONSENT_VERSION } from '../../../components/ConsentStep';
-import { useToast } from '../../../components/Toast';
-import { API_URL } from '../../../utils/auth';
-import UpdateManager from '../../../components/UpdateManager';
+import { getToken, fetchCurrentUser } from '@/utils/auth';
+import ConsentStep, { CONSENT_VERSION } from '@/components/ConsentStep';
+import { useToast } from '@/components/Toast';
+import { API_URL } from '@/utils/auth';
+import UpdateManager from '@/components/UpdateManager';
+import Button from '@/components/ui/Button';
+import InputField from '@/components/ui/InputField';
 
 export default function ProfessorRegisterPage() {
     const { showToast } = useToast();
@@ -26,9 +28,6 @@ export default function ProfessorRegisterPage() {
         confirmPassword: ''
     });
     const [loading, setLoading] = useState(false);
-    const [isCheckingProfessorId, setIsCheckingProfessorId] = useState(false);
-    const [showPassword, setShowPassword] = useState(false);
-    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [showSuccess, setShowSuccess] = useState(false);
     const [consent, setConsent] = useState(false);
     const [profilePicture, setProfilePicture] = useState<string | null>(null);
@@ -57,12 +56,13 @@ export default function ProfessorRegisterPage() {
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
-    const handleNextStep1 = async () => {
+    const handleNextStep1 = () => {
         if (!formData.professorId || !formData.firstName || !formData.lastName || !formData.email || !profilePicture) {
-            showToast("Required fields missing (Photo ID is mandatory)", "error");
+            showToast("Missing Protocol Data", "Personal information and Institutional Image ID are required for faculty verification.", "warning");
             return;
         }
         setStep(2);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -77,79 +77,85 @@ export default function ProfessorRegisterPage() {
             });
             setShowSuccess(true);
         } catch (err: any) {
-            showToast(err.response?.data?.message || 'Registration failed', "error");
+            showToast("Registration Protocol Failed", err.response?.data?.message || 'Access denied by system. Check your institutional credentials.', "error");
         } finally {
             setLoading(false);
         }
     };
 
     if (isCheckingAuth) return (
-        <div className="min-h-screen bg-brand-cream flex flex-col items-center justify-center">
-            <RefreshCw className="animate-spin text-primary mb-4" size={32} />
-            <p className="text-primary font-black uppercase text-[10px] tracking-widest">Initialising Faculty Secure...</p>
+        <div className="min-h-screen flex items-center justify-center bg-slate-50">
+            <div className="flex flex-col items-center">
+                <div className="w-12 h-12 border-4 border-identity-navy/20 border-t-identity-navy rounded-full animate-spin mb-4" />
+                <p className="text-identity-navy font-black uppercase text-[10px] tracking-[0.3em]">Faculty Link Establishing...</p>
+            </div>
         </div>
     );
 
     return (
-        <div className="min-h-screen bg-brand-cream flex flex-col font-sans selection:bg-secondary selection:text-white">
+        <div className="w-full relative selection:bg-identity-navy/10 page-transition">
             <Navbar />
-            <div className="flex-grow container mx-auto px-6 pt-32 pb-20 flex items-center justify-center">
-                <div className="max-w-2xl w-full">
+            <div className="flex-grow container mx-auto px-6 pt-32 pb-20 flex items-center justify-center relative z-10 w-full">
+                <div className="max-w-3xl w-full">
                     {/* Stepper HUD */}
-                    <div className="mb-14 flex items-center justify-between relative px-12 md:px-24">
-                        <div className="absolute left-20 md:left-32 right-20 md:right-32 top-6 h-[2px] bg-primary/5 -z-10">
-                            <div className="h-full bg-secondary transition-all duration-1000" style={{ width: `${(step - 1) * 50}%` }} />
+                    <div className="mb-16 flex items-center justify-between relative px-4 md:px-14">
+                        <div className="absolute left-10 md:left-24 right-10 md:right-24 top-6 h-[2px] bg-slate-100 -z-10 rounded-full">
+                            <div className="h-full bg-identity-navy transition-all duration-700" style={{ width: `${((step - 1) / 2) * 100}%` }} />
                         </div>
                         {[1, 2, 3].map(s => (
-                            <div key={s} className="flex flex-col items-center gap-3">
-                                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center border-2 transition-all duration-500 ${step >= s ? 'bg-coffee border-secondary text-brand-cream shadow-3xl' : 'bg-white border-primary/5 text-primary/20'}`}>
+                            <div key={s} className="flex flex-col items-center gap-4">
+                                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center border-2 transition-all duration-500 ${step >= s ? 'bg-identity-navy border-identity-navy text-white shadow-lg scale-110' : 'bg-white border-slate-100 text-slate-300'}`}>
                                     {s === 1 ? <User size={20} /> : s === 2 ? <ShieldCheck size={20} /> : <Lock size={20} />}
                                 </div>
                             </div>
                         ))}
                     </div>
 
-                    <div className="bg-white/70 backdrop-blur-xl rounded-[2.5rem] shadow-4xl overflow-hidden border border-primary/5">
-                        <div className="bg-coffee p-12 text-center relative overflow-hidden">
-                            <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/natural-paper.png')] opacity-5"></div>
-                            <h1 className="relative z-10 text-3xl font-black text-brand-cream tracking-tighter uppercase mb-2">Faculty Onboarding</h1>
-                            <p className="relative z-10 text-secondary/60 text-[10px] font-black tracking-[0.4em] uppercase">Professor Registry • Secure Clearance</p>
+                    <div className="w-full identity-glass rounded-[2rem] md:rounded-[3rem] shadow-xl overflow-hidden border border-identity-navy/10 animate-fade-in relative z-20">
+                        <div className="bg-identity-navy p-12 text-center relative border-b border-white/10">
+                            <h1 className="text-3xl md:text-5xl font-black text-white tracking-tighter uppercase mb-2 font-outfit">Faculty Onboarding</h1>
+                            <p className="text-identity-sky text-[10px] font-black tracking-[0.4em] uppercase opacity-70">Institutional Registry Protocol</p>
                         </div>
 
                         <div className="p-8 md:p-16">
                             {step === 2 ? (
                                 <ConsentStep 
                                     consentType="registration" 
-                                    onAccept={() => { setStep(3); window.scrollTo(0,0); }} 
-                                    onDecline={() => router.push('/login')} 
+                                    onAccept={() => { setStep(3); window.scrollTo({ top: 0, behavior: 'smooth' }); }} 
+                                    onDecline={() => setStep(1)} 
                                 />
                             ) : (
                                 <form onSubmit={handleSubmit} className="space-y-10">
                                     {step === 1 && (
                                         <div className="space-y-10 animate-fade-in">
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                                                <div className="col-span-full space-y-4">
-                                                    <label className="text-[9px] font-black uppercase tracking-[0.3em] text-primary/30 mb-1 ml-1">Faculty Identity Protocol</label>
-                                                    <div className="relative">
-                                                        <input name="professorId" value={formData.professorId} onChange={handleInputChange} placeholder="5-DIGIT SECURITY ID" className="w-full bg-white border-2 border-primary/5 rounded-3xl p-5 text-primary font-black tracking-[0.2em] focus:border-secondary transition-all outline-none shadow-sm" maxLength={5} />
-                                                        {isCheckingProfessorId && <RefreshCw size={18} className="absolute right-5 top-5 text-secondary animate-spin" />}
-                                                    </div>
+                                                <div className="col-span-full">
+                                                    <InputField
+                                                        label="PROFESSOR ID (5-DIGIT REFERENCE)"
+                                                        name="professorId"
+                                                        value={formData.professorId}
+                                                        onChange={handleInputChange}
+                                                        placeholder="XXXXX"
+                                                        maxLength={5}
+                                                        isRequired
+                                                        isValid={formData.professorId.length === 5}
+                                                    />
                                                 </div>
 
                                                 <div className="col-span-full">
-                                                    <label className="text-[9px] font-black uppercase tracking-[0.3em] text-primary/30 mb-4 ml-1 block">Institutional Verification Image</label>
-                                                    <label className={`flex flex-col items-center justify-center w-full h-48 border-4 border-dashed rounded-[3rem] cursor-pointer transition-all ${profilePicture ? 'bg-secondary/5 border-secondary/20' : 'bg-primary/5 border-primary/5 hover:border-secondary/20'}`}>
+                                                    <label className="text-[10px] font-black uppercase tracking-[0.3em] text-identity-navy/60 mb-4 ml-2 block">INSTITUTIONAL VERIFICATION PROXY</label>
+                                                    <label className={`flex flex-col items-center justify-center w-full h-56 border-4 border-dashed rounded-[3rem] cursor-pointer transition-all ${profilePicture ? 'bg-identity-navy/5 border-identity-navy/20' : 'bg-slate-50 border-slate-200 hover:border-identity-navy/20'}`}>
                                                         {profilePicture ? (
-                                                            <div className="relative w-full h-full p-4">
+                                                            <div className="relative w-full h-full p-6">
                                                                 <img src={profilePicture} alt="ID Preview" className="w-full h-full object-contain" />
-                                                                <button type="button" onClick={() => setProfilePicture(null)} className="absolute top-4 right-4 p-2 bg-red-500 text-white rounded-full shadow-lg"><X size={16}/></button>
+                                                                <button type="button" onClick={() => setProfilePicture(null)} className="absolute top-4 right-4 p-2 bg-rose-500 text-white rounded-full shadow-lg hover:scale-110 active:scale-95 transition-transform"><X size={16}/></button>
                                                             </div>
                                                         ) : (
                                                             <div className="text-center group">
-                                                                <div className="w-16 h-16 bg-coffee text-brand-cream rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
+                                                                <div className="w-16 h-16 bg-white border border-slate-100 text-identity-navy rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform shadow-md">
                                                                    <Upload size={24} />
                                                                 </div>
-                                                                <span className="text-[9px] font-black text-primary/40 uppercase tracking-widest">Select Credentials (PDF/JPG)</span>
+                                                                <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.15em]">Select ID Image / PDF</span>
                                                             </div>
                                                         )}
                                                         <input type="file" className="hidden" accept="image/*,application/pdf" onChange={(e) => {
@@ -163,24 +169,42 @@ export default function ProfessorRegisterPage() {
                                                     </label>
                                                 </div>
 
-                                                <div className="space-y-3">
-                                                    <label className="text-[9px] font-black uppercase tracking-[0.3em] text-primary/30 block ml-1">Given Name</label>
-                                                    <input name="firstName" value={formData.firstName} onChange={handleInputChange} placeholder="AS WRITTEN" className="w-full bg-white border-2 border-primary/5 rounded-3xl p-5 text-primary font-bold focus:border-secondary transition-all outline-none shadow-sm" />
-                                                </div>
-                                                <div className="space-y-3">
-                                                    <label className="text-[9px] font-black uppercase tracking-[0.3em] text-primary/30 block ml-1">Family Name</label>
-                                                    <input name="lastName" value={formData.lastName} onChange={handleInputChange} placeholder="AS WRITTEN" className="w-full bg-white border-2 border-primary/5 rounded-3xl p-5 text-primary font-bold focus:border-secondary transition-all outline-none shadow-sm" />
-                                                </div>
-                                                <div className="col-span-full space-y-3">
-                                                    <label className="text-[9px] font-black uppercase tracking-[0.3em] text-primary/30 block ml-1">Academic Email</label>
-                                                    <input name="email" value={formData.email} onChange={handleInputChange} placeholder="faculty@pup.edu.ph" className="w-full bg-white border-2 border-primary/5 rounded-3xl p-5 text-primary font-bold focus:border-secondary transition-all outline-none shadow-sm" />
+                                                <InputField
+                                                    label="FIRST NAME"
+                                                    name="firstName"
+                                                    value={formData.firstName}
+                                                    onChange={handleInputChange}
+                                                    placeholder="REQUIRED"
+                                                    isRequired
+                                                    isValid={formData.firstName.length > 1}
+                                                />
+                                                <InputField
+                                                    label="LAST NAME"
+                                                    name="lastName"
+                                                    value={formData.lastName}
+                                                    onChange={handleInputChange}
+                                                    placeholder="REQUIRED"
+                                                    isRequired
+                                                    isValid={formData.lastName.length > 1}
+                                                />
+                                                <div className="col-span-full">
+                                                    <InputField
+                                                        label="INSTITUTIONAL EMAIL ADDRESS"
+                                                        name="email"
+                                                        type="email"
+                                                        value={formData.email}
+                                                        onChange={handleInputChange}
+                                                        placeholder="FACULTY@PUP.EDU.PH"
+                                                        isRequired
+                                                        isValid={formData.email.endsWith('.edu.ph')}
+                                                    />
                                                 </div>
                                             </div>
 
-                                            <div className="flex justify-end pt-6">
-                                                <button type="button" onClick={handleNextStep1} className="bg-coffee text-brand-cream px-12 py-5 rounded-[2rem] font-black uppercase text-[10px] tracking-[0.3em] shadow-3xl hover:bg-black transition-all flex items-center gap-3">
-                                                    Initialize Protocols <ChevronRight size={18} />
-                                                </button>
+                                            <div className="flex justify-end pt-10 border-t border-slate-100">
+                                                <Button type="button" onClick={handleNextStep1} size="xl">
+                                                    NEXT PROTOCOL <ChevronRight size={18} className="ml-2" />
+                                                </Button>
                                             </div>
                                         </div>
                                     )}
@@ -188,44 +212,52 @@ export default function ProfessorRegisterPage() {
                                     {step === 3 && (
                                         <div className="space-y-12 animate-fade-in">
                                             <div className="text-center mb-8">
-                                                <h3 className="text-2xl font-black text-primary uppercase tracking-tighter mb-2">Security Manifest</h3>
-                                                <p className="text-primary/40 text-[10px] uppercase font-bold tracking-widest">Establish your administrative passphrase</p>
+                                                <h3 className="text-3xl font-black text-identity-navy uppercase tracking-tighter mb-2 font-outfit">Access Registry</h3>
+                                                <p className="text-slate-500 text-[10px] uppercase font-black tracking-[0.15em]">Establish your administrative access key</p>
                                             </div>
 
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                                                <div className="space-y-3">
-                                                    <label className="text-[9px] font-black uppercase tracking-[0.3em] text-primary/30 block ml-1">Security Key</label>
-                                                    <div className="relative">
-                                                        <input name="password" type={showPassword ? "text" : "password"} value={formData.password} onChange={handleInputChange} className="w-full bg-white border-2 border-primary/5 rounded-3xl p-5 text-primary font-bold focus:border-secondary transition-all outline-none shadow-sm" />
-                                                        <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-5 top-5 text-primary/20 hover:text-primary">
-                                                            {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                                <div className="space-y-3">
-                                                    <label className="text-[9px] font-black uppercase tracking-[0.3em] text-primary/30 block ml-1">Confirm Primary Key</label>
-                                                    <input name="confirmPassword" type={showConfirmPassword ? "text" : "password"} value={formData.confirmPassword} onChange={handleInputChange} className="w-full bg-white border-2 border-primary/5 rounded-3xl p-5 text-primary font-bold focus:border-secondary transition-all outline-none shadow-sm" />
-                                                </div>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                                <InputField
+                                                    label="SECURE ACCESS KEY"
+                                                    name="password"
+                                                    type="password"
+                                                    value={formData.password}
+                                                    onChange={handleInputChange}
+                                                    placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
+                                                    isRequired
+                                                    showStrength
+                                                    isValid={formData.password.length >= 8}
+                                                />
+                                                <InputField
+                                                    label="CONFIRM ACCESS KEY"
+                                                    name="confirmPassword"
+                                                    type="password"
+                                                    value={formData.confirmPassword}
+                                                    onChange={handleInputChange}
+                                                    placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
+                                                    isRequired
+                                                    isValid={formData.confirmPassword.length >= 8 && formData.confirmPassword === formData.password}
+                                                />
                                             </div>
 
-                                            <div className="flex items-start gap-5 bg-primary/5 p-6 rounded-3xl border border-primary/5 group hover:border-secondary/20 transition-all">
-                                                <div className="relative pt-1">
+                                            <div className="flex items-start gap-5 bg-slate-50 p-6 rounded-[2.5rem] border border-slate-200 group hover:border-identity-navy/20 transition-all cursor-pointer" onClick={() => setConsent(!consent)}>
+                                                <div className="relative pt-1 flex-shrink-0">
                                                     <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} className="peer hidden" id="consent-check" />
-                                                    <div className="w-6 h-6 border-2 border-primary/10 rounded-lg peer-checked:bg-secondary peer-checked:border-secondary transition-all"></div>
-                                                    <Check className="absolute inset-0 m-auto text-brand-cream opacity-0 peer-checked:opacity-100 transition-all" size={14} strokeWidth={4} />
+                                                    <div className="w-6 h-6 border-2 border-slate-200 bg-white rounded-lg peer-checked:bg-identity-navy peer-checked:border-identity-navy transition-all"></div>
+                                                    <Check className="absolute inset-0 m-auto text-white opacity-0 peer-checked:opacity-100 transition-all w-4 h-4" strokeWidth={4} />
                                                 </div>
-                                                <label htmlFor="consent-check" className="text-[10px] text-primary/60 font-bold uppercase tracking-wider leading-[1.8] cursor-pointer selection:bg-none">
-                                                    I acknowledge the professional responsibility of laboratory oversight and agree to the institutional data processing framework.
+                                                <label className="text-[10px] text-identity-navy font-bold uppercase tracking-wider leading-[1.8] cursor-pointer opacity-70 group-hover:opacity-100 transition-opacity">
+                                                    I acknowledge the professional responsibility of faculty oversight and agree to the institutional governance framework regarding biometric data.
                                                 </label>
                                             </div>
 
-                                            <div className="flex justify-between items-center pt-8">
-                                                <button type="button" onClick={() => setStep(2)} className="text-primary/30 font-black uppercase text-[9px] tracking-widest hover:text-primary transition-all underline decoration-primary/5 pb-1">
-                                                    « Review Consent
+                                            <div className="flex justify-between items-center pt-10 border-t border-slate-100">
+                                                <button type="button" onClick={() => setStep(2)} className="text-slate-300 font-black uppercase text-[10px] tracking-[0.15em] hover:text-identity-navy transition-all flex items-center min-h-[44px]">
+                                                    <ChevronLeft size={16} className="mr-2" /> GO BACK
                                                 </button>
-                                                <button type="submit" disabled={!consent || loading} className="bg-coffee text-brand-cream px-14 py-6 rounded-[2rem] font-black uppercase text-[10px] tracking-[0.4em] shadow-4xl hover:bg-black transition-all disabled:opacity-20 active:scale-95">
-                                                    {loading ? 'Committing...' : 'Commit Faculty Profile'}
-                                                </button>
+                                                <Button type="submit" disabled={!consent || loading || !formData.password || formData.password !== formData.confirmPassword} isLoading={loading} size="xl">
+                                                    COMMIT REGISTRY
+                                                </Button>
                                             </div>
                                         </div>
                                     )}
@@ -235,24 +267,24 @@ export default function ProfessorRegisterPage() {
                     </div>
                     
                     <div className="mt-16 text-center">
-                        <Link href="/login" className="text-primary/40 text-[9px] font-black uppercase tracking-[0.3em] hover:text-secondary transition-all border-b border-primary/5 pb-1">
-                            Existing Faculty Profile? Login Terminal
+                        <Link href="/login" className="text-slate-400 text-[10px] font-black uppercase tracking-[0.3em] hover:text-identity-navy transition-all flex items-center justify-center min-h-[44px]">
+                            EXISTING FACULTY PROFILE? ACCESS TERMINAL
                         </Link>
                     </div>
                 </div>
             </div>
 
             {showSuccess && (
-                <div className="fixed inset-0 bg-coffee/95 backdrop-blur-3xl z-[100] flex items-center justify-center p-8 text-center animate-fade-in">
-                    <div className="max-w-md w-full">
-                        <div className="w-28 h-28 bg-secondary/20 text-secondary rounded-[3rem] flex items-center justify-center mx-auto mb-10 shadow-4xl shadow-secondary/20 border border-secondary/10">
-                            <Clock size={56} />
+                <div className="fixed inset-0 bg-white/60 backdrop-blur-3xl z-[100] flex items-center justify-center p-8 text-center animate-fade-in">
+                    <div className="max-w-md w-full bg-white border border-slate-100 p-12 rounded-[4rem] shadow-4xl relative overflow-hidden">
+                        <div className="w-24 h-24 bg-identity-navy/5 text-identity-navy rounded-[2.5rem] flex items-center justify-center mx-auto mb-10 shadow-xl border border-identity-navy/10">
+                            <Clock size={48} className="animate-pulse" />
                         </div>
-                        <h2 className="text-5xl font-black text-brand-cream uppercase tracking-tighter mb-4 leading-none">Awaiting Clearance</h2>
-                        <p className="text-brand-cream/40 mb-12 font-medium uppercase text-[10px] tracking-[0.2em] leading-relaxed">Faculty accounts require manual administrative validation. <br /> Check your email for clearance protocols.</p>
-                        <button onClick={() => window.location.href = '/login'} className="w-full bg-brand-cream text-coffee py-6 rounded-[2rem] font-black uppercase text-[10px] tracking-[0.3em] shadow-3xl hover:scale-105 transition-all">
-                            Retract to Login
-                        </button>
+                        <h2 className="text-4xl font-black text-identity-navy uppercase tracking-tighter mb-4 font-outfit">Governance Pending</h2>
+                        <p className="text-slate-600 mb-12 font-black uppercase text-[10px] tracking-[0.3em] leading-relaxed">Professor accounts require manual validation. <br /> Awaiting clearance from Administrative Core.</p>
+                        <Button onClick={() => window.location.href = '/login'} size="xl" className="w-full">
+                            RETURN TO TERMINAL
+                        </Button>
                     </div>
                 </div>
             )}
@@ -260,3 +292,10 @@ export default function ProfessorRegisterPage() {
         </div>
     );
 }
+
+const Clock = ({ size, className }: { size: number, className: string }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={className}>
+        <circle cx="12" cy="12" r="10" />
+        <polyline points="12 6 12 12 16 14" />
+    </svg>
+);

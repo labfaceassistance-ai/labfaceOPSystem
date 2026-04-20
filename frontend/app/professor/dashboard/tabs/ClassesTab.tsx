@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import CreateClassModal from '@/components/CreateClassModal';
 import SessionModal from '@/components/SessionModal';
@@ -171,7 +171,7 @@ export default function ClassesTab({ user, classes, loading, onRefresh, onTabCha
 
             const days = schedule.map((s: any) => s.day.substring(0, 3)).join(', ');
             const times = schedule[0];
-            return `${days} • ${times.startTime} - ${times.endTime}`;
+            return `${days} â€¢ ${times.startTime} - ${times.endTime}`;
         } catch {
             return 'Invalid schedule';
         }
@@ -344,39 +344,39 @@ export default function ClassesTab({ user, classes, loading, onRefresh, onTabCha
 
     return (
         <>
-            <div className="identity-glass rounded-2xl shadow-sm border border-identity-sky/10 backdrop-blur-sm overflow-hidden min-h-[600px] shadow-3xl">
+            <div className="identity-glass p-6 sm:p-8 md:p-10 rounded-[2rem] md:rounded-[3rem] shadow-xl border border-identity-sky/10 backdrop-blur-sm overflow-hidden min-h-[600px] font-outfit">
                 <div className="p-4 border-b border-identity-sky/5 flex flex-col xl:flex-row xl:items-center justify-between gap-4">
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-3 flex-1">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-4 flex-1">
                         {/* Tabs */}
-                        <div className="bg-identity-navy/5 border border-identity-navy/10 rounded-lg p-1 inline-flex shrink-0 self-start sm:self-auto shadow-inner">
-                                <button
-                                    onClick={() => {
-                                        setActiveSubTab('active');
-                                        setSearchTerm('');
-                                        setIsFilterMenuOpen(false);
-                                    }}
-                                    className={`px-4 py-1.5 text-[10px] font-black uppercase tracking-widest rounded-md transition-all ${activeSubTab === 'active'
-                                        ? 'bg-identity-navy text-white shadow-lg shadow-identity-navy/20'
-                                        : 'text-slate-400 hover:text-identity-navy hover:bg-identity-navy/5'}`}
-                                >
-                                    Active
-                                </button>
+                        <div className="bg-identity-sky/5 border border-identity-sky/10 rounded-2xl p-1 inline-flex shrink-0 self-start sm:self-auto shadow-inner">
+                            <button
+                                onClick={() => {
+                                    setActiveSubTab('active');
+                                    setSearchTerm('');
+                                    setIsFilterMenuOpen(false);
+                                }}
+                                className={`px-6 py-2 text-[10px] font-black uppercase tracking-[0.15em] rounded-2xl transition-all ${activeSubTab === 'active'
+                                    ? 'bg-identity-sky text-white shadow-xl shadow-identity-sky/10'
+                                    : 'text-slate-400 hover:text-identity-navy hover:bg-identity-sky/5'}`}
+                            >
+                                Active
+                            </button>
                             <button
                                 onClick={() => {
                                     setActiveSubTab('archived');
                                     setSearchTerm('');
                                     setSelectedYearLevel('All');
                                 }}
-                                className={`px-4 py-1.5 text-[10px] font-black uppercase tracking-widest rounded-md transition-all ${activeSubTab === 'archived'
-                                    ? 'bg-identity-navy text-white shadow-lg shadow-identity-navy/20'
-                                    : 'text-slate-400 hover:text-identity-navy hover:bg-identity-navy/5'}`}
+                                className={`px-6 py-2 text-[10px] font-black uppercase tracking-[0.15em] rounded-2xl transition-all ${activeSubTab === 'archived'
+                                    ? 'bg-identity-sky text-white shadow-xl shadow-identity-sky/10'
+                                    : 'text-slate-400 hover:text-identity-navy hover:bg-identity-sky/5'}`}
                             >
                                 Archived
                             </button>
                         </div>
 
                         {/* Search + Create Container (Sticky on Mobile, Separate on Desktop) */}
-                        <div className="flex flex-1 items-center gap-3 w-full sm:contents">
+                        <div className="flex flex-1 items-center gap-4 w-full sm:contents">
                             {/* Search Bar - Compact & Embedded Filter */}
                             <div className="relative flex-1 group">
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-identity-sky transition-colors" size={16} />
@@ -386,16 +386,16 @@ export default function ClassesTab({ user, classes, loading, onRefresh, onTabCha
                                     placeholder={`Search ${activeSubTab} classes...`}
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
-                                    className="w-full pl-10 pr-16 py-2.5 bg-white/40 border border-identity-sky/10 rounded-xl text-xs font-bold text-identity-navy uppercase tracking-widest focus:outline-none focus:border-identity-sky/50 focus:ring-1 focus:ring-identity-sky/20 placeholder-slate-300 transition-all shadow-inner"
+                                    className="w-full pl-10 pr-16 py-2.5 bg-white/40 border border-identity-sky/10 rounded-2xl text-xs font-bold text-identity-navy uppercase tracking-[0.15em] focus:outline-none focus:border-identity-sky/50 focus:ring-1 focus:ring-identity-sky/20 placeholder-slate-300 transition-all shadow-inner"
                                 />
 
                                 {/* Embedded Filter Button */}
-                                <div className="absolute right-1.5 top-1.5 bottom-1.5">
+                                <div className="absolute right-2 top-2 bottom-2">
                                     <button
                                         onClick={() => setIsFilterMenuOpen(!isFilterMenuOpen)}
-                                        className={`h-full flex items-center justify-center gap-1 w-10 rounded-lg border text-[10px] font-black uppercase tracking-widest transition-all ${selectedYearLevel !== 'All' || selectedDateFilter !== 'all'
-                                            ? 'bg-identity-navy text-white border-identity-navy shadow-lg shadow-identity-navy/20'
-                                            : 'bg-white/5 text-slate-400 border-identity-sky/10 hover:bg-identity-navy/5 hover:text-identity-navy'
+                                        className={`h-full flex items-center justify-center gap-1 w-10 rounded-lg border text-[10px] font-black uppercase tracking-[0.15em] transition-all ${selectedYearLevel !== 'All' || selectedDateFilter !== 'all'
+                                            ? 'bg-identity-sky text-white border-identity-sky shadow-xl shadow-identity-sky/10'
+                                            : 'bg-white/5 text-slate-400 border-identity-sky/10 hover:bg-identity-sky/5 hover:text-identity-navy'
                                             }`}
                                         title="Filter"
                                     >
@@ -405,9 +405,9 @@ export default function ClassesTab({ user, classes, loading, onRefresh, onTabCha
 
                                 {/* Filter Dropdown */}
                                 {isFilterMenuOpen && (
-                                    <div className="absolute top-full right-0 mt-2 w-72 identity-glass rounded-xl border border-identity-sky/10 shadow-3xl p-4 space-y-4 animate-in fade-in zoom-in-95 duration-100 z-50 origin-top-right">
+                                    <div className="absolute top-full right-0 mt-2 w-72 identity-glass p-6 sm:p-8 md:p-10 rounded-[2rem] md:rounded-[3rem] border border-identity-sky/10 shadow-3xl p-4 space-y-4 animate-in fade-in zoom-in-95 duration-100 z-50 origin-top-right">
                                         <div className="flex justify-between items-center pb-3 border-b border-white/5">
-                                            <span className="text-[10px] font-black text-secondary/40 uppercase tracking-widest flex items-center gap-2">
+                                            <span className="text-[10px] font-black text-secondary/40 uppercase tracking-[0.15em] flex items-center gap-2">
                                                 <Filter size={12} /> Filter Options
                                             </span>
                                             {(selectedYearLevel !== 'All' || selectedDateFilter !== 'all') && (
@@ -421,7 +421,7 @@ export default function ClassesTab({ user, classes, loading, onRefresh, onTabCha
                                                         setCustomStartDate('');
                                                         setCustomEndDate('');
                                                     }}
-                                                    className="text-[10px] font-black uppercase tracking-widest bg-red-500/10 text-red-400 px-2 py-1 rounded hover:bg-red-500/20 transition-colors"
+                                                    className="text-[10px] font-black uppercase tracking-[0.15em] bg-red-500/10 text-red-400 px-2 py-1 rounded hover:bg-red-500/20 transition-colors"
                                                 >
                                                     Reset All
                                                 </button>
@@ -431,7 +431,7 @@ export default function ClassesTab({ user, classes, loading, onRefresh, onTabCha
                                         <div className="space-y-4">
                                             {/* School Year Display - Read Only */}
                                             <div className="space-y-1.5">
-                                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Current School Year</label>
+                                                <label className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-500 ml-1">Current School Year</label>
                                                 <div className="w-full px-3 py-2 bg-white/40 border border-identity-sky/10 rounded-lg text-xs shadow-inner">
                                                     <span className="font-black text-identity-sky uppercase tracking-tight">{currentSchoolYear}</span>
                                                 </div>
@@ -439,11 +439,11 @@ export default function ClassesTab({ user, classes, loading, onRefresh, onTabCha
 
                                             {/* Year Level Filter */}
                                             <div className="space-y-1.5">
-                                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Year Level</label>
+                                                <label className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-500 ml-1">Year Level</label>
                                                 <select
                                                     value={selectedYearLevel}
                                                     onChange={(e) => setSelectedYearLevel(e.target.value)}
-                                                    className="w-full px-3 py-2 bg-white/60 border border-identity-sky/10 rounded-lg text-xs font-bold text-identity-navy uppercase tracking-widest focus:outline-none focus:border-identity-sky/50 focus:ring-1 focus:ring-identity-sky/20 transition-all shadow-inner"
+                                                    className="w-full px-3 py-2 bg-white/60 border border-identity-sky/10 rounded-lg text-xs font-bold text-identity-navy uppercase tracking-[0.15em] focus:outline-none focus:border-identity-sky/50 focus:ring-1 focus:ring-identity-sky/20 transition-all shadow-inner"
                                                 >
                                                     <option value="All">All Years</option>
                                                     <option value="1">1st Year</option>
@@ -457,7 +457,7 @@ export default function ClassesTab({ user, classes, loading, onRefresh, onTabCha
 
                                         {/* Date Filter Section */}
                                         <div className="space-y-3 pt-3 border-t border-identity-sky/5">
-                                            <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Date Filter</label>
+                                            <label className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-500 ml-1">Date Filter</label>
 
                                             {/* Single Filter Dropdown */}
                                             <div className="space-y-2">
@@ -466,7 +466,7 @@ export default function ClassesTab({ user, classes, loading, onRefresh, onTabCha
                                                     onChange={(e) => {
                                                         // ... (rest of logic unchanged)
                                                     }}
-                                                    className="w-full px-3 py-2 bg-white/60 border border-identity-sky/10 rounded-lg text-xs font-bold text-identity-navy uppercase tracking-widest focus:outline-none focus:border-identity-sky/50 focus:ring-1 focus:ring-identity-sky/20 transition-all shadow-inner"
+                                                    className="w-full px-3 py-2 bg-white/60 border border-identity-sky/10 rounded-lg text-xs font-bold text-identity-navy uppercase tracking-[0.15em] focus:outline-none focus:border-identity-sky/50 focus:ring-1 focus:ring-identity-sky/20 transition-all shadow-inner"
                                                 >
                                                     <option value="all">All Time</option>
                                                     <option value="today">Today</option>
@@ -482,9 +482,9 @@ export default function ClassesTab({ user, classes, loading, onRefresh, onTabCha
 
                                                 {/* Custom Range Date Pickers - Only show when Custom Range is selected */}
                                                 {selectedDateFilter === 'custom' && (
-                                                    <div className="grid grid-cols-2 gap-2 pt-1">
+                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 pt-1">
                                                         <div className="space-y-1">
-                                                            <label className="text-[10px] font-black uppercase tracking-widest text-secondary/40 ml-1">Start Date</label>
+                                                            <label className="text-[10px] font-black uppercase tracking-[0.15em] text-secondary/40 ml-1">Start Date</label>
                                                             <input
                                                                 type="date"
                                                                 value={customStartDate}
@@ -498,7 +498,7 @@ export default function ClassesTab({ user, classes, loading, onRefresh, onTabCha
                                                             />
                                                         </div>
                                                         <div className="space-y-1">
-                                                            <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">End Date</label>
+                                                            <label className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-500 ml-1">End Date</label>
                                                             <input
                                                                 type="date"
                                                                 value={customEndDate}
@@ -525,7 +525,7 @@ export default function ClassesTab({ user, classes, loading, onRefresh, onTabCha
                                 {activeSubTab === 'active' && (
                                     <button
                                         onClick={() => setIsCreateModalOpen(true)}
-                                        className="bg-identity-navy hover:bg-identity-navy/90 text-white px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-identity-navy/10 flex items-center gap-2 transition-all whitespace-nowrap"
+                                        className="bg-identity-sky hover:bg-identity-navy text-white px-8 py-3 rounded-2xl text-[10px] font-black uppercase tracking-[0.15em] shadow-xl shadow-identity-sky/10 flex items-center gap-2 transition-all whitespace-nowrap active:scale-95"
                                         title="Create Class"
                                     >
                                         <span className="hidden sm:inline">Create Class</span>
@@ -541,8 +541,12 @@ export default function ClassesTab({ user, classes, loading, onRefresh, onTabCha
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6">
                     {loading ? (
-                        <div className="col-span-full flex justify-center py-12">
-                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-identity-sky"></div>
+                        <div className="col-span-full flex flex-col items-center justify-center py-20 gap-4">
+                            <div className="w-12 h-12 relative">
+                                <div className="absolute inset-0 border-4 border-identity-sky/20 rounded-full"></div>
+                                <div className="absolute inset-0 border-4 border-identity-sky border-t-transparent rounded-full animate-spin"></div>
+                            </div>
+                            <p className="text-[10px] font-black text-identity-sky uppercase tracking-[0.2em] animate-pulse">Retrieving Class Directories...</p>
                         </div>
                     ) : (
                         <>
@@ -556,14 +560,14 @@ export default function ClassesTab({ user, classes, loading, onRefresh, onTabCha
                             )}
 
                             {filteredClasses.map((cls) => (
-                                <div key={cls.id} className={`identity-glass rounded-xl border transition-all group relative ${cls.active_session_type ? 'border-identity-sky/50 shadow-lg shadow-identity-sky/5' : 'border-identity-sky/10 hover:border-identity-sky/30 hover:shadow-2xl hover:shadow-black/5'}`}>
-                                    <div className={`h-1.5 rounded-t-xl transition-colors ${cls.is_archived ? 'bg-slate-200' : cls.active_session_type ? 'bg-identity-sky animate-pulse' : 'bg-identity-sky group-hover:bg-identity-sky/80'}`}></div>
-                                    <div className="p-6">
+                                <div key={cls.id} className={`identity-glass rounded-[2rem] md:rounded-[3rem] border transition-all group relative overflow-hidden ${cls.active_session_type ? 'border-identity-sky/50 shadow-2xl shadow-identity-sky/10' : 'border-identity-sky/10 hover:border-identity-sky/40 shadow-xl hover:shadow-2xl'} flex flex-col`}>
+                                    <div className={`h-1.5 transition-colors ${cls.is_archived ? 'bg-slate-200' : cls.active_session_type ? 'bg-identity-sky animate-pulse' : 'bg-identity-sky group-hover:bg-identity-sky/80'}`}></div>
+                                    <div className="p-8 flex flex-col flex-1">
                                         <div className="flex justify-between items-start mb-4">
                                             <div>
                                                 <h3 className="text-xl font-black text-identity-navy group-hover:text-identity-sky transition-colors mb-1 uppercase tracking-tight">{cls.subject_code}</h3>
-                                                <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">{cls.subject_name}</p>
-                                                <p className="text-[10px] font-black text-identity-sky mt-2 bg-identity-sky/5 px-2 py-0.5 rounded border border-identity-sky/10 w-fit uppercase tracking-widest">{cls.section}</p>
+                                                <p className="text-xs font-bold text-slate-500 uppercase tracking-[0.15em]">{cls.subject_name}</p>
+                                                <p className="text-[10px] font-black text-identity-sky mt-2 bg-identity-sky/5 px-2 py-0.5 rounded border border-identity-sky/10 w-fit uppercase tracking-[0.15em]">{cls.section}</p>
                                             </div>
                                             <div className="flex flex-col items-end gap-2">
                                                 <div className="flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
@@ -575,22 +579,22 @@ export default function ClassesTab({ user, classes, loading, onRefresh, onTabCha
                                                             setSelectedClassIsArchived(!!cls.is_archived);
                                                             setIsEditModalOpen(true);
                                                         }}
-                                                        className="text-slate-400 hover:text-identity-sky p-2 rounded-lg hover:bg-identity-sky/5 transition-colors"
+                                                        className="text-slate-400 hover:text-identity-sky p-2 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-2xl hover:bg-identity-sky/5 transition-all"
                                                         title="Edit Class"
                                                     >
-                                                        <Edit size={16} />
+                                                        <Edit size={18} />
                                                     </button>
                                                     <button
                                                         onClick={(e) => {
                                                             e.stopPropagation();
                                                             handleArchive(cls.id, cls.is_archived, cls.subject_name);
                                                         }}
-                                                        className={`p-2 rounded-lg transition-colors ${cls.is_archived
+                                                        className={`p-2 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-2xl transition-all ${cls.is_archived
                                                             ? 'text-slate-400 hover:text-emerald-500 hover:bg-emerald-50'
                                                             : 'text-slate-400 hover:text-identity-sky hover:bg-identity-sky/5'}`}
                                                         title={cls.is_archived ? "Restore Class" : "Archive Class"}
                                                     >
-                                                        {cls.is_archived ? <RotateCcw size={16} /> : <Archive size={16} />}
+                                                        {cls.is_archived ? <RotateCcw size={18} /> : <Archive size={18} />}
                                                     </button>
                                                     {!cls.is_archived && (
                                                         <button
@@ -598,10 +602,10 @@ export default function ClassesTab({ user, classes, loading, onRefresh, onTabCha
                                                                 e.stopPropagation();
                                                                 handleDelete(cls.id, cls.subject_name);
                                                             }}
-                                                            className="text-slate-400 hover:text-red-500 p-2 rounded-lg hover:bg-red-50"
+                                                            className="text-slate-400 hover:text-red-500 p-2 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-2xl hover:bg-red-50 transition-all"
                                                             title="Delete Class"
                                                         >
-                                                            <Trash2 size={16} />
+                                                            <Trash2 size={18} />
                                                         </button>
                                                     )}
                                                 </div>
@@ -612,13 +616,13 @@ export default function ClassesTab({ user, classes, loading, onRefresh, onTabCha
                                                             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-identity-sky opacity-75"></span>
                                                             <span className="relative inline-flex rounded-full h-2 w-2 bg-identity-sky"></span>
                                                         </span>
-                                                        <span className="text-[10px] font-black text-identity-sky uppercase tracking-widest">{cls.active_session_type} Session</span>
+                                                        <span className="text-[10px] font-black text-identity-sky uppercase tracking-[0.15em]">{cls.active_session_type} Session</span>
                                                     </div>
                                                 )}
                                             </div>
                                         </div>
 
-                                        <div className="flex items-center gap-4 text-xs text-slate-500 mb-6 uppercase font-black tracking-widest">
+                                        <div className="flex items-center gap-4 text-xs text-slate-500 mb-6 uppercase font-black tracking-[0.15em]">
                                             <div className="flex items-center gap-2 bg-white/40 px-3 py-1.5 rounded-lg border border-identity-sky/10">
                                                 <Calendar size={14} className="text-identity-sky" />
                                                 <span className="text-identity-navy">{formatSchedule(cls.schedule_json)}</span>
@@ -629,7 +633,7 @@ export default function ClassesTab({ user, classes, loading, onRefresh, onTabCha
                                             </div>
                                         </div>
 
-                                        <div className="flex gap-3 mt-auto pt-4 border-t border-identity-sky/5">
+                                        <div className="flex gap-4 mt-auto pt-6 border-t border-identity-sky/5">
                                             <button
                                                 onClick={() => {
                                                     setSelectedClassId(cls.id);
@@ -638,7 +642,7 @@ export default function ClassesTab({ user, classes, loading, onRefresh, onTabCha
                                                     setInitialView('list');
                                                     setIsViewModalOpen(true);
                                                 }}
-                                                className="flex-1 bg-white hover:bg-slate-50 text-identity-navy border border-identity-navy/10 py-2.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 group-hover:shadow-lg lg:opacity-90 lg:group-hover:opacity-100"
+                                                className="flex-1 bg-white/40 hover:bg-white/60 text-identity-navy border border-identity-sky/10 py-3 rounded-2xl text-[10px] font-black uppercase tracking-[0.15em] transition-all flex items-center justify-center gap-2 active:scale-95 shadow-sm"
                                             >
                                                 <Eye size={16} /> View
                                             </button>
@@ -647,14 +651,14 @@ export default function ClassesTab({ user, classes, loading, onRefresh, onTabCha
                                                 <>
                                                     <button
                                                         onClick={() => router.push(`/professor/dashboard?tab=monitor&sessionId=${cls.active_session_id}`)}
-                                                        className="flex-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-600 border border-emerald-200 py-2.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2"
+                                                        className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white py-3 rounded-2xl text-[10px] font-black uppercase tracking-[0.15em] transition-all flex items-center justify-center gap-2 shadow-xl shadow-emerald-500/10 active:scale-95"
                                                     >
                                                         <Activity size={16} /> Monitor
                                                     </button>
                                                     <button
                                                         onClick={() => cls.active_session_id && handleStopMonitoring(cls.active_session_id)}
                                                         disabled={stoppingSessionId === cls.active_session_id}
-                                                        className="flex-1 bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 py-2.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2"
+                                                        className="flex-1 bg-rose-500 hover:bg-rose-600 text-white py-3 rounded-2xl text-[10px] font-black uppercase tracking-[0.15em] transition-all flex items-center justify-center gap-2 shadow-xl shadow-rose-500/10 active:scale-95 disabled:opacity-50"
                                                     >
                                                         {stoppingSessionId === cls.active_session_id ? (
                                                             <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
@@ -672,7 +676,7 @@ export default function ClassesTab({ user, classes, loading, onRefresh, onTabCha
                                                             setSelectedClassName(cls.subject_name);
                                                             setIsSessionModalOpen(true);
                                                         }}
-                                                        className="flex-1 bg-identity-navy hover:bg-identity-navy/90 text-white py-2.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 shadow-lg shadow-identity-navy/10"
+                                                        className="flex-1 bg-identity-sky hover:bg-identity-navy text-white py-3 rounded-2xl text-[10px] font-black uppercase tracking-[0.15em] transition-all flex items-center justify-center gap-2 shadow-xl shadow-identity-sky/10 active:scale-95"
                                                     >
                                                         <Play size={16} fill="currentColor" /> Start
                                                     </button>

@@ -21,12 +21,13 @@ export default function Navbar() {
     const pathname = usePathname();
     const [user, setUser] = useState<UserData | null>(null);
     const [scrolled, setScrolled] = useState(false);
+    const [visible, setVisible] = useState(true);
+    const [lastScrollY, setLastScrollY] = useState(0);
 
     useEffect(() => {
         const storedUser = getUser();
         const token = getToken();
 
-        // Only set user if BOTH user data AND token exist
         if (storedUser && token) {
             setUser(storedUser);
         } else {
@@ -34,12 +35,24 @@ export default function Navbar() {
         }
 
         const handleScroll = () => {
-            setScrolled(window.scrollY > 20);
+            const currentScrollY = window.scrollY;
+            
+            // Background blur effect
+            setScrolled(currentScrollY > 20);
+
+            // Hide/Show logic
+            if (currentScrollY > lastScrollY && currentScrollY > 10) {
+                setVisible(false); // Scrolling down
+            } else {
+                setVisible(true); // Scrolling up
+            }
+            
+            setLastScrollY(currentScrollY);
         };
 
         window.addEventListener('scroll', handleScroll);
         return () => window.removeEventListener('scroll', handleScroll);
-    }, []);
+    }, [lastScrollY]);
 
     const handleLogout = () => {
         logout();
@@ -50,7 +63,7 @@ export default function Navbar() {
     const isHomePage = pathname === '/';
 
     return (
-        <nav className="fixed w-full z-50 transition-all duration-300 identity-glass border-b border-identity-sky/10 shadow-lg py-2">
+        <nav className={`fixed w-full z-50 transition-all duration-500 identity-glass border-b border-identity-sky/10 shadow-lg py-2 ${visible ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'}`}>
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex items-center justify-between h-16">
                     <div className="flex items-center">
@@ -96,13 +109,13 @@ export default function Navbar() {
                                                             className="w-full h-full object-cover"
                                                         />
                                                     ) : (
-                                                        <span className="text-[10px] font-black uppercase tracking-widest">{user.firstName?.[0] || ''}{user.lastName?.[0] || ''}</span>
+                                                        <span className="text-[10px] font-black uppercase tracking-[0.15em]">{user.firstName?.[0] || ''}{user.lastName?.[0] || ''}</span>
                                                     )}
                                                 </div>
                                             </Link>
 
-                                            <button onClick={handleLogout} className="text-red-400 hover:text-red-300 hover:bg-white/5 px-3 py-2 rounded-md text-sm font-bold transition-colors flex items-center gap-2">
-                                                <LogOut size={16} /> Logout
+                                            <button onClick={handleLogout} className="text-red-400 hover:text-red-300 hover:bg-white/5 px-6 py-3 min-h-[44px] min-w-[44px] rounded-xl text-sm font-black uppercase tracking-[0.15em] transition-all flex items-center justify-center gap-2 border border-transparent hover:border-red-400/20 active:scale-95 shadow-sm hover:shadow-lg">
+                                                <LogOut size={18} /> Logout
                                             </button>
                                         </>
                                     )}
@@ -114,9 +127,10 @@ export default function Navbar() {
                         <div className="-mr-2 flex md:hidden">
                             <button
                                 onClick={() => setIsOpen(!isOpen)}
-                                className="inline-flex items-center justify-center p-2 rounded-md text-identity-sky hover:bg-identity-sky/10 focus:outline-none transition-colors"
+                                className="inline-flex items-center justify-center p-3 min-h-[44px] min-w-[44px] rounded-xl text-identity-sky hover:bg-identity-sky/10 focus:outline-none transition-all active:scale-90 border border-transparent hover:border-identity-sky/20"
+                                title={isOpen ? "Close Menu" : "Open Menu"}
                             >
-                                {isOpen ? <X size={24} /> : <Menu size={24} />}
+                                {isOpen ? <X size={28} /> : <Menu size={28} />}
                             </button>
                         </div>
                     )}
@@ -129,13 +143,13 @@ export default function Navbar() {
                     <div className="px-4 pt-4 pb-6 space-y-2">
                         {!user && !isAuthPage && (
                             <>
-                                <Link href="/login" onClick={() => setIsOpen(false)} className="block text-identity-navy/40 hover:text-identity-navy hover:bg-black/5 px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all">Login</Link>
+                                <Link href="/login" onClick={() => setIsOpen(false)} className="block text-identity-navy/40 hover:text-identity-navy hover:bg-black/5 px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-[0.15em] transition-all">Login</Link>
                                 <button
                                     onClick={() => {
                                         setIsOpen(false);
                                         setIsRegisterModalOpen(true);
                                     }}
-                                    className="block w-full text-left text-identity-sky hover:bg-identity-sky/5 px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border border-identity-sky/20"
+                                    className="block w-full text-left text-identity-sky hover:bg-identity-sky/5 px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-[0.15em] transition-all border border-identity-sky/20"
                                 >
                                     Register
                                 </button>
@@ -143,31 +157,31 @@ export default function Navbar() {
                         )}
                         {user && isHomePage && (
                             <>
-                                <div className="px-4 py-2 text-[8px] font-black text-secondary/20 uppercase tracking-widest">Signed in as {user.firstName} {user.lastName}</div>
-                                <Link href={user.role === 'professor' ? '/professor/dashboard' : '/student/dashboard'} onClick={() => setIsOpen(false)} className="block text-identity-navy hover:bg-black/5 px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-3 transition-all">
+                                <div className="px-4 py-2 text-[8px] font-black text-secondary/20 uppercase tracking-[0.15em]">Signed in as {user.firstName} {user.lastName}</div>
+                                <Link href={user.role === 'professor' ? '/professor/dashboard' : '/student/dashboard'} onClick={() => setIsOpen(false)} className="block text-identity-navy hover:bg-black/5 px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-[0.15em] flex items-center gap-3 transition-all">
                                     <LayoutDashboard size={18} className="text-identity-sky" /> Go to Dashboard
                                 </Link>
-                                <button onClick={() => { handleLogout(); setIsOpen(false); }} className="block w-full text-left text-red-400 hover:bg-red-400/5 px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-3 transition-all">
+                                <button onClick={() => { handleLogout(); setIsOpen(false); }} className="block w-full text-left text-red-400 hover:bg-red-400/5 px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-[0.15em] flex items-center gap-3 transition-all">
                                     <LogOut size={18} /> Logout
                                 </button>
                             </>
                         )}
                         {user && !isAuthPage && !isHomePage && (
                             <>
-                                <div className="px-4 py-2 text-[8px] font-black text-secondary/20 uppercase tracking-widest">Signed in as {user.firstName} {user.lastName}</div>
+                                <div className="px-4 py-2 text-[8px] font-black text-secondary/20 uppercase tracking-[0.15em]">Signed in as {user.firstName} {user.lastName}</div>
                                 <Link href={
                                     user.role === 'professor' ? '/professor/profile' :
                                         user.role === 'student' ? '/student/profile' :
                                             '/admin/profile'
-                                } onClick={() => setIsOpen(false)} className="block text-identity-navy hover:bg-black/5 px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-3 transition-all">
+                                } onClick={() => setIsOpen(false)} className="block text-identity-navy hover:bg-black/5 px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-[0.15em] flex items-center gap-3 transition-all">
                                     <User size={18} className="text-identity-sky" /> Profile
                                 </Link>
                                 {(!user.role.includes('admin')) && (
-                                    <Link href="/notifications" onClick={() => setIsOpen(false)} className="block text-identity-navy hover:bg-black/5 px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-3 transition-all">
+                                    <Link href="/notifications" onClick={() => setIsOpen(false)} className="block text-identity-navy hover:bg-black/5 px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-[0.15em] flex items-center gap-3 transition-all">
                                         <Bell size={18} className="text-identity-sky" /> Notifications
                                     </Link>
                                 )}
-                                <button onClick={() => { handleLogout(); setIsOpen(false); }} className="block w-full text-left text-red-500 hover:bg-red-500/5 px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-3 transition-all">
+                                <button onClick={() => { handleLogout(); setIsOpen(false); }} className="block w-full text-left text-red-500 hover:bg-red-500/5 px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-[0.15em] flex items-center gap-3 transition-all">
                                     <LogOut size={18} /> Logout
                                 </button>
                             </>
@@ -181,17 +195,18 @@ export default function Navbar() {
                 <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-identity-navy/40 backdrop-blur-md animate-in fade-in duration-300">
                     <div className="identity-glass rounded-3xl shadow-3xl max-w-md w-full overflow-hidden animate-scale-up border border-identity-sky/10">
                         <div className="p-8 bg-white/40 border-b border-identity-sky/5 flex justify-between items-center">
-                            <h3 className="text-xl font-black text-identity-navy uppercase tracking-tight italic">Initialize Identity</h3>
+                            <h3 className="text-xl font-black text-identity-navy uppercase tracking-tight italic">Sign In</h3>
                             <button
                                 onClick={() => setIsRegisterModalOpen(false)}
-                                className="text-slate-400 hover:text-identity-navy transition-all p-2 hover:bg-white/60 rounded-xl"
+                                className="text-slate-400 hover:text-identity-navy transition-all p-3 min-h-[44px] min-w-[44px] flex items-center justify-center hover:bg-white/60 rounded-xl border border-transparent hover:border-identity-sky/10 active:scale-90"
+                                title="Close Modal"
                             >
                                 <X size={24} />
                             </button>
                         </div>
 
                         <div className="p-10 space-y-5">
-                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-8 text-center italic">Choose your operational role</p>
+                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.15em] mb-8 text-center italic">Choose your operational role</p>
                             <Link
                                 href="/register/student"
                                 onClick={() => setIsRegisterModalOpen(false)}
@@ -202,7 +217,7 @@ export default function Navbar() {
                                 </div>
                                 <div className="text-left">
                                     <div className="font-black text-identity-navy uppercase tracking-tight text-lg italic">Student</div>
-                                    <div className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1">Register with your student number</div>
+                                    <div className="text-[9px] font-bold text-slate-400 uppercase tracking-[0.15em] mt-1">Register with your student number</div>
                                 </div>
                                 <div className="ml-auto text-slate-200 group-hover:text-identity-sky group-hover:translate-x-2 transition-all">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6" /></svg>
@@ -219,7 +234,7 @@ export default function Navbar() {
                                 </div>
                                 <div className="text-left">
                                     <div className="font-black text-identity-navy uppercase tracking-tight text-lg italic">Professor</div>
-                                    <div className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1">Register with faculty credentials</div>
+                                    <div className="text-[9px] font-bold text-slate-400 uppercase tracking-[0.15em] mt-1">Register as a Professor</div>
                                 </div>
                                 <div className="ml-auto text-slate-200 group-hover:text-identity-navy group-hover:translate-x-2 transition-all">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6" /></svg>

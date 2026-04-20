@@ -1,214 +1,184 @@
-"use client";
+﻿"use client";
 import { useRouter } from 'next/navigation';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Shield, Lock, Users, Server, Database, AlertCircle } from 'lucide-react';
+import Navbar from '@/components/Navbar';
 
 export default function PrivacyPolicy() {
     const router = useRouter();
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 p-8">
-            <div className="max-w-4xl mx-auto">
-                <div className="bg-slate-800/50 backdrop-blur-sm rounded-2xl shadow-2xl p-8 border border-slate-700 relative">
-                    <div className="absolute top-8 left-8">
-                        <button onClick={() => router.back()} className="flex items-center text-slate-400 hover:text-white transition-colors">
-                            <ArrowLeft size={20} className="mr-2" />
-                            Back
-                        </button>
-                    </div>
-                    <div className="mt-12">
-                        <h1 className="text-4xl font-bold mb-2 bg-gradient-to-r from-blue-400 to-blue-600 bg-clip-text text-transparent">
+        <div className="w-full relative selection:bg-identity-sky/10 min-h-screen">
+            <Navbar />
+            
+            <div className="flex-grow container mx-auto px-6 pt-32 pb-20 relative z-10 w-full max-w-4xl">
+                
+                <div className="mb-8">
+                    <button onClick={() => router.back()} className="flex items-center text-slate-400 hover:text-identity-navy font-black uppercase text-[10px] tracking-[0.2em] transition-colors group bg-white/50 px-5 py-3 rounded-2xl border border-slate-200">
+                        <ArrowLeft size={16} className="mr-3 group-hover:-translate-x-1 transition-transform" />
+                        Return to Previous Terminus
+                    </button>
+                </div>
+
+                <div className="identity-glass rounded-[2rem] md:rounded-[3rem] shadow-xl overflow-hidden border border-identity-sky/20 animate-fade-in relative z-20">
+                    
+                    {/* Header Area */}
+                    <div className="bg-identity-navy p-12 lg:p-16 text-center relative overflow-hidden">
+                        <div className="absolute inset-0 bg-blueprint-fine opacity-[0.03] pointer-events-none"></div>
+                        <div className="absolute inset-x-0 bottom-0 h-1 bg-gradient-to-r from-transparent via-identity-sky/60 to-transparent"></div>
+                        
+                        <div className="w-20 h-20 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center shadow-lg mx-auto mb-8 relative z-10 text-identity-sky">
+                            <Shield size={40} />
+                        </div>
+                        
+                        <h1 className="relative z-10 text-3xl md:text-4xl md:text-4xl md:text-5xl font-black text-white tracking-tighter uppercase mb-4 font-outfit">
                             Privacy Policy
                         </h1>
+                        <p className="relative z-10 text-identity-sky text-[10px] md:text-xs font-black tracking-[0.4em] uppercase">
+                            Data Protection & Security Framework
+                        </p>
+                        
+                        <div className="mt-8 inline-flex items-center gap-2 bg-white/5 rounded-full px-5 py-2 border border-white/10">
+                            <AlertCircle size={14} className="text-identity-sky" />
+                            <span className="text-[9px] font-black uppercase tracking-[0.3em] text-white/70">Effective Date: January 4, 2026 | Version 1.0</span>
+                        </div>
                     </div>
-                    <p className="text-slate-400 mb-8">
-                        Effective Date: January 4, 2026 | Version 1.0
-                    </p>
 
-                    {/* Introduction */}
-                    <section className="mb-8">
-                        <h2 className="text-2xl font-semibold mb-4 text-white">Introduction</h2>
-                        <p className="text-slate-300 leading-relaxed">
-                            LabFace is committed to protecting your privacy and complying with the Philippine Data Privacy Act of 2012 (Republic Act No. 10173).
-                            This privacy policy explains how we collect, use, store, and protect your personal and biometric data.
+                    <div className="p-8 md:p-16 bg-white/50 backdrop-blur-sm space-y-12 text-slate-700 leading-relaxed">
+                        
+                        {/* Introduction */}
+                        <section className="space-y-4">
+                            <div className="inline-flex items-center gap-4 text-identity-navy mb-2">
+                                <AlertCircle className="w-5 h-5 text-identity-sky" />
+                                <h2 className="text-xl font-black uppercase tracking-tight">Introduction</h2>
+                            </div>
+                            <p className="font-bold text-sm tracking-wide text-slate-600">
+                                LabFace is committed to protecting your privacy and complying with the Philippine Data Privacy Act of 2012 (Republic Act No. 10173).
+                                This privacy policy explains how we collect, use, store, and protect your personal and biometric data.
+                            </p>
+                        </section>
+
+                        {/* Data We Collect */}
+                        <section className="space-y-6">
+                            <h2 className="text-xl font-black uppercase tracking-tight text-identity-navy border-b border-slate-200 pb-3">1. Data We Collect</h2>
+                            
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div className="bg-white border border-slate-200 rounded-3xl p-8 shadow-sm hover:shadow-md transition-shadow">
+                                    <div className="flex items-center gap-4 mb-6 border-b border-slate-100 pb-4">
+                                        <div className="bg-identity-sky/10 p-2 rounded-2xl text-identity-sky"><Users size={20} /></div>
+                                        <h3 className="text-sm font-black text-identity-navy uppercase tracking-[0.15em]">Personal Information</h3>
+                                    </div>
+                                    <ul className="space-y-3">
+                                        {['Full name', 'Student/Employee ID number', 'Email address', 'Course and year level'].map((item, i) => (
+                                            <li key={i} className="flex items-start gap-4">
+                                                <div className="w-1.5 h-1.5 rounded-full bg-identity-sky mt-2 flex-shrink-0" />
+                                                <span className="text-xs font-bold text-slate-600 tracking-wide">{item}</span>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+
+                                <div className="bg-white border border-slate-200 rounded-3xl p-8 shadow-sm hover:shadow-md transition-shadow">
+                                    <div className="flex items-center gap-4 mb-6 border-b border-slate-100 pb-4">
+                                        <div className="bg-identity-navy/5 p-2 rounded-2xl text-identity-navy"><Database size={20} /></div>
+                                        <h3 className="text-sm font-black text-identity-navy uppercase tracking-[0.15em]">Biometric Data</h3>
+                                    </div>
+                                    <ul className="space-y-3">
+                                        {[
+                                            'Face photographs',
+                                            'Biometric templates (512-dimensional)',
+                                            'Attendance records with timestamps',
+                                            'Liveness detection data',
+                                            'Temporary CCTV processing buffers'
+                                        ].map((item, i) => (
+                                            <li key={i} className="flex items-start gap-4">
+                                                <div className="w-1.5 h-1.5 rounded-full bg-identity-navy mt-2 flex-shrink-0" />
+                                                <span className="text-xs font-bold text-slate-600 tracking-wide">{item}</span>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            </div>
+                        </section>
+
+                        {/* How We Use Your Data */}
+                        <section className="space-y-6 bg-identity-sky/5 p-8 md:p-10 rounded-[2.5rem] border border-identity-sky/10">
+                            <h2 className="text-xl font-black uppercase tracking-tight text-identity-navy mb-4">2. How We Use Your Data</h2>
+                            <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 gap-4">
+                                {[
+                                    { t: 'Identity Verification', d: 'To verify your identity during laboratory access.' },
+                                    { t: 'Attendance Tracking', d: 'To automatically log your presence via CCTV.' },
+                                    { t: 'Fraud Prevention', d: 'To mitigate spoofing using liveness safeguards.' },
+                                    { t: 'Academic Records', d: 'To generate official attendance reports.' },
+                                    { t: 'System Improvement', d: 'To train internal recognition accuracy pipelines.' },
+                                    { t: 'Security Audits', d: 'To log access for compliance reviews.' }
+                                ].map((item, i) => (
+                                    <div key={i} className="bg-white p-5 rounded-2xl border border-identity-sky/10 flex flex-col gap-1 shadow-sm">
+                                        <span className="text-[11px] font-black uppercase tracking-[0.15em] text-identity-sky">{item.t}</span>
+                                        <span className="text-xs font-bold text-slate-600 leading-relaxed">{item.d}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </section>
+
+                        {/* Data Security Measures */}
+                        <section className="space-y-6">
+                            <h2 className="text-xl font-black uppercase tracking-tight text-identity-navy border-b border-slate-200 pb-3">3. Data Security Measures</h2>
+                            <p className="font-bold text-sm tracking-wide text-slate-500 mb-6">
+                                We protect your data using industry-standard enterprise security measures:
+                            </p>
+                            
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                                {[
+                                    { i: <Lock />, t: 'Encryption at Rest', d: 'AES-256-GCM encryption for all biometric data stored in our database.' },
+                                    { i: <Server />, t: 'Encryption in Transit', d: 'TLS 1.3 encryption for all data transmitted over the network.' },
+                                    { i: <Users />, t: 'Access Controls', d: 'Role-based access with multi-layered authentication.' },
+                                    { i: <Shield />, t: 'Audit Logging', d: 'All data access and modifications are strictly logged.' }
+                                ].map((item, i) => (
+                                    <div key={i} className="flex gap-5 items-start p-6 bg-white border border-slate-200 rounded-3xl shadow-sm">
+                                        <div className="bg-identity-sky/10 text-identity-sky p-3 rounded-2xl">
+                                            {item.i}
+                                        </div>
+                                        <div>
+                                            <h3 className="text-sm font-black uppercase tracking-[0.15em] text-identity-navy mb-2">{item.t}</h3>
+                                            <p className="text-xs font-bold text-slate-500 leading-relaxed">{item.d}</p>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </section>
+
+                        {/* Your Rights */}
+                        <section className="space-y-6">
+                            <h2 className="text-xl font-black uppercase tracking-tight text-identity-navy border-b border-slate-200 pb-3">4. Rights Under Data Privacy Act</h2>
+                            <div className="space-y-3">
+                                {[
+                                    { t: 'Right to Access', d: 'Request a copy of all personal data we hold about you.' },
+                                    { t: 'Right to Rectification', d: 'Request correction of inaccurate or incomplete data.' },
+                                    { t: 'Right to Erasure', d: 'Request deletion of your personal and biometric data.' },
+                                    { t: 'Right to Object', d: 'Object to the processing of your data for specific purposes.' },
+                                    { t: 'Right to Data Portability', d: 'Receive your data in a structured, machine-readable format.' },
+                                    { t: 'Right to Withdraw Consent', d: 'Withdraw your consent for biometric data processing at any time.' }
+                                ].map((item, i) => (
+                                    <div key={i} className="flex items-center gap-4 bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
+                                        <div className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-500 flex items-center justify-center font-black flex-shrink-0">âœ“</div>
+                                        <div>
+                                            <span className="block text-[11px] font-black uppercase tracking-[0.15em] text-identity-navy">{item.t}</span>
+                                            <span className="block text-xs font-bold text-slate-500">{item.d}</span>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </section>
+
+                    </div>
+                    
+                    {/* Legal Footer */}
+                    <div className="bg-slate-100 p-8 border-t border-slate-200 text-center">
+                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-2">
+                            This privacy policy complies with the Philippine Data Privacy Act of 2012 (RA 10173).
                         </p>
-                    </section>
-
-                    {/* Data We Collect */}
-                    <section className="mb-8">
-                        <h2 className="text-2xl font-semibold mb-4 text-white">1. Data We Collect</h2>
-                        <div className="bg-slate-900/50 rounded-lg p-6 mb-4">
-                            <h3 className="text-lg font-semibold mb-3 text-blue-400">Personal Information</h3>
-                            <ul className="list-disc list-inside text-slate-300 space-y-2">
-                                <li>Full name</li>
-                                <li>Student/Employee ID number</li>
-                                <li>Email address</li>
-                                <li>Course and year level (for students)</li>
-                            </ul>
-                        </div>
-
-                        <div className="bg-slate-900/50 rounded-lg p-6">
-                            <h3 className="text-lg font-semibold mb-3 text-blue-400">Biometric Data (Sensitive Personal Information)</h3>
-                            <ul className="list-disc list-inside text-slate-300 space-y-2">
-                                <li>Face photographs</li>
-                                <li>Facial biometric templates (512-dimensional embeddings)</li>
-                                <li>Attendance records with timestamps</li>
-                                <li>CCTV footage (processed in real-time, not permanently stored)</li>
-                                <li>Liveness detection data (anti-spoofing verification)</li>
-                            </ul>
-                        </div>
-                    </section>
-
-                    {/* How We Use Your Data */}
-                    <section className="mb-8">
-                        <h2 className="text-2xl font-semibold mb-4 text-white">2. How We Use Your Data</h2>
-                        <p className="text-slate-300 mb-4">We use your data for the following purposes:</p>
-                        <ul className="list-disc list-inside text-slate-300 space-y-2">
-                            <li><strong>Identity Verification:</strong> To verify your identity during attendance tracking</li>
-                            <li><strong>Attendance Tracking:</strong> To automatically mark your attendance using CCTV and facial recognition</li>
-                            <li><strong>Fraud Prevention:</strong> To prevent attendance fraud and spoofing attacks using liveness detection</li>
-                            <li><strong>Academic Records:</strong> To generate attendance reports for academic evaluation</li>
-                            <li><strong>System Improvement:</strong> To improve recognition accuracy and system security</li>
-                            <li><strong>Security Audits:</strong> To maintain system logs for security and compliance purposes</li>
-                        </ul>
-                    </section>
-
-                    {/* Legal Basis */}
-                    <section className="mb-8">
-                        <h2 className="text-2xl font-semibold mb-4 text-white">3. Legal Basis for Processing</h2>
-                        <p className="text-slate-300 mb-4">
-                            We process your biometric data based on your <strong>explicit consent</strong> as required by Section 13 of the Philippine Data Privacy Act.
-                            You have the right to withdraw this consent at any time.
-                        </p>
-                    </section>
-
-                    {/* Data Security */}
-                    <section className="mb-8">
-                        <h2 className="text-2xl font-semibold mb-4 text-white">4. Data Security Measures</h2>
-                        <p className="text-slate-300 mb-4">We protect your data using industry-standard security measures:</p>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div className="bg-slate-900/50 rounded-lg p-4">
-                                <h3 className="font-semibold text-blue-400 mb-2">🔐 Encryption at Rest</h3>
-                                <p className="text-sm text-slate-400">AES-256-GCM encryption for all biometric data stored in our database</p>
-                            </div>
-                            <div className="bg-slate-900/50 rounded-lg p-4">
-                                <h3 className="font-semibold text-blue-400 mb-2">🔒 Encryption in Transit</h3>
-                                <p className="text-sm text-slate-400">TLS 1.3 encryption for all data transmitted over the network</p>
-                            </div>
-                            <div className="bg-slate-900/50 rounded-lg p-4">
-                                <h3 className="font-semibold text-blue-400 mb-2">👥 Access Controls</h3>
-                                <p className="text-sm text-slate-400">Role-based access with authentication and authorization</p>
-                            </div>
-                            <div className="bg-slate-900/50 rounded-lg p-4">
-                                <h3 className="font-semibold text-blue-400 mb-2">📝 Audit Logging</h3>
-                                <p className="text-sm text-slate-400">All data access and modifications are logged for security audits</p>
-                            </div>
-                        </div>
-                    </section>
-
-                    {/* Data Retention */}
-                    <section className="mb-8">
-                        <h2 className="text-2xl font-semibold mb-4 text-white">5. Data Retention</h2>
-                        <p className="text-slate-300 mb-4">
-                            We retain your data only as long as necessary for the purposes stated above:
-                        </p>
-                        <ul className="list-disc list-inside text-slate-300 space-y-2">
-                            <li><strong>Active Users:</strong> Data retained while you are enrolled or employed</li>
-                            <li><strong>Graduated/Separated:</strong> Data deleted within 30 days after graduation or separation</li>
-                            <li><strong>Audit Logs:</strong> Security logs retained for 1 year for compliance purposes</li>
-                            <li><strong>CCTV Footage:</strong> Processed in real-time and not permanently stored</li>
-                        </ul>
-                    </section>
-
-                    {/* Your Rights */}
-                    <section className="mb-8">
-                        <h2 className="text-2xl font-semibold mb-4 text-white">6. Your Rights Under Philippine Data Privacy Act</h2>
-                        <p className="text-slate-300 mb-4">You have the following rights regarding your personal data:</p>
-
-                        <div className="space-y-4">
-                            <div className="bg-slate-900/50 rounded-lg p-4">
-                                <h3 className="font-semibold text-blue-400 mb-2">✓ Right to Access</h3>
-                                <p className="text-sm text-slate-400">Request a copy of all personal data we hold about you</p>
-                            </div>
-
-                            <div className="bg-slate-900/50 rounded-lg p-4">
-                                <h3 className="font-semibold text-blue-400 mb-2">✓ Right to Rectification</h3>
-                                <p className="text-sm text-slate-400">Request correction of inaccurate or incomplete data</p>
-                            </div>
-
-                            <div className="bg-slate-900/50 rounded-lg p-4">
-                                <h3 className="font-semibold text-blue-400 mb-2">✓ Right to Erasure</h3>
-                                <p className="text-sm text-slate-400">Request deletion of your personal and biometric data</p>
-                            </div>
-
-                            <div className="bg-slate-900/50 rounded-lg p-4">
-                                <h3 className="font-semibold text-blue-400 mb-2">✓ Right to Object</h3>
-                                <p className="text-sm text-slate-400">Object to the processing of your data for specific purposes</p>
-                            </div>
-
-                            <div className="bg-slate-900/50 rounded-lg p-4">
-                                <h3 className="font-semibold text-blue-400 mb-2">✓ Right to Data Portability</h3>
-                                <p className="text-sm text-slate-400">Receive your data in a structured, machine-readable format</p>
-                            </div>
-
-                            <div className="bg-slate-900/50 rounded-lg p-4">
-                                <h3 className="font-semibold text-blue-400 mb-2">✓ Right to Withdraw Consent</h3>
-                                <p className="text-sm text-slate-400">Withdraw your consent for biometric data processing at any time</p>
-                            </div>
-                        </div>
-
-                        <p className="text-slate-400 mt-4 text-sm">
-                            To exercise any of these rights, please contact our Data Protection Officer (see contact information below).
-                        </p>
-                    </section>
-
-                    {/* Data Sharing */}
-                    <section className="mb-8">
-                        <h2 className="text-2xl font-semibold mb-4 text-white">7. Data Sharing and Disclosure</h2>
-                        <p className="text-slate-300 mb-4">
-                            We do not sell, rent, or trade your personal data. We may share your data only in the following circumstances:
-                        </p>
-                        <ul className="list-disc list-inside text-slate-300 space-y-2">
-                            <li><strong>Authorized Personnel:</strong> Professors and administrators with legitimate educational interest</li>
-                            <li><strong>Legal Requirements:</strong> When required by law or court order</li>
-                            <li><strong>Emergency Situations:</strong> To protect health, safety, or security</li>
-                        </ul>
-                    </section>
-
-                    {/* Breach Notification */}
-                    <section className="mb-8">
-                        <h2 className="text-2xl font-semibold mb-4 text-white">8. Data Breach Notification</h2>
-                        <p className="text-slate-300">
-                            In the event of a data breach that may affect your personal data, we will:
-                        </p>
-                        <ul className="list-disc list-inside text-slate-300 space-y-2 mt-4">
-                            <li>Notify the National Privacy Commission (NPC) within 72 hours</li>
-                            <li>Notify affected individuals within 24 hours</li>
-                            <li>Provide information about the breach and steps taken to mitigate harm</li>
-                        </ul>
-                    </section>
-
-
-
-                    {/* Changes to Policy */}
-                    <section className="mb-8">
-                        <h2 className="text-2xl font-semibold mb-4 text-white">9. Changes to This Policy</h2>
-                        <p className="text-slate-300">
-                            We may update this privacy policy from time to time. We will notify you of any material changes by:
-                        </p>
-                        <ul className="list-disc list-inside text-slate-300 space-y-2 mt-4">
-                            <li>Posting the updated policy on our website</li>
-                            <li>Sending email notifications to registered users</li>
-                            <li>Requesting renewed consent if required by law</li>
-                        </ul>
-                    </section>
-
-                    {/* Footer */}
-                    <div className="border-t border-slate-700 pt-6 mt-8">
-                        <p className="text-slate-400 text-sm text-center">
-                            Last Updated: January 4, 2026 | Version 1.0
-                        </p>
-                        <p className="text-slate-500 text-xs text-center mt-2">
-                            This privacy policy complies with the Philippine Data Privacy Act of 2012 (RA 10173) and its Implementing Rules and Regulations
+                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-identity-sky">
+                            LabFace Administration â€¢ PUP Lopez Campus
                         </p>
                     </div>
                 </div>

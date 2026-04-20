@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from 'next/link';
 import { Home, ArrowLeft, Search, AlertCircle } from 'lucide-react';
@@ -12,85 +12,56 @@ export default function NotFound() {
     }, []);
 
     return (
-        <main className="min-h-screen bg-slate-950 flex items-center justify-center px-4 overflow-hidden">
-            {/* Animated background elements */}
-            <div className="absolute inset-0 overflow-hidden opacity-10">
-                <div className="absolute -top-24 -left-24 w-96 h-96 rounded-full bg-brand-500 blur-3xl animate-pulse"></div>
-                <div className="absolute top-1/2 right-0 w-64 h-64 rounded-full bg-purple-600 blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
-                <div className="absolute bottom-0 left-1/3 w-80 h-80 rounded-full bg-blue-400 blur-3xl animate-pulse" style={{ animationDelay: '2s' }}></div>
-            </div>
-
-            <div className={`relative z-10 max-w-2xl w-full text-center transition-all duration-700 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
-                {/* 404 Icon */}
-                <div className="mb-8 flex justify-center">
-                    <div className="relative">
-                        <div className="absolute inset-0 bg-brand-500/20 rounded-full blur-2xl animate-pulse"></div>
-                        <div className="relative bg-slate-900/50 backdrop-blur-sm border border-slate-800 rounded-full p-8 shadow-2xl">
-                            <AlertCircle className="w-24 h-24 text-brand-400" strokeWidth={1.5} />
-                        </div>
+        <div className="flex flex-col items-center justify-center min-h-[70vh] px-4 w-full">
+            <div className={`relative z-10 max-w-2xl w-full text-center p-12 transition-all duration-700 identity-glass rounded-[3rem] shadow-xl border border-identity-sky/20 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
+                
+                {/* 404 Icon Container */}
+                <div className="mb-10 flex justify-center">
+                    <div className="w-24 h-24 bg-identity-sky/10 rounded-2xl flex items-center justify-center border border-identity-sky/20 shadow-sm">
+                        <AlertCircle className="w-12 h-12 text-identity-sky" strokeWidth={2} />
                     </div>
                 </div>
 
                 {/* 404 Text */}
-                <div className="mb-6">
-                    <h1 className="text-8xl md:text-9xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-brand-400 via-purple-400 to-brand-500 mb-4 animate-scale-in">
+                <div className="mb-10">
+                    <h1 className="text-6xl md:text-8xl md:text-7xl md:text-9xl font-black text-identity-navy mb-4">
                         404
                     </h1>
-                    <h2 className="text-3xl md:text-4xl font-bold text-white mb-4 animate-fade-in">
-                        Page Not Found
+                    <h2 className="text-2xl md:text-3xl font-black text-identity-navy uppercase tracking-[0.15em] mb-4">
+                        SYSTEM PATH UNREACHABLE
                     </h2>
-                    <p className="text-lg text-slate-400 max-w-md mx-auto animate-fade-in" style={{ animationDelay: '0.1s' }}>
-                        Oops! The page you're looking for seems to have vanished into the digital void. Let's get you back on track.
+                    <p className="text-sm md:text-base font-bold text-identity-navy/70 uppercase tracking-[0.15em] max-w-md mx-auto leading-relaxed">
+                        The requested page could not be located in the current workspace.
                     </p>
                 </div>
 
                 {/* Search suggestion */}
-                <div className="mb-8 p-4 bg-slate-900/50 backdrop-blur-sm border border-slate-800 rounded-xl max-w-md mx-auto animate-fade-in" style={{ animationDelay: '0.2s' }}>
-                    <div className="flex items-center gap-3 text-slate-300">
-                        <Search className="w-5 h-5 text-brand-400 flex-shrink-0" />
-                        <p className="text-sm text-left">
-                            <span className="font-semibold text-white">Tip:</span> Double-check the URL or use the navigation buttons below to find what you need.
-                        </p>
-                    </div>
+                <div className="mb-10 p-6 bg-identity-bg rounded-2xl border border-identity-navy/10 text-center max-w-md mx-auto flex flex-col items-center gap-4">
+                    <Search className="w-6 h-6 text-identity-sky" strokeWidth={2} />
+                    <p className="text-xs font-bold text-identity-navy/70 uppercase tracking-[0.15em] leading-relaxed">
+                        <span className="text-identity-navy font-black">TIP:</span> VERIFY THE URL OR USE THE SYSTEM CONTROLS BELOW TO REALIGN.
+                    </p>
                 </div>
 
                 {/* Action buttons */}
-                <div className="flex flex-col sm:flex-row gap-4 justify-center items-center animate-fade-in" style={{ animationDelay: '0.3s' }}>
-                    <Link
-                        href="/"
-                        className="group px-8 py-4 bg-brand-500 hover:bg-brand-400 text-white rounded-lg font-bold text-lg shadow-lg hover:shadow-brand-500/50 flex items-center gap-2 w-full sm:w-auto justify-center transition-all duration-300 hover:scale-105 active:scale-95"
-                    >
-                        <Home size={20} />
-                        Go Home
-                    </Link>
-
+                <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
                     <button
                         onClick={() => window.history.back()}
-                        className="group px-8 py-4 bg-slate-800/50 hover:bg-slate-700/50 text-white rounded-lg font-bold text-lg border border-slate-700 backdrop-blur-sm flex items-center gap-2 w-full sm:w-auto justify-center transition-all duration-300 hover:scale-105 active:scale-95"
+                        className="flex-1 w-full sm:w-auto px-10 py-5 bg-identity-sky/10 text-identity-sky rounded-2xl font-black uppercase text-[10px] tracking-[0.15em] hover:bg-identity-sky hover:text-white transition-all shadow-md active:scale-95 flex items-center justify-center gap-4"
                     >
-                        <ArrowLeft size={20} />
-                        Go Back
+                        <ArrowLeft size={18} />
+                        GO BACK
                     </button>
-                </div>
-
-                {/* Additional links */}
-                <div className="mt-12 pt-8 border-t border-slate-800 animate-fade-in" style={{ animationDelay: '0.4s' }}>
-                    <p className="text-sm text-slate-500 mb-4">Quick Links</p>
-                    <div className="flex flex-wrap gap-4 justify-center text-sm">
-                        <Link href="/login" className="text-brand-400 hover:text-brand-300 transition-colors">
-                            Login
-                        </Link>
-                        <span className="text-slate-700">•</span>
-                        <Link href="/register/student" className="text-brand-400 hover:text-brand-300 transition-colors">
-                            Student Registration
-                        </Link>
-                        <span className="text-slate-700">•</span>
-                        <Link href="/register/professor" className="text-brand-400 hover:text-brand-300 transition-colors">
-                            Professor Registration
-                        </Link>
-                    </div>
+                    
+                    <Link
+                        href="/"
+                        className="flex-1 w-full sm:w-auto px-10 py-5 bg-identity-navy text-white rounded-2xl font-black uppercase text-[10px] tracking-[0.15em] hover:scale-105 active:scale-95 transition-all shadow-xl flex items-center justify-center gap-4"
+                    >
+                        <Home size={18} />
+                        HOME DASHBOARD
+                    </Link>
                 </div>
             </div>
-        </main>
+        </div>
     );
 }

@@ -1,8 +1,8 @@
-"use client";
-import { useState, useRef, useEffect } from 'react';
+﻿"use client";
+import { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import axios from 'axios';
-import { User, Mail, Lock, ShieldCheck, Camera, Upload, X, CheckCircle, AlertCircle, Image as ImageIcon, ChevronLeft, ChevronRight, ChevronDown, BookOpen, Check, RefreshCw, Edit2, Eye, EyeOff, Loader2, Shield, FileText, ArrowRight } from 'lucide-react';
+import { User, ShieldCheck, Camera, X, CheckCircle, ChevronLeft, BookOpen, Shield, FileText, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { getToken, fetchCurrentUser, API_URL } from '@/utils/auth';
@@ -10,27 +10,9 @@ import ConsentStep, { CONSENT_VERSION } from '@/components/ConsentStep';
 import { useToast } from '@/components/Toast';
 import FaceEnrollmentScanner from '@/components/FaceEnrollmentScanner';
 import UpdateManager from '@/components/UpdateManager';
-
-// NEW: Biometric Identity Node Component for Consistency
-const IdentityNode = ({ className = "", size = 120 }) => (
-    <div className={`identity-node ${className}`} style={{ width: size, height: size }}>
-       <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
-          <g>
-             <path d="M100,30 Q60,30 50,80 T100,170 T150,80 Q140,30 100,30 Z" fill="none" stroke="currentColor" className="text-identity-sky" strokeWidth="2" />
-             <line x1="100" y1="30" x2="100" y2="170" stroke="currentColor" className="text-identity-navy" strokeWidth="1" />
-             <line x1="60" y1="80" x2="140" y2="80" stroke="currentColor" className="text-identity-navy" strokeWidth="1" />
-             <line x1="55" y1="110" x2="145" y2="110" stroke="currentColor" className="text-identity-navy" strokeWidth="1" />
-             <circle cx="75" cy="80" r="3" fill="currentColor" className="text-identity-sky" />
-             <circle cx="125" cy="80" r="3" fill="currentColor" className="text-identity-sky" />
-             <circle cx="100" cy="110" r="3" fill="currentColor" className="text-identity-sky" />
-             <circle cx="100" cy="30" r="2" fill="currentColor" className="text-identity-navy" />
-             <circle cx="100" cy="170" r="2" fill="currentColor" className="text-identity-navy" />
-             <line x1="75" y1="80" x2="100" y2="110" stroke="currentColor" className="text-identity-sky" strokeWidth="1" strokeDasharray="3 2" />
-             <line x1="125" y1="80" x2="100" y2="110" stroke="currentColor" className="text-identity-sky" strokeWidth="1" strokeDasharray="3 2" />
-          </g>
-       </svg>
-    </div>
- );
+import Button from '@/components/ui/Button';
+import InputField from '@/components/ui/InputField';
+import Skeleton from '@/components/ui/Skeleton';
 
 export default function StudentRegisterPage() {
     const { showToast } = useToast();
@@ -54,19 +36,9 @@ export default function StudentRegisterPage() {
     const [captures, setCaptures] = useState<Record<string, string>>({});
     const [corVerifying, setCorVerifying] = useState(false);
     const [corVerified, setCorVerified] = useState(false);
-    const [isCheckingStudentId, setIsCheckingStudentId] = useState(false);
-    const [studentIdError, setStudentIdError] = useState('');
     const [loading, setLoading] = useState(false);
-    const [showPassword, setShowPassword] = useState(false);
-    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [showSuccess, setShowSuccess] = useState(false);
     const [corPreviewUrl, setCorPreviewUrl] = useState<string | null>(null);
-
-    useEffect(() => {
-        return () => {
-            if (corPreviewUrl) URL.revokeObjectURL(corPreviewUrl);
-        };
-    }, [corPreviewUrl]);
 
     useEffect(() => {
         const checkSession = async () => {
@@ -78,7 +50,7 @@ export default function StudentRegisterPage() {
                     if (parsed.captures) setCaptures(parsed.captures);
                     if (parsed.enrollmentCompleted) setStep(5);
                     else if (parsed.step) setStep(parsed.step);
-                    showToast('Welcome back! Progress restored.', 'info');
+                    showToast('Progress Restored', 'Welcome back! We have restored your registration progress.', 'info');
                 } catch (e) {
                     console.error("Failed to restore progress", e);
                 }
@@ -119,7 +91,6 @@ export default function StudentRegisterPage() {
         { id: 2, title: 'Documents', icon: ShieldCheck },
         { id: 3, title: 'Consent', icon: FileText },
         { id: 4, title: 'Biometrics', icon: Camera },
-        { id: 5, title: 'Security', icon: Lock },
     ];
 
     const formatStudentId = (value: string) => {
@@ -137,7 +108,6 @@ export default function StudentRegisterPage() {
         const name = e.target.name;
         if (name === 'studentId') {
             value = formatStudentId(value);
-            setStudentIdError('');
         }
         setFormData(prev => ({ ...prev, [name]: value }));
     };
@@ -168,12 +138,12 @@ export default function StudentRegisterPage() {
 
             if (response.data.valid) {
                 setCorVerified(true);
-                showToast('Academic Status Verified', 'success');
+                showToast('Status Verified', 'Your academic credentials have been validated successfully.', 'success');
             } else {
-                showToast(response.data.reason || 'Verification failed', 'info');
+                showToast('Verification Failed', response.data.reason || 'We could not validate your COR. Please check the details.', 'warning');
             }
         } catch (err: any) {
-            showToast('COR verification service unavailable', 'error');
+            showToast('Service Unavailable', 'Verification service is temporarily offline. Please try again later.', 'error');
         } finally {
             setCorVerifying(false);
         }
@@ -192,183 +162,135 @@ export default function StudentRegisterPage() {
             localStorage.removeItem('student_registration_progress');
             setShowSuccess(true);
         } catch (err: any) {
-            showToast(err.response?.data?.message || 'Registration failed', 'error');
+            showToast('Registration Error', err.response?.data?.message || 'We encountered an error while creating your account.', 'error');
         } finally {
             setLoading(false);
         }
     };
 
     if (isCheckingAuth) return (
-        <div className="min-h-screen bg-[#F8FAFC] flex flex-col items-center justify-center">
-            <Loader2 className="animate-spin text-identity-sky mb-4" size={32} />
-            <p className="text-identity-navy font-black uppercase text-[10px] tracking-widest animate-pulse">Initialising LabFace Identity...</p>
+        <div className="min-h-screen flex items-center justify-center bg-slate-50">
+            <div className="flex flex-col items-center">
+                <div className="w-12 h-12 border-4 border-identity-sky/20 border-t-identity-sky rounded-full animate-spin mb-4" />
+                <p className="text-identity-navy font-black uppercase text-[10px] tracking-[0.3em]">Protocols Initializing...</p>
+            </div>
         </div>
     );
 
     return (
-        <div className="min-h-screen bg-[#F8FAFC] flex flex-col font-sans selection:bg-identity-sky selection:text-white relative overflow-x-hidden">
+        <div className="w-full relative selection:bg-identity-sky/[0.15] page-transition">
             <Navbar />
             
-            {/* System Identity Nodes: Absolute Deep Background Layer */}
-            <div className="fixed inset-0 pointer-events-none z-0 opacity-[0.12] overflow-hidden">
-                <IdentityNode className="top-[15%] left-[5%]" size={160} />
-                <IdentityNode className="bottom-[10%] right-[5%]" size={220} />
-                <IdentityNode className="top-[45%] right-[10%]" size={110} />
-                <IdentityNode className="bottom-[35%] left-[8%]" size={140} />
-            </div>
-
-            <div className="flex-grow container mx-auto px-6 pt-32 pb-20 relative z-10">
+            <div className="flex-grow container mx-auto px-6 pt-32 pb-20 relative z-10 w-full">
                 <div className="max-w-4xl mx-auto">
-                    {/* Stepper HUD: Premium Linear Style */}
+                    {/* Stepper */}
                     <div className="mb-16 flex items-center justify-between relative px-4 md:px-14">
-                        <div className="absolute left-10 md:left-24 right-10 md:right-24 top-6 h-[2.5px] bg-slate-100 -z-10 rounded-full">
-                            <div className="h-full bg-identity-sky transition-all duration-1000 shadow-[0_0_10px_rgba(14,165,233,0.3)]" style={{ width: `${(step - 1) * 25}%` }} />
+                        <div className="absolute left-10 md:left-24 right-10 md:right-24 top-6 h-[2px] bg-slate-100 -z-10 rounded-full overflow-hidden">
+                            <div className="h-full bg-identity-sky transition-all duration-700" style={{ width: `${((step - 1) / (steps.length - 1)) * 100}%` }} />
                         </div>
                         {steps.map(s => (
-                            <div key={s.id} className="flex flex-col items-center gap-3">
-                                <div className={`w-12 h-12 rounded-[1.2rem] flex items-center justify-center border-2 transition-all duration-500 ${step >= s.id ? 'bg-identity-sky border-identity-sky text-white shadow-xl shadow-identity-sky/20' : 'bg-white border-slate-100 text-slate-300'}`}>
-                                    <s.icon size={20} className={step === s.id ? 'animate-pulse' : ''} />
+                            <div key={s.id} className="flex flex-col items-center gap-4">
+                                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center border-2 transition-all duration-500 ${step >= s.id ? 'bg-identity-sky border-identity-sky text-white shadow-lg scale-110' : 'bg-white border-slate-100 text-slate-300'}`}>
+                                    <s.icon size={20} />
                                 </div>
-                                <span className={`text-[9px] font-black uppercase tracking-[0.2em] hidden md:block ${step >= s.id ? 'text-identity-navy' : 'text-slate-300'}`}>{s.title}</span>
+                                <span className={`text-[8px] font-black uppercase tracking-[0.2em] hidden md:block ${step >= s.id ? 'text-identity-navy' : 'text-slate-300'}`}>{s.title}</span>
                             </div>
                         ))}
                     </div>
 
-                    <div className="identity-glass rounded-[3rem] shadow-3xl overflow-hidden border border-slate-100 animate-fade-in">
-                        <div className="bg-identity-navy p-12 text-center relative overflow-hidden">
-                            <div className="absolute inset-x-0 bottom-0 h-1 bg-gradient-to-r from-transparent via-identity-sky/40 to-transparent" />
-                            <h1 className="relative z-10 text-4xl font-black text-white tracking-tighter uppercase mb-2 font-outfit">
-                                Lab<span className="text-identity-sky">Face</span> Registration
+                    <div className="w-full identity-glass rounded-[3rem] shadow-xl overflow-hidden border border-identity-sky/20 animate-fade-in relative z-20">
+                        <div className="bg-identity-sky/5 p-12 text-center border-b border-identity-sky/10">
+                            <h1 className="text-3xl md:text-5xl font-black text-identity-navy tracking-tighter uppercase mb-2 font-outfit">
+                                Lab<span className="text-identity-sky">Face</span> Enrollment
                             </h1>
-                            <p className="relative z-10 text-slate-400 text-[10px] font-black tracking-[0.4em] uppercase">Student Identity Enrollment Protocol</p>
+                            <p className="text-identity-sky text-[10px] font-black tracking-[0.4em] uppercase opacity-70">Student Identity Registry</p>
                         </div>
 
-                        <div className="p-8 md:p-16 bg-white/40">
+                        <div className="p-8 md:p-16">
                             <form onSubmit={handleSubmit} className="space-y-10">
                                 {step === 1 && (
                                     <div className="space-y-10 animate-fade-in">
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-10">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                             <div className="col-span-full">
-                                                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 mb-3 block ml-2">Identity Protocol (Institutional ID)</label>
-                                                <div className="relative group">
-                                                    <div className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-identity-sky transition-colors">
-                                                        <Shield size={20} />
-                                                    </div>
-                                                    <input
-                                                        name="studentId"
-                                                        value={formData.studentId}
-                                                        onChange={handleInputChange}
-                                                        placeholder="YYYY-NNNNN-XX-N"
-                                                        className="w-full bg-white border border-slate-200 rounded-2xl pl-16 pr-8 py-5 text-identity-navy placeholder:text-slate-200 font-black tracking-[0.15em] focus:border-identity-sky focus:ring-4 focus:ring-identity-sky/5 transition-all outline-none shadow-sm"
-                                                        maxLength={15}
-                                                    />
-                                                    {formData.studentId.length >= 10 && (
-                                                        <div className="absolute right-6 top-1/2 -translate-y-1/2 flex items-center justify-center">
-                                                            {formData.studentId.length === 15 ? (
-                                                                <CheckCircle className="text-emerald-500" size={24} />
-                                                            ) : (
-                                                                <Loader2 className="animate-spin text-identity-sky/30" size={24} />
-                                                            )}
-                                                        </div>
-                                                    )}
-                                                </div>
+                                                <InputField
+                                                    label="INSTITUTIONAL ID REFERENCE"
+                                                    name="studentId"
+                                                    value={formData.studentId}
+                                                    onChange={handleInputChange}
+                                                    placeholder="YYYY-NNNNN-XX-N"
+                                                    maxLength={15}
+                                                    isRequired
+                                                    isValid={formData.studentId.length === 15}
+                                                />
                                             </div>
 
-                                            <div className="space-y-3 group">
-                                                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 block ml-2">Given Name</label>
-                                                <input name="firstName" value={formData.firstName} onChange={handleInputChange} placeholder="Firstname" className="w-full bg-white border border-slate-200 rounded-2xl px-8 py-5 text-identity-navy placeholder:text-slate-200 font-bold focus:border-identity-sky outline-none transition-all shadow-sm" />
-                                            </div>
-                                            <div className="space-y-3 group">
-                                                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 block ml-2">Family Name</label>
-                                                <input name="lastName" value={formData.lastName} onChange={handleInputChange} placeholder="Surname" className="w-full bg-white border border-slate-200 rounded-2xl px-8 py-5 text-identity-navy placeholder:text-slate-200 font-bold focus:border-identity-sky outline-none transition-all shadow-sm" />
+                                            <InputField
+                                                label="FIRST NAME"
+                                                name="firstName"
+                                                value={formData.firstName}
+                                                onChange={handleInputChange}
+                                                placeholder="REQUIRED"
+                                                isRequired
+                                                isValid={formData.firstName.length > 1}
+                                            />
+                                            <InputField
+                                                label="LAST NAME"
+                                                name="lastName"
+                                                value={formData.lastName}
+                                                onChange={handleInputChange}
+                                                placeholder="REQUIRED"
+                                                isRequired
+                                                isValid={formData.lastName.length > 1}
+                                            />
+
+                                            <div className="col-span-full">
+                                                <InputField
+                                                    label="INSTITUTIONAL COMMUNICATION ADDRESS"
+                                                    name="email"
+                                                    type="email"
+                                                    value={formData.email}
+                                                    onChange={handleInputChange}
+                                                    placeholder="USER@LINK.PUP.EDU.PH"
+                                                    isRequired
+                                                    isValid={formData.email.endsWith('.edu.ph')}
+                                                />
                                             </div>
 
-                                            <div className="col-span-full space-y-3 group">
-                                                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 block ml-2">University Communication Address</label>
-                                                <div className="relative group">
-                                                    <div className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-identity-sky transition-colors">
-                                                        <Mail size={20} />
-                                                    </div>
-                                                    <input
-                                                        name="email"
-                                                        value={formData.email}
-                                                        onChange={handleInputChange}
-                                                        placeholder="iskolar@iskolarngbayan.pup.edu.ph"
-                                                        className="w-full bg-white border border-slate-200 rounded-2xl pl-16 pr-8 py-5 text-identity-navy placeholder:text-slate-200 font-bold focus:border-identity-sky outline-none transition-all shadow-sm"
-                                                    />
-                                                    {formData.email.length > 5 && (
-                                                        <div className="absolute right-6 top-1/2 -translate-y-1/2">
-                                                            {formData.email.includes('@') && formData.email.includes('.') ? (
-                                                                <CheckCircle className="text-emerald-500" size={24} />
-                                                            ) : (
-                                                                <Loader2 className="animate-spin text-identity-sky/30" size={24} />
-                                                            )}
-                                                        </div>
-                                                    )}
-                                                </div>
+                                            <div className="space-y-2">
+                                                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-identity-navy/60 ml-2 block">ACADEMIC PROGRAM</label>
+                                                <select name="course" value={formData.course} onChange={handleInputChange} className="w-full px-5 py-4 rounded-2xl bg-white/40 border-2 border-identity-sky/10 transition-all outline-none text-identity-navy font-bold text-sm focus:border-identity-sky">
+                                                    <option value="" disabled hidden>--- SELECT PROGRAM ---</option>
+                                                    <option value="BSIT">BS Information Technology</option>
+                                                    <option value="DIT">Diploma in IT</option>
+                                                </select>
                                             </div>
 
-                                            <div className="space-y-3 relative group">
-                                                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 block ml-2">Academic Program</label>
-                                                <div className="relative">
-                                                    <div className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-identity-sky transition-colors">
-                                                        <BookOpen size={20} />
-                                                    </div>
-                                                    <select name="course" value={formData.course} onChange={handleInputChange} className="w-full bg-white border border-slate-200 rounded-2xl pl-16 pr-12 py-5 text-identity-navy font-bold focus:border-identity-sky transition-all outline-none shadow-sm appearance-none cursor-pointer">
-                                                        <option value="" disabled hidden>SELECT PROGRAM</option>
-                                                        <option value="BSIT">BS Information Technology</option>
-                                                        <option value="DIT">Diploma in IT</option>
-                                                    </select>
-                                                    <ChevronDown className="absolute right-6 top-1/2 -translate-y-1/2 text-slate-300 pointer-events-none" size={20} />
-                                                </div>
-                                            </div>
-
-                                            <div className="space-y-3 relative group">
-                                                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 block ml-2">Registry Level</label>
-                                                <div className="relative">
-                                                    <div className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-identity-sky transition-colors">
-                                                        <Check size={20} />
-                                                    </div>
-                                                    <select name="yearLevel" value={formData.yearLevel} onChange={handleInputChange} className="w-full bg-white border border-slate-200 rounded-2xl pl-16 pr-12 py-5 text-identity-navy font-bold focus:border-identity-sky transition-all outline-none shadow-sm appearance-none cursor-pointer">
-                                                        <option value="" disabled hidden>SELECT YEAR</option>
-                                                        <option value="1">1ST YEAR</option>
-                                                        <option value="2">2ND YEAR</option>
-                                                        <option value="3">3RD YEAR</option>
-                                                        <option value="4">4TH YEAR</option>
-                                                    </select>
-                                                    <ChevronDown className="absolute right-6 top-1/2 -translate-y-1/2 text-slate-300 pointer-events-none" size={20} />
-                                                </div>
+                                            <div className="space-y-2">
+                                                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-identity-navy/60 ml-2 block">REGISTRY LEVEL</label>
+                                                <select name="yearLevel" value={formData.yearLevel} onChange={handleInputChange} className="w-full px-5 py-4 rounded-2xl bg-white/40 border-2 border-identity-sky/10 transition-all outline-none text-identity-navy font-bold text-sm focus:border-identity-sky">
+                                                    <option value="" disabled hidden>--- SELECT YEAR ---</option>
+                                                    {[1, 2, 3, 4, 5].map(y => <option key={y} value={y}>{y}{y === 1 ? 'ST' : y === 2 ? 'ND' : y === 3 ? 'RD' : 'TH'} YEAR</option>)}
+                                                </select>
                                             </div>
                                         </div>
 
                                         <div className="flex justify-end pt-12 border-t border-slate-100">
-                                            <button
+                                            <Button
                                                 type="button"
                                                 onClick={() => { setStep(2); window.scrollTo(0, 0); }}
                                                 disabled={!formData.studentId || !formData.firstName || !formData.lastName || !formData.course || !formData.yearLevel}
-                                                className="bg-identity-sky text-white px-10 py-5 rounded-2xl font-black uppercase text-[10px] tracking-[0.25em] shadow-xl hover:bg-identity-navy disabled:opacity-30 transition-all flex items-center gap-3 active:scale-95 group"
+                                                size="xl"
                                             >
-                                                Initialize Verification <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
-                                            </button>
+                                                CONTINUE PROTOCOL <ArrowRight size={18} className="ml-3" />
+                                            </Button>
                                         </div>
                                     </div>
                                 )}
 
                                 {step === 2 && (
                                     <div className="space-y-12 animate-fade-in text-center">
-                                        <div>
-                                            <h3 className="text-3xl font-black text-identity-navy uppercase tracking-tighter mb-3 font-outfit">Registry Validation</h3>
-                                            <p className="text-slate-400 text-[11px] uppercase font-bold tracking-[0.2em]">Upload your Certificate of Registration (COR)</p>
-                                        </div>
-
                                         <div className="max-w-2xl mx-auto">
-                                            <div className={`relative border-2 rounded-[3.5rem] p-12 transition-all duration-500 overflow-hidden ${corVerified
-                                                    ? 'bg-emerald-500/5 border-emerald-500/20 shadow-2xl shadow-emerald-500/10'
-                                                    : corPreviewUrl
-                                                        ? 'bg-slate-50 border-identity-sky/20 shadow-xl'
-                                                        : 'bg-white border-dashed border-slate-200 hover:border-identity-sky/40 hover:bg-identity-sky/[0.02]'
-                                                }`}>
-
+                                            <div className={`relative border-4 rounded-[4rem] p-12 transition-all duration-500 overflow-hidden ${corVerified ? 'bg-emerald-50 border-emerald-200' : 'bg-white border-dashed border-slate-100 hover:border-identity-sky/20'}`}>
                                                 {!corVerified && (
                                                     <input
                                                         type="file"
@@ -387,59 +309,59 @@ export default function StudentRegisterPage() {
 
                                                 <div className="space-y-8 flex flex-col items-center justify-center relative">
                                                     {!corPreviewUrl ? (
-                                                        <div className="w-24 h-24 rounded-[2.5rem] bg-slate-100 flex items-center justify-center text-slate-300">
-                                                            <Upload size={40} />
+                                                        <div className="w-24 h-24 bg-identity-sky/5 rounded-3xl flex items-center justify-center text-identity-sky border border-identity-sky/10">
+                                                            <FileText size={32} />
                                                         </div>
                                                     ) : (
-                                                        <div className="relative w-full h-72 rounded-3xl overflow-hidden border border-slate-200 bg-white">
+                                                        <div className="relative w-full h-80 rounded-[2.5rem] overflow-hidden border border-slate-100">
                                                             {formData.certificateOfRegistration instanceof File && formData.certificateOfRegistration.type.startsWith('image/') ? (
                                                                 <img src={corPreviewUrl} alt="COR Preview" className="w-full h-full object-contain" />
                                                             ) : (
-                                                                <iframe src={`${corPreviewUrl}#toolbar=0&navpanes=0&scrollbar=0`} className="w-full h-full border-none" />
+                                                                <div className="w-full h-full bg-slate-50 flex items-center justify-center">
+                                                                    <BookOpen size={48} className="text-slate-200" />
+                                                                </div>
                                                             )}
                                                             
                                                             {corVerifying && (
-                                                                <div className="absolute inset-0 bg-white/80 backdrop-blur-md flex flex-col items-center justify-center z-20">
-                                                                    <Loader2 className="animate-spin text-identity-sky mb-4" size={48} />
-                                                                    <span className="text-[10px] font-black uppercase tracking-[0.3em] text-identity-navy">Neural Syncing...</span>
+                                                                <div className="absolute inset-0 bg-white/90 backdrop-blur-sm flex flex-col items-center justify-center z-20">
+                                                                    <div className="w-10 h-10 border-4 border-identity-sky/20 border-t-identity-sky rounded-full animate-spin mb-4" />
+                                                                    <span className="text-[10px] font-black uppercase tracking-[0.3em]">ANALYZING...</span>
                                                                 </div>
                                                             )}
                                                             {corVerified && (
-                                                                <div className="absolute inset-0 bg-emerald-500/90 backdrop-blur-sm flex flex-col items-center justify-center text-white z-20">
-                                                                    <CheckCircle size={64} className="mb-4" />
-                                                                    <span className="text-[14px] font-black uppercase tracking-[0.3em]">VALIDATED</span>
+                                                                <div className="absolute inset-0 bg-emerald-500/95 flex flex-col items-center justify-center text-white z-20">
+                                                                    <CheckCircle size={56} className="mb-4" />
+                                                                    <span className="text-sm font-black uppercase tracking-[0.4em]">VALIDATED</span>
                                                                 </div>
                                                             )}
                                                         </div>
                                                     )}
 
-                                                    <div className="space-y-2 pointer-events-none">
-                                                        <div className={`text-[11px] font-black uppercase tracking-[0.2em] ${corVerified ? 'opacity-0' : 'text-identity-navy'}`}>
-                                                            {corPreviewUrl ? (formData.certificateOfRegistration as File).name : 'Select Official Enrollment Proxy'}
+                                                    <div className="space-y-2">
+                                                        <div className="text-[10px] font-black uppercase tracking-[0.3em] text-identity-navy">
+                                                            {corPreviewUrl ? (formData.certificateOfRegistration as File).name : 'UPLOAD ENROLLMENT CREDENTIAL'}
                                                         </div>
-                                                        {!corVerified && !corPreviewUrl && (
-                                                            <div className="text-[9px] font-bold uppercase tracking-[0.2em] text-slate-400">PDF, JPG, or PNG Format Required</div>
-                                                        )}
+                                                        <div className="text-[8px] font-black uppercase tracking-[0.4em] text-slate-300">PDF, JPG, OR PNG (MAX 5MB)</div>
                                                     </div>
                                                 </div>
                                             </div>
                                         </div>
 
-                                        <div className="flex justify-between items-center pt-10 border-t border-slate-100 px-2">
-                                            <button type="button" onClick={() => setStep(1)} className="text-slate-400 font-black uppercase text-[10px] tracking-[0.2em] hover:text-identity-navy transition-all flex items-center gap-2">
-                                                <ChevronLeft size={16} /> Return Back
+                                        <div className="flex justify-between items-center pt-10 border-t border-slate-100">
+                                            <button type="button" onClick={() => setStep(1)} className="text-slate-300 font-black uppercase text-[10px] tracking-[0.2em] hover:text-identity-navy transition-all flex items-center min-h-[44px]">
+                                                <ChevronLeft size={16} className="mr-2" /> GO BACK
                                             </button>
 
-                                            {formData.certificateOfRegistration && !corVerified && !corVerifying && (
-                                                <button type="button" onClick={verifyCOR} className="bg-identity-navy text-white px-10 py-5 rounded-2xl font-black uppercase text-[10px] tracking-[0.25em] shadow-xl hover:bg-black transition-all flex items-center gap-3">
-                                                    <ShieldCheck size={18} className="text-identity-sky" /> Execute Profile Scan
-                                                </button>
+                                            {formData.certificateOfRegistration && !corVerified && (
+                                                <Button type="button" onClick={verifyCOR} isLoading={corVerifying} size="lg">
+                                                    EXECUTE VALIDATION
+                                                </Button>
                                             )}
 
                                             {corVerified && (
-                                                <button type="button" onClick={() => { setStep(3); window.scrollTo(0,0); }} className="bg-identity-sky text-white px-10 py-8 rounded-2xl font-black uppercase text-[10px] tracking-[0.25em] shadow-2xl hover:bg-identity-navy transition-all flex items-center gap-3 animate-fade-in group">
-                                                    Proceed to Legal Consent <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
-                                                </button>
+                                                <Button type="button" onClick={() => { setStep(3); window.scrollTo(0,0); }} size="lg">
+                                                    CONTINUE PROTOCOL <ArrowRight size={18} className="ml-3" />
+                                                </Button>
                                             )}
                                         </div>
                                     </div>
@@ -460,13 +382,13 @@ export default function StudentRegisterPage() {
                                             onComplete={(c: Record<string, string>) => {
                                                 setCaptures(c);
                                                 setStep(5);
-                                                showToast('Neural Pattern Secured', 'success');
+                                                showToast('Profile Secured', 'Your biometric profile has been successfully cached.', 'success');
                                                 window.scrollTo(0, 0);
                                             }}
                                         />
-                                        <div className="flex justify-between items-center pt-8 border-t border-slate-100 px-2">
-                                            <button type="button" onClick={() => { setStep(3); window.scrollTo(0,0); }} className="text-slate-400 font-black uppercase text-[10px] tracking-[0.2em] hover:text-identity-navy transition-all flex items-center gap-2">
-                                                <ChevronLeft size={16} /> Return Back
+                                        <div className="flex justify-start pt-8 border-t border-slate-100">
+                                            <button type="button" onClick={() => { setStep(3); window.scrollTo(0,0); }} className="text-slate-300 font-black uppercase text-[10px] tracking-[0.2em] hover:text-identity-navy transition-all flex items-center min-h-[44px]">
+                                                <ChevronLeft size={16} className="mr-2" /> GO BACK
                                             </button>
                                         </div>
                                     </div>
@@ -475,47 +397,47 @@ export default function StudentRegisterPage() {
                                 {step === 5 && (
                                     <div className="space-y-12 animate-fade-in">
                                         <div className="text-center">
-                                            <h3 className="text-3xl font-black text-identity-navy uppercase tracking-tighter mb-2 font-outfit">Identity Encryption</h3>
-                                            <p className="text-slate-400 text-[10px] uppercase font-bold tracking-[0.3em]">Establish your secure access key</p>
+                                            <h3 className="text-3xl font-black text-identity-navy uppercase tracking-tighter mb-2 font-outfit">Access Encryption</h3>
+                                            <p className="text-slate-500 text-[10px] uppercase font-black tracking-[0.3em]">Establish your secure passkey</p>
                                         </div>
 
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                                            <div className="space-y-4 group">
-                                                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 block ml-2">Secure Passkey</label>
-                                                <div className="relative">
-                                                    <div className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-identity-sky transition-colors">
-                                                        <Lock size={18} />
-                                                    </div>
-                                                    <input name="password" type={showPassword ? "text" : "password"} value={formData.password} onChange={handleInputChange} placeholder="••••••••" className="w-full bg-white border border-slate-200 rounded-2xl pl-16 pr-16 py-5 text-identity-navy placeholder:text-slate-200 font-bold focus:border-identity-sky outline-none transition-all shadow-sm" />
-                                                    <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-6 top-1/2 -translate-y-1/2 text-slate-300 hover:text-identity-sky transition-colors">
-                                                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                                                    </button>
-                                                </div>
-                                            </div>
-                                            <div className="space-y-4 group">
-                                                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 block ml-2">Confirm Identity Key</label>
-                                                <div className="relative">
-                                                    <div className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-identity-sky transition-colors">
-                                                        <CheckCircle size={18} />
-                                                    </div>
-                                                    <input name="confirmPassword" type={showConfirmPassword ? "text" : "password"} value={formData.confirmPassword} onChange={handleInputChange} placeholder="••••••••" className="w-full bg-white border border-slate-200 rounded-2xl pl-16 pr-16 py-5 text-identity-navy placeholder:text-slate-200 font-bold focus:border-identity-sky outline-none transition-all shadow-sm" />
-                                                </div>
-                                            </div>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                            <InputField
+                                                label="SECURE ACCESS KEY"
+                                                name="password"
+                                                type="password"
+                                                value={formData.password}
+                                                onChange={handleInputChange}
+                                                placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
+                                                isRequired
+                                                showStrength
+                                                isValid={formData.password.length >= 8}
+                                            />
+                                            <InputField
+                                                label="CONFIRM IDENTITY KEY"
+                                                name="confirmPassword"
+                                                type="password"
+                                                value={formData.confirmPassword}
+                                                onChange={handleInputChange}
+                                                placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
+                                                isRequired
+                                                isValid={formData.confirmPassword.length >= 8 && formData.confirmPassword === formData.password}
+                                            />
                                         </div>
 
-                                        <div className="flex justify-between items-center pt-10 border-t border-slate-100 px-2 mt-6">
-                                            <button type="button" onClick={() => { setStep(4); window.scrollTo(0,0); }} className="text-slate-400 font-black uppercase text-[10px] tracking-[0.2em] hover:text-identity-navy transition-all flex items-center gap-2">
-                                                <ChevronLeft size={16} /> Return Back
+                                        <div className="flex justify-between items-center pt-10 border-t border-slate-100">
+                                            <button type="button" onClick={() => { setStep(4); window.scrollTo(0,0); }} className="text-slate-300 font-black uppercase text-[10px] tracking-[0.2em] hover:text-identity-navy transition-all flex items-center min-h-[44px]">
+                                                <ChevronLeft size={16} className="mr-2" /> GO BACK
                                             </button>
 
-                                            <button
+                                            <Button
                                                 type="submit"
-                                                disabled={loading || !formData.password || formData.password !== formData.confirmPassword}
-                                                className="bg-identity-sky text-white px-12 py-5 rounded-2xl font-black uppercase text-[10px] tracking-[0.25em] shadow-2xl hover:bg-identity-navy disabled:opacity-20 transition-all flex items-center gap-3 group active:scale-95"
+                                                isLoading={loading}
+                                                disabled={!formData.password || formData.password !== formData.confirmPassword}
+                                                size="xl"
                                             >
-                                                {loading ? <Loader2 size={16} className="animate-spin" /> : <Shield size={18} />}
-                                                Finalize Registration
-                                            </button>
+                                                COMMIT REGISTRATION <Shield size={18} className="ml-3" />
+                                            </Button>
                                         </div>
                                     </div>
                                 )}
@@ -523,25 +445,25 @@ export default function StudentRegisterPage() {
                         </div>
                     </div>
 
-                    <div className="mt-16 text-center">
-                        <Link href="/login" className="text-slate-400 text-[10px] font-black uppercase tracking-[0.3em] hover:text-identity-sky transition-all border-b border-slate-200 pb-2">
-                            Already Enrolled? Sign In to Terminal
+                    <div className="mt-16 text-center pb-8">
+                        <Link href="/login" className="text-slate-400 text-[9px] font-black uppercase tracking-[0.3em] hover:text-identity-sky transition-all flex items-center justify-center min-h-[44px]">
+                            ALREADY ENROLLED? SIGN IN TO TERMINAL
                         </Link>
                     </div>
                 </div>
             </div>
 
             {showSuccess && (
-                <div className="fixed inset-0 bg-identity-navy/95 backdrop-blur-3xl z-[100] flex items-center justify-center p-8 text-center animate-fade-in">
-                    <div className="max-w-md w-full">
-                        <div className="w-28 h-28 bg-white/10 text-identity-sky rounded-[2.5rem] flex items-center justify-center mx-auto mb-10 border border-white/10 shadow-3xl">
-                            <CheckCircle size={56} />
+                <div className="fixed inset-0 bg-white/60 backdrop-blur-3xl z-[100] flex items-center justify-center p-8 animate-fade-in">
+                    <div className="max-w-md w-full bg-white p-12 rounded-[4rem] shadow-[0_40px_100px_rgba(0,0,0,0.1)] border border-slate-100 text-center">
+                        <div className="w-24 h-24 bg-emerald-50 text-emerald-500 rounded-[2.5rem] flex items-center justify-center mx-auto mb-10 border border-emerald-100 shadow-xl">
+                            <CheckCircle size={48} />
                         </div>
-                        <h2 className="text-5xl font-black text-white uppercase tracking-tighter mb-4 font-outfit">Integrity Secured</h2>
-                        <p className="text-slate-400 mb-12 font-medium uppercase text-[10px] tracking-widest leading-relaxed">Your biometric profile has been successfully <br /> committed to the LabFace Identity Core.</p>
-                        <button onClick={() => window.location.href = '/login'} className="w-full bg-identity-sky text-white py-6 rounded-2xl font-black uppercase text-[10px] tracking-[0.3em] shadow-2xl hover:bg-white hover:text-identity-navy transition-all">
-                            Enter Operations Terminal
-                        </button>
+                        <h2 className="text-4xl font-black text-identity-navy uppercase tracking-tighter mb-4 font-outfit">Integrity Secured</h2>
+                        <p className="text-slate-600 mb-12 font-black uppercase text-[10px] tracking-[0.3em] leading-relaxed">Your identity protocol has been successfully <br /> committed to the LabFace Core.</p>
+                        <Button onClick={() => window.location.href = '/login'} size="xl" className="w-full">
+                            ENTER OPERATIONS TERMINAL
+                        </Button>
                     </div>
                 </div>
             )}

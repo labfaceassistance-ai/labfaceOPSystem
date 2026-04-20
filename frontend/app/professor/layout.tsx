@@ -13,5 +13,10 @@ export default function ProfessorLayout({
 }: {
     children: React.ReactNode;
 }) {
-    return children;
+    return (
+        <div className="relative min-h-screen bg-identity-navy selection:bg-identity-sky/20 selection:text-white">
+            {children}
+        </div>
+    );
 }
+

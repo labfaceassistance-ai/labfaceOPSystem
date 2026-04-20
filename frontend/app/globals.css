@@ -7,14 +7,25 @@
 @layer base {
   :root {
     /* Identity Blue Palette - Clean Foundation */
-    --background: #F8FAFC;
+    /* Base Configuration */
+    --bg-base: #F8FAFC;
+    --background: var(--bg-base);
     --foreground: #041C3C;
-    --primary: #041C3C;
-    --secondary: #5CB4E4;
+    
+    /* LabFace Identity Palette */
     --identity-navy: #041C3C;
     --identity-sky: #5CB4E4;
-    --identity-sky-glow: rgba(92, 180, 228, 0.4);
-    --identity-bg: #F8FAFC;
+    --identity-rose: #F43F5E;
+    --sky-glow: rgba(92, 180, 228, 0.4);
+    --rose-glow: rgba(244, 63, 94, 0.4);
+    
+    /* Glassmorphism Defaults */
+    --glass-light-bg: rgba(255, 255, 255, 0.70);
+    --glass-dark-bg: rgba(4, 28, 60, 0.85);
+    
+    /* Legacy variables mapping for compatibility */
+    --primary: var(--identity-navy);
+    --secondary: var(--identity-sky);
     --surface: #FFFFFF;
     --border: #E2E8F0;
     --success: #10B981;
@@ -40,6 +51,23 @@ body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+/* Page & Tab Transitions */
+.tab-content-fade {
+  animation: fadeIn 200ms ease-in-out;
+}
+
+.page-transition {
+  animation: fadeIn 200ms ease-out;
+}
+
+/* Responsive Table Wrapper */
+.table-responsive-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 /* Custom Scrollbar - Identity Style */
@@ -73,6 +101,7 @@ h3,
 h4,
 .font-black {
   font-family: 'Outfit', sans-serif;
+  font-weight: 900;
   letter-spacing: -0.04em;
   line-height: 0.95;
 }

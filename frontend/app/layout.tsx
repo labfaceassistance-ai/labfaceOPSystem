@@ -10,6 +10,7 @@ export const metadata: Metadata = {
   description: 'AI-Powered Facial Recognition Attendance System',
 };
 
+import IdentityBackground from '../components/IdentityBackground';
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -20,9 +21,14 @@ export default function RootLayout({
       <head>
         <link rel="icon" href="/logo.png" />
       </head>
-      <body>
+      <body className="text-foreground">
         <Providers>
-          {children}
+          <IdentityBackground />
+          <div className="flex flex-col min-h-screen relative z-10 text-identity-navy page-transition">
+             <main className="flex-grow">
+               {children}
+             </main>
+          </div>
         </Providers>
       </body>
     </html>

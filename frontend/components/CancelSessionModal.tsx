@@ -90,12 +90,12 @@ export default function CancelSessionModal({
                     <div className="bg-black/40 rounded-2xl p-6 border border-white/5 shadow-inner">
                         <div className="flex items-center gap-2 mb-4">
                             <Calendar className="text-brand-gold/60" size={16} />
-                            <span className="text-[10px] font-black uppercase tracking-widest text-secondary/40">Reference Session</span>
+                            <span className="text-[10px] font-black uppercase tracking-[0.15em] text-secondary/40">Selected Class</span>
                         </div>
                         <div className="space-y-2">
                             <p className="text-lg font-black text-white tracking-tight">{className}</p>
                             <div className="flex flex-col gap-1">
-                                <p className="text-[10px] font-bold text-secondary/60 uppercase tracking-widest leading-none">
+                                <p className="text-[10px] font-bold text-secondary/60 uppercase tracking-[0.15em] leading-none">
                                     {new Date(sessionDate).toLocaleDateString('en-US', {
                                         weekday: 'long',
                                         month: 'long',
@@ -103,7 +103,7 @@ export default function CancelSessionModal({
                                         year: 'numeric'
                                     })}
                                 </p>
-                                <p className="text-[10px] font-black text-brand-gold uppercase tracking-widest">{sessionTime}</p>
+                                <p className="text-[10px] font-black text-brand-gold uppercase tracking-[0.15em]">{sessionTime}</p>
                             </div>
                         </div>
                     </div>
@@ -112,15 +112,15 @@ export default function CancelSessionModal({
                     <div className="bg-brand-gold/10 border border-brand-gold/20 rounded-xl p-5 shadow-inner">
                         <div className="flex gap-3">
                             <AlertTriangle size={18} className="text-brand-gold flex-shrink-0 mt-0.5" />
-                            <p className="text-[10px] font-black uppercase tracking-widest text-brand-gold leading-relaxed">
-                                Security Protocol Alert: All enrolled students will be formally notified of this cancellation.
+                            <p className="text-[10px] font-black uppercase tracking-[0.15em] text-brand-gold leading-relaxed">
+                                Alert: All enrolled students will be formally notified of this cancellation.
                             </p>
                         </div>
                     </div>
 
                     {/* Reason Input */}
                     <div>
-                        <label className="block text-[10px] font-black text-secondary/40 uppercase tracking-widest mb-3">
+                        <label className="block text-[10px] font-black text-secondary/40 uppercase tracking-[0.15em] mb-3">
                             Reason for Cancellation <span className="text-brand-gold">*</span>
                         </label>
                         <textarea
@@ -136,7 +136,7 @@ export default function CancelSessionModal({
                     {/* Error Message */}
                     {error && (
                         <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4">
-                            <p className="text-red-400 text-[10px] font-black uppercase tracking-widest">{error}</p>
+                            <p className="text-red-400 text-[10px] font-black uppercase tracking-[0.15em]">{error}</p>
                         </div>
                     )}
                 </div>
@@ -146,14 +146,14 @@ export default function CancelSessionModal({
                     <button
                         onClick={handleClose}
                         disabled={loading}
-                        className="flex-1 px-6 py-4 bg-black/40 hover:bg-white/5 text-secondary/60 hover:text-white rounded-xl font-black uppercase tracking-widest text-[10px] border border-white/5 transition-all shadow-inner disabled:opacity-50"
+                        className="flex-1 px-6 py-4 bg-black/40 hover:bg-white/5 text-secondary/60 hover:text-white rounded-xl font-black uppercase tracking-[0.15em] text-[10px] border border-white/5 transition-all shadow-inner disabled:opacity-50"
                     >
-                        Retain Session
+                        Keep Class
                     </button>
                     <button
                         onClick={handleCancel}
                         disabled={loading || !reason.trim()}
-                        className="flex-1 px-6 py-4 bg-red-500 hover:bg-red-600 text-white rounded-xl font-black uppercase tracking-widest text-[10px] transition-all shadow-lg shadow-red-500/10 disabled:opacity-30 disabled:cursor-not-allowed"
+                        className="flex-1 px-6 py-4 bg-red-500 hover:bg-red-600 text-white rounded-xl font-black uppercase tracking-[0.15em] text-[10px] transition-all shadow-lg shadow-red-500/10 disabled:opacity-30 disabled:cursor-not-allowed"
                     >
                         {loading ? 'Processing...' : 'Confirm Cancellation'}
                     </button>

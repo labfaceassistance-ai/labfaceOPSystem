@@ -1,7 +1,9 @@
-"use client";
+﻿"use client";
 import { useEffect, useState } from 'react';
-import { BookOpen, Archive, Calendar, User, ChevronRight } from 'lucide-react';
+import { BookOpen, Archive, User, ChevronRight } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import Skeleton from '@/components/ui/Skeleton';
+import EmptyState from '@/components/ui/EmptyState';
 
 interface ClassesTabProps {
     user: {
@@ -17,7 +19,7 @@ interface ClassItem {
     subject_code: string;
     subject_name: string;
     section: string;
-    professor_id: string; // This is actually the name from the SQL concat
+    professor_id: string;
     is_archived: number;
     schedule_json: string;
 }
@@ -33,8 +35,6 @@ export default function ClassesTab({ user }: ClassesTabProps) {
             try {
                 const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
                 const axios = (await import('axios')).default;
-
-                // Fetch ALL classes (including archived)
                 const response = await axios.get(`${API_URL}/api/student/classes/${user.id}?include_archived=true`);
                 setClasses(response.data);
             } catch (error) {
@@ -43,15 +43,17 @@ export default function ClassesTab({ user }: ClassesTabProps) {
                 setLoading(false);
             }
         };
-
         fetchClasses();
     }, [user.id]);
 
     if (loading) {
         return (
-            <div className="flex flex-col items-center justify-center py-24">
-                <div className="w-12 h-12 border-4 border-identity-sky/10 border-t-identity-sky rounded-full animate-spin mb-4"></div>
-                <p className="font-black text-[10px] text-slate-400 uppercase tracking-[0.4em]">Querying Node Records...</p>
+            <div className="space-y-12 animate-fade-in">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {[...Array(6)].map((_, i) => (
+                        <Skeleton key={i} variant="card" height="250px" />
+                    ))}
+                </div>
             </div>
         );
     }
@@ -64,98 +66,102 @@ export default function ClassesTab({ user }: ClassesTabProps) {
             <div
                 onClick={() => router.push(`/student/classes/${cls.id}`)}
                 className={`
-                    group relative overflow-hidden rounded-2xl border p-8 transition-all cursor-pointer shadow-sm hover:shadow-2xl
+                    identity-glass group relative overflow-hidden rounded-[2rem] md:rounded-[3rem] p-6 sm:p-8 md:p-10 transition-all cursor-pointer shadow-xl hover:shadow-2xl active:scale-[0.98]
                     ${isArchived
-                        ? 'bg-white/20 border-identity-sky/5 opacity-60 hover:opacity-100 identity-glass grayscale hover:grayscale-0'
-                        : 'bg-white border-identity-sky/10 hover:border-identity-sky/40 identity-glass'
+                        ? 'opacity-60 saturate-50 hover:opacity-100 hover:saturate-100 border-slate-200/50'
+                        : 'border-identity-sky/10 hover:border-identity-sky/30'
                     }
                 `}
             >
-                <div className="flex justify-between items-start mb-6">
+                <div className="flex justify-between items-start mb-10">
                     <div className={`
-                        w-14 h-14 rounded-xl flex items-center justify-center font-black text-xl shadow-inner transition-colors duration-500 border border-identity-sky/5
+                        w-14 h-14 rounded-2xl flex items-center justify-center font-black text-xl shadow-xl transition-all duration-500 border italic font-outfit
                         ${isArchived
-                            ? 'bg-white/40 text-slate-400'
-                            : 'bg-identity-sky/10 text-identity-navy group-hover:bg-identity-navy group-hover:text-white'
+                            ? 'bg-slate-200 border-slate-300 text-slate-500'
+                            : 'bg-identity-sky text-white border-identity-sky/10 group-hover:scale-110 shadow-identity-sky/20'
                         }
                     `}>
                         {cls.subject_code.substring(0, 2).toUpperCase()}
                     </div>
-                    <div className="text-right">
-                        <h3 className={`font-black uppercase tracking-tighter text-lg italic ${isArchived ? 'text-slate-400' : 'text-identity-navy'}`}>
+                    <div className="text-right font-outfit">
+                        <h3 className={`font-black uppercase tracking-tight text-lg italic ${isArchived ? 'text-slate-400' : 'text-identity-navy'}`}>
                             {cls.subject_code}
                         </h3>
-                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">{cls.section}</p>
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mt-1">{cls.section}</p>
                     </div>
                 </div>
 
-                {isArchived && (
-                    <span className="inline-block px-3 py-1 rounded-full text-[8px] font-black uppercase bg-white/40 text-slate-500 mb-4 tracking-widest border border-identity-sky/5 shadow-inner">
-                        Node Archived
-                    </span>
-                )}
-
-                <h4 className={`text-sm font-black uppercase tracking-tight mb-8 line-clamp-2 leading-relaxed italic ${isArchived ? 'text-slate-400' : 'text-slate-700'}`}>
+                <h4 className={`text-base font-black uppercase tracking-tight mb-12 line-clamp-2 leading-tight italic font-outfit ${isArchived ? 'text-slate-400' : 'text-slate-700'}`}>
                     {cls.subject_name}
                 </h4>
 
-                <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest text-slate-500 mt-auto pt-6 border-t border-identity-sky/5">
-                    <div className="flex items-center gap-2">
-                        <User size={14} className="opacity-40" />
-                        <span className="truncate max-w-[120px]">{cls.professor_id || 'Professor Assigned'}</span>
+                <div className="flex items-center justify-between text-[9px] font-black uppercase tracking-[0.2em] text-slate-400 mt-auto pt-6 border-t border-identity-sky/5 font-outfit">
+                    <div className="flex items-center gap-4">
+                        <div className="p-2 bg-slate-100 rounded-lg">
+                            <User size={14} className="opacity-60" />
+                        </div>
+                        <span className="truncate max-w-[120px]">{cls.professor_id || 'Professor Pending'}</span>
                     </div>
-                    <ChevronRight size={18} className={`transition-transform group-hover:translate-x-2 ${isArchived ? 'text-slate-300' : 'text-identity-sky'}`} />
+                    <div className={`p-2 rounded-2xl transition-all ${isArchived ? 'bg-slate-100 text-slate-300' : 'bg-identity-sky/10 text-identity-sky group-hover:px-4'}`}>
+                        <ChevronRight size={18} className="transition-transform group-hover:translate-x-1" />
+                    </div>
                 </div>
             </div>
         );
     };
 
     return (
-        <div className="space-y-12 animate-fade-in">
+        <div className="space-y-12 animate-fade-in pb-20 font-outfit">
             {/* Active Classes Section */}
             <div>
-                <div className="flex items-center gap-4 mb-8 group">
-                    <div className="p-3 bg-identity-sky/10 text-identity-navy rounded-xl border border-identity-sky/10 shadow-lg shadow-identity-sky/5 group-hover:scale-110 transition-transform">
-                        <BookOpen size={24} />
+                <div className="flex items-center gap-6 mb-12">
+                    <div className="p-3 bg-identity-sky/10 text-identity-navy rounded-2xl border border-identity-sky/10">
+                        <BookOpen size={28} />
                     </div>
                     <div>
-                        <h2 className="text-2xl font-black text-identity-navy uppercase tracking-tighter font-outfit italic">Active Node Sessions</h2>
-                        <p className="text-[10px] font-black text-identity-sky uppercase tracking-[0.3em] mt-1">Operational Environment: Lab 1</p>
+                        <h2 className="text-3xl font-black text-identity-navy uppercase tracking-tighter italic">Active Nodes</h2>
+                        <p className="text-[10px] font-black text-identity-sky uppercase tracking-[0.4em] mt-2">Registry Environment: Academic Ops</p>
                     </div>
-                    <span className="ml-auto bg-white/40 text-slate-500 text-[10px] font-black px-4 py-2 rounded-xl border border-identity-sky/5 shadow-inner">{activeClasses.length} Total</span>
+                    <div className="ml-auto bg-white/40 text-identity-sky text-[10px] font-black px-6 py-3 rounded-full border border-identity-sky/10 shadow-sm backdrop-blur-sm">
+                        {activeClasses.length} Active Modules
+                    </div>
                 </div>
 
                 {activeClasses.length > 0 ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                         {activeClasses.map(cls => (
                             <ClassCard key={cls.id} cls={cls} />
                         ))}
                     </div>
                 ) : (
-                    <div className="identity-glass rounded-[2rem] border-2 border-identity-sky/10 border-dashed p-16 text-center">
-                        <div className="w-16 h-16 bg-white/40 border border-identity-sky/5 rounded-2xl flex items-center justify-center text-slate-200 mx-auto mb-6 shadow-inner">
-                            <BookOpen size={32} />
-                        </div>
-                        <p className="font-black text-[10px] text-slate-300 uppercase tracking-[0.4em]">No active sessions found.</p>
+                    <div className="identity-glass p-12 rounded-[2rem] sm:rounded-[3rem] border border-identity-sky/10 shadow-xl">
+                        <EmptyState
+                            icon={BookOpen}
+                            title="No Active Modules"
+                            description="Your academic registry is currently clear. Active class modules will manifest here upon synchronization."
+                            className="py-12"
+                        />
                     </div>
                 )}
             </div>
 
             {/* Archived Classes Section */}
             {archivedClasses.length > 0 && (
-                <div className="pt-12 border-t border-identity-sky/10">
-                    <div className="flex items-center gap-4 mb-8 opacity-60 group">
-                        <div className="p-3 bg-slate-100 text-slate-400 rounded-xl border border-slate-200 group-hover:scale-110 transition-transform">
-                            <Archive size={24} />
+                <div className="pt-20">
+                    <div className="flex items-center gap-6 mb-12 opacity-60">
+                        <div className="p-3 bg-slate-200 text-slate-500 rounded-2xl border border-slate-300">
+                            <Archive size={28} />
                         </div>
                         <div>
-                            <h2 className="text-xl font-black text-slate-500 uppercase tracking-tighter font-outfit italic">Archived Matrix Entries</h2>
-                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mt-1">Historical Synchronizations</p>
+                            <h2 className="text-2xl font-black text-slate-600 uppercase tracking-tighter italic">Historical Archives</h2>
+                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em] mt-2">End-of-Life Cryptographic Logs</p>
                         </div>
-                        <span className="ml-auto bg-slate-50 text-slate-300 text-[10px] font-black px-4 py-2 rounded-xl border border-slate-100 shadow-inner">{archivedClasses.length} Historical</span>
+                        <div className="ml-auto bg-slate-100 text-slate-400 text-[10px] font-black px-6 py-3 rounded-full border border-slate-200 shadow-inner">
+                            {archivedClasses.length} Archived
+                        </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                         {archivedClasses.map(cls => (
                             <ClassCard key={cls.id} cls={cls} isArchived={true} />
                         ))}

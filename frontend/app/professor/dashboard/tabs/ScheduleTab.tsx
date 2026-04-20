@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { Calendar, ChevronLeft, ChevronRight, X, Clock, Users, MapPin, Ban } from 'lucide-react';
 import axios from 'axios';
 import CancelSessionModal from '@/components/CancelSessionModal';
@@ -184,27 +184,37 @@ export default function ScheduleTab({ user, classes }: ScheduleTabProps) {
 
     return (
         <>
-            <div className="space-y-6">
+            <div className="space-y-6 font-outfit">
                 {/* Header */}
-                <div className="identity-glass rounded-2xl shadow-sm border border-identity-sky/10 backdrop-blur-sm p-6 shadow-3xl">
-                    <div className="flex items-center justify-between mb-4">
-                        <h1 className="text-2xl font-black text-identity-navy flex items-center gap-2 uppercase tracking-tight">
-                            <Calendar className="text-identity-sky" size={28} />
-                            Weekly Schedule
-                        </h1>
-                        <div className="flex items-center gap-3">
+                <div className="identity-glass p-6 sm:p-8 md:p-10 rounded-[2rem] md:rounded-[3rem] border border-identity-sky/10 shadow-xl backdrop-blur-sm">
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
+                        <div className="flex items-center gap-4">
+                            <div className="bg-identity-sky/10 p-3 rounded-2xl border border-identity-sky/10">
+                                <Calendar className="text-identity-sky" size={28} />
+                            </div>
+                            <div>
+                                <h1 className="text-2xl font-black text-identity-navy uppercase tracking-tight italic">
+                                    Weekly Schedule
+                                </h1>
+                                <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.2em] mt-1">Class timing and structural planning</p>
+                            </div>
+                        </div>
+
+                        <div className="flex items-center gap-4 bg-white/40 p-2 rounded-2xl border border-identity-sky/5 shadow-inner">
                             <button
                                 onClick={handlePreviousWeek}
-                                className="p-2 bg-white/40 hover:bg-identity-navy/5 text-identity-navy border border-identity-sky/10 rounded-lg transition-colors shadow-inner"
+                                className="w-12 h-12 flex items-center justify-center bg-white hover:bg-identity-sky/5 text-identity-navy border border-identity-sky/10 rounded-2xl transition-all active:scale-95 shadow-sm"
+                                title="Previous Week"
                             >
                                 <ChevronLeft size={20} />
                             </button>
-                            <span className="text-[10px] font-black uppercase tracking-widest text-identity-sky min-w-[200px] text-center">
+                            <span className="text-[11px] font-black uppercase tracking-[0.2em] text-identity-sky min-w-[200px] text-center">
                                 {getWeekRange()}
                             </span>
                             <button
                                 onClick={handleNextWeek}
-                                className="p-2 bg-white/40 hover:bg-identity-navy/5 text-identity-navy border border-identity-sky/10 rounded-lg transition-colors shadow-inner"
+                                className="w-12 h-12 flex items-center justify-center bg-white hover:bg-identity-sky/5 text-identity-navy border border-identity-sky/10 rounded-2xl transition-all active:scale-95 shadow-sm"
+                                title="Next Week"
                             >
                                 <ChevronRight size={20} />
                             </button>
@@ -214,9 +224,15 @@ export default function ScheduleTab({ user, classes }: ScheduleTabProps) {
 
                 {/* Schedule Grid */}
                 {loading ? (
-                    <div className="text-center py-12 text-slate-400 font-black uppercase tracking-widest">Loading schedule...</div>
+                    <div className="flex flex-col items-center justify-center py-20 gap-4">
+                        <div className="w-12 h-12 relative">
+                            <div className="absolute inset-0 border-4 border-identity-sky/20 rounded-full"></div>
+                            <div className="absolute inset-0 border-4 border-identity-sky border-t-transparent rounded-full animate-spin"></div>
+                        </div>
+                        <p className="text-[10px] font-black text-identity-sky uppercase tracking-[0.2em] animate-pulse">Retrieving Weekly Plans...</p>
+                    </div>
                 ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                         {daysOfWeek.map((day, index) => {
                             const dayDate = new Date(currentWeekStart);
                             dayDate.setDate(currentWeekStart.getDate() + index);
@@ -225,82 +241,83 @@ export default function ScheduleTab({ user, classes }: ScheduleTabProps) {
                             return (
                                 <div
                                     key={day}
-                                    className={`identity-glass rounded-xl border transition-all ${isToday ? 'border-identity-sky shadow-lg shadow-identity-sky/5' : 'border-identity-sky/10'
-                                        } p-4`}
+                                    className={`identity-glass p-8 rounded-[2rem] md:rounded-[3rem] border transition-all ${isToday
+                                        ? 'border-identity-sky/50 shadow-2xl shadow-identity-sky/10 bg-identity-sky/[0.02]'
+                                        : 'border-identity-sky/10 shadow-xl'
+                                        }`}
                                 >
-                                    <div className="mb-3">
-                                        <h3 className={`font-black uppercase tracking-widest text-sm ${isToday ? 'text-identity-sky' : 'text-identity-navy'}`}>
+                                    <div className="mb-6">
+                                        <h3 className={`font-black uppercase tracking-[0.2em] text-sm italic ${isToday ? 'text-identity-sky' : 'text-identity-navy'}`}>
                                             {day}
                                         </h3>
-                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.15em] mt-1 opacity-70">
                                             {dayDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                                         </p>
                                     </div>
 
-                                    <div className="space-y-2">
+                                    <div className="space-y-4">
                                         {weekSessions[day]?.length > 0 ? (
                                             weekSessions[day].map((session, idx) => (
                                                 <div
                                                     key={idx}
-                                                    className={`p-3 rounded-lg border transition-all ${session.isCancelled
-                                                        ? 'bg-red-500/10 border-red-500/30'
-                                                        : 'bg-white/40 border-identity-sky/10 hover:border-identity-sky/20'
+                                                    className={`p-5 rounded-2xl border transition-all overflow-hidden relative group ${session.isCancelled
+                                                        ? 'bg-rose-500/5 border-rose-500/20'
+                                                        : 'bg-white/40 border-identity-sky/10 hover:border-identity-sky/30 shadow-sm'
                                                         }`}
                                                 >
-                                                    <div className="flex items-start justify-between mb-2">
-                                                        <div className="flex-1 flex items-center gap-2">
-                                                            {session.isCancelled && (
-                                                                <Ban className="text-red-500 flex-shrink-0" size={16} />
-                                                            )}
-                                                            <div>
-                                                                <p className={`font-black text-xs uppercase tracking-tight ${session.isCancelled ? 'text-red-500 line-through' : 'text-identity-navy'}`}>
+                                                    <div className="flex items-start justify-between mb-4">
+                                                        <div className="flex-1">
+                                                            <div className="flex items-center gap-2 mb-1">
+                                                                {session.isCancelled && (
+                                                                    <Ban className="text-rose-500 flex-shrink-0" size={14} />
+                                                                )}
+                                                                <p className={`font-black text-xs uppercase tracking-tight ${session.isCancelled ? 'text-rose-500 line-through decoration-2' : 'text-identity-navy'}`}>
                                                                     {session.subjectCode}
                                                                 </p>
-                                                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                                                                    Section {session.section}
-                                                                </p>
                                                             </div>
+                                                            <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">
+                                                                Section {session.section}
+                                                            </p>
                                                         </div>
                                                         {session.isCancelled && (
-                                                            <span className="text-[10px] font-black uppercase tracking-widest bg-red-500/20 text-red-400 px-2 py-1 rounded flex items-center gap-1">
-                                                                <Ban size={12} />
-                                                                Cancelled
+                                                            <span className="text-[8px] font-black uppercase tracking-[0.2em] bg-rose-500/20 text-rose-500 px-2.5 py-1 rounded-full border border-rose-500/20 absolute -top-1 -right-1 rotate-12 group-hover:rotate-0 transition-transform">
+                                                                Void
                                                             </span>
                                                         )}
                                                     </div>
 
-                                                    <div className="space-y-1 text-[10px] font-bold text-slate-500 uppercase tracking-widest">
-                                                        <div className="flex items-center gap-1">
+                                                    <div className="space-y-2 text-[9px] font-black text-slate-500 uppercase tracking-[0.2em]">
+                                                        <div className="flex items-center gap-2">
                                                             <Clock size={12} className="text-identity-sky" />
                                                             {formatTime(session.startTime)} - {formatTime(session.endTime)}
                                                         </div>
-                                                        <div className="flex items-center gap-1">
+                                                        <div className="flex items-center gap-2">
                                                             <MapPin size={12} className="text-identity-sky" />
                                                             {session.room}
                                                         </div>
-                                                        <div className="flex items-center gap-1">
+                                                        <div className="flex items-center gap-2">
                                                             <Users size={12} className="text-identity-sky" />
                                                             {session.studentCount} students
                                                         </div>
                                                     </div>
 
                                                     {session.isCancelled ? (
-                                                        <div className="mt-2 text-[10px] font-black uppercase tracking-widest text-red-400 bg-red-500/5 p-2 rounded border border-red-500/10">
-                                                            Reason: {session.cancelReason}
+                                                        <div className="mt-4 text-[9px] font-black uppercase tracking-[0.15em] text-rose-500 bg-rose-500/5 p-3 rounded-2xl border border-rose-500/10 italic">
+                                                            Reason: {session.cancelReason?.toUpperCase() || 'EXTERNAL OVERRIDE'}
                                                         </div>
                                                     ) : (
                                                         <button
                                                             onClick={() => handleCancelClick(session)}
-                                                            className="mt-2 w-full px-3 py-1.5 bg-red-600/10 hover:bg-red-600/20 text-red-400 rounded text-[10px] font-black uppercase tracking-widest transition-colors flex items-center justify-center gap-1 border border-red-500/10"
+                                                            className="mt-4 w-full px-4 py-2.5 bg-rose-500/5 hover:bg-rose-500 text-rose-500 hover:text-white rounded-2xl text-[9px] font-black uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-2 border border-rose-500/10 active:scale-95"
                                                         >
-                                                            <X size={14} />
-                                                            Cancel Session
+                                                            <Ban size={14} />
+                                                            Suspend Session
                                                         </button>
                                                     )}
                                                 </div>
                                             ))
                                         ) : (
-                                            <p className="text-center text-secondary/20 text-[10px] font-black uppercase tracking-widest py-4">
+                                            <p className="text-center text-secondary/20 text-[10px] font-black uppercase tracking-[0.15em] py-4">
                                                 No classes
                                             </p>
                                         )}

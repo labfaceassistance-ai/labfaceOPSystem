@@ -102,10 +102,10 @@ export default function FaceReScan({ userId, onSuccess }: FaceReScanProps) {
         <>
             <button
                 onClick={() => setIsOpen(true)}
-                className="flex items-center gap-3 px-6 py-3 bg-brand-gold text-black rounded-xl font-black uppercase text-[10px] tracking-widest hover:brightness-110 transition-all shadow-xl shadow-brand-gold/10 active:scale-95"
+                className="flex items-center gap-3 px-6 py-3 bg-brand-gold text-black rounded-xl font-black uppercase text-[10px] tracking-[0.15em] hover:brightness-110 transition-all shadow-xl shadow-brand-gold/10 active:scale-95"
             >
                 <RefreshCw size={16} />
-                Biometric Re-Sync
+                Update Face Data
             </button>
 
             {isOpen && (
@@ -115,8 +115,8 @@ export default function FaceReScan({ userId, onSuccess }: FaceReScanProps) {
                         
                         <div className="flex items-center justify-between mb-8 relative z-10">
                             <div>
-                                <h3 className="text-2xl font-black text-white uppercase tracking-tight leading-none">Biometric Re-Sync</h3>
-                                <p className="text-[10px] font-black text-brand-gold/60 uppercase tracking-[0.3em] mt-2">Update Identity Vault · 5 Perspective Matrix</p>
+                                <h3 className="text-2xl font-black text-white uppercase tracking-tight leading-none">Update Face Data</h3>
+                                <p className="text-[10px] font-black text-brand-gold/60 uppercase tracking-[0.3em] mt-2">Update Profile Picture</p>
                             </div>
                             <button
                                 onClick={() => setIsOpen(false)}
@@ -129,7 +129,7 @@ export default function FaceReScan({ userId, onSuccess }: FaceReScanProps) {
                         {error && (
                             <div className="bg-rose-500/10 border border-rose-500/20 text-rose-500 p-4 rounded-2xl mb-8 flex items-center gap-3 relative z-10">
                                 <span className="text-rose-500">⚠</span>
-                                <span className="text-[10px] font-black uppercase tracking-widest">{error}</span>
+                                <span className="text-[10px] font-black uppercase tracking-[0.15em]">{error}</span>
                             </div>
                         )}
 
@@ -137,7 +137,7 @@ export default function FaceReScan({ userId, onSuccess }: FaceReScanProps) {
                         <div className="mb-10 relative z-10">
                             <div className="flex justify-between mb-3 text-[10px] font-black uppercase tracking-[0.2em]">
                                 <span className="text-secondary/40">
-                                    Matrix Status: {Object.keys(capturedImages).length}/5
+                                    Photo Status: {Object.keys(capturedImages).length}/5
                                 </span>
                                 <span className="text-brand-gold/80">
                                     {allCaptured ? 'Full alignment captured' : 'Awaiting perspectives...'}
@@ -194,14 +194,14 @@ export default function FaceReScan({ userId, onSuccess }: FaceReScanProps) {
                                             >
                                                 <X size={10} />
                                             </button>
-                                            <div className="absolute bottom-0 left-0 right-0 bg-brand-gold/90 backdrop-blur-md text-black text-[8px] font-black py-1 text-center uppercase tracking-widest">
+                                            <div className="absolute bottom-0 left-0 right-0 bg-brand-gold/90 backdrop-blur-md text-black text-[8px] font-black py-1 text-center uppercase tracking-[0.15em]">
                                                 Locked
                                             </div>
                                         </>
                                     ) : (
                                         <div className="w-full h-full flex flex-col items-center justify-center opacity-40">
                                             <Camera size={18} className="text-secondary/40 mb-1" />
-                                            <span className="text-[7px] font-black uppercase tracking-widest text-secondary/40">{angle.label}</span>
+                                            <span className="text-[7px] font-black uppercase tracking-[0.15em] text-secondary/40">{angle.label}</span>
                                         </div>
                                     )}
                                 </div>
@@ -220,7 +220,7 @@ export default function FaceReScan({ userId, onSuccess }: FaceReScanProps) {
                                         className="hidden"
                                     />
                                     <div className="w-full py-5 bg-black/40 border border-white/10 text-white rounded-2xl font-black uppercase text-[10px] tracking-[0.25em] text-center cursor-pointer hover:bg-white/5 hover:border-brand-gold/30 transition-all shadow-inner active:scale-95 group">
-                                        Archive <span className="text-brand-gold group-hover:underline">{FACE_ANGLES[currentAngle].label}</span> Matrix
+                                        Save <span className="text-brand-gold group-hover:underline">{FACE_ANGLES[currentAngle].label}</span> Photo
                                     </div>
                                 </label>
                             </div>
@@ -230,7 +230,7 @@ export default function FaceReScan({ userId, onSuccess }: FaceReScanProps) {
                         <div className="flex gap-4 relative z-10 bg-maroon-950 pt-4">
                             <button
                                 onClick={() => setIsOpen(false)}
-                                className="flex-1 px-8 py-4 bg-white/5 border border-white/10 text-secondary/40 rounded-2xl font-black uppercase text-[10px] tracking-widest hover:text-white hover:bg-white/10 transition-all active:scale-95"
+                                className="flex-1 px-8 py-4 bg-white/5 border border-white/10 text-secondary/40 rounded-2xl font-black uppercase text-[10px] tracking-[0.15em] hover:text-white hover:bg-white/10 transition-all active:scale-95"
                             >
                                 Abandon
                             </button>
@@ -239,7 +239,7 @@ export default function FaceReScan({ userId, onSuccess }: FaceReScanProps) {
                                 disabled={!allCaptured || uploading}
                                 className="flex-1 px-10 py-4 bg-brand-gold text-black rounded-2xl font-black uppercase text-[10px] tracking-[0.2em] shadow-2xl shadow-brand-gold/20 hover:brightness-110 disabled:opacity-20 disabled:grayscale transition-all active:scale-95 border border-brand-gold"
                             >
-                                {uploading ? 'Archiving...' : 'Sync New Matrix'}
+                                {uploading ? 'Archiving...' : 'Update Photos'}
                             </button>
                         </div>
                     </div>

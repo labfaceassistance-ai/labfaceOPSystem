@@ -10,7 +10,7 @@ interface FaceEnrollmentScannerProps {
 }
 
 const ANGLES = [
-    { id: 'front', label: 'Frontal Sync',  instruction: 'Look straight at the scanner',       meshColor: '#0ea5e9' },
+    { id: 'front', label: 'Frontal View',  instruction: 'Look straight at the scanner',       meshColor: '#0ea5e9' },
     { id: 'left',  label: 'Left Profile',  instruction: 'Turn your head slowly to the left',  meshColor: '#0ea5e9' },
     { id: 'right', label: 'Right Profile', instruction: 'Turn your head slowly to the right', meshColor: '#0ea5e9' },
     { id: 'up',    label: 'High View',     instruction: 'Tilt your head slightly upward',     meshColor: '#0ea5e9' },
@@ -59,7 +59,7 @@ export default function FaceEnrollmentScanner({
     const [captures,       setCaptures]       = useState<Record<string, string>>(initialCaptures);
     const [isCapturing,    setIsCapturing]    = useState(false);
     const [status,         setStatus]         = useState<'IDLE' | 'LOADING' | 'DETECTING' | 'STABILIZING' | 'SUCCESS'>('IDLE');
-    const [feedback,       setFeedback]       = useState('Initialize Biometric Stream');
+    const [feedback,       setFeedback]       = useState('Start Camera Scanner');
     const [stabilityScore, setStabilityScore] = useState(0);
     const [faceDetected,   setFaceDetected]   = useState(false);
     const [mpReady,        setMpReady]        = useState(false);
@@ -224,7 +224,7 @@ export default function FaceEnrollmentScanner({
                     setMpReady(true);
                     setStatus('IDLE');
                     statusRef.current = 'IDLE';
-                    setFeedback('Initialize Biometric Stream');
+                    setFeedback('Start Camera Scanner');
                 }
             } catch (err) {
                 console.error('[FaceEnrollment] MediaPipe init failed:', err);
@@ -310,7 +310,7 @@ export default function FaceEnrollmentScanner({
                     <div>
                         <h3 className="text-white font-black uppercase text-base tracking-tight flex items-center gap-3 leading-none mb-1.5 font-outfit">
                             <Scan size={18} className="text-identity-sky animate-pulse shrink-0" />
-                            Biometric Sync
+                            Face Registration
                         </h3>
                         <p className="text-slate-400 text-[9px] font-black uppercase tracking-[0.3em] flex items-center gap-2">
                             <Zap size={9} className="text-identity-sky animate-pulse" />
@@ -325,12 +325,14 @@ export default function FaceEnrollmentScanner({
                                 type="button"
                                 onClick={() => { if (isCapturing && status !== 'SUCCESS') { currentStepRef.current = i; setCurrentStep(i); }}}
                                 title={a.label}
-                                className={`h-2 rounded-full transition-all duration-500 border border-white/5 ${
+                                className={`h-11 w-11 flex items-center justify-center transition-all duration-500 rounded-xl group`}
+                            >
+                                <div className={`h-2 rounded-full transition-all duration-500 border border-white/5 ${
                                     i === currentStep          ? 'bg-identity-sky w-8 border-identity-sky/50 shadow-[0_0_12px_rgba(14,165,233,0.4)]' :
                                     captures[a.id]             ? 'bg-identity-sky/40 w-2.5' :
                                                                   'bg-white/10 w-2.5'
-                                }`}
-                            />
+                                }`} />
+                            </button>
                         ))}
                     </div>
                 </div>
@@ -347,20 +349,20 @@ export default function FaceEnrollmentScanner({
                             <div className="text-center space-y-2">
                                 <Loader2 className="animate-spin text-identity-sky mx-auto mb-4" size={32} />
                                 <p className="text-white text-[10px] font-black uppercase tracking-[0.4em] animate-pulse">
-                                    Initializing Neural Logic
+                                    Loading Face Scanner
                                 </p>
                             </div>
                         ) : (
                             <div className="text-center space-y-8 px-12">
                                 <p className="text-slate-400 text-[9px] font-black uppercase tracking-[0.4em]">
-                                    Multi-Angle Identity Calibration
+                                    Multi-Angle Face Registration
                                 </p>
                                 <button
                                     type="button"
                                     onClick={handleStart}
                                     className="bg-identity-sky text-white px-12 py-5 rounded-2xl font-black uppercase text-[10px] tracking-[0.25em] shadow-2xl shadow-identity-sky/20 hover:bg-white hover:text-identity-navy transition-all active:scale-95 border border-identity-sky"
                                 >
-                                    Initialize Secure Stream
+                                    Start Setup
                                 </button>
                             </div>
                         )}
@@ -403,11 +405,11 @@ export default function FaceEnrollmentScanner({
                                             {ANGLES[currentStep]?.label}
                                         </p>
                                     </div>
-                                    <p className="text-identity-sky font-black text-[10px] tabular-nums tracking-widest">
+                                    <p className="text-identity-sky font-black text-[10px] tabular-nums tracking-[0.15em]">
                                         PHASE {currentStep + 1} / 5
                                     </p>
                                 </div>
-                                <p className="text-white font-black text-xs uppercase tracking-widest mb-4">{feedback}</p>
+                                <p className="text-white font-black text-xs uppercase tracking-[0.15em] mb-4">{feedback}</p>
                                 <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden shadow-inner">
                                     <div
                                         className="h-full bg-identity-sky rounded-full transition-all duration-300 ease-out shadow-[0_0_15px_rgba(14,165,233,0.5)]"
@@ -424,17 +426,17 @@ export default function FaceEnrollmentScanner({
                         <div className="w-24 h-24 bg-identity-sky/10 text-identity-sky rounded-[2.5rem] flex items-center justify-center mb-10 border border-identity-sky/20 shadow-2xl">
                             <CheckCircle size={56} />
                         </div>
-                        <h4 className="text-4xl font-black text-white uppercase tracking-tight mb-4 font-outfit">Sync Optimized</h4>
+                        <h4 className="text-3xl md:text-4xl font-black text-white uppercase tracking-tight mb-4 font-outfit">Face Saved</h4>
                         <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.2em] mb-12 max-w-sm leading-relaxed">
-                            Biometric patterns archived to identity vault. All perspectives secured.
+                            Photos successfully uploaded and saved.
                         </p>
                         <div className="flex gap-5">
                             <button
                                 type="button"
                                 onClick={resetScanner}
-                                className="bg-white/5 text-slate-300 px-10 py-5 rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-white/10 transition-all border border-white/5"
+                                className="bg-white/5 text-slate-300 px-10 py-5 rounded-2xl font-black uppercase text-[10px] tracking-[0.15em] hover:bg-white/10 transition-all border border-white/5"
                             >
-                                Re-Sync
+                                Retake Photo
                             </button>
                             <button
                                 type="button"
@@ -448,12 +450,12 @@ export default function FaceEnrollmentScanner({
                 )}
             </div>
 
-            <div className="grid grid-cols-2 gap-4 sm:gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                 <div className="bg-white border border-slate-200 p-4 sm:p-6 rounded-2xl sm:rounded-3xl shadow-xl flex items-center gap-3 sm:gap-6 relative overflow-hidden group">
                     <div className="p-2 sm:p-4 bg-identity-sky/5 text-identity-sky rounded-xl sm:rounded-2xl shrink-0 group-hover:scale-110 transition-transform duration-500">
                         <AlertCircle size={20} />
                     </div>
-                    <p className="text-identity-navy text-[9px] sm:text-xs font-black uppercase tracking-widest leading-relaxed">
+                    <p className="text-identity-navy text-[9px] sm:text-xs font-black uppercase tracking-[0.15em] leading-relaxed">
                         "{ANGLES[currentStep]?.instruction}"
                     </p>
                 </div>
@@ -465,7 +467,7 @@ export default function FaceEnrollmentScanner({
                                 key={i}
                                 type="button"
                                 onClick={() => { if (isCapturing && status !== 'SUCCESS') { currentStepRef.current = i; setCurrentStep(i); }}}
-                                className={`w-8 h-8 sm:w-14 sm:h-14 rounded-full border transition-all duration-500 overflow-hidden shadow-2xl hover:scale-110 hover:z-50 ${
+                                className={`w-11 h-11 sm:w-14 sm:h-14 rounded-full border transition-all duration-500 overflow-hidden shadow-2xl hover:scale-110 hover:z-50 min-h-[44px] min-w-[44px] flex items-center justify-center ${
                                     i === currentStep
                                         ? 'border-identity-sky scale-110 sm:scale-125 ring-2 sm:ring-4 ring-identity-sky/20 z-40'
                                         : captures[angle.id]
@@ -473,6 +475,7 @@ export default function FaceEnrollmentScanner({
                                             : 'border-white/10 opacity-30 shadow-none'
                                 }`}
                                 style={{ zIndex: 10 - i }}
+                                title={angle.label}
                             >
                                 {captures[angle.id] ? (
                                     <img src={captures[angle.id]} className="w-full h-full object-cover scale-110" alt={angle.label} />

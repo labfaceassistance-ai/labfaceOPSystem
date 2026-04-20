@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import IdentityBackground from '../../components/IdentityBackground';
 
 export const metadata: Metadata = {
     title: {
@@ -13,5 +14,11 @@ export default function StudentLayout({
 }: {
     children: React.ReactNode;
 }) {
-    return children;
+    return (
+        <div className="relative min-h-screen">
+            <IdentityBackground />
+            {children}
+        </div>
+    );
 }
+

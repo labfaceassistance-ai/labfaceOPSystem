@@ -227,22 +227,22 @@ export default function ClassDetailsModal({ isOpen, onClose, classId, className,
                             {className}
                         </h2>
                         <div className="flex items-center gap-3 mt-2">
-                            <span className="bg-identity-sky/10 text-identity-sky border border-identity-sky/20 px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-[0.2em] shadow-inner">Attendance Ledger Matrix</span>
+                            <span className="bg-identity-sky/10 text-identity-sky border border-identity-sky/20 px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-[0.2em] shadow-inner">Attendance Records</span>
                             <span className="text-slate-200">|</span>
-                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{viewMode === 'list' ? 'Cohort Overview' : 'Detailed Session History Layer'}</span>
+                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.15em]">{viewMode === 'list' ? 'Cohort Overview' : 'Detailed Session History Layer'}</span>
                         </div>
                     </div>
                     <div className="flex items-center gap-4">
                         <div className="bg-white/40 p-1.5 rounded-xl border border-identity-sky/10 flex gap-1 shadow-inner">
                             <button
                                 onClick={() => setViewMode('list')}
-                                className={`px-5 py-2.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${viewMode === 'list' ? 'bg-identity-navy text-white shadow-lg shadow-identity-navy/20' : 'text-slate-400 hover:text-identity-navy'}`}
+                                className={`px-5 py-2.5 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg text-[10px] font-black uppercase tracking-[0.15em] transition-all gap-2 ${viewMode === 'list' ? 'bg-identity-navy text-white shadow-lg shadow-identity-navy/20' : 'text-slate-400 hover:text-identity-navy hover:bg-slate-50'}`}
                             >
                                 <Users size={14} /> List View
                             </button>
                             <button
                                 onClick={() => setViewMode('history')}
-                                className={`px-5 py-2.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${viewMode === 'history' ? 'bg-identity-navy text-white shadow-lg shadow-identity-navy/20' : 'text-slate-400 hover:text-identity-navy'}`}
+                                className={`px-5 py-2.5 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg text-[10px] font-black uppercase tracking-[0.15em] transition-all gap-2 ${viewMode === 'history' ? 'bg-identity-navy text-white shadow-lg shadow-identity-navy/20' : 'text-slate-400 hover:text-identity-navy hover:bg-slate-50'}`}
                             >
                                 <History size={14} /> History View
                             </button>
@@ -252,7 +252,7 @@ export default function ClassDetailsModal({ isOpen, onClose, classId, className,
                             <button
                                 onClick={downloadAttendance}
                                 disabled={selectedEnrollmentIds.length === 0 && students.length === 0}
-                                className="flex items-center gap-2 px-6 py-3 bg-emerald-500 hover:bg-emerald-600 disabled:opacity-30 disabled:cursor-not-allowed text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-lg shadow-emerald-500/10 active:scale-95"
+                                className="flex items-center gap-2 px-6 py-3 bg-emerald-500 hover:bg-emerald-600 disabled:opacity-30 disabled:cursor-not-allowed text-white rounded-xl text-[10px] font-black uppercase tracking-[0.15em] transition-all shadow-lg shadow-emerald-500/10 active:scale-95"
                             >
                                 <Download size={16} /> Export Dataset {selectedEnrollmentIds.length > 0 && selectedEnrollmentIds.length < students.length ? `(${selectedEnrollmentIds.length})` : ''}
                             </button>
@@ -261,22 +261,22 @@ export default function ClassDetailsModal({ isOpen, onClose, classId, className,
                             !isArchived && viewMode === 'history' && (
                                 <button
                                     onClick={() => setIsEditing(true)}
-                                    className="flex items-center gap-2 px-6 py-3 bg-identity-navy hover:bg-identity-navy/90 text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-lg shadow-identity-navy/20 active:scale-95"
+                                    className="flex items-center gap-2 px-6 py-3 bg-identity-navy hover:bg-identity-navy/90 text-white rounded-xl text-[10px] font-black uppercase tracking-[0.15em] transition-all shadow-lg shadow-identity-navy/20 active:scale-95"
                                 >
-                                    <Edit2 size={16} /> Update Ledger
+                                    <Edit2 size={16} /> Update Record
                                 </button>
                             )
                         ) : (
                             <>
                                 <button
                                     onClick={cancelEdit}
-                                    className="flex items-center gap-2 px-6 py-3 bg-white hover:bg-slate-50 text-slate-500 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border border-slate-200 shadow-inner italic active:scale-95"
+                                    className="flex items-center gap-2 px-6 py-3 bg-white hover:bg-slate-50 text-slate-500 rounded-xl text-[10px] font-black uppercase tracking-[0.15em] transition-all border border-slate-200 shadow-inner italic active:scale-95"
                                 >
                                     <RotateCcw size={16} /> Revert Changes
                                 </button>
                                 <button
                                     onClick={saveChanges}
-                                    className="flex items-center gap-2 px-6 py-3 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-lg shadow-emerald-500/10 active:scale-95"
+                                    className="flex items-center gap-2 px-6 py-3 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-[10px] font-black uppercase tracking-[0.15em] transition-all shadow-lg shadow-emerald-500/10 active:scale-95"
                                 >
                                     <Save size={16} /> Commit Updates
                                 </button>
@@ -285,12 +285,12 @@ export default function ClassDetailsModal({ isOpen, onClose, classId, className,
                         {/* Cancellation Button */}
                         <button
                             onClick={() => setIsCancelModalOpen(true)}
-                            className="p-3 hover:bg-rose-50 rounded-xl text-slate-400 hover:text-rose-500 transition-all ml-2 border border-transparent hover:border-rose-100 active:scale-90"
-                            title="Cancel Class (Advance Notice Protocol)"
+                            className="p-3 min-h-[44px] min-w-[44px] flex items-center justify-center hover:bg-rose-50 rounded-xl text-slate-400 hover:text-rose-500 transition-all ml-2 border border-transparent hover:border-rose-100 active:scale-90"
+                            title="Cancel Class"
                         >
                             <Ban size={22} />
                         </button>
-                        <button onClick={onClose} className="p-3 hover:bg-white/60 rounded-xl text-slate-400 hover:text-identity-navy transition-all ml-2 border border-transparent hover:border-identity-sky/10 active:scale-90">
+                        <button onClick={onClose} className="p-3 min-h-[44px] min-w-[44px] flex items-center justify-center hover:bg-white/60 rounded-xl text-slate-400 hover:text-identity-navy transition-all ml-2 border border-transparent hover:border-identity-sky/10 active:scale-90">
                             <X size={22} />
                         </button>
                     </div>
@@ -302,22 +302,22 @@ export default function ClassDetailsModal({ isOpen, onClose, classId, className,
                         loading ? (
                             <div className="flex flex-col items-center justify-center h-full gap-4" >
                                 <div className="animate-spin rounded-full h-12 w-12 border-4 border-identity-sky/10 border-t-identity-sky"></div>
-                                <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic animate-pulse">Syncing attendance matrix...</div>
+                                <div className="text-[10px] font-black text-slate-400 uppercase tracking-[0.15em] italic animate-pulse">Loading attendance...</div>
                             </div>
                         ) : (
                             <div className="min-w-[800px] flex flex-col h-full">
                                 {/* Stats Summary */}
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-10 shrink-0">
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-10 shrink-0">
                                     <div className="bg-white/40 p-8 rounded-2xl border border-identity-sky/10 shadow-inner">
-                                        <div className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-3 ml-1">Cohort Engagement</div>
-                                        <div className="text-3xl font-black text-identity-navy tracking-tight">{students.length} <span className="text-sm font-bold text-slate-300 uppercase tracking-widest ml-1 italic">Personnes</span></div>
+                                        <div className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-500 mb-3 ml-1">Cohort Engagement</div>
+                                        <div className="text-3xl font-black text-identity-navy tracking-tight">{students.length} <span className="text-sm font-bold text-slate-300 uppercase tracking-[0.15em] ml-1 italic">Personnes</span></div>
                                     </div>
                                     <div className="bg-white/40 p-8 rounded-2xl border border-identity-sky/10 shadow-inner">
-                                        <div className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-3 ml-1">Session Log Depth</div>
-                                        <div className="text-3xl font-black text-identity-sky tracking-tight">{sessions.length} <span className="text-sm font-bold text-identity-sky/20 uppercase tracking-widest ml-1 italic">Entries</span></div>
+                                        <div className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-500 mb-3 ml-1">Attendance Log</div>
+                                        <div className="text-3xl font-black text-identity-sky tracking-tight">{sessions.length} <span className="text-sm font-bold text-identity-sky/20 uppercase tracking-[0.15em] ml-1 italic">Entries</span></div>
                                     </div>
                                     <div className="bg-white/40 p-8 rounded-2xl border border-identity-sky/10 shadow-inner">
-                                        <div className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-3 ml-1">Persistence Rate</div>
+                                        <div className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-500 mb-3 ml-1">Persistence Rate</div>
                                         <div className="text-3xl font-black text-emerald-500 tracking-tight">
                                             {sessions.length > 0 ? Math.round(
                                                 (students.reduce((acc, s) => acc + s.attendance.filter((a: any) => a.status === 'Present' || a.status === 'Late').length, 0) /
@@ -330,12 +330,12 @@ export default function ClassDetailsModal({ isOpen, onClose, classId, className,
                                 {/* Attendance Table Wrapper */}
                                 <div className={`flex-1 flex flex-col min-h-0 border border-identity-sky/10 rounded-3xl overflow-hidden bg-white/40 shadow-inner ${isEditing ? 'ring-4 ring-identity-sky/20 border-identity-sky/50' : ''}`}>
                                     {viewMode === 'list' ? (
-                                        <div className="flex-1 overflow-auto relative no-scrollbar">
+                                        <div className="flex-1 overflow-auto relative no-scrollbar table-responsive-wrapper">
                                             <table className="w-full text-sm text-left">
                                                 <thead className="text-[10px] uppercase bg-slate-50 text-slate-500 tracking-[0.2em]">
                                                     <tr>
                                                         <th className="px-10 py-6 font-black border-b border-identity-sky/5">Student Digital Reference</th>
-                                                        <th className="px-10 py-6 font-black border-b border-identity-sky/5">Identity Matrix Number</th>
+                                                        <th className="px-10 py-6 font-black border-b border-identity-sky/5">ID Number</th>
                                                         <th className="px-10 py-6 font-black border-b border-identity-sky/5">Security Status</th>
                                                         <th className="px-10 py-6 font-black border-b border-identity-sky/5 text-right">Engagement Vector</th>
                                                     </tr>
@@ -350,9 +350,9 @@ export default function ClassDetailsModal({ isOpen, onClose, classId, className,
                                                                 <td className="px-10 py-5 text-slate-400 font-mono italic">{student.studentNumber || 'REFERENCE_VOID'}</td>
                                                                 <td className="px-10 py-5">
                                                                     {student.studentId ? (
-                                                                        <span className="inline-flex items-center px-3 py-1 rounded-lg text-[8px] font-black uppercase tracking-widest bg-emerald-50 text-emerald-600 border border-emerald-100">PROVISIONED</span>
+                                                                        <span className="inline-flex items-center px-3 py-1 rounded-lg text-[8px] font-black uppercase tracking-[0.15em] bg-emerald-50 text-emerald-600 border border-emerald-100">PROVISIONED</span>
                                                                     ) : (
-                                                                        <span className="inline-flex items-center px-3 py-1 rounded-lg text-[8px] font-black uppercase tracking-widest bg-slate-50 text-slate-400 border border-slate-200">NO_IDENTITY</span>
+                                                                        <span className="inline-flex items-center px-3 py-1 rounded-lg text-[8px] font-black uppercase tracking-[0.15em] bg-slate-50 text-slate-400 border border-slate-200">NO_IDENTITY</span>
                                                                     )}
                                                                 </td>
                                                                 <td className={`px-10 py-5 font-black text-right tabular-nums ${rate < 75 ? 'text-rose-500' : 'text-emerald-500'}`}>{rate}%</td>
@@ -388,7 +388,7 @@ export default function ClassDetailsModal({ isOpen, onClose, classId, className,
                                                                         const dateStr = `${currentYear}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
                                                                         setFilterDate(dateStr);
                                                                     }}
-                                                                    className="bg-white border border-identity-sky/10 text-identity-navy text-[10px] font-black uppercase tracking-widest rounded-xl pl-5 pr-12 py-4 outline-none cursor-pointer focus:ring-4 focus:ring-identity-sky/10 transition-all shadow-inner appearance-none bg-no-repeat bg-[right_1rem_center] bg-[length:1.2em_1.2em]"
+                                                                    className="bg-white border border-identity-sky/10 text-identity-navy text-[10px] font-black uppercase tracking-[0.15em] rounded-xl pl-5 pr-12 py-4 outline-none cursor-pointer focus:ring-4 focus:ring-identity-sky/10 transition-all shadow-inner appearance-none bg-no-repeat bg-[right_1rem_center] bg-[length:1.2em_1.2em]"
                                                                     style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='rgba(15, 23, 42, 0.4)'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")` }}
                                                                 >
                                                                     <option value="">ALL SPECTRA</option>
@@ -407,7 +407,7 @@ export default function ClassDetailsModal({ isOpen, onClose, classId, className,
                                                                         setFilterDate(dateStr);
                                                                     }}
                                                                     disabled={!filterDate}
-                                                                    className="bg-white border border-identity-sky/10 text-identity-navy text-[10px] font-black uppercase tracking-widest rounded-xl pl-5 pr-12 py-4 outline-none cursor-pointer focus:ring-4 focus:ring-identity-sky/10 transition-all shadow-inner appearance-none bg-no-repeat bg-[right_1rem_center] bg-[length:1.2em_1.2em] disabled:opacity-30 disabled:cursor-not-allowed"
+                                                                    className="bg-white border border-identity-sky/10 text-identity-navy text-[10px] font-black uppercase tracking-[0.15em] rounded-xl pl-5 pr-12 py-4 outline-none cursor-pointer focus:ring-4 focus:ring-identity-sky/10 transition-all shadow-inner appearance-none bg-no-repeat bg-[right_1rem_center] bg-[length:1.2em_1.2em] disabled:opacity-30 disabled:cursor-not-allowed"
                                                                     style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='rgba(15, 23, 42, 0.4)'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")` }}
                                                                 >
                                                                     <option value="">DAY</option>
@@ -416,7 +416,7 @@ export default function ClassDetailsModal({ isOpen, onClose, classId, className,
                                                                     ))}
                                                                 </select>
                                                                 {filterDate && (
-                                                                    <button onClick={() => { setFilterDate(''); setSelectedSessionId(null); }} className="p-4 text-slate-400 hover:text-rose-500 transition-all hover:bg-rose-50 rounded-xl border border-transparent hover:border-rose-100 italic active:scale-90">
+                                                                    <button onClick={() => { setFilterDate(''); setSelectedSessionId(null); }} className="p-4 min-h-[44px] min-w-[44px] flex items-center justify-center text-slate-400 hover:text-rose-500 transition-all hover:bg-rose-50 rounded-xl border border-transparent hover:border-rose-100 italic active:scale-90">
                                                                         <XCircle size={22} />
                                                                     </button>
                                                                 )}
@@ -427,7 +427,7 @@ export default function ClassDetailsModal({ isOpen, onClose, classId, className,
                                             </div>
 
                                             {/* History Table */}
-                                            <div className="flex-1 overflow-auto relative no-scrollbar">
+                                            <div className="flex-1 overflow-auto relative no-scrollbar table-responsive-wrapper">
                                                 <table className="w-full text-sm text-left border-collapse">
                                                     <thead className="bg-slate-50/50 text-slate-500">
                                                         <tr>
@@ -445,11 +445,12 @@ export default function ClassDetailsModal({ isOpen, onClose, classId, className,
                                                                         />
                                                                     )}
                                                                     <div className="flex flex-col">
-                                                                        <span className="text-[10px] uppercase tracking-[0.2em] text-slate-400 mb-1 font-black">Student Record Matrix</span>
+                                                                        <span className="text-[10px] uppercase tracking-[0.2em] text-slate-400 mb-1 font-black">Student Master List</span>
                                                                         <span className="text-sm font-black text-identity-navy uppercase tracking-tight italic">Full Biological Identity</span>
                                                                     </div>
                                                                 </div>
                                                             </th>
+                                                            {/* ... sessions ... */}
 
                                                             {filteredSessions.map((session) => (
                                                                 <th key={session.id} className="px-8 py-6 border-b border-identity-sky/10 text-center min-w-[220px] border-l border-identity-sky/5 sticky top-0 bg-white/90 backdrop-blur-md z-20">
@@ -460,7 +461,7 @@ export default function ClassDetailsModal({ isOpen, onClose, classId, className,
                                                                         <div className="text-lg font-black text-identity-navy uppercase tracking-tight">
                                                                             {new Date(session.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                                                                         </div>
-                                                                        <div className="text-[10px] font-black text-identity-sky flex items-center gap-2 mt-2 opacity-80 uppercase tracking-widest bg-identity-sky/5 px-2 py-1 rounded-lg border border-identity-sky/10">
+                                                                        <div className="text-[10px] font-black text-identity-sky flex items-center gap-2 mt-2 opacity-80 uppercase tracking-[0.15em] bg-identity-sky/5 px-2 py-1 rounded-lg border border-identity-sky/10">
                                                                             <Clock size={12} />
                                                                             {session.startTime.substring(0, 5)} - {session.endTime.substring(0, 5)}
                                                                         </div>
@@ -470,7 +471,7 @@ export default function ClassDetailsModal({ isOpen, onClose, classId, className,
                                                             <th className="px-10 py-6 border-b border-identity-sky/10 text-center sticky right-0 top-0 bg-white/90 backdrop-blur-md z-40 shadow-[-4px_0_12px_rgba(15,23,42,0.05)] min-w-[120px]">
                                                                 <div className="flex flex-col items-center">
                                                                     <span className="text-[10px] uppercase tracking-[0.2em] text-slate-400 mb-1 font-black">Success</span>
-                                                                    <span className="font-black text-identity-sky uppercase tracking-widest text-sm italic">Rate</span>
+                                                                    <span className="font-black text-identity-sky uppercase tracking-[0.15em] text-sm italic">Rate</span>
                                                                 </div>
                                                             </th>
                                                         </tr>
@@ -520,7 +521,7 @@ export default function ClassDetailsModal({ isOpen, onClose, classId, className,
                                                                                             <select
                                                                                                 value={status}
                                                                                                 onChange={(e) => handleStatusChange(student.enrollmentId, student.studentId, session.id, e.target.value)}
-                                                                                                className={`w-full py-3.5 px-5 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all cursor-pointer appearance-none text-center outline-none border focus:ring-4 focus:ring-identity-sky/10 shadow-sm ${normalizedStatus === 'present'
+                                                                                                className={`w-full py-3.5 px-5 rounded-xl font-black text-[10px] uppercase tracking-[0.15em] transition-all cursor-pointer appearance-none text-center outline-none border focus:ring-4 focus:ring-identity-sky/10 shadow-sm ${normalizedStatus === 'present'
                                                                                                     ? 'bg-emerald-50 text-emerald-600 border-emerald-200 shadow-emerald-500/5'
                                                                                                     : normalizedStatus === 'late'
                                                                                                         ? 'bg-identity-sky/5 text-identity-sky border-identity-sky/20 shadow-identity-sky/5'
@@ -562,7 +563,7 @@ export default function ClassDetailsModal({ isOpen, onClose, classId, className,
                                                                                                         : 'bg-rose-50 text-rose-600 border-rose-200'
                                                                                                 }`}
                                                                                         >
-                                                                                            <span className="text-[10px] font-black uppercase tracking-widest italic">{status}</span>
+                                                                                            <span className="text-[10px] font-black uppercase tracking-[0.15em] italic">{status}</span>
                                                                                             {record?.timeIn && <div className="text-[9px] font-black font-mono mt-1 opacity-60 uppercase tracking-tighter">
                                                                                                 {(() => {
                                                                                                     const d = new Date(new Date(record.timeIn).getTime() + (8 * 60 * 60 * 1000));
@@ -611,7 +612,7 @@ export default function ClassDetailsModal({ isOpen, onClose, classId, className,
                                                                                 </td>
                                                                             );
                                                                         })}
-                                                                        <td className="px-10 py-5 text-center sticky right-0 bg-white z-10 shadow-[-4px_0_12px_rgba(15,23,42,0.05)] group-hover:bg-slate-50 transition-colors uppercase tracking-widest text-[11px] font-black tabular-nums italic"><div className={`${rate < 75 ? 'text-rose-500' : 'text-emerald-500'}`}>{rate}%</div></td>
+                                                                        <td className="px-10 py-5 text-center sticky right-0 bg-white z-10 shadow-[-4px_0_12px_rgba(15,23,42,0.05)] group-hover:bg-slate-50 transition-colors uppercase tracking-[0.15em] text-[11px] font-black tabular-nums italic"><div className={`${rate < 75 ? 'text-rose-500' : 'text-emerald-500'}`}>{rate}%</div></td>
                                                                     </tr>
                                                                 );
                                                             })
@@ -645,37 +646,37 @@ export default function ClassDetailsModal({ isOpen, onClose, classId, className,
                     <div className="fixed inset-0 bg-identity-navy/40 backdrop-blur-md flex items-center justify-center z-[60] p-4 animate-in fade-in duration-200">
                         <div className="identity-glass w-full max-w-md rounded-3xl border border-identity-sky/10 shadow-3xl p-10 overflow-hidden">
                             <h3 className="text-xl font-black text-identity-navy mb-8 flex items-center gap-4 uppercase tracking-tight italic">
-                                <FileText className="text-identity-sky" /> Exception Protocol
+                                <FileText className="text-identity-sky" /> Exceptions
                             </h3>
 
                             <div className="space-y-8">
                                 <div className="p-6 bg-white/40 rounded-2xl border border-identity-sky/10 shadow-inner">
                                     <div className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-3 italic">Subject Identity Fragment</div>
                                     <div className="font-black text-identity-navy text-xl tracking-tight">{excuseTarget?.student?.studentName}</div>
-                                    <div className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mt-6 mb-3 italic">Time Segment Protocol</div>
-                                    <div className="font-black text-identity-sky text-[10px] uppercase tracking-widest bg-identity-sky/5 px-3 py-1.5 rounded-lg inline-block border border-identity-sky/10">
+                                    <div className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mt-6 mb-3 italic">Time Segment</div>
+                                    <div className="font-black text-identity-sky text-[10px] uppercase tracking-[0.15em] bg-identity-sky/5 px-3 py-1.5 rounded-lg inline-block border border-identity-sky/10">
                                         {excuseTarget?.session && new Date(excuseTarget.session.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
                                     </div>
                                 </div>
 
                                 <div>
-                                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-4 ml-1">Formal Justification</label>
+                                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.15em] mb-4 ml-1">Formal Justification</label>
                                     <textarea
                                         value={excuseReason}
                                         onChange={(e) => setExcuseReason(e.target.value)}
                                         className="w-full bg-white/60 border border-identity-sky/10 rounded-2xl p-5 text-identity-navy font-bold focus:border-identity-sky/50 outline-none shadow-inner transition-all placeholder:text-slate-300 placeholder:italic"
-                                        placeholder="Specify official justification parameters..."
+                                        placeholder="Provide a reason..."
                                         rows={3}
                                     ></textarea>
                                 </div>
 
                                 <div>
-                                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-4 ml-1">Validation Documentation</label>
+                                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.15em] mb-4 ml-1">Supporting Documents</label>
                                     <div className="flex items-center gap-4">
                                         <label className="flex-1 cursor-pointer">
                                             <div className="items-center justify-center w-full p-5 border-2 border-dashed border-identity-sky/20 rounded-2xl hover:border-identity-sky/50 hover:bg-white/40 transition-all flex gap-4 group shadow-inner">
                                                 <Upload size={20} className="text-slate-300 group-hover:text-identity-sky transition-colors" />
-                                                <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 group-hover:text-identity-navy truncate max-w-[200px] italic">
+                                                <span className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-400 group-hover:text-identity-navy truncate max-w-[200px] italic">
                                                     {excuseFile ? excuseFile.name : 'Upload Credentials'}
                                                 </span>
                                             </div>
@@ -697,14 +698,14 @@ export default function ClassDetailsModal({ isOpen, onClose, classId, className,
                                 <div className="flex gap-4 mt-10">
                                     <button
                                         onClick={() => setIsExcuseModalOpen(false)}
-                                        className="flex-1 py-5 bg-white/20 hover:bg-white/40 text-slate-400 hover:text-identity-navy rounded-2xl font-black uppercase tracking-widest text-[10px] border border-slate-200 transition-all shadow-sm italic active:scale-95"
+                                        className="flex-1 py-5 bg-white/20 hover:bg-white/40 text-slate-400 hover:text-identity-navy rounded-2xl font-black uppercase tracking-[0.15em] text-[10px] border border-slate-200 transition-all shadow-sm italic active:scale-95"
                                     >
                                         Retain Entry
                                     </button>
                                     <button
                                         onClick={submitExcuse}
                                         disabled={isSubmittingExcuse || !excuseReason}
-                                        className="flex-1 py-5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-2xl font-black uppercase tracking-widest text-[10px] transition-all shadow-lg shadow-emerald-500/10 disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center gap-3 active:scale-95"
+                                        className="flex-1 py-5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-2xl font-black uppercase tracking-[0.15em] text-[10px] transition-all shadow-lg shadow-emerald-500/10 disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center gap-3 active:scale-95"
                                     >
                                         {isSubmittingExcuse ? 'Archiving...' : 'Decrypt & Clear'}
                                     </button>
@@ -721,13 +722,13 @@ export default function ClassDetailsModal({ isOpen, onClose, classId, className,
                             <h3 className="text-xl font-black text-identity-navy mb-5 flex items-center gap-4 uppercase tracking-tight italic">
                                 <Ban className="text-rose-500" /> Session Archival
                             </h3>
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-10 leading-relaxed italic">
-                                This action will formally notify all enrolled cohorts of the session archival status.
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.15em] mb-10 leading-relaxed italic">
+                                This action will formally notify all students that the class is archived.
                             </p>
 
                             <div className="space-y-8">
                                 <div>
-                                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-4 ml-1">Effective Date</label>
+                                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.15em] mb-4 ml-1">Effective Date</label>
                                     <input
                                         type="date"
                                         value={cancelDate}
@@ -738,7 +739,7 @@ export default function ClassDetailsModal({ isOpen, onClose, classId, className,
                                 </div>
 
                                 <div>
-                                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-4 ml-1">Formal Justification</label>
+                                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.15em] mb-4 ml-1">Formal Justification</label>
                                     <textarea
                                         value={cancelReason}
                                         onChange={(e) => setCancelReason(e.target.value)}
@@ -751,14 +752,14 @@ export default function ClassDetailsModal({ isOpen, onClose, classId, className,
                                 <div className="flex gap-4 mt-10">
                                     <button
                                         onClick={() => setIsCancelModalOpen(false)}
-                                        className="flex-1 py-5 bg-white/20 hover:bg-white/40 text-slate-400 hover:text-identity-navy rounded-2xl font-black uppercase tracking-widest text-[10px] border border-slate-200 transition-all shadow-sm italic active:scale-95"
+                                        className="flex-1 py-5 bg-white/20 hover:bg-white/40 text-slate-400 hover:text-identity-navy rounded-2xl font-black uppercase tracking-[0.15em] text-[10px] border border-slate-200 transition-all shadow-sm italic active:scale-95"
                                     >
                                         Retain
                                     </button>
                                     <button
                                         onClick={handleCancelClass}
                                         disabled={isCancelling || !cancelDate || !cancelReason}
-                                        className="flex-1 py-5 bg-rose-500 hover:bg-rose-600 text-white rounded-2xl font-black uppercase tracking-widest text-[10px] transition-all shadow-lg shadow-rose-500/10 disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center gap-3 active:scale-95"
+                                        className="flex-1 py-5 bg-rose-500 hover:bg-rose-600 text-white rounded-2xl font-black uppercase tracking-[0.15em] text-[10px] transition-all shadow-lg shadow-rose-500/10 disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center gap-3 active:scale-95"
                                     >
                                         {isCancelling ? 'Processing...' : 'Confirm Archival'}
                                     </button>
@@ -776,7 +777,7 @@ export default function ClassDetailsModal({ isOpen, onClose, classId, className,
                                 <div>
                                     <h3 className="text-xl font-black text-identity-navy flex items-center gap-5 uppercase tracking-tight italic">
                                         <Camera className="text-identity-sky" size={28} />
-                                        Optical Evidence Fragment
+                                        Captured Image
                                     </h3>
                                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.3em] mt-3 ml-1">
                                         {snapshotModal.studentName} <span className="text-identity-sky/20 mx-3">|</span> {snapshotModal.date}
@@ -801,7 +802,7 @@ export default function ClassDetailsModal({ isOpen, onClose, classId, className,
                                 />
                             </div>
                             <div className="p-6 bg-white/40 border-t border-identity-sky/10 flex justify-center">
-                                <span className="text-[9px] font-black text-slate-300 uppercase tracking-[0.5em] italic">Encrypted Optical Ledger Evidence Protocol</span>
+                                <span className="text-[9px] font-black text-slate-300 uppercase tracking-[0.5em] italic">Captured Image</span>
                             </div>
                         </div>
                     </div>

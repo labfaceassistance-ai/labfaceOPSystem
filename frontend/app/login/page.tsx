@@ -1,40 +1,24 @@
-"use client";
+﻿"use client";
 import { useState, useEffect, Suspense, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import axios from 'axios';
-import { GraduationCap, School, User, Lock, Eye, EyeOff, Loader2, Check, Zap, ShieldCheck, ArrowRight, ChevronRight } from 'lucide-react';
+import { GraduationCap, School, ArrowRight, ChevronLeft } from 'lucide-react';
 import { useToast } from '../../components/Toast';
 import { API_URL, getToken, fetchCurrentUser } from '../../utils/auth';
-
-const IdentityNode = ({ className = "", size = 120 }) => (
-    <div className={`identity-node ${className}`} style={{ width: size, height: size }}>
-       <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
-          <g>
-             <path d="M100,30 Q60,30 50,80 T100,170 T150,80 Q140,30 100,30 Z" fill="none" stroke="currentColor" className="text-identity-sky" strokeWidth="2" />
-             <line x1="100" y1="30" x2="100" y2="170" stroke="currentColor" className="text-identity-navy" strokeWidth="1" />
-             <line x1="60" y1="80" x2="140" y2="80" stroke="currentColor" className="text-identity-navy" strokeWidth="1" />
-             <line x1="55" y1="110" x2="145" y2="110" stroke="currentColor" className="text-identity-navy" strokeWidth="1" />
-             <circle cx="75" cy="80" r="3" fill="currentColor" className="text-identity-sky" />
-             <circle cx="125" cy="80" r="3" fill="currentColor" className="text-identity-sky" />
-             <circle cx="100" cy="110" r="3" fill="currentColor" className="text-identity-sky" />
-             <circle cx="100" cy="30" r="2" fill="currentColor" className="text-identity-navy" />
-             <circle cx="100" cy="170" r="2" fill="currentColor" className="text-identity-navy" />
-             <line x1="75" y1="80" x2="100" y2="110" stroke="currentColor" className="text-identity-sky" strokeWidth="1" strokeDasharray="3 2" />
-             <line x1="125" y1="80" x2="100" y2="110" stroke="currentColor" className="text-identity-sky" strokeWidth="1" strokeDasharray="3 2" />
-          </g>
-       </svg>
-    </div>
- );
+import Button from '../../components/ui/Button';
+import InputField from '../../components/ui/InputField';
 
 export default function LoginPage() {
     return (
         <Suspense fallback={
-            <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center">
+            <div className="min-h-[70vh] flex items-center justify-center">
                 <div className="w-12 h-12 border-4 border-identity-sky/30 border-t-identity-sky rounded-full animate-spin"></div>
             </div>
         }>
-            <LoginContent />
+            <div className="flex flex-col items-center justify-center min-h-[85vh] px-6 py-20 w-full relative page-transition">
+               <LoginContent />
+            </div>
         </Suspense>
     );
 }
@@ -75,7 +59,6 @@ function LoginContent() {
     const [formData, setFormData] = useState({ userId: '', password: '' });
     const [userIdError, setUserIdError] = useState('');
     const [loading, setLoading] = useState(false);
-    const [showPassword, setShowPassword] = useState(false);
     const [rememberMe, setRememberMe] = useState(false);
     const userIdRef = useRef(formData.userId);
 
@@ -92,14 +75,8 @@ function LoginContent() {
 
             const token = getToken();
             if (token) {
-                const startTime = Date.now();
                 try {
                     const user = await fetchCurrentUser();
-                    const elapsedTime = Date.now() - startTime;
-                    const minDelay = 800;
-                    if (elapsedTime < minDelay) {
-                        await new Promise(resolve => setTimeout(resolve, minDelay - elapsedTime));
-                    }
                     if (user) {
                         const dashboardPath = user.role === 'admin' ? '/admin/dashboard' : user.role === 'professor' ? '/professor/dashboard' : '/student/dashboard';
                         router.replace(dashboardPath);
@@ -150,18 +127,18 @@ function LoginContent() {
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         let value = e.target.value;
         const name = e.target.name;
-        if (name === 'studentId' || name === 'professorId') {
+        if (name === 'userId') {
             const isBulkInput = value.length - formData.userId.length > 1;
             if (isBulkInput && canSmartSwitch) {
                 if (/^\d{5}$/.test(value) && activeTab !== 'professor') setActiveTab('professor');
                 else if ((value.includes('-') || /^\d{4}-\d{5}/.test(value)) && activeTab !== 'student') setActiveTab('student');
             }
             setUserIdError('');
-            if (activeTab === 'student') value = formatStudentId(value, (e.nativeEvent as any).inputType);
+            if (activeTab === 'student') value = formatStudentId(value);
             else value = value.replace(/\D/g, '').slice(0, 5);
             userIdRef.current = value;
             setFormData(prev => ({ ...prev, userId: value }));
-        } else if (name === 'studentPassword' || name === 'professorPassword') {
+        } else if (name === 'password') {
             setFormData(prev => ({ ...prev, password: value }));
         }
     };
@@ -169,8 +146,19 @@ function LoginContent() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setUserIdError('');
-        if (activeTab === 'student' && formData.userId.length < 15) { setUserIdError('Invalid format'); return; }
-        if (activeTab === 'professor' && formData.userId.length < 5) { setUserIdError('Invalid format'); return; }
+        
+        let isValid = true;
+        if (activeTab === 'student' && formData.userId.length < 15) { 
+            setUserIdError('INVALID STUDENT ID FORMAT'); 
+            isValid = false; 
+        }
+        if (activeTab === 'professor' && formData.userId.length < 5) { 
+            setUserIdError('INVALID PROFESSOR ID FORMAT'); 
+            isValid = false; 
+        }
+
+        if (!isValid) return;
+
         setLoading(true);
         try {
             const res = await axios.post(`${API_URL}/api/auth/login`, { ...formData, intendedRole: activeTab }, { withCredentials: true });
@@ -178,188 +166,108 @@ function LoginContent() {
             const storage = rememberMe ? localStorage : sessionStorage;
             storage.setItem('token', token);
             storage.setItem('user', JSON.stringify(user));
+            
+            showToast('Authentication Successful', 'Login protocol complete. Redirecting...', 'success');
             router.push(user.role === 'admin' ? '/admin/dashboard' : user.role === 'professor' ? '/professor/dashboard' : '/student/dashboard');
         } catch (err: any) {
-            showToast(err.response?.data?.message || 'Login failed', 'error');
+            showToast('Login Failed', err.response?.data?.message || 'Access denied. Please check your credentials.', 'error');
             setLoading(false);
         }
     };
 
     if (isCheckingAuth) {
         return (
-            <div className="min-h-screen bg-[#F8FAFC] flex flex-col items-center justify-center relative overflow-hidden">
-                <div className="w-16 h-16 border-[3px] border-identity-sky/10 border-t-identity-sky rounded-full animate-spin shadow-2xl"></div>
-                <p className="mt-8 font-black uppercase tracking-[0.4em] text-[10px] text-identity-navy animate-pulse">Synchronizing Identity...</p>
+            <div className="absolute inset-0 z-[100] flex flex-col items-center justify-center bg-white/60 backdrop-blur-md rounded-[3rem] animate-in fade-in duration-500">
+                <div className="bg-white border border-slate-200 p-12 rounded-[3rem] text-center shadow-xl">
+                    <div className="w-12 h-12 border-4 border-identity-sky/30 border-t-identity-sky rounded-full animate-spin mx-auto mb-6"></div>
+                    <h2 className="text-[10px] font-black text-identity-navy uppercase tracking-[0.15em]">Synchronizing Identity...</h2>
+                </div>
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen flex items-stretch overflow-hidden bg-[#F8FAFC] text-slate-900 font-sans relative">
-            <div className="fixed inset-0 pointer-events-none z-0 opacity-[0.12] overflow-hidden">
-                <IdentityNode className="top-[10%] left-[5%]" size={160} />
-                <IdentityNode className="bottom-[10%] right-[5%]" size={220} />
-                <IdentityNode className="top-[40%] right-[15%]" size={110} />
-                <IdentityNode className="bottom-[30%] left-[20%]" size={140} />
+        <div className="w-full max-w-xl identity-glass rounded-[3rem] shadow-xl overflow-hidden animate-fade-in relative z-10 border border-identity-sky/20">
+            {/* Header Area */}
+            <div className="bg-identity-sky/5 p-12 text-center border-b border-identity-sky/10 relative">
+                <Link href="/" className="absolute top-8 left-8 text-slate-400 hover:text-identity-navy text-[9px] font-black uppercase tracking-[0.4em] flex items-center justify-center min-h-[44px] min-w-[44px] gap-2 transition-all group">
+                    <ChevronLeft size={14} className="group-hover:-translate-x-1 transition-transform" /> 
+                    HOME
+                </Link>
+
+                <div className="w-20 h-20 bg-white border border-identity-sky/20 rounded-2xl flex items-center justify-center shadow-md mx-auto mb-6 mt-4">
+                    <img src="/logo.png" alt="LabFace" className="w-12 h-12 object-contain" />
+                </div>
+                <h1 className="text-3xl md:text-4xl font-black text-identity-navy tracking-tighter mb-2 uppercase font-outfit">SIGN IN</h1>
+                <p className="text-identity-sky text-[10px] font-black uppercase tracking-[0.15em]">Sign Into LabFace</p>
             </div>
 
-            {loading && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-white/60 backdrop-blur-md">
-                    <div className="bg-white border border-slate-200 p-12 rounded-[3rem] text-center shadow-4xl relative overflow-hidden group">
-                        <Loader2 className="animate-spin h-10 w-10 text-identity-sky mx-auto mb-6" />
-                        <h2 className="text-[10px] font-black text-identity-navy uppercase tracking-[0.3em]">Authenticating</h2>
-                    </div>
-                </div>
-            )}
-
-            <div className="hidden lg:flex lg:w-[45%] bg-white relative flex-col justify-between p-20 border-r border-slate-100 overflow-hidden z-10">
-                <div className="absolute inset-0 opacity-[0.03] bg-blueprint pointer-events-none"></div>
-                
-                <div className="flex-1 flex flex-col items-center justify-center relative z-10 w-full max-w-lg mx-auto text-center mt-[-5vh]">
-                    <div className="w-24 h-24 bg-white border border-slate-100 rounded-[2.5rem] flex items-center justify-center shadow-xl mb-12 group transition-all hover:border-identity-sky/30 identity-glass">
-                        <img src="/logo.png" alt="LabFace" className="w-14 h-14 object-contain" />
-                    </div>
-
-                    <h1 className="text-6xl font-black tracking-tighter leading-none mb-8 font-outfit uppercase">
-                        <span className="text-identity-navy">Lab</span>
-                        <span className="text-identity-sky">Face</span>
-                    </h1>
-                    
-                    <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.4em] mb-16 leading-relaxed">
-                        Advanced Biometric Security <br />
-                        Academic Environment Protocol
-                    </p>
-                    
-                    <div className="grid grid-cols-2 gap-4 w-full">
-                        <div className="bg-slate-50 border border-slate-100 p-8 rounded-3xl flex flex-col items-center hover:bg-white hover:shadow-xl transition-all cursor-default group">
-                            <h3 className="text-xl font-black text-identity-navy tracking-tighter mb-1 uppercase">Fast</h3>
-                            <p className="text-[8px] font-black text-identity-sky uppercase tracking-[0.3em]">ZERO_LATENCY</p>
-                        </div>
-                        <div className="bg-slate-50 border border-slate-100 p-8 rounded-3xl flex flex-col items-center hover:bg-white hover:shadow-xl transition-all cursor-default group">
-                            <h3 className="text-xl font-black text-identity-navy tracking-tighter mb-1 uppercase">Secure</h3>
-                            <p className="text-[8px] font-black text-identity-sky uppercase tracking-[0.3em]">ENCRYPTED_L9</p>
-                        </div>
-                    </div>
+            <div className="p-12">
+                <div className="flex bg-slate-100/80 p-2 rounded-2xl border border-slate-200 w-full shadow-sm mb-10">
+                    {['student', 'professor'].map((role) => (
+                        <button
+                            key={role}
+                            type="button"
+                            className={`flex-1 py-4 rounded-2xl text-[10px] font-black uppercase tracking-[0.15em] transition-all flex items-center justify-center min-h-[44px] gap-4 ${activeTab === role ? 'bg-identity-sky text-white shadow-lg' : 'text-slate-400 hover:text-identity-navy'}`}
+                            onClick={() => setActiveTab(role as any)}
+                        >
+                            {role === 'student' ? <GraduationCap size={18} /> : <School size={18} />}
+                            {role}
+                        </button>
+                    ))}
                 </div>
 
-                <div className="relative z-10 flex flex-col gap-4">
-                    <div className="flex items-center gap-3 text-[9px] font-black uppercase tracking-[0.4em] text-slate-400">
-                        <ShieldCheck size={16} className="text-identity-sky/50" />
-                        <span>LOCATION: PUP_LOPEZ_CAMPUS</span>
-                    </div>
-                    <div className="flex items-center gap-3 text-[9px] font-black uppercase tracking-[0.4em] text-identity-navy">
-                        <span className="w-2 h-2 rounded-full bg-identity-sky animate-pulse shadow-[0_0_8px_rgba(92,180,228,0.8)]"></span>
-                        <span>SYSTEM_STATUS: ONLINE</span>
-                    </div>
-                </div>
-            </div>
+                <form onSubmit={handleSubmit} className="space-y-8 animate-in fade-in zoom-in-95 duration-300">
+                    <InputField
+                        label={activeTab === 'student' ? "STUDENT ID REFERENCE" : "PROFESSOR ID REFERENCE"}
+                        name="userId"
+                        value={formData.userId}
+                        onChange={handleInputChange}
+                        error={userIdError}
+                        isRequired
+                        isValid={activeTab === 'student' ? formData.userId.length === 15 : formData.userId.length === 5}
+                        placeholder={activeTab === 'student' ? "YYYY-NNNNN-XX-N" : "XXXXX"}
+                    />
 
-            <div className="flex-1 flex flex-col relative overflow-hidden bg-[#F8FAFC] p-8 sm:p-20 z-10">
-                
-                <div className="absolute top-12 left-12 z-20">
-                    <Link href="/" className="text-slate-400 hover:text-identity-navy text-[9px] font-black uppercase tracking-[0.4em] flex items-center gap-2 transition-all group">
-                        <ChevronRight size={14} className="rotate-180 group-hover:-translate-x-1 transition-transform" /> 
-                        Return to Home
-                    </Link>
-                </div>
+                    <InputField
+                        label="PASSKEY"
+                        name="password"
+                        type="password"
+                        value={formData.password}
+                        onChange={handleInputChange}
+                        isRequired
+                        isValid={formData.password.length >= 8}
+                        placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
+                    />
 
-                <div className="flex-1 flex flex-col justify-center items-center relative z-10 w-full">
-                    
-                    <div className="max-w-md w-full space-y-12 animate-fade-in">
-                        <div className="text-center">
-                            <h2 className="text-5xl font-black text-identity-navy tracking-tighter mb-3 uppercase font-outfit">Login</h2>
-                            <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.5em]">Identity Verification Portal</p>
-                        </div>
-
-                        <div className="flex bg-slate-100 p-1.5 rounded-2xl border border-slate-200 w-full shadow-sm">
-                            {['student', 'professor'].map((role) => (
-                                <button
-                                    key={role}
-                                    type="button"
-                                    className={`flex-1 py-4 rounded-xl text-[10px] font-black uppercase tracking-[0.3em] transition-all flex items-center justify-center gap-3 ${activeTab === role ? 'bg-identity-sky text-white shadow-lg' : 'text-slate-400 hover:text-identity-navy'}`}
-                                    onClick={() => setActiveTab(role as any)}
-                                >
-                                    {role === 'student' ? <GraduationCap size={18} /> : <School size={18} />}
-                                    {role}
-                                </button>
-                            ))}
-                        </div>
-
-                        <form onSubmit={handleSubmit} className="space-y-6">
-                            <div className="space-y-3 group">
-                                <label className="block text-[9px] font-black text-slate-500 uppercase tracking-[0.3em] ml-2">
-                                    {activeTab === 'student' ? 'Student ID' : 'Professor ID'}
-                                </label>
-                                <div className="relative">
-                                    <div className="absolute inset-y-0 left-6 flex items-center pointer-events-none text-slate-300 group-focus-within:text-identity-sky transition-colors">
-                                        <User size={18} />
-                                    </div>
-                                    <input
-                                        name={activeTab === 'student' ? "studentId" : "professorId"}
-                                        type="text"
-                                        required
-                                        value={formData.userId}
-                                        onChange={handleInputChange}
-                                        className={`block w-full pl-16 pr-6 py-5 bg-white border ${userIdError ? 'border-rose-400' : 'border-slate-200'} rounded-2xl text-identity-navy text-xs font-black uppercase tracking-widest focus:border-identity-sky focus:ring-4 focus:ring-identity-sky/5 outline-none transition-all placeholder:text-slate-200 shadow-sm`}
-                                        placeholder={activeTab === 'student' ? "YYYY-NNNNN-XX-N" : "XXXXX"}
-                                    />
-                                </div>
-                                {userIdError && <p className="mt-2 text-[9px] font-black text-rose-500 uppercase tracking-widest ml-2 italic">{userIdError}</p>}
+                    <div className="flex items-center justify-between pt-2">
+                        <label className="flex items-center gap-4 cursor-pointer group min-h-[44px]">
+                            <div className="relative flex items-center justify-center w-5 h-5">
+                                <input type="checkbox" checked={rememberMe} onChange={(e) => setRememberMe(e.target.checked)} className="peer hidden" />
+                                <div className="w-full h-full border border-slate-200 bg-white rounded-lg group-hover:border-identity-sky/50 peer-checked:bg-identity-sky peer-checked:border-identity-sky transition-all shadow-sm"></div>
+                                <svg className="absolute text-white opacity-0 peer-checked:opacity-100 transition-opacity w-3 h-3" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
                             </div>
-
-                            <div className="space-y-3 group">
-                                <label className="block text-[9px] font-black text-slate-500 uppercase tracking-[0.3em] ml-2">Password</label>
-                                <div className="relative">
-                                    <div className="absolute inset-y-0 left-6 flex items-center pointer-events-none text-slate-300 group-focus-within:text-identity-sky transition-colors">
-                                        <Lock size={18} />
-                                    </div>
-                                    <input
-                                        name={activeTab === 'student' ? "studentPassword" : "professorPassword"}
-                                        type={showPassword ? "text" : "password"}
-                                        required
-                                        value={formData.password}
-                                        onChange={handleInputChange}
-                                        className="block w-full pl-16 pr-16 py-5 bg-white border border-slate-200 rounded-2xl text-identity-navy text-xs font-black tracking-widest focus:border-identity-sky focus:ring-4 focus:ring-identity-sky/5 outline-none transition-all placeholder:text-slate-200 shadow-sm"
-                                        placeholder="••••••••"
-                                    />
-                                    <button
-                                        type="button"
-                                        className="absolute inset-y-0 right-6 flex items-center text-slate-300 hover:text-identity-sky transition-colors"
-                                        onClick={() => setShowPassword(!showPassword)}
-                                    >
-                                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                                    </button>
-                                </div>
-                            </div>
-
-                            <div className="flex items-center justify-between pt-2">
-                                <label className="flex items-center gap-3 cursor-pointer group">
-                                    <div className="relative flex items-center justify-center w-5 h-5">
-                                        <input type="checkbox" checked={rememberMe} onChange={(e) => setRememberMe(e.target.checked)} className="peer hidden" />
-                                        <div className="w-full h-full border border-slate-200 bg-white rounded-lg group-hover:border-identity-sky/50 peer-checked:bg-identity-sky peer-checked:border-identity-sky transition-all"></div>
-                                        <Check className="absolute text-white opacity-0 peer-checked:opacity-100 transition-opacity" size={14} strokeWidth={4} />
-                                    </div>
-                                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] group-hover:text-identity-navy transition-colors">Keep me signed in</span>
-                                </label>
-                                <Link href="/forgot-password" className="text-[9px] font-black text-identity-sky hover:text-identity-navy uppercase tracking-[0.2em] transition-colors">
-                                    Forgot password?
-                                </Link>
-                            </div>
-
-                            <button
-                                type="submit"
-                                disabled={loading}
-                                className="w-full py-6 mt-8 bg-identity-sky text-white rounded-2xl font-black uppercase tracking-[0.4em] text-[11px] shadow-2xl hover:bg-identity-navy transition-all active:scale-[0.98] group flex items-center justify-center gap-3"
-                            >
-                                Sign In
-                                <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
-                            </button>
-                        </form>
-
-                        <div className="mt-12 text-center text-slate-400 text-[9px] font-black uppercase tracking-[0.3em]">
-                            Don't have an account? <Link href="/register/student" className="text-identity-sky ml-2 hover:text-identity-navy transition-colors underline underline-offset-[8px] decoration-1 decoration-identity-sky/30 font-black">Register Here</Link>
-                        </div>
+                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] group-hover:text-identity-navy transition-colors">MAINTAIN ACTIVE SESSION</span>
+                        </label>
+                        <Link href="/forgot-password" className="text-[9px] font-black text-identity-sky hover:text-identity-navy uppercase tracking-[0.2em] transition-colors min-h-[44px] flex items-center">
+                            RESET ACCESS
+                        </Link>
                     </div>
+
+                    <Button
+                        type="submit"
+                        isLoading={loading}
+                        variant="primary"
+                        size="xl"
+                        className="w-full mt-8"
+                    >
+                        SIGN IN PROTOCOL
+                        <ArrowRight size={18} className="ml-3" />
+                    </Button>
+                </form>
+
+                <div className="mt-12 text-center text-slate-400 text-[9px] font-black uppercase tracking-[0.15em] border-t border-slate-100 pt-8">
+                    NEW TO LABFACE? <Link href="/register/student" className="text-identity-sky ml-2 hover:text-identity-navy transition-colors underline underline-offset-[8px] decoration-2 decoration-identity-sky/30 font-black">CREATE AN ACCOUNT</Link>
                 </div>
             </div>
         </div>
