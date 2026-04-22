@@ -6,6 +6,8 @@ import { registerServiceWorker } from "../lib/offline";
 import UpdateManager from "../components/UpdateManager";
 import { ThemeProvider } from "../components/ThemeProvider";
 
+import { NavigationProvider } from "../context/NavigationContext";
+
 export default function Providers({ children }: { children: React.ReactNode }) {
     useEffect(() => {
         // Register Service Worker for offline support
@@ -40,8 +42,10 @@ export default function Providers({ children }: { children: React.ReactNode }) {
         <ThemeProvider>
             <PersonalizationProvider>
                 <ToastProvider>
-                    <UpdateManager />
-                    {children}
+                    <NavigationProvider>
+                        <UpdateManager />
+                        {children}
+                    </NavigationProvider>
                 </ToastProvider>
             </PersonalizationProvider>
         </ThemeProvider>

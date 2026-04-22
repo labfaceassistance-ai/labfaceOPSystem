@@ -64,6 +64,16 @@ export default function FaceEnrollmentScanner({
     const [faceDetected,   setFaceDetected]   = useState(false);
     const [mpReady,        setMpReady]        = useState(false);
 
+    // Finalization Loading State
+    const [isFinalizing,   setIsFinalizing]   = useState(false);
+
+    // Selective Update State
+    const [targetAngles,   setTargetAngles]   = useState<string[]>(['front', 'left', 'right', 'up', 'down']);
+    const [sessionCompleted, setSessionCompleted] = useState<string[]>([]);
+    const targetAnglesRef  = useRef<string[]>(['front', 'left', 'right', 'up', 'down']);
+
+    useEffect(() => { targetAnglesRef.current = targetAngles; }, [targetAngles]);
+
     // Keep refs in sync whenever state updates
     useEffect(() => { currentStepRef.current = currentStep; },   [currentStep]);
     useEffect(() => { statusRef.current      = status; },        [status]);
@@ -96,38 +106,83 @@ export default function FaceEnrollmentScanner({
         return 'unknown';
     };
 
+    // ── Voice Guidance Logic ─────────────────────────────────────────
+    const lastSpokenRef = useRef<string>('');
+    const diagnosticTimerRef = useRef<number>(0);
+    const lastStabilityRef = useRef<number>(0);
+
+    const speak = useCallback((text: string, force = false) => {
+        if (typeof window === 'undefined' || !window.speechSynthesis) return;
+        
+        // Prevent repeating the same instruction too frequently unless forced
+        if (!force && (lastSpokenRef.current === text && window.speechSynthesis.speaking)) return;
+        
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.rate = 0.95; // Slightly slower for clarity
+        utterance.pitch = 1.05; // Slightly higher for a friendly natural tone
+        
+        const voices = window.speechSynthesis.getVoices();
+        // Prefer natural-sounding voices if available
+        const preferredVoice = voices.find(v => v.name.includes('Google US English') || v.name.includes('Natural')) || voices[0];
+        if (preferredVoice) utterance.voice = preferredVoice;
+        
+        lastSpokenRef.current = text;
+        window.speechSynthesis.speak(utterance);
+    }, []);
+
     const capturePhoto = useCallback((imageSrc: string) => {
         const step  = currentStepRef.current;
-        const angle = ANGLES[step].id;
-        const updated = { ...capturesRef.current, [angle]: imageSrc };
+        const angleId = ANGLES[step].id;
+        const updated = { ...capturesRef.current, [angleId]: imageSrc };
 
         capturesRef.current = updated;
         setCaptures({ ...updated });
         setStabilityScore(0);
         stabilityRef.current = 0;
+        lastStabilityRef.current = 0;
+        diagnosticTimerRef.current = 0;
 
-        const nextEmpty = ANGLES.findIndex((a, idx) => idx > step && !updated[a.id]);
-        if (nextEmpty !== -1) {
-            currentStepRef.current = nextEmpty;
-            setCurrentStep(nextEmpty);
-            statusRef.current = 'DETECTING';
-            setStatus('DETECTING');
-        } else {
-            const allDone = ANGLES.every(a => updated[a.id]);
-            if (allDone) {
+        // Track session completion
+        setSessionCompleted(prev => {
+            const nextSession = Array.from(new Set([...prev, angleId]));
+            const isFinished = targetAnglesRef.current.every(t => nextSession.includes(t));
+            
+            if (isFinished) {
                 statusRef.current = 'SUCCESS';
                 setStatus('SUCCESS');
                 isCapturingRef.current = false;
                 setIsCapturing(false);
+                speak("Verification sequence complete. Selected face data secured.", true);
             } else {
-                const firstEmpty = ANGLES.findIndex(a => !updated[a.id]);
-                if (firstEmpty !== -1) {
-                    currentStepRef.current = firstEmpty;
-                    setCurrentStep(firstEmpty);
+                // Find next target angle that hasn't been captured this session
+                const nextTargetIdx = ANGLES.findIndex((a, idx) => 
+                    targetAnglesRef.current.includes(a.id) && !nextSession.includes(a.id)
+                );
+                
+                if (nextTargetIdx !== -1) {
+                    currentStepRef.current = nextTargetIdx;
+                    setCurrentStep(nextTargetIdx);
+                    statusRef.current = 'DETECTING';
+                    setStatus('DETECTING');
+                    speak(ANGLES[nextTargetIdx].instruction, true);
                 }
             }
+            return nextSession;
+        });
+    }, [speak]);
+
+    const handleFinalize = async () => {
+        setIsFinalizing(true);
+        try {
+            await onCompleteRef.current(capturesRef.current);
+        } catch (err) {
+            console.error("Finalization failed:", err);
+            // We keep the state so user can retry
+        } finally {
+            setIsFinalizing(false);
         }
-    }, []);
+    };
 
     useEffect(() => {
         let cancelled = false;
@@ -160,18 +215,37 @@ export default function FaceEnrollmentScanner({
                     ctx.clearRect(0, 0, canvas.width, canvas.height);
                     const detected = results.multiFaceLandmarks?.length > 0;
                     setFaceDetected(detected);
+                    
                     if (!detected) {
                         stabilityRef.current = 0;
                         setStabilityScore(0);
                         if (isCapturingRef.current) setFeedback('Position your face in the frame');
                         return;
                     }
+                    
                     if (statusRef.current === 'SUCCESS') return;
+                    
                     const landmarks = results.multiFaceLandmarks[0];
                     const step      = currentStepRef.current;
                     const angle     = ANGLES[step];
                     const meshColor = angle?.meshColor ?? '#0ea5e9';
                     const { width, height } = canvas;
+
+                    // ── Diagnostic Logic ─────────────────────────────────────
+                    const leftEye = landmarks[33];
+                    const rightEye = landmarks[263];
+                    const eyeDistance = Math.sqrt(Math.pow(rightEye.x - leftEye.x, 2) + Math.pow(rightEye.y - leftEye.y, 2));
+                    
+                    // 1. Distance Check
+                    if (eyeDistance < 0.15) {
+                        setFeedback('Face too far. Please step closer.');
+                        if (Date.now() - diagnosticTimerRef.current > 4000) {
+                            speak("Please step closer to the camera.", true);
+                            diagnosticTimerRef.current = Date.now();
+                        }
+                        return;
+                    }
+
                     const drawConn = (conns: number[][], color: string, lw: number) => {
                         ctx.strokeStyle = color;
                         ctx.lineWidth   = lw;
@@ -196,9 +270,12 @@ export default function FaceEnrollmentScanner({
                         ctx.arc(pt.x * width, pt.y * height, 3, 0, Math.PI * 2);
                         ctx.fill();
                     }
+                    
                     if (!isCapturingRef.current) return;
+                    
                     const pose        = detectPose(landmarks);
                     const targetAngle = angle?.id;
+
                     if (pose === targetAngle) {
                         const next = stabilityRef.current + 1;
                         stabilityRef.current = next;
@@ -207,16 +284,38 @@ export default function FaceEnrollmentScanner({
                         setStatus('STABILIZING');
                         setStabilityScore(next);
                         setFeedback(`Hold steady... ${pct}%`);
+                        
                         if (next >= STABILITY_THRESHOLD) {
                             const img = webcamRef.current?.getScreenshot();
                             if (img) capturePhoto(img);
                         }
+                        diagnosticTimerRef.current = Date.now(); // Reset diagnostic timer while progressing
                     } else {
                         stabilityRef.current = 0;
                         setStabilityScore(0);
                         statusRef.current = 'DETECTING';
                         setStatus('DETECTING');
                         setFeedback(`Looking for ${angle?.label}...`);
+
+                        // Immediate Correction Logic
+                        if (pose !== 'unknown' && pose !== targetAngle && pose !== null) {
+                            let correction = "";
+                            if (targetAngle === 'left' && pose === 'right') correction = "You are turning right. Please turn left.";
+                            if (targetAngle === 'right' && pose === 'left') correction = "You are turning left. Please turn right.";
+                            if (targetAngle === 'front' && pose !== 'front') correction = "Please look straight at the camera.";
+                            
+                            if (correction && (Date.now() - diagnosticTimerRef.current > 3000)) {
+                                speak(correction, true);
+                                diagnosticTimerRef.current = Date.now();
+                            }
+                        }
+
+                        // Diagnostic Stall Warning
+                        if (diagnosticTimerRef.current === 0) diagnosticTimerRef.current = Date.now();
+                        if (Date.now() - diagnosticTimerRef.current > 7000) {
+                            speak("I am having trouble capturing your pose. Please ensure you are not wearing glasses or a hat, and ensure your face is fully visible in a bright area.", true);
+                            diagnosticTimerRef.current = Date.now();
+                        }
                     }
                 });
                 if (!cancelled) {
@@ -239,8 +338,9 @@ export default function FaceEnrollmentScanner({
         return () => {
             cancelled = true;
             if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
+            if (window.speechSynthesis) window.speechSynthesis.cancel();
         };
-    }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    }, [capturePhoto, speak]); // eslint-disable-line react-hooks/exhaustive-deps
 
     const runLoop = useCallback(async () => {
         const video = webcamRef.current?.video;
@@ -274,35 +374,55 @@ export default function FaceEnrollmentScanner({
         if (isCapturing && status !== 'SUCCESS') {
             setStatus('DETECTING');
             statusRef.current = 'DETECTING';
+            const instruction = ANGLES[currentStep].instruction;
             setFeedback(`Looking for ${ANGLES[currentStep].label}...`);
+            speak(instruction, true);
         }
-    }, [currentStep]); // eslint-disable-line react-hooks/exhaustive-deps
+    }, [currentStep, speak]); // eslint-disable-line react-hooks/exhaustive-deps
 
     const resetScanner = () => {
-        capturesRef.current  = {};
-        currentStepRef.current = 0;
+        setSessionCompleted([]);
+        currentStepRef.current = ANGLES.findIndex(a => targetAngles.includes(a.id));
         stabilityRef.current = 0;
         isCapturingRef.current = true;
         statusRef.current    = 'DETECTING';
-        setCaptures({});
-        setCurrentStep(0);
+        setCurrentStep(currentStepRef.current);
         setStabilityScore(0);
         setIsCapturing(true);
         setStatus('DETECTING');
-        setFeedback(`Looking for ${ANGLES[0].label}...`);
+        setFeedback(`Looking for ${ANGLES[currentStepRef.current].label}...`);
+        speak(ANGLES[currentStepRef.current].instruction, true);
     };
 
     const handleStart = () => {
+        if (targetAngles.length === 0) {
+            speak("Please select at least one angle to update.", true);
+            return;
+        }
+        setSessionCompleted([]);
+        const firstTarget = ANGLES.findIndex(a => targetAngles.includes(a.id));
+        currentStepRef.current = firstTarget;
         isCapturingRef.current = true;
         statusRef.current      = 'DETECTING';
         setIsCapturing(true);
         setStatus('DETECTING');
-        setFeedback(`Looking for ${ANGLES[0].label}...`);
+        setCurrentStep(firstTarget);
+        setFeedback(`Looking for ${ANGLES[firstTarget].label}...`);
+        
+        const angleList = targetAngles.map(id => ANGLES.find(a => a.id === id)?.label).join(", ");
+        speak(`Starting update for: ${angleList}. ${ANGLES[firstTarget].instruction}`, true);
+        
         animFrameRef.current   = requestAnimationFrame(runLoop);
     };
 
+    const toggleTarget = (id: string) => {
+        setTargetAngles(prev => 
+            prev.includes(id) ? prev.filter(a => a !== id) : [...prev, id]
+        );
+    };
+
     return (
-        <div className="w-full max-w-2xl mx-auto space-y-6">
+        <div className="w-full max-w-2xl mx-auto space-y-6 animate-fade-in">
             {/* ── Header HUD: Navy/Sky Premium ─────────────────────────────────── */}
             <div className="bg-identity-navy px-8 py-6 rounded-3xl border border-white/5 relative overflow-hidden shadow-2xl">
                 <div className="absolute inset-0 bg-gradient-to-br from-identity-sky/10 via-transparent to-transparent pointer-events-none" />
@@ -310,11 +430,11 @@ export default function FaceEnrollmentScanner({
                     <div>
                         <h3 className="text-white font-black uppercase text-base tracking-tight flex items-center gap-3 leading-none mb-1.5 font-outfit">
                             <Scan size={18} className="text-identity-sky animate-pulse shrink-0" />
-                            Face Registration
+                            Biometric Sync
                         </h3>
                         <p className="text-slate-400 text-[9px] font-black uppercase tracking-[0.3em] flex items-center gap-2">
                             <Zap size={9} className="text-identity-sky animate-pulse" />
-                            {mpReady ? 'AI Vision Core v2.0' : 'Initializing Logic...'}
+                            {targetAngles.length} Targets Selected
                         </p>
                     </div>
                     {/* Step progress dots */}
@@ -323,15 +443,25 @@ export default function FaceEnrollmentScanner({
                             <button
                                 key={i}
                                 type="button"
-                                onClick={() => { if (isCapturing && status !== 'SUCCESS') { currentStepRef.current = i; setCurrentStep(i); }}}
+                                onClick={() => { 
+                                    if (status === 'IDLE') toggleTarget(a.id);
+                                    if (isCapturing && status !== 'SUCCESS' && targetAngles.includes(a.id)) { 
+                                        currentStepRef.current = i; 
+                                        setCurrentStep(i); 
+                                    }
+                                }}
                                 title={a.label}
-                                className={`h-11 w-11 flex items-center justify-center transition-all duration-500 rounded-xl group`}
+                                className={`h-11 w-11 flex items-center justify-center transition-all duration-500 rounded-xl group relative`}
                             >
                                 <div className={`h-2 rounded-full transition-all duration-500 border border-white/5 ${
                                     i === currentStep          ? 'bg-identity-sky w-8 border-identity-sky/50 shadow-[0_0_12px_rgba(14,165,233,0.4)]' :
-                                    captures[a.id]             ? 'bg-identity-sky/40 w-2.5' :
+                                    sessionCompleted.includes(a.id) ? 'bg-emerald-500 w-2.5' :
+                                    targetAngles.includes(a.id)    ? 'bg-identity-sky/40 w-2.5' :
                                                                   'bg-white/10 w-2.5'
                                 }`} />
+                                {targetAngles.includes(a.id) && status === 'IDLE' && (
+                                    <span className="absolute -top-1 -right-1 w-2 h-2 bg-identity-sky rounded-full animate-ping" />
+                                )}
                             </button>
                         ))}
                     </div>
@@ -354,15 +484,33 @@ export default function FaceEnrollmentScanner({
                             </div>
                         ) : (
                             <div className="text-center space-y-8 px-12">
-                                <p className="text-slate-400 text-[9px] font-black uppercase tracking-[0.4em]">
-                                    Multi-Angle Face Registration
-                                </p>
+                                <div className="space-y-4">
+                                    <p className="text-slate-400 text-[9px] font-black uppercase tracking-[0.4em]">
+                                        Custom Sync Target
+                                    </p>
+                                    <div className="flex flex-wrap justify-center gap-3">
+                                        {ANGLES.map(a => (
+                                            <button
+                                                key={a.id}
+                                                onClick={() => toggleTarget(a.id)}
+                                                className={`px-4 py-2 rounded-xl text-[8px] font-black uppercase tracking-[0.2em] border transition-all ${
+                                                    targetAngles.includes(a.id)
+                                                        ? 'bg-identity-sky text-white border-identity-sky shadow-lg shadow-identity-sky/20'
+                                                        : 'bg-white/5 text-slate-500 border-white/10 hover:bg-white/10'
+                                                }`}
+                                            >
+                                                {a.label}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
                                 <button
                                     type="button"
                                     onClick={handleStart}
-                                    className="bg-identity-sky text-white px-12 py-5 rounded-2xl font-black uppercase text-[10px] tracking-[0.25em] shadow-2xl shadow-identity-sky/20 hover:bg-white hover:text-identity-navy transition-all active:scale-95 border border-identity-sky"
+                                    disabled={targetAngles.length === 0}
+                                    className="bg-identity-sky text-white px-12 py-5 rounded-2xl font-black uppercase text-[10px] tracking-[0.25em] shadow-2xl shadow-identity-sky/20 hover:bg-white hover:text-identity-navy disabled:opacity-30 disabled:hover:bg-identity-sky transition-all active:scale-95 border border-identity-sky"
                                 >
-                                    Start Setup
+                                    Start Targeted Setup
                                 </button>
                             </div>
                         )}
@@ -424,26 +572,31 @@ export default function FaceEnrollmentScanner({
                 {status === 'SUCCESS' && (
                     <div className="absolute inset-0 bg-identity-navy/98 backdrop-blur-3xl z-40 flex flex-col items-center justify-center px-16 text-center animate-fade-in">
                         <div className="w-24 h-24 bg-identity-sky/10 text-identity-sky rounded-[2.5rem] flex items-center justify-center mb-10 border border-identity-sky/20 shadow-2xl">
-                            <CheckCircle size={56} />
+                            {isFinalizing ? <Loader2 size={56} className="animate-spin text-identity-sky" /> : <CheckCircle size={56} />}
                         </div>
-                        <h4 className="text-3xl md:text-4xl font-black text-white uppercase tracking-tight mb-4 font-outfit">Face Saved</h4>
+                        <h4 className="text-3xl md:text-4xl font-black text-white uppercase tracking-tight mb-4 font-outfit">
+                            {isFinalizing ? "Synchronizing..." : "Face Saved"}
+                        </h4>
                         <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.2em] mb-12 max-w-sm leading-relaxed">
-                            Photos successfully uploaded and saved.
+                            {isFinalizing ? "Uploading biometric data to Neural Matrix core. Do not close this window." : "Photos successfully uploaded and saved."}
                         </p>
                         <div className="flex gap-5">
                             <button
                                 type="button"
                                 onClick={resetScanner}
-                                className="bg-white/5 text-slate-300 px-10 py-5 rounded-2xl font-black uppercase text-[10px] tracking-[0.15em] hover:bg-white/10 transition-all border border-white/5"
+                                disabled={isFinalizing}
+                                className="bg-white/5 text-slate-300 px-10 py-5 rounded-2xl font-black uppercase text-[10px] tracking-[0.15em] hover:bg-white/10 transition-all border border-white/5 disabled:opacity-20"
                             >
                                 Retake Photo
                             </button>
                             <button
                                 type="button"
-                                onClick={() => onCompleteRef.current(capturesRef.current)}
-                                className="bg-identity-sky text-white px-14 py-5 rounded-2xl font-black uppercase text-[10px] tracking-[0.25em] shadow-2xl shadow-identity-sky/30 hover:bg-white hover:text-identity-navy transition-all active:scale-95 border border-identity-sky"
+                                onClick={handleFinalize}
+                                disabled={isFinalizing}
+                                className="bg-identity-sky text-white px-14 py-5 rounded-2xl font-black uppercase text-[10px] tracking-[0.25em] shadow-2xl shadow-identity-sky/30 hover:bg-white hover:text-identity-navy transition-all active:scale-95 border border-identity-sky flex items-center gap-3 disabled:opacity-50 disabled:hover:bg-identity-sky disabled:hover:text-white"
                             >
-                                Finalize Capture
+                                {isFinalizing && <Loader2 size={14} className="animate-spin" />}
+                                {isFinalizing ? "Synchronizing Logic..." : "Finalize Capture"}
                             </button>
                         </div>
                     </div>
@@ -466,7 +619,13 @@ export default function FaceEnrollmentScanner({
                             <button
                                 key={i}
                                 type="button"
-                                onClick={() => { if (isCapturing && status !== 'SUCCESS') { currentStepRef.current = i; setCurrentStep(i); }}}
+                                onClick={() => { 
+                                    if (status === 'IDLE') toggleTarget(angle.id);
+                                    if (isCapturing && status !== 'SUCCESS' && targetAngles.includes(angle.id)) { 
+                                        currentStepRef.current = i; 
+                                        setCurrentStep(i); 
+                                    }
+                                }}
                                 className={`w-11 h-11 sm:w-14 sm:h-14 rounded-full border transition-all duration-500 overflow-hidden shadow-2xl hover:scale-110 hover:z-50 min-h-[44px] min-w-[44px] flex items-center justify-center ${
                                     i === currentStep
                                         ? 'border-identity-sky scale-110 sm:scale-125 ring-2 sm:ring-4 ring-identity-sky/20 z-40'

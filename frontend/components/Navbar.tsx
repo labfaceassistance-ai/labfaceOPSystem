@@ -1,11 +1,11 @@
 "use client";
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Menu, X, LogOut, User, LayoutDashboard, GraduationCap, School, Bell, Brain } from 'lucide-react';
-import { useState, useEffect } from 'react';
-import Image from 'next/image';
-import { getToken, getUser, logout, API_URL, getBackendUrl, getProfilePictureUrl } from '@/utils/auth';
+import { Menu, X, LogOut, User, Bell, ChevronRight, Home as HomeIcon } from 'lucide-react';
+import { getToken, getUser, logout } from '@/utils/auth';
 import NotificationCenter from './NotificationCenter';
+import { useNavigation } from '@/context/NavigationContext';
 
 interface UserData {
     id: number;
@@ -17,12 +17,10 @@ interface UserData {
 
 export default function Navbar() {
     const [isOpen, setIsOpen] = useState(false);
-    const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
     const pathname = usePathname();
     const [user, setUser] = useState<UserData | null>(null);
     const [scrolled, setScrolled] = useState(false);
-    const [visible, setVisible] = useState(true);
-    const [lastScrollY, setLastScrollY] = useState(0);
+    const { tabs, activeTab, setActiveTab } = useNavigation();
 
     useEffect(() => {
         const storedUser = getUser();
@@ -34,213 +32,148 @@ export default function Navbar() {
             setUser(null);
         }
 
-        const handleScroll = () => {
-            const currentScrollY = window.scrollY;
-            
-            // Background blur effect
-            setScrolled(currentScrollY > 20);
-
-            // Hide/Show logic
-            if (currentScrollY > lastScrollY && currentScrollY > 10) {
-                setVisible(false); // Scrolling down
-            } else {
-                setVisible(true); // Scrolling up
-            }
-            
-            setLastScrollY(currentScrollY);
-        };
-
+        const handleScroll = () => setScrolled(window.scrollY > 20);
         window.addEventListener('scroll', handleScroll);
         return () => window.removeEventListener('scroll', handleScroll);
-    }, [lastScrollY]);
+    }, []);
 
     const handleLogout = () => {
         logout();
     };
 
     const isAuthPage = pathname === '/login' || pathname.startsWith('/register');
-
     const isHomePage = pathname === '/';
+    const isPrivacyPage = pathname === '/privacy-policy';
 
     return (
-        <nav className={`fixed w-full z-50 transition-all duration-500 identity-glass border-b border-identity-sky/10 shadow-lg py-2 ${visible ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'}`}>
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="flex items-center justify-between h-16">
-                    <div className="flex items-center">
-                        <Link href={user ? (
-                            user.role.includes('admin') ? '/admin/dashboard' :
-                                user.role.includes('professor') ? '/professor/dashboard' :
-                                    user.role.includes('student') ? '/student/dashboard' :
-                                        '/'
-                        ) : '/'} className="flex items-center gap-3 group">
-                            <div className="relative h-10 w-10 bg-white rounded-full overflow-hidden shadow-xl group-hover:scale-105 transition-transform border border-identity-sky/20">
-                                <Image src="/logo.png" alt="LabFace Logo" width={40} height={40} className="object-cover" />
-                            </div>
-                            <div className={`font-bold text-xl sm:text-2xl tracking-tight leading-none`}>
-                                <span className="text-identity-navy drop-shadow-sm">Lab</span>
-                                <span className="text-identity-sky drop-shadow-sm">Face</span>
-                            </div>
-                        </Link>
-                    </div>
+        <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 font-outfit ${
+            scrolled 
+            ? 'h-16 bg-white/95 backdrop-blur-2xl shadow-md border-b border-slate-200' 
+            : 'h-20 bg-white/80 backdrop-blur-xl border-b border-slate-100/80 shadow-sm'
+        }`}>
+            <div className="max-w-7xl mx-auto h-full px-6 flex items-center justify-between">
+                {/* Logo Section */}
+                <div className="flex items-center space-x-12">
+                    <Link href="/" className="flex items-center space-x-3 group transition-transform hover:scale-105 active:scale-95">
+                        <div className="relative w-10 h-10 overflow-hidden rounded-full border border-slate-200 bg-white p-2 group-hover:border-identity-sky transition-colors">
+                            <img src="/logo.png" alt="Logo" className="w-full h-full object-contain" />
+                        </div>
+                        <span className="text-xl font-black text-identity-navy tracking-tight group-hover:text-identity-sky transition-colors">
+                            Lab<span className="text-identity-sky group-hover:text-identity-navy">Face</span>
+                        </span>
+                    </Link>
+                </div>
 
-                    <div className="hidden md:block">
-                        <div className="ml-10 flex items-baseline space-x-4">
-
-
-
-                            {user && !isAuthPage && (
-                                <div className="flex items-center gap-4 relative">
-                                    {!isHomePage && (
-                                        <>
-                                            {/* Enhanced Notification Center - Hide for Admins */}
-                                            {!user.role.includes('admin') && <NotificationCenter />}
-                                            <Link href={
-                                                user.role.toLowerCase().includes('admin') ? '/admin/profile' :
-                                                    user.role.toLowerCase().includes('professor') ? '/professor/profile' :
-                                                        '/student/profile'
-                                            }
-                                                className="flex items-center gap-2 group"
-                                                title="Edit Profile">
-                                                <div className="w-10 h-10 rounded-full bg-identity-navy flex items-center justify-center text-white font-bold border-2 border-slate-200 group-hover:border-identity-sky transition-all shadow-lg overflow-hidden">
-                                                    {user.profilePicture ? (
-                                                        <img
-                                                            src={getProfilePictureUrl(user.profilePicture) || ''}
-                                                            alt="Profile"
-                                                            className="w-full h-full object-cover"
-                                                        />
-                                                    ) : (
-                                                        <span className="text-[10px] font-black uppercase tracking-[0.15em]">{user.firstName?.[0] || ''}{user.lastName?.[0] || ''}</span>
-                                                    )}
-                                                </div>
-                                            </Link>
-
-                                            <button onClick={handleLogout} className="text-red-400 hover:text-red-300 hover:bg-white/5 px-6 py-3 min-h-[44px] min-w-[44px] rounded-xl text-sm font-black uppercase tracking-[0.15em] transition-all flex items-center justify-center gap-2 border border-transparent hover:border-red-400/20 active:scale-95 shadow-sm hover:shadow-lg">
-                                                <LogOut size={18} /> Logout
-                                            </button>
-                                        </>
-                                    )}
-                                </div>
-                            )}
+                {/* Dashboard Tabs in Middle */}
+                {user && tabs && tabs.length > 0 && !isHomePage && !isAuthPage && (
+                    <div className="hidden lg:flex items-center justify-center flex-1 max-w-xl px-4">
+                        <div className="flex gap-2">
+                            {tabs.map((tab) => {
+                                const isActive = activeTab === tab.id;
+                                return (
+                                    <button
+                                        key={tab.id}
+                                        onClick={() => setActiveTab(tab.id)}
+                                        className={`relative px-5 py-2 text-[10px] font-black uppercase tracking-[0.2em] transition-all italic ${
+                                            isActive 
+                                            ? 'text-identity-navy' 
+                                            : 'text-slate-400 hover:text-identity-navy'
+                                        }`}
+                                    >
+                                        {tab.label}
+                                        {isActive && (
+                                            <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 bg-identity-sky rounded-full animate-in zoom-in duration-300" />
+                                        )}
+                                    </button>
+                                );
+                            })}
                         </div>
                     </div>
-                    {!pathname.startsWith('/register') && !isHomePage && (
-                        <div className="-mr-2 flex md:hidden">
+                )}
+
+                {/* Right Side Actions */}
+                <div className="flex items-center gap-4">
+                    {user && !isAuthPage ? (
+                        <div className="flex items-center gap-2">
+                            <div className="hidden md:flex items-center gap-1">
+                                {!user.role.includes('admin') && (
+                                    <Link
+                                        href="/notifications"
+                                        className="p-2.5 rounded-xl text-slate-400 hover:text-identity-navy hover:bg-slate-50 transition-all relative group"
+                                    >
+                                        <Bell size={18} className="group-hover:rotate-12 transition-transform" />
+                                        <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-rose-500 rounded-full border-2 border-white shadow-sm" />
+                                    </Link>
+                                )}
+
+                                <div className="w-[1px] h-6 bg-slate-100 mx-1" />
+
+                                <Link
+                                    href={user.role === 'admin' ? '/admin/dashboard' : `/${user.role}/dashboard`}
+                                    className="flex items-center gap-3 pl-2 pr-4 py-1.5 rounded-xl hover:bg-slate-50 transition-all group"
+                                >
+                                    <div className="w-8 h-8 rounded-lg bg-identity-navy text-white flex items-center justify-center text-[10px] font-black group-hover:scale-105 transition-transform shadow-sm">
+                                        {user.firstName?.[0]}{user.lastName?.[0]}
+                                    </div>
+                                    <span className="hidden lg:block text-[10px] font-black text-identity-navy uppercase tracking-widest italic group-hover:text-identity-sky transition-colors">
+                                        {user.firstName}
+                                    </span>
+                                </Link>
+
+                                <button
+                                    onClick={handleLogout}
+                                    className="flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-rose-500 hover:bg-rose-50 transition-all group"
+                                >
+                                    <LogOut size={14} className="group-hover:-translate-x-1 transition-transform" />
+                                    <span className="hidden sm:inline">Logout</span>
+                                </button>
+                            </div>
+
+                            {/* Mobile Toggle */}
                             <button
                                 onClick={() => setIsOpen(!isOpen)}
-                                className="inline-flex items-center justify-center p-3 min-h-[44px] min-w-[44px] rounded-xl text-identity-sky hover:bg-identity-sky/10 focus:outline-none transition-all active:scale-90 border border-transparent hover:border-identity-sky/20"
-                                title={isOpen ? "Close Menu" : "Open Menu"}
+                                className="md:hidden p-2 text-slate-400 hover:text-identity-navy transition-all"
                             >
-                                {isOpen ? <X size={28} /> : <Menu size={28} />}
+                                {isOpen ? <X size={24} /> : <Menu size={24} />}
                             </button>
                         </div>
-                    )}
+                    ) : !isAuthPage && !isHomePage && !isPrivacyPage ? (
+                        <div className="flex items-center gap-6">
+                            <Link href="/login" className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 hover:text-identity-navy transition-all italic">Login</Link>
+                            <Link 
+                                href="/register/student" 
+                                className="bg-identity-navy text-white px-8 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] italic hover:bg-identity-sky hover:scale-105 active:scale-95 transition-all shadow-lg"
+                            >
+                                Get Started
+                            </Link>
+                        </div>
+                    ) : null}
                 </div>
             </div>
 
             {/* Mobile Menu */}
             {isOpen && (
-                <div className="md:hidden absolute top-full left-0 w-full identity-glass border-b border-black/10 shadow-2xl animate-in slide-in-from-top-4 duration-200">
-                    <div className="px-4 pt-4 pb-6 space-y-2">
-                        {!user && !isAuthPage && (
-                            <>
-                                <Link href="/login" onClick={() => setIsOpen(false)} className="block text-identity-navy/40 hover:text-identity-navy hover:bg-black/5 px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-[0.15em] transition-all">Login</Link>
-                                <button
-                                    onClick={() => {
-                                        setIsOpen(false);
-                                        setIsRegisterModalOpen(true);
-                                    }}
-                                    className="block w-full text-left text-identity-sky hover:bg-identity-sky/5 px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-[0.15em] transition-all border border-identity-sky/20"
-                                >
-                                    Register
-                                </button>
-                            </>
+                <div className="md:hidden absolute top-full left-0 w-full bg-white border-b border-slate-100 shadow-2xl animate-in slide-in-from-top-4 duration-300">
+                    <div className="p-6 space-y-4">
+                        {user && tabs && tabs.length > 0 && !isHomePage && (
+                            <div className="grid grid-cols-2 gap-2 pb-6 border-b border-slate-50">
+                                {tabs.map((tab) => (
+                                    <button
+                                        key={tab.id}
+                                        onClick={() => { setActiveTab(tab.id); setIsOpen(false); }}
+                                        className={`px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest italic text-left transition-all ${
+                                            activeTab === tab.id 
+                                            ? 'bg-identity-sky/10 text-identity-navy' 
+                                            : 'text-slate-400 hover:bg-slate-50'
+                                        }`}
+                                    >
+                                        {tab.label}
+                                    </button>
+                                ))}
+                            </div>
                         )}
-                        {user && isHomePage && (
-                            <>
-                                <div className="px-4 py-2 text-[8px] font-black text-secondary/20 uppercase tracking-[0.15em]">Signed in as {user.firstName} {user.lastName}</div>
-                                <Link href={user.role === 'professor' ? '/professor/dashboard' : '/student/dashboard'} onClick={() => setIsOpen(false)} className="block text-identity-navy hover:bg-black/5 px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-[0.15em] flex items-center gap-3 transition-all">
-                                    <LayoutDashboard size={18} className="text-identity-sky" /> Go to Dashboard
-                                </Link>
-                                <button onClick={() => { handleLogout(); setIsOpen(false); }} className="block w-full text-left text-red-400 hover:bg-red-400/5 px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-[0.15em] flex items-center gap-3 transition-all">
-                                    <LogOut size={18} /> Logout
-                                </button>
-                            </>
-                        )}
-                        {user && !isAuthPage && !isHomePage && (
-                            <>
-                                <div className="px-4 py-2 text-[8px] font-black text-secondary/20 uppercase tracking-[0.15em]">Signed in as {user.firstName} {user.lastName}</div>
-                                <Link href={
-                                    user.role === 'professor' ? '/professor/profile' :
-                                        user.role === 'student' ? '/student/profile' :
-                                            '/admin/profile'
-                                } onClick={() => setIsOpen(false)} className="block text-identity-navy hover:bg-black/5 px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-[0.15em] flex items-center gap-3 transition-all">
-                                    <User size={18} className="text-identity-sky" /> Profile
-                                </Link>
-                                {(!user.role.includes('admin')) && (
-                                    <Link href="/notifications" onClick={() => setIsOpen(false)} className="block text-identity-navy hover:bg-black/5 px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-[0.15em] flex items-center gap-3 transition-all">
-                                        <Bell size={18} className="text-identity-sky" /> Notifications
-                                    </Link>
-                                )}
-                                <button onClick={() => { handleLogout(); setIsOpen(false); }} className="block w-full text-left text-red-500 hover:bg-red-500/5 px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-[0.15em] flex items-center gap-3 transition-all">
-                                    <LogOut size={18} /> Logout
-                                </button>
-                            </>
-                        )}
-                    </div>
-                </div>
-            )}
-
-            {/* Registration Choice Modal */}
-            {isRegisterModalOpen && (
-                <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-identity-navy/40 backdrop-blur-md animate-in fade-in duration-300">
-                    <div className="identity-glass rounded-3xl shadow-3xl max-w-md w-full overflow-hidden animate-scale-up border border-identity-sky/10">
-                        <div className="p-8 bg-white/40 border-b border-identity-sky/5 flex justify-between items-center">
-                            <h3 className="text-xl font-black text-identity-navy uppercase tracking-tight italic">Sign In</h3>
-                            <button
-                                onClick={() => setIsRegisterModalOpen(false)}
-                                className="text-slate-400 hover:text-identity-navy transition-all p-3 min-h-[44px] min-w-[44px] flex items-center justify-center hover:bg-white/60 rounded-xl border border-transparent hover:border-identity-sky/10 active:scale-90"
-                                title="Close Modal"
-                            >
-                                <X size={24} />
-                            </button>
-                        </div>
-
-                        <div className="p-10 space-y-5">
-                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.15em] mb-8 text-center italic">Choose your operational role</p>
-                            <Link
-                                href="/register/student"
-                                onClick={() => setIsRegisterModalOpen(false)}
-                                className="flex items-center p-6 bg-white/60 border border-identity-sky/10 rounded-[2rem] hover:border-identity-sky/50 transition-all group shadow-sm hover:shadow-xl hover:-translate-y-1"
-                            >
-                                <div className="w-16 h-16 bg-identity-sky/10 text-identity-sky rounded-2xl flex items-center justify-center mr-6 group-hover:bg-identity-sky group-hover:text-white transition-all border border-identity-sky/20 shadow-inner">
-                                    <GraduationCap size={32} />
-                                </div>
-                                <div className="text-left">
-                                    <div className="font-black text-identity-navy uppercase tracking-tight text-lg italic">Student</div>
-                                    <div className="text-[9px] font-bold text-slate-400 uppercase tracking-[0.15em] mt-1">Register with your student number</div>
-                                </div>
-                                <div className="ml-auto text-slate-200 group-hover:text-identity-sky group-hover:translate-x-2 transition-all">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6" /></svg>
-                                </div>
-                            </Link>
-
-                            <Link
-                                href="/register/professor"
-                                onClick={() => setIsRegisterModalOpen(false)}
-                                className="flex items-center p-6 bg-white/60 border border-identity-sky/10 rounded-[2rem] hover:border-identity-sky/50 transition-all group shadow-sm hover:shadow-xl hover:-translate-y-1"
-                            >
-                                <div className="w-16 h-16 bg-identity-navy/10 text-identity-navy rounded-2xl flex items-center justify-center mr-6 group-hover:bg-identity-navy group-hover:text-white transition-all border border-identity-navy/20 shadow-inner">
-                                    <School size={32} />
-                                </div>
-                                <div className="text-left">
-                                    <div className="font-black text-identity-navy uppercase tracking-tight text-lg italic">Professor</div>
-                                    <div className="text-[9px] font-bold text-slate-400 uppercase tracking-[0.15em] mt-1">Register as a Professor</div>
-                                </div>
-                                <div className="ml-auto text-slate-200 group-hover:text-identity-navy group-hover:translate-x-2 transition-all">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6" /></svg>
-                                </div>
-                            </Link>
-                        </div>
+                        <Link href="/notifications" onClick={() => setIsOpen(false)} className="block px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-identity-navy hover:bg-slate-50 transition-all italic">Notifications</Link>
+                        <button onClick={handleLogout} className="w-full text-left px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest text-rose-500 hover:bg-rose-50 transition-all italic">Logout</button>
                     </div>
                 </div>
             )}

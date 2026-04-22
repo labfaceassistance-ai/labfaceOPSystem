@@ -190,11 +190,18 @@ export default function SessionModal({ isOpen, onClose, classId, className, onSu
             startTime: customTime,
             endTime: customEndTime,
             date: customDate,
-            enrollmentIds: group.enrollmentIds
+            enrollmentIds: group.enrollmentIds,
+            lateThreshold: lateThreshold || 15
         };
 
         setScheduledBatches([...scheduledBatches, newBatch]);
         setSelectedScheduleGroupId('');
+    };
+
+    const updateBatchField = (index: number, field: string, value: any) => {
+        const newBatches = [...scheduledBatches];
+        newBatches[index] = { ...newBatches[index], [field]: value };
+        setScheduledBatches(newBatches);
     };
 
     const handleRemoveFromSchedule = (index: number) => {
@@ -311,7 +318,7 @@ export default function SessionModal({ isOpen, onClose, classId, className, onSu
                         sessionName: batch.groupName,
 
                         isScheduled: batchIsScheduled,
-                        lateThreshold: lateThreshold || 15
+                        lateThreshold: batch.lateThreshold || 15
                     };
 
                     if (type === 'makeup' && reason) {
@@ -957,21 +964,51 @@ export default function SessionModal({ isOpen, onClose, classId, className, onSu
                                         </div>
                                     ) : (
                                         scheduledBatches.map((batch, idx) => (
-                                            <div key={idx} className="flex items-center justify-between bg-white/60 p-5 rounded-xl border border-identity-sky/10 shadow-inner animate-slide-in">
-                                                <div className="flex items-center gap-4">
-                                                    <div className="w-10 h-10 bg-identity-sky/10 rounded-lg flex items-center justify-center border border-identity-sky/20">
-                                                        <Users size={20} className="text-identity-sky" />
+                                            <div key={idx} className="flex flex-col bg-white/60 p-5 rounded-2xl border border-identity-sky/10 shadow-inner animate-slide-in group hover:border-identity-sky/20 transition-all">
+                                                <div className="flex items-center justify-between mb-4 pb-4 border-b border-identity-sky/5">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="w-8 h-8 bg-identity-sky/10 rounded flex items-center justify-center">
+                                                            <Users size={16} className="text-identity-sky" />
+                                                        </div>
+                                                        <div className="text-[10px] font-black text-identity-navy uppercase tracking-[0.15em]">{batch.groupName}</div>
+                                                    </div>
+                                                    <button onClick={() => handleRemoveFromSchedule(idx)} className="text-slate-300 hover:text-red-500 p-2 rounded-lg hover:bg-red-50 transition-all" title="Remove Batch">
+                                                        <X size={18} />
+                                                    </button>
+                                                </div>
+                                                
+                                                <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+                                                    <div>
+                                                        <label className="block text-[8px] font-black text-slate-400 mb-2 uppercase tracking-[0.15em] ml-1">Start Time</label>
+                                                        <input 
+                                                            type="time" 
+                                                            value={batch.startTime} 
+                                                            onChange={(e) => updateBatchField(idx, 'startTime', e.target.value)}
+                                                            className="w-full px-3 py-2 bg-white/60 border border-identity-sky/10 rounded-lg text-xs font-black text-identity-navy uppercase tracking-[0.15em] focus:outline-none focus:border-identity-sky/30 shadow-inner" 
+                                                            style={{ colorScheme: 'light' }}
+                                                        />
                                                     </div>
                                                     <div>
-                                                        <div className="text-[10px] font-black text-identity-navy uppercase tracking-[0.15em]">{batch.groupName}</div>
-                                                        <div className="text-[8px] font-black text-slate-400 uppercase tracking-[0.15em] flex items-center gap-1 mt-0.5">
-                                                            <Clock size={12} className="text-identity-sky" /> {batch.startTime} - {batch.endTime}
-                                                        </div>
+                                                        <label className="block text-[8px] font-black text-slate-400 mb-2 uppercase tracking-[0.15em] ml-1">End Time</label>
+                                                        <input 
+                                                            type="time" 
+                                                            value={batch.endTime} 
+                                                            onChange={(e) => updateBatchField(idx, 'endTime', e.target.value)}
+                                                            className="w-full px-3 py-2 bg-white/60 border border-identity-sky/10 rounded-lg text-xs font-black text-identity-navy uppercase tracking-[0.15em] focus:outline-none focus:border-identity-sky/30 shadow-inner" 
+                                                            style={{ colorScheme: 'light' }}
+                                                        />
+                                                    </div>
+                                                    <div className="col-span-2 lg:col-span-1">
+                                                        <label className="block text-[8px] font-black text-slate-400 mb-2 uppercase tracking-[0.15em] ml-1 text-nowrap">Late Threshold (Min)</label>
+                                                        <input 
+                                                            type="number" 
+                                                            min="1"
+                                                            value={batch.lateThreshold} 
+                                                            onChange={(e) => updateBatchField(idx, 'lateThreshold', parseInt(e.target.value) || 15)}
+                                                            className="w-full px-3 py-2 bg-white/60 border border-identity-sky/10 rounded-lg text-xs font-black text-identity-navy uppercase tracking-[0.15em] focus:outline-none focus:border-identity-sky/30 shadow-inner" 
+                                                        />
                                                     </div>
                                                 </div>
-                                                <button onClick={() => handleRemoveFromSchedule(idx)} className="text-slate-300 hover:text-red-500 p-2 rounded-lg hover:bg-red-50 transition-all">
-                                                    <X size={20} />
-                                                </button>
                                             </div>
                                         ))
                                     )}

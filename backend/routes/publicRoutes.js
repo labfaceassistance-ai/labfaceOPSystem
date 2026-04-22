@@ -13,7 +13,7 @@ router.get('/academic-settings', async (req, res) => {
                 school_year as schoolYear,
                 semester
             FROM academic_periods
-            WHERE effective_date <= CONVERT_TZ(NOW(), 'UTC', 'Asia/Manila')
+            WHERE effective_date <= NOW()
             ORDER BY effective_date DESC
             LIMIT 1
         `);

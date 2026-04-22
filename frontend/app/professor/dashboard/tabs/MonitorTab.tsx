@@ -1,5 +1,6 @@
-﻿import { useState, useEffect, useRef } from 'react';
-import { Camera, RefreshCw, Activity, ShieldCheck, Server, Wifi, AlertTriangle, Maximize2, X } from 'lucide-react';
+"use client";
+import { useState, useEffect } from 'react';
+import { Camera, RefreshCw, Activity, ShieldCheck, Server, Wifi, AlertTriangle, Maximize2, X, Zap, Signal, Monitor, Cpu } from 'lucide-react';
 import axios from 'axios';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import ActiveSessionPanel from './ActiveSessionPanel';
@@ -35,33 +36,25 @@ const VideoFeed = ({ src, alt, className, onExpand, label, onStatusChange }: Vid
         }
     }, [error, onStatusChange]);
 
-    // Poll camera status instead of relying on onLoad
     useEffect(() => {
         let isMounted = true;
-
-        // Safety timeout: hide loading after 15s regardless of status check
         const safetyTimeout = setTimeout(() => {
             if (isMounted) {
-                console.log(`[VideoFeed] Safety timeout hit for ${alt}, forcing isLoading=false`);
                 setIsLoading(false);
             }
         }, 15000);
 
         const checkStatus = async () => {
             try {
-                // Extract ID from src (e.g. /api/ai/video_feed/1)
                 const id = src.split('/').pop();
                 const response = await fetch(`/api/ai/camera_status/${id}`);
                 const data = await response.json();
-
                 if (isMounted && data.online) {
                     setIsLoading(false);
                     setError(false);
                     clearTimeout(safetyTimeout);
                 }
-            } catch (e) {
-                // Ignore errors
-            }
+            } catch (e) { }
         };
 
         checkStatus();
@@ -71,9 +64,7 @@ const VideoFeed = ({ src, alt, className, onExpand, label, onStatusChange }: Vid
             clearInterval(interval);
             clearTimeout(safetyTimeout);
         };
-    }, [src, retryKey, alt]);
-
-
+    }, [src, retryKey]);
 
     const handleRefresh = () => {
         setError(false);
@@ -81,29 +72,27 @@ const VideoFeed = ({ src, alt, className, onExpand, label, onStatusChange }: Vid
         setRetryKey(prev => prev + 1);
     };
 
-    // For MJPEG streams, we don't use the interval refresh as it restarts the stream connection
-    // causing massive lag. We only add a timestamp once on error/retry or manual refresh.
     const currentSrc = `${src}${src.includes('?') ? '&' : '?'}retry=${retryKey}`;
 
     return (
-        <div className={`relative bg-black group overflow-hidden rounded-2xl border border-white/5 shadow-2xl ${className}`}>
+        <div className={`relative bg-black group overflow-hidden rounded-[4rem] border-2 border-[#041C3C]/30 shadow-4xl ${className} group/feed transition-all duration-700`}>
             {!error ? (
                 <>
                     {isLoading && (
-                        <div className="absolute inset-0 flex flex-col items-center justify-center bg-identity-navy/80 z-20 backdrop-blur-md text-center p-6 font-outfit">
-                            <div className="relative mb-6">
-                                <div className="absolute inset-0 rounded-full bg-identity-sky/20 animate-ping blur-xl"></div>
-                                <div className="w-16 h-16 relative">
-                                    <div className="absolute inset-0 border-4 border-identity-sky/20 rounded-full"></div>
-                                    <div className="absolute inset-0 border-4 border-identity-sky border-t-transparent rounded-full animate-spin"></div>
+                        <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#041C3C]/98 z-30 backdrop-blur-3xl p-12">
+                            <div className="w-32 h-32 relative mb-12">
+                                <div className="absolute inset-0 border-4 border-[#5CB4E4]/10 rounded-[3rem] rotate-45" />
+                                <div className="absolute inset-0 border-4 border-[#5CB4E4] border-t-transparent rounded-[3rem] rotate-45 animate-spin shadow-[0_0_30px_rgba(92,180,228,0.6)]" />
+                                <div className="absolute inset-0 flex items-center justify-center -rotate-45">
+                                    <Activity className="text-[#5CB4E4] w-10 h-10 animate-pulse" />
                                 </div>
                             </div>
-                            <div className="space-y-2">
-                                <span className="block text-lg font-black tracking-[0.2em] uppercase text-identity-sky animate-pulse">
-                                    Initializing Feed
+                            <div className="text-center space-y-4">
+                                <span className="block text-2xl font-black tracking-[0.5em] uppercase text-[#5CB4E4] animate-pulse italic font-outfit">
+                                    CONNECTING...
                                 </span>
-                                <span className="block text-[8px] font-black tracking-[0.3em] uppercase text-slate-400">
-                                    Establishing Secure Connection...
+                                <span className="block text-[10px] font-black tracking-[0.4em] uppercase text-slate-500 italic font-outfit">
+                                    Connecting to camera feed...
                                 </span>
                             </div>
                         </div>
@@ -111,7 +100,7 @@ const VideoFeed = ({ src, alt, className, onExpand, label, onStatusChange }: Vid
                     <img
                         src={currentSrc}
                         alt={alt}
-                        className="w-full h-full object-cover transition-opacity duration-300 text-transparent"
+                        className="w-full h-full object-cover transition-opacity duration-300"
                         style={{ opacity: 1 }}
                         onError={() => {
                             setError(true);
@@ -121,54 +110,90 @@ const VideoFeed = ({ src, alt, className, onExpand, label, onStatusChange }: Vid
                             setIsLoading(false);
                         }}
                     />
-
-                    {/* Manual Refresh Button */}
-                    <button
-                        onClick={handleRefresh}
-                        className="absolute bottom-4 right-4 p-3 min-h-[44px] min-w-[44px] flex items-center justify-center bg-identity-navy/80 text-identity-navy rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-identity-navy"
-                        title="Reset Feed"
-                    >
-                        <RefreshCw size={16} />
-                    </button>
+  
+                    {/* High-Tech Scan Line Overlay */}
+                    <div className="absolute inset-0 pointer-events-none z-20 overflow-hidden opacity-30">
+                        <div className="absolute inset-0 bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.3)_50%),linear-gradient(90deg,rgba(92,180,228,0.05),transparent,rgba(92,180,228,0.05))] bg-[length:100%_4px,10%_100%] pointer-events-none" />
+                        <div className="absolute top-0 w-full h-[3px] bg-gradient-to-r from-transparent via-[#5CB4E4] to-transparent shadow-[0_0_25px_rgba(92,180,228,1)] animate-scanline" />
+                    </div>
                 </>
             ) : (
-                <div className="w-full h-full flex flex-col items-center justify-center text-slate-400 bg-white/50 absolute inset-0 backdrop-blur-sm">
-                    <div className="animate-spin mb-2 text-slate-500">
-                        <RefreshCw size={32} />
+                <div className="absolute inset-0 flex flex-col items-center justify-center bg-rose-950/95 backdrop-blur-3xl z-40 p-16 text-center">
+                    <div className="relative mb-10">
+                        <div className="absolute inset-0 blur-3xl bg-rose-500/30 animate-pulse" />
+                        <AlertTriangle size={80} className="text-rose-500 relative z-10" />
                     </div>
-                    <span className="text-sm font-mono tracking-[0.15em] uppercase">Signal Lost â€¢ Reconnecting</span>
+                    <div className="space-y-6">
+                        <h4 className="text-3xl font-black text-rose-500 uppercase italic tracking-tighter leading-none">CAMERA OFFLINE</h4>
+                        <p className="text-[11px] font-black text-rose-300/60 uppercase tracking-[0.4em] italic mb-8">Error: Connection timed out</p>
+                        <button 
+                            onClick={handleRefresh}
+                            className="px-12 py-6 bg-rose-500 hover:bg-rose-600 text-white border border-rose-400/30 rounded-[2.2rem] text-[11px] font-black uppercase tracking-[0.4em] transition-all shadow-3xl active:scale-95 italic"
+                        >
+                            RECONNECT CAMERA
+                        </button>
+                    </div>
                 </div>
             )}
-
-            <div className="absolute inset-0 pointer-events-none p-4 flex flex-col justify-between">
+  
+            {/* UI Overlay HUD Redesigned */}
+            <div className="absolute inset-0 pointer-events-none p-12 flex flex-col justify-between z-30 font-outfit">
                 <div className="flex justify-between items-start">
-                    <div className="flex items-center gap-2">
-                        <div className={`h-2 w-2 rounded-full ${!error ? 'bg-emerald-500 animate-pulse' : 'bg-red-500'}`}></div>
-                        <span className={`text-xs px-2 py-1 rounded backdrop-blur-md border font-mono ${!error ? 'bg-black/40 text-slate-100 border-white/10' : 'bg-red-900/60 text-red-100 border-red-500/30'}`}>
-                            {error ? 'OFFLINE' : (label || 'LIVE FEED')}
-                        </span>
+                    <div className="flex items-center gap-6">
+                        <div className="bg-[#041C3C]/90 backdrop-blur-2xl px-8 py-4 rounded-2.5xl border border-white/10 shadow-3xl flex items-center gap-5">
+                            <div className={`w-3.5 h-3.5 rounded-full ${!error ? 'bg-[#5CB4E4] animate-pulse shadow-[0_0_20px_rgba(92,180,228,1)]' : 'bg-rose-600 shadow-[0_0_20px_rgba(225,29,72,1)]'}`} />
+                            <div className="flex flex-col">
+                                <span className="text-[12px] font-black tracking-[0.4em] uppercase text-white italic leading-none mb-1">
+                                    {error ? 'OFFLINE' : (label || 'MAIN CAMERA')}
+                                </span>
+                                <span className="text-[8px] font-black tracking-[0.2em] uppercase text-slate-400 italic">SECURE CONNECTION</span>
+                            </div>
+                        </div>
                     </div>
-
+  
                     {!error && onExpand && (
                         <button
-                            onClick={onExpand}
-                            className="pointer-events-auto bg-black/40 hover:bg-identity-sky/80 text-identity-navy p-3 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg backdrop-blur-md border border-white/10 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0"
+                            onClick={(e) => { e.stopPropagation(); onExpand(); }}
+                            className="pointer-events-auto w-16 h-16 flex items-center justify-center bg-white/10 hover:bg-[#5CB4E4] text-white rounded-2.5xl backdrop-blur-xl border border-white/20 opacity-0 group-hover/feed:opacity-100 transition-all duration-700 transform translate-y-6 group-hover/feed:translate-y-0 shadow-3xl active:scale-90"
                         >
-                            <Maximize2 size={18} />
+                            <Maximize2 size={24} />
                         </button>
                     )}
                 </div>
-
+  
                 {!error && (
-                    <div className="flex justify-between items-end opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                        <div className="text-[10px] text-secondary/60 font-mono bg-black/60 px-2 py-1 rounded backdrop-blur-md border border-white/5">
-                            FHD â€¢ 30 FPS â€¢ NET: STABLE
+                    <div className="flex justify-between items-end">
+                        <div className="flex items-center gap-8 bg-[#041C3C]/80 backdrop-blur-2xl px-10 py-5 rounded-3xl border border-white/10 shadow-3xl">
+                            <div className="flex items-center gap-4">
+                                <Activity size={18} className="text-[#5CB4E4] animate-pulse" />
+                                <span className="text-[11px] font-black uppercase tracking-[0.3em] text-white italic">STABLE</span>
+                            </div>
+                            <div className="h-6 w-px bg-white/10 mx-2" />
+                            <div className="flex items-center gap-4">
+                                <Signal size={18} className="text-emerald-400" />
+                                <span className="text-[11px] font-black uppercase tracking-[0.3em] text-white italic">LIVE</span>
+                            </div>
+                        </div>
+                        <div className="flex flex-col items-end gap-3 text-right">
+                             <div className="bg-black/60 px-6 py-2 rounded-xl border border-white/5 text-[11px] font-black text-white/50 tracking-[0.5em] italic">
+                                {new Date().toLocaleTimeString('en-US', { hour12: false })}
+                            </div>
+                            <div className="text-[9px] font-black text-white/20 tracking-[0.3em] uppercase italic">FEED ACTIVE</div>
                         </div>
                     </div>
                 )}
             </div>
-
-            <div className="absolute inset-0 pointer-events-none bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.1)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] z-10 bg-[length:100%_2px,3px_100%] pointer-events-none opacity-20"></div>
+            
+            <div className="absolute inset-0 pointer-events-none shadow-[inset_0_0_150px_rgba(0,0,0,0.7)] z-10" />
+            
+            {/* Manual Sync Button (Hover) */}
+            <button
+                onClick={(e) => { e.stopPropagation(); handleRefresh(); }}
+                className="absolute top-12 left-12 p-5 bg-white/10 text-white rounded-2xl opacity-0 group-hover:opacity-100 transition-all hover:bg-[#5CB4E4] shadow-4xl backdrop-blur-xl border border-white/20 active:scale-95 z-[35]"
+                title="RESET CONNECTION"
+            >
+                <RefreshCw size={20} className={isLoading ? 'animate-spin' : ''} />
+            </button>
         </div>
     );
 };
@@ -184,11 +209,10 @@ export default function MonitorTab() {
         if (activeSessionIdParam) {
             setCurrentSessionId(activeSessionIdParam);
         } else {
-            // Auto-fetch if no param
             const fetchActiveSession = async () => {
                 try {
                     const token = getToken();
-                    if (!token) return; // Don't fetch if no token
+                    if (!token) return;
                     const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
                     const response = await axios.get(`${API_URL}/api/attendance/sessions/active/me`, {
                         headers: { 'Authorization': `Bearer ${token}` }
@@ -197,8 +221,7 @@ export default function MonitorTab() {
                         setCurrentSessionId(response.data.id.toString());
                     }
                 } catch (e) {
-                    // Silent fail is okay, maybe no session active
-                    console.log("No active session or failed to fetch", e);
+                    console.log("No active session detected", e);
                 }
             };
             fetchActiveSession();
@@ -211,13 +234,11 @@ export default function MonitorTab() {
     const [cam1Online, setCam1Online] = useState(false);
     const [sessionDetails, setSessionDetails] = useState<any>(null);
 
-    // Fetch Session Details for Dynamic Title
     useEffect(() => {
         if (!currentSessionId) {
             setSessionDetails(null);
             return;
         }
-
         const fetchDetails = async () => {
             try {
                 const token = localStorage.getItem('token') || sessionStorage.getItem('token');
@@ -227,14 +248,13 @@ export default function MonitorTab() {
                 });
                 setSessionDetails(response.data);
             } catch (e) {
-                console.error("Error fetching session details for title:", e);
+                console.error("Error fetching session details:", e);
             }
         };
         fetchDetails();
     }, [currentSessionId]);
 
     useEffect(() => {
-        // Fetch System Status
         const fetchSystemStatus = async () => {
             const token = localStorage.getItem('token') || sessionStorage.getItem('token');
             try {
@@ -259,195 +279,229 @@ export default function MonitorTab() {
     const overallSystemOnline = systemStatus.online;
 
     const handleStopSession = () => {
-        // Clear sessionId from URL without full reload if possible, or just push path
         setCurrentSessionId(null);
         router.push(pathname + '?tab=monitor');
     };
 
-    // --- DEFAULT GENERIC MONITOR ---
     return (
-        <>
-            <div className="space-y-6">
-                <div className="flex items-center justify-between">
-                    <div className="font-outfit">
-                        <h2 className="text-2xl font-black text-identity-navy flex items-center gap-4 uppercase tracking-tight italic">
-                            <div className="p-3 bg-identity-sky/10 rounded-2xl border border-identity-sky/10">
-                                <Camera className="w-6 h-6 text-identity-sky" />
-                            </div>
-                            {currentSessionId ? (
-                                <span className="flex items-center gap-4">
-                                    <span className="text-identity-sky">Live:</span>
-                                    {sessionDetails?.subject_name || 'Class Monitor'}
-                                    <span className="text-[10px] font-black text-slate-500 bg-white/40 px-3 py-1 rounded-full border border-identity-sky/10 ml-2 uppercase tracking-[0.15em]">
-                                        {sessionDetails?.section || 'Active'}
-                                    </span>
-                                </span>
-                            ) : (
-                                'Security Monitoring'
-                            )}
-                        </h2>
-                        <p className="text-slate-500 text-[10px] font-bold uppercase tracking-[0.2em] mt-2 ml-16">Real-time surveillance and attendance tracking</p>
-                    </div>
-                    <div className="flex flex-wrap items-center gap-4 font-outfit">
-                        <Link 
-                            href="/professor/camera-test" 
-                            className="bg-identity-sky hover:bg-identity-navy text-white px-6 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-[0.15em] flex items-center gap-2 transition-all shadow-xl shadow-identity-sky/10 active:scale-95"
-                        >
-                            <Activity className="w-4 h-4" />
-                            Run Diagnostic
-                        </Link>
-                        <div className={`flex items-center gap-2 px-4 py-2.5 bg-white/40 rounded-2xl border ${overallSystemOnline ? 'border-emerald-500/30' : 'border-rose-500/30'} backdrop-blur-md`}>
-                            <Wifi size={16} className={overallSystemOnline ? "text-emerald-500" : "text-rose-500"} />
-                            <span className={`text-[10px] font-black tracking-[0.15em] ${overallSystemOnline ? "text-emerald-500" : "text-rose-400"}`}>
-                                {overallSystemOnline ? "SYSTEM ONLINE" : "SYSTEM OFFLINE"}
-                            </span>
+        <div className="space-y-16 animate-in fade-in duration-1000">
+            {/* Header / Sub-Nav Redesigned */}
+            <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-12 mb-12">
+                <div className="relative group transition-all duration-700 hover:translate-x-6">
+                    <div className="flex items-center gap-10">
+                        <div className="w-28 h-28 bg-[#041C3C] text-[#5CB4E4] rounded-[3rem] shadow-4xl border border-[#5CB4E4]/30 flex items-center justify-center group-hover:rotate-[-10deg] group-hover:scale-110 transition-all duration-1000">
+                            <Monitor size={56} className="group-hover:animate-pulse" />
                         </div>
-                        {overallSystemOnline && (
-                            <div className="flex items-center gap-2 px-4 py-2 bg-identity-sky/10 text-identity-sky rounded-lg border border-identity-sky/20 animate-pulse">
-                                <div className="w-2 h-2 bg-identity-sky rounded-full"></div>
-                                <span className="text-xs font-bold tracking-[0.15em]">LIVE</span>
+                        <div className="space-y-4">
+                            <h2 className="text-4xl md:text-6xl font-black text-[#041C3C] uppercase tracking-tighter italic leading-none font-outfit">
+                                {currentSessionId ? (
+                                    <>
+                                        <span className="text-[#5CB4E4]">ACTIVE SESSION:</span><br/>
+                                        {sessionDetails?.subject_name?.toUpperCase() || 'MAIN FEED'}
+                                    </>
+                                ) : (
+                                    <>
+                                        MONITORING CENTER:<br/>
+                                        <span className="text-[#5CB4E4]">CAMERA FEEDS</span>
+                                    </>
+                                )}
+                            </h2>
+                            <div className="flex items-center gap-6">
+                                {currentSessionId && (
+                                    <div className="px-8 py-3 bg-[#5CB4E4]/10 rounded-2xl border border-[#5CB4E4]/20 text-[11px] font-black text-[#5CB4E4] uppercase tracking-[0.5em] italic shadow-2xl">
+                                        Section: {sessionDetails?.section || 'N/A'}
+                                    </div>
+                                )}
+                                <div className="flex items-center gap-4">
+                                    <div className="w-3.5 h-3.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_20px_rgba(16,185,129,0.8)]" />
+                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em] italic opacity-60">LIVE AND SECURE</span>
+                                </div>
                             </div>
-                        )}
+                        </div>
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    <div className="lg:col-span-2 space-y-6">
-                        {/* Primary Entrance Terminal (Single Camera Focus) */}
-                        <div className="identity-glass rounded-[2rem] md:rounded-[3rem] border border-identity-sky/10 shadow-3xl backdrop-blur-sm overflow-hidden font-outfit">
-                            <div className="px-8 py-6 flex justify-between items-center bg-white/40 border-b border-identity-sky/5">
-                                <div className="flex items-center gap-4">
-                                    <div className={`w-3 h-3 rounded-full ${cam1Online ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'}`}></div>
-                                    <h3 className="font-black text-lg text-identity-navy uppercase tracking-tighter italic">
-                                        ENTRANCE TERMINAL
-                                        <span className="ml-4 text-[10px] font-black text-slate-400 tracking-[0.15em]">CAM-01 â€¢ PRIMARY</span>
+                <div className="flex flex-wrap items-center gap-8">
+                    <Link 
+                        href="/professor/camera-test" 
+                        className="bg-[#041C3C] hover:bg-[#5CB4E4] text-white px-16 py-8 rounded-[2.8rem] text-[13px] font-black uppercase tracking-[0.4em] flex items-center gap-6 transition-all shadow-4xl active:scale-95 italic group/test border border-[#5CB4E4]/30"
+                    >
+                        <Zap className="w-7 h-7 group-hover:animate-bounce" />
+                        TEST CAMERA
+                    </Link>
+                    
+                    <div className={`flex items-center gap-6 px-12 py-8 bg-white/40 backdrop-blur-xl shadow-4xl rounded-[2.8rem] border-2 transition-all duration-1000 ${overallSystemOnline ? 'border-emerald-500/20' : 'border-rose-500/20'}`}>
+                        <div className="relative">
+                            <Signal size={28} className={overallSystemOnline ? "text-emerald-500" : "text-rose-500"} />
+                            {overallSystemOnline && <div className="absolute inset-0 bg-emerald-400/30 rounded-full animate-ping blur-xl" />}
+                        </div>
+                        <div className="flex flex-col">
+                            <span className={`text-[12px] font-black tracking-[0.4em] uppercase italic ${overallSystemOnline ? "text-emerald-500" : "text-rose-500"}`}>
+                                {overallSystemOnline ? "ONLINE" : "OFFLINE"}
+                            </span>
+                            <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest mt-1">VERIFIED CONNECTION</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-12">
+                <div className="lg:col-span-3 space-y-12">
+                    {/* Primary Feed Frame */}
+                    <div className="bg-white/40 backdrop-blur-xl rounded-[5rem] border border-white/20 shadow-4xl overflow-hidden font-outfit relative group/stream">
+                        <div className="absolute inset-x-0 top-0 h-full z-0 opacity-[0.05] pointer-events-none bg-blueprint" />
+                        <div className="absolute inset-x-0 h-[2px] bg-gradient-to-r from-transparent via-[#5CB4E4]/40 to-transparent z-20 animate-scan-y opacity-30 pointer-events-none" />
+                        
+                        <div className="px-16 py-12 flex justify-between items-center bg-white border-b border-slate-100 relative z-10">
+                            <div className="flex items-center gap-8">
+                                <div className={`w-6 h-6 rounded-full ${cam1Online ? 'bg-emerald-500' : 'bg-rose-500'} shadow-[0_0_25px_rgba(16,185,129,0.8)] animate-pulse`} />
+                                <div className="space-y-1">
+                                    <h3 className="font-black text-3xl text-[#041C3C] uppercase tracking-tighter italic leading-none">
+                                        CAMERA: <span className="text-[#5CB4E4]">MAIN</span>
                                     </h3>
-                                </div>
-                                <div className="text-[10px] font-black text-identity-sky/60 bg-identity-sky/5 border border-identity-sky/10 px-4 py-1.5 rounded-full uppercase tracking-[0.15em]">
-                                    SECURE NODE: 220
+                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.5em] italic">DEVICE: LAB MONITOR</p>
                                 </div>
                             </div>
-                            <div className="aspect-video w-full bg-black relative">
+                            <div className="flex items-center gap-6">
+                                <div className="px-8 py-3 bg-[#041C3C] text-white text-[10px] font-black rounded-2xl uppercase tracking-[0.4em] italic shadow-2xl border border-[#5CB4E4]/20">
+                                    LIVE FEED
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="p-8 pb-16 relative z-10">
+                            <div className="aspect-video w-full bg-slate-900 rounded-[4rem] overflow-hidden border-4 border-[#041C3C] shadow-[0_50px_100px_-20px_rgba(4,28,60,0.5)] relative">
                                 <VideoFeed
                                     src="/api/ai/video_feed/1"
-                                    alt="Entrance Camera"
-                                    label="MAIN ENTRANCE MONITOR"
+                                    alt="Main Operational Stream"
+                                    label="SCANNING..."
                                     className="w-full h-full"
                                     onExpand={() => setExpandedCamera(1)}
                                     onStatusChange={setCam1Online}
                                 />
                             </div>
-                            <div className="px-8 py-6 bg-white/20 flex items-center justify-between">
-                                <div className="flex items-center gap-6">
-                                    <div className="flex flex-col">
-                                        <span className="text-[9px] text-slate-400 uppercase font-black tracking-[0.2em]">Signal Quality</span>
-                                        <span className="text-xs text-emerald-500 font-bold tracking-tight">98% STABLE</span>
-                                    </div>
-                                    <div className="w-px h-8 bg-identity-sky/10"></div>
-                                    <div className="flex flex-col">
-                                        <span className="text-[9px] text-slate-400 uppercase font-black tracking-[0.2em]">Protocol</span>
-                                        <span className="text-xs text-identity-navy font-bold tracking-tight">RTSP / FFMPEG</span>
+                        </div>
+
+                        <div className="px-10 py-6 bg-white/20 backdrop-blur-2xl border-t border-slate-100/50 flex flex-col md:flex-row items-center justify-between gap-8 relative z-10 shadow-inner">
+                            <div className="flex items-center gap-10">
+                                <div className="space-y-1.5">
+                                    <span className="text-[9px] text-slate-400 uppercase font-black tracking-[0.4em] italic">NETWORK PING</span>
+                                    <div className="flex items-center gap-3">
+                                        <Activity size={14} className="text-emerald-500 animate-pulse" />
+                                        <span className="text-lg font-black text-[#041C3C] italic tracking-tight">14ms</span>
                                     </div>
                                 </div>
-                                <div className="text-[9px] text-slate-400 font-black uppercase tracking-[0.2em]">
-                                    Camera: <span className="text-identity-sky">LN-01-ENTRANCE</span>
+                                <div className="w-px h-10 bg-slate-200" />
+                                <div className="space-y-1.5">
+                                    <span className="text-[9px] text-slate-400 uppercase font-black tracking-[0.4em] italic">SYSTEM INFO</span>
+                                    <div className="flex items-center gap-3">
+                                        <Cpu size={14} className="text-[#5CB4E4]" />
+                                        <span className="text-lg font-black text-[#041C3C] italic tracking-tight uppercase">LAB PROCESSOR</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
+                </div>
 
-                    <div className="space-y-6">
-                        <div className="identity-glass p-8 rounded-[2rem] md:rounded-[3rem] border border-identity-sky/10 shadow-3xl font-outfit">
-                            <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-8 ml-1 italic">Surveillance Node Status</h3>
+                <div className="space-y-12">
+                    {/* Metrics Sidebar Redesigned */}
+                    <div className="bg-white/40 backdrop-blur-xl p-8 rounded-[3rem] border border-white/20 shadow-4xl font-outfit relative overflow-hidden group/side">
+                        <div className="absolute inset-x-0 top-0 h-full z-0 opacity-[0.03] pointer-events-none bg-blueprint" />
+                        <h3 className="text-[11px] font-black text-[#041C3C] uppercase tracking-[0.4em] mb-8 flex items-center gap-4 italic relative z-10">
+                            <Activity size={18} className="text-[#5CB4E4] animate-pulse" /> SYSTEM STATUS
+                        </h3>
 
-                            <div className="space-y-5">
-                                <div className={`flex items-center justify-between p-4 bg-white/40 rounded-2xl border ${overallSystemOnline ? 'border-identity-sky/10 shadow-sm' : 'border-rose-500/30'}`}>
-                                    <div className="flex items-center gap-4">
-                                        <div className={`p-3 rounded-2xl ${overallSystemOnline ? 'bg-identity-sky/10 text-identity-sky border border-identity-sky/10' : 'bg-rose-500/10 text-rose-500 border border-rose-500/10'}`}>
-                                            <Server size={20} />
-                                        </div>
-                                        <div>
-                                            <div className="text-sm font-black text-identity-navy uppercase tracking-tight">AI Engine</div>
-                                            <div className={`text-[10px] font-bold uppercase tracking-[0.15em] ${overallSystemOnline ? 'text-slate-400' : 'text-rose-500'}`}>
-                                                {loadingStatus ? 'Verifying...' : (overallSystemOnline ? 'Operational' : 'Node Unreachable')}
-                                            </div>
-                                        </div>
+                        <div className="space-y-6 relative z-10">
+                            <div className={`p-5 rounded-[2rem] border-2 transition-all duration-700 shadow-2xl bg-white group/stat hover:scale-105 ${overallSystemOnline ? 'border-emerald-100' : 'border-rose-100'}`}>
+                                <div className="flex items-start justify-between mb-4">
+                                    <div className={`p-3.5 rounded-[1.2rem] shadow-xl transition-all duration-700 ${overallSystemOnline ? 'bg-[#041C3C] text-[#5CB4E4] border border-[#5CB4E4]/30' : 'bg-rose-500/10 text-rose-500 border border-rose-500/20'}`}>
+                                        <Server size={20} />
                                     </div>
-                                    {overallSystemOnline ? (
-                                        <div className="h-3 w-3 rounded-full bg-emerald-500 shadow-[0_0_12px_rgba(16,185,129,0.5)]"></div>
-                                    ) : (
-                                        <AlertTriangle size={18} className="text-rose-500" />
-                                    )}
-                                </div>
-
-                                <div className="flex items-center justify-between p-4 bg-white/40 rounded-2xl border border-identity-sky/10 shadow-sm">
-                                    <div className="flex items-center gap-4">
-                                        <div className={`p-3 rounded-2xl ${overallSystemOnline ? 'bg-identity-sky/10 text-identity-sky border border-identity-sky/10' : 'bg-white/5 text-slate-300 border border-identity-sky/5'}`}>
-                                            <ShieldCheck size={20} />
-                                        </div>
-                                        <div>
-                                            <div className="text-sm font-black text-identity-navy uppercase tracking-tight">Neural Sync</div>
-                                            <div className={`text-[10px] font-bold uppercase tracking-[0.15em] ${overallSystemOnline ? 'text-slate-400' : 'text-slate-300'}`}>
-                                                {overallSystemOnline ? 'High Authority' : 'Paused'}
-                                            </div>
-                                        </div>
+                                    <div className={`text-[7px] font-black px-3 py-1.5 rounded-lg transition-all duration-700 ${overallSystemOnline ? 'bg-emerald-50 text-emerald-500' : 'bg-rose-50 text-rose-500'}`}>
+                                        {overallSystemOnline ? 'CONNECTED' : 'OFFLINE'}
                                     </div>
-                                    <span className={`text-[10px] font-black uppercase tracking-[0.22em] ${overallSystemOnline ? 'text-identity-sky' : 'text-slate-300'}`}>
-                                        {overallSystemOnline ? 'ACTIVE' : 'VOID'}
-                                    </span>
                                 </div>
+                                <h4 className="text-base font-black text-[#041C3C] uppercase tracking-tighter italic leading-none mb-2">RECOGNITION SYSTEM</h4>
+                                <p className="text-[8px] font-black text-slate-300 uppercase tracking-[0.3em] italic leading-tight">VERSION 2.0.4</p>
+                            </div>
+
+                            <div className="p-5 rounded-[2rem] border-2 border-slate-100 bg-white group/stat hover:scale-105 hover:border-[#5CB4E4]/30 transition-all duration-700 shadow-2xl">
+                                <div className="flex items-start justify-between mb-4">
+                                    <div className="bg-[#041C3C] text-[#5CB4E4] p-3.5 rounded-[1.2rem] shadow-xl border border-[#5CB4E4]/20 group-hover/stat:bg-[#5CB4E4] group-hover/stat:text-white transition-all duration-500">
+                                        <ShieldCheck size={20} />
+                                    </div>
+                                    <div className="text-[7px] font-black px-3 py-1.5 rounded-lg bg-slate-50 text-slate-400">
+                                        PROTECTED
+                                    </div>
+                                </div>
+                                <h4 className="text-base font-black text-[#041C3C] uppercase tracking-tighter italic leading-none mb-2">SYSTEM SECURITY</h4>
+                                <p className="text-[8px] font-black text-slate-300 uppercase tracking-[0.3em] italic leading-tight">STATUS: CLEAN</p>
                             </div>
                         </div>
 
-                        {/* Active Session Panel - Only shown when session is active */}
-                        {currentSessionId && (
+                        <div className="mt-10 p-6 bg-[#041C3C] hover:bg-[#5CB4E4] text-white rounded-[2rem] transition-all duration-1000 border border-white/10 shadow-3xl group/footer relative overflow-hidden flex flex-col items-center gap-3 text-center cursor-pointer">
+                            <div className="absolute inset-0 opacity-10 bg-blueprint pointer-events-none" />
+                            <ShieldCheck size={28} className="relative z-10 group-hover/footer:scale-110 transition-transform duration-1000" />
+                            <div className="relative z-10">
+                                <p className="text-[10px] font-black uppercase tracking-[0.3em] italic">VERIFICATION ACTIVE</p>
+                                <p className="text-[7px] font-black text-white/40 uppercase tracking-[0.2em] font-mono">SYSTEM SECURE</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Active Session Component Wrapper */}
+                    {currentSessionId && (
+                        <div className="relative group/panel">
+                            <div className="absolute -inset-4 bg-gradient-to-b from-[#5CB4E4]/10 to-transparent blur-3xl opacity-0 group-hover/panel:opacity-100 transition-opacity duration-1000" />
                             <ActiveSessionPanel
                                 sessionId={currentSessionId}
                                 onStopSession={handleStopSession}
                             />
-                        )}
-                    </div>
+                        </div>
+                    )}
                 </div>
             </div>
 
+            {/* Expanded Camera Modal Redesigned */}
             {expandedCamera && (
                 <div
-                    className="fixed inset-0 bg-black/95 z-[100] flex items-center justify-center p-4 backdrop-blur-md animate-in fade-in duration-200"
+                    className="fixed inset-0 bg-[#041C3C]/98 z-[100] flex items-center justify-center p-12 backdrop-blur-3xl animate-in zoom-in-95 duration-500"
                     onClick={() => setExpandedCamera(null)}
                 >
-                    <div
-                        className="relative w-full h-full flex flex-col"
-                        onClick={e => e.stopPropagation()}
-                    >
-                        <div className="absolute top-4 right-4 z-50">
+                    <div className="relative w-full h-full flex flex-col items-center justify-center" onClick={e => e.stopPropagation()}>
+                        <div className="absolute top-10 right-10 z-[120]">
                             <button
                                 onClick={() => setExpandedCamera(null)}
-                                className="bg-black/50 hover:bg-white/20 text-identity-navy p-3 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-full backdrop-blur-md border border-white/10 transition-colors"
+                                className="w-20 h-20 flex items-center justify-center bg-white/10 hover:bg-rose-500 text-white rounded-full border border-white/20 transition-all shadow-4xl active:scale-90"
                             >
-                                <X size={24} />
+                                <X size={40} />
                             </button>
                         </div>
-
-                        <div className="flex-1 relative flex items-center justify-center p-4 md:p-10">
-                            <div className="w-full h-full flex items-center justify-center identity-glass p-6 sm:p-8 md:p-10 rounded-[2rem] md:rounded-[3rem] border border-identity-sky/20 overflow-hidden shadow-2xl relative">
-                                <VideoFeed
-                                    src={`/api/ai/video_feed/${expandedCamera}`}
-                                    alt={`Camera ${expandedCamera} Full View`}
-                                    label="ENTRANCE TERMINAL - FULL VIEW"
-                                    className="h-full w-full object-contain"
-                                />
-                                <div className="absolute bottom-8 left-1/2 -translate-x-1/2 bg-black/80 text-identity-navy pl-4 pr-6 py-3 rounded-full backdrop-blur-xl border border-white/10 flex items-center gap-4 shadow-2xl">
-                                    <div className="w-3 h-3 bg-red-600 rounded-full animate-pulse shadow-[0_0_10px_rgba(220,38,38,0.5)]"></div>
+  
+                        <div className="w-full max-w-7xl aspect-video bg-black rounded-[5rem] border-8 border-[#041C3C] shadow-[0_0_150px_rgba(92,180,228,0.4)] overflow-hidden relative group/full">
+                            <VideoFeed
+                                src={`/api/ai/video_feed/${expandedCamera}`}
+                                alt="Expanded Node Stream"
+                                label="CAMERA FEED"
+                                className="h-full w-full"
+                            />
+                            
+                            <div className="absolute bottom-16 left-1/2 -translate-x-1/2 bg-[#041C3C]/95 text-[#5CB4E4] px-14 py-8 rounded-[3.5rem] backdrop-blur-3xl border border-[#5CB4E4]/40 flex items-center gap-12 shadow-4xl shadow-black/80 font-outfit">
+                                <div className="flex items-center gap-5">
+                                    <div className="w-5 h-5 bg-emerald-500 rounded-full animate-pulse shadow-[0_0_30px_rgba(16,185,129,1)]" />
+                                    <div className="h-10 w-px bg-white/10 mx-2" />
                                     <div className="flex flex-col">
-                                        <span className="text-sm font-bold tracking-[0.15em]">LIVE MONITORING</span>
-                                        <span className="text-[10px] text-slate-400 font-mono">CAM 0{expandedCamera} â€¢ 1080p Stream</span>
+                                        <span className="text-2xl font-black tracking-tighter uppercase italic leading-none mb-1 text-white">LIVE MONITORING</span>
+                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.5em] italic">Connecting to camera feed...</span>
                                     </div>
                                 </div>
+                                <ShieldCheck size={48} className="animate-bounce" />
                             </div>
                         </div>
                     </div>
                 </div>
             )}
-        </>
+        </div>
     );
 }

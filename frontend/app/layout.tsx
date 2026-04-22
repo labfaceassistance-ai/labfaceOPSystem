@@ -11,6 +11,8 @@ export const metadata: Metadata = {
 };
 
 import IdentityBackground from '../components/IdentityBackground';
+import ConditionalFooter from '../components/ConditionalFooter';
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -28,10 +30,12 @@ export default function RootLayout({
              <main className="flex-grow">
                {children}
              </main>
+             <ConditionalFooter />
           </div>
         </Providers>
       </body>
     </html>
+
   );
 }
 

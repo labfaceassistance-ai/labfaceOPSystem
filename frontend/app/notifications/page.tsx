@@ -13,6 +13,8 @@ interface Notification {
     is_read: boolean;
 }
 
+import IdentityBackground from '@/components/IdentityBackground';
+
 export default function NotificationsPage() {
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [loading, setLoading] = useState(true);
@@ -67,18 +69,19 @@ export default function NotificationsPage() {
         const now = new Date();
         const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
 
-        if (diffInSeconds < 60) return 'Just now';
-        if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} mins ago`;
+        if (diffInSeconds < 60) return 'Just Now';
+        if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} minutes ago`;
         if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} hours ago`;
         if (diffInSeconds < 172800) return 'Yesterday';
-        return date.toLocaleDateString();
+        return date.toLocaleDateString().toUpperCase();
     };
 
     return (
-        <div className="min-h-screen bg-slate-950 font-sans">
+        <div className="min-h-screen relative selection:bg-identity-sky/20">
+            <IdentityBackground />
             <Navbar />
 
-            <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-8">
+            <main className="max-w-5xl mx-auto px-6 pt-40 pb-20 relative z-10">
                 <button
                     onClick={() => {
                         const storedUser = localStorage.getItem('user');
@@ -87,67 +90,92 @@ export default function NotificationsPage() {
                             router.push(user.role === 'professor' ? '/professor/dashboard' : '/student/dashboard');
                         }
                     }}
-                    className="mb-4 text-brand-400 hover:text-brand-300 font-medium flex items-center gap-2 transition-colors"
+                    className="mb-8 text-identity-navy/60 hover:text-identity-navy font-black uppercase text-[11px] tracking-[0.3em] flex items-center gap-4 transition-all group bg-white/40 px-8 py-4 rounded-[1.5rem] border-2 border-white/40 backdrop-blur-md shadow-xl hover:scale-105 italic"
                 >
-                    <ArrowLeft size={18} /> Back to Dashboard
+                    <ArrowLeft size={18} className="group-hover:-translate-x-2 transition-transform" /> 
+                    Back to Dashboard
                 </button>
 
-                <div className="bg-slate-900/50 rounded-2xl shadow-sm border border-slate-800 backdrop-blur-sm overflow-hidden">
-                    <div className="p-6 border-b border-slate-800 bg-slate-900/30">
-                        <div className="flex justify-between items-center">
-                            <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-                                <Bell className="text-brand-400" /> Notifications
-                            </h1>
+                <div className="identity-glass rounded-[3.5rem] shadow-4xl border-2 border-white/40 backdrop-blur-2xl overflow-hidden animate-fade-in bg-white/10">
+                    <div className="p-10 md:p-14 border-b-2 border-identity-navy/5 bg-white/40">
+                        <div className="flex flex-col md:flex-row justify-between items-center gap-8">
+                           <div className="flex items-center gap-6">
+                               <div className="w-16 h-16 bg-identity-navy text-identity-sky rounded-2xl flex items-center justify-center shadow-xl border-2 border-white/10">
+                                   <Bell size={32} className="animate-pulse" />
+                               </div>
+                               <div>
+                                   <h1 className="text-3xl md:text-5xl font-black text-identity-navy uppercase tracking-tighter italic">
+                                       Academic Alerts & Notifications
+                                   </h1>
+                                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em] italic opacity-60">Communication Portal</p>
+                               </div>
+                           </div>
                             {notifications.some(n => !n.is_read) && (
                                 <button
                                     onClick={markAllAsRead}
-                                    className="tracking-[0.15em] font-black uppercase rounded-2xl text-sm text-brand-400 hover:text-brand-300 font-bold flex items-center gap-1"
+                                    className="px-8 py-4 bg-identity-sky text-white rounded-2xl text-[11px] font-black uppercase tracking-[0.2em] shadow-glow-blue hover:scale-105 transition-all flex items-center gap-3 italic border-2 border-white/10"
                                 >
-                                    <Check size={16} /> Mark all as read
+                                    <Check size={18} /> Mark All as Read
                                 </button>
                             )}
                         </div>
                     </div>
 
-                    <div className="divide-y divide-slate-800">
+                    <div className="divide-y-2 divide-identity-navy/5">
                         {loading ? (
-                            <div className="p-8 text-center">
-                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-500 mx-auto"></div>
+                            <div className="p-24 text-center">
+                                <div className="w-16 h-16 border-4 border-identity-sky border-t-transparent rounded-full animate-spin mx-auto shadow-glow-blue"></div>
+                                <p className="mt-8 text-[11px] font-black text-identity-navy uppercase tracking-[0.4em] italic animate-pulse">Loading notifications...</p>
                             </div>
                         ) : notifications.length > 0 ? (
                             notifications.map((notification) => (
                                 <div
                                     key={notification.id}
-                                    className={`p-6 hover:bg-slate-800/30 transition-colors cursor-pointer ${!notification.is_read ? 'bg-brand-500/10' : ''}`}
+                                    className={`p-10 md:p-12 hover:bg-white/40 transition-all cursor-pointer group relative overflow-hidden ${!notification.is_read ? 'bg-identity-sky/[0.03]' : ''}`}
                                     onClick={() => !notification.is_read && markAsRead(notification.id)}
                                 >
-                                    <div className="flex justify-between items-start">
+                                    {/* Unread Indicator Bar */}
+                                    {!notification.is_read && (
+                                        <div className="absolute left-0 top-0 bottom-0 w-2 bg-identity-sky shadow-glow-blue"></div>
+                                    )}
+
+                                    <div className="flex flex-col md:flex-row justify-between items-start gap-8 relative z-10">
                                         <div className="flex-1">
-                                            <h3 className={`text-lg font-semibold mb-1 ${!notification.is_read ? 'text-brand-300' : 'text-white'}`}>
+                                            <div className="flex items-center gap-4 mb-4">
+                                                {!notification.is_read && (
+                                                    <span className="px-3 py-1 bg-identity-sky text-white text-[9px] font-black uppercase tracking-[0.2em] rounded-md italic shadow-glow-blue animate-pulse">
+                                                        New
+                                                    </span>
+                                                )}
+                                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] flex items-center gap-2 italic">
+                                                    <Clock size={12} /> {formatDate(notification.created_at)}
+                                                </span>
+                                            </div>
+                                            <h3 className={`text-xl md:text-2xl font-black uppercase tracking-tighter mb-3 italic ${!notification.is_read ? 'text-identity-navy underline decoration-identity-sky/20' : 'text-identity-navy/80'}`}>
                                                 {notification.title}
                                             </h3>
-                                            <p className="text-slate-400 leading-relaxed">{notification.message}</p>
+                                            <p className="text-[12px] font-black text-slate-500 leading-relaxed uppercase tracking-widest italic opacity-70 group-hover:opacity-100 transition-opacity">
+                                                {notification.message}
+                                            </p>
                                         </div>
-                                        <div className="ml-4 flex flex-col items-end gap-2">
-                                            <span className="text-xs text-slate-500 flex items-center gap-1 whitespace-nowrap">
-                                                <Clock size={12} /> {formatDate(notification.created_at)}
-                                            </span>
-                                            {!notification.is_read && (
-                                                <span className="h-2 w-2 rounded-full bg-brand-500"></span>
-                                            )}
+                                        <div className="flex flex-col items-end shrink-0">
+                                            <div className={`w-14 h-14 rounded-2xl flex items-center justify-center border-2 transition-all duration-500 ${!notification.is_read ? 'bg-identity-sky/10 border-identity-sky/40 text-identity-sky shadow-glow-blue rotate-12' : 'bg-white border-identity-navy/5 text-slate-300'}`}>
+                                                <Bell size={24} />
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
                             ))
                         ) : (
-                            <div className="p-12 text-center text-slate-400">
-                                <Bell size={48} className="mx-auto text-slate-700 mb-4" />
-                                <h3 className="text-lg font-medium text-white">No notifications</h3>
-                                <p>You're all caught up!</p>
+                            <div className="p-32 text-center opacity-40">
+                                <Bell size={80} className="mx-auto text-slate-300 mb-8" />
+                                <h3 className="text-2xl font-black text-identity-navy uppercase tracking-tighter italic">No New Notifications</h3>
+                                <p className="text-[10px] font-black uppercase tracking-[0.4em] mt-4 italic">Your notification log is currently empty</p>
                             </div>
                         )}
                     </div>
                 </div>
+
             </main>
         </div>
     );

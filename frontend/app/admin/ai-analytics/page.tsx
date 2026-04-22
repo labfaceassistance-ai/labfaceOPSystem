@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
@@ -135,7 +135,7 @@ export default function AdminAIPage() {
         return (
             <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center gap-6">
                 <div className="w-16 h-16 border-4 border-identity-sky/20 border-t-identity-sky rounded-full animate-spin"></div>
-                <p className="text-identity-navy/40 text-[10px] font-black uppercase tracking-[0.4em] animate-pulse">Loading Analytics...</p>
+                <p className="text-identity-navy/40 text-[10px] font-black uppercase tracking-[0.4em] animate-pulse">Analyzing Student Patterns...</p>
             </div>
         );
     }
@@ -152,119 +152,121 @@ export default function AdminAIPage() {
                     </Link>
                 </div>
 
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12 animate-fade-in">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12 animate-fade-in px-2">
                     <div>
-                        <h1 className="text-3xl md:text-4xl font-black text-identity-navy mb-3 uppercase tracking-tighter italic flex items-center gap-4">
-                            <div className="bg-identity-sky/10 p-3 rounded-2xl">
-                                <Brain className="text-identity-sky w-8 h-8" />
+                        <h1 className="text-4xl md:text-5xl font-black text-[#041C3C] mb-3 uppercase tracking-tighter font-outfit flex flex-wrap items-center gap-4">
+                            <div className="bg-[#5CB4E4]/10 rounded-2xl p-3">
+                                <Brain className="text-[#5CB4E4] w-10 h-10" />
                             </div>
-                            Monitor Predictive Analytics
+                            <span>Predictive Insights</span>
                         </h1>
-                        <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.4em] ml-2">Behavioral Insights Engine</p>
+                        <p className="text-slate-400 text-[10px] md:text-sm font-black uppercase tracking-[0.4em] ml-2">AI-driven student performance forecasting.</p>
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8 animate-fade-in">
-                    <div className="identity-glass p-8 rounded-[32px] shadow-xl border border-identity-sky/10 relative overflow-hidden group">
-                        <div className="absolute inset-0 bg-gradient-to-br from-identity-sky/5 via-transparent to-transparent opacity-50" />
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12 animate-fade-in">
+                    <div className="identity-glass p-10 rounded-[3rem] shadow-xl border border-[#5CB4E4]/10 relative overflow-hidden group">
+                        <div className="absolute inset-0 bg-gradient-to-br from-[#5CB4E4]/5 via-transparent to-transparent opacity-50" />
                         <div className="flex items-center justify-between mb-6 relative z-10">
-                            <div className="p-4 bg-identity-navy/5 rounded-2xl text-identity-navy">
-                                <Users size={28} />
+                            <div className="bg-[#5CB4E4]/10 rounded-2xl p-3 text-[#041C3C]">
+                                <Users size={32} />
                             </div>
                             <div className="text-right">
-                                <div className="text-3xl md:text-4xl font-black text-identity-navy tracking-tighter">{insights.totalStudents}</div>
-                                <div className="text-[10px] font-bold uppercase tracking-[0.15em] text-slate-400 mt-1">Monitored Nodes</div>
+                                <div className="text-4xl md:text-5xl font-black text-[#041C3C] tracking-tighter font-outfit">{insights.totalStudents}</div>
+                                <div className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-400 mt-1">TOTAL STUDENTS</div>
                             </div>
                         </div>
                     </div>
 
-                    <div className="identity-glass p-8 rounded-[32px] shadow-xl border border-rose-500/10 relative overflow-hidden group">
+                    <div className="identity-glass p-10 rounded-[3rem] shadow-xl border border-rose-500/10 relative overflow-hidden group">
                         <div className="absolute inset-0 bg-gradient-to-br from-rose-500/5 via-transparent to-transparent opacity-50" />
                         <div className="flex items-center justify-between mb-6 relative z-10">
-                            <div className="p-4 bg-rose-500/10 rounded-2xl text-rose-500">
-                                <AlertTriangle size={28} />
+                            <div className="bg-rose-500/10 rounded-2xl p-3 text-rose-500">
+                                <AlertTriangle size={32} />
                             </div>
                             <div className="text-right">
-                                <div className="text-3xl md:text-4xl font-black text-rose-500 tracking-tighter">{insights.highRiskCount}</div>
-                                <div className="text-[10px] font-bold uppercase tracking-[0.15em] text-slate-400 mt-1">Critical Anomalies</div>
+                                <div className="text-4xl md:text-5xl font-black text-rose-500 tracking-tighter font-outfit">{insights.highRiskCount}</div>
+                                <div className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-400 mt-1">HIGH-RISK ALERTS</div>
                             </div>
                         </div>
-                        <div className="text-[9px] font-black uppercase tracking-[0.15em] text-rose-400 mt-2 relative z-10 bg-rose-500/5 px-4 py-2 rounded-2xl inline-block">
-                            {insights.totalStudents > 0 ? ((insights.highRiskCount / insights.totalStudents) * 100).toFixed(1) : 0}% OF ALL STUDENTS
+                        <div className="text-[9px] font-black uppercase tracking-[0.15em] text-rose-400 mt-4 relative z-10 bg-rose-500/5 px-4 py-2 rounded-2xl inline-block">
+                            {insights.totalStudents > 0 ? ((insights.highRiskCount / insights.totalStudents) * 100).toFixed(1) : 0}% of student body
                         </div>
                     </div>
 
-                    <div className="identity-glass p-8 rounded-[32px] shadow-xl border border-emerald-500/10 relative overflow-hidden group">
+                    <div className="identity-glass p-10 rounded-[3rem] shadow-xl border border-emerald-500/10 relative overflow-hidden group">
                         <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 via-transparent to-transparent opacity-50" />
                         <div className="flex items-center justify-between mb-6 relative z-10">
-                            <div className="p-4 bg-emerald-500/10 rounded-2xl text-emerald-500">
-                                <CheckCircle size={28} />
+                            <div className="bg-emerald-500/10 rounded-2xl p-3 text-emerald-500">
+                                <CheckCircle size={32} />
                             </div>
                             <div className="text-right">
-                                <div className="text-3xl md:text-4xl font-black text-emerald-500 tracking-tighter">{insights.lowRiskCount}</div>
-                                <div className="text-[10px] font-bold uppercase tracking-[0.15em] text-slate-400 mt-1">Stable Records</div>
+                                <div className="text-4xl md:text-5xl font-black text-emerald-500 tracking-tighter font-outfit">{insights.lowRiskCount}</div>
+                                <div className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-400 mt-1">ON-TRACK STUDENTS</div>
                             </div>
                         </div>
-                        <div className="text-[9px] font-black uppercase tracking-[0.15em] text-emerald-500 mt-2 relative z-10 bg-emerald-500/5 px-4 py-2 rounded-2xl inline-block">
-                            {insights.totalStudents > 0 ? ((insights.lowRiskCount / insights.totalStudents) * 100).toFixed(1) : 0}% OF ALL STUDENTS
+                        <div className="text-[9px] font-black uppercase tracking-[0.15em] text-emerald-500 mt-4 relative z-10 bg-emerald-500/5 px-4 py-2 rounded-2xl inline-block">
+                            {insights.totalStudents > 0 ? ((insights.lowRiskCount / insights.totalStudents) * 100).toFixed(1) : 0}% of student body
                         </div>
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12 animate-fade-in">
-                    <div className="identity-glass p-8 rounded-[32px] shadow-xl border border-slate-200">
-                         <div className="flex items-center gap-4 mb-6">
-                            <div className="p-3 bg-identity-sky/10 rounded-2xl text-identity-sky">
-                                <Target size={24} />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12 animate-fade-in">
+                    <div className="identity-glass p-10 rounded-[3rem] shadow-xl border border-[#041C3C]/5 bg-white/40">
+                         <div className="flex items-center gap-4 mb-8">
+                            <div className="bg-[#5CB4E4]/10 rounded-2xl p-3 text-[#5CB4E4]">
+                                <Target size={28} />
                             </div>
-                            <h3 className="text-sm font-black text-identity-navy uppercase tracking-[0.15em]">System Reliability Coefficient</h3>
+                            <h3 className="text-xs md:text-sm font-black text-[#041C3C] uppercase tracking-[0.15em]">Prediction Accuracy Level</h3>
                         </div>
-                        <div className="flex items-end gap-4 mt-4">
-                            <span className="text-4xl md:text-5xl font-black text-identity-navy tracking-tighter italic">{insights.avgSuccessProbability.toFixed(1)}%</span>
+                        <div className="flex items-end gap-2 mt-4">
+                            <span className="text-5xl md:text-6xl font-black text-[#041C3C] tracking-tighter font-outfit italic">{insights.avgSuccessProbability.toFixed(1)}%</span>
                         </div>
-                        <p className="text-[10px] font-bold text-slate-400 mt-3 uppercase tracking-[0.15em]">AI Prediction Confidence</p>
+                        <p className="text-[10px] font-black text-slate-400 mt-4 uppercase tracking-[0.15em]">AI CONFIDENCE RATING</p>
                     </div>
 
-                    <div className="identity-glass p-8 rounded-[32px] shadow-xl border border-rose-200 bg-rose-50/30">
-                        <div className="flex items-center gap-4 mb-6">
-                            <div className="p-3 bg-rose-500/10 rounded-2xl text-rose-500">
-                                <XCircle size={24} />
+                    <div className="identity-glass p-10 rounded-[3rem] shadow-xl border border-rose-200 bg-rose-50/20">
+                        <div className="flex items-center gap-4 mb-8">
+                            <div className="bg-rose-500/10 rounded-2xl p-3 text-rose-500">
+                                <XCircle size={28} />
                             </div>
-                            <h3 className="text-sm font-black text-rose-500 uppercase tracking-[0.15em]">Forecasted Deregistrations</h3>
+                            <h3 className="text-xs md:text-sm font-black text-rose-500 uppercase tracking-[0.15em]">Predicted At-Risk Departures</h3>
                         </div>
-                        <div className="flex items-end gap-4 mt-4">
-                            <span className="text-4xl md:text-5xl font-black text-rose-500 tracking-tighter italic">{insights.predictedDropouts}</span>
+                        <div className="flex items-end gap-2 mt-4">
+                            <span className="text-5xl md:text-6xl font-black text-rose-500 tracking-tighter font-outfit italic">{insights.predictedDropouts}</span>
                         </div>
-                        <p className="text-[10px] font-bold text-rose-400 mt-3 uppercase tracking-[0.15em]">Students with &lt; 40% attendance</p>
+                        <p className="text-[10px] font-black text-rose-400 mt-4 uppercase tracking-[0.15em]">Status: Attention Required</p>
                     </div>
                 </div>
 
-                <div className="identity-glass p-6 sm:p-8 md:p-10 rounded-[2rem] md:rounded-[3rem] shadow-2xl border border-identity-sky/10 mb-12 bg-white/40 animate-fade-in">
-                    <h2 className="text-xl font-black text-identity-navy mb-8 uppercase tracking-tighter italic flex items-center gap-4">
-                        <Activity className="text-identity-sky w-6 h-6" />
-                        Analyze Threat Distribution
+                <div className="identity-glass p-10 rounded-[3rem] shadow-2xl border border-[#5CB4E4]/10 mb-12 bg-white/40 animate-fade-in">
+                    <h2 className="text-2xl font-black text-[#041C3C] mb-10 uppercase tracking-tighter font-outfit flex items-center gap-4">
+                        <div className="bg-[#5CB4E4]/10 rounded-2xl p-2">
+                            <Activity className="text-[#5CB4E4] w-6 h-6" />
+                        </div>
+                        STUDENT RISK DISTRIBUTION
                     </h2>
                     
-                    <div className="space-y-6">
+                    <div className="space-y-8">
                         <div>
-                            <div className="flex justify-between items-end mb-2">
-                                <span className="text-[10px] font-black text-rose-500 uppercase tracking-[0.15em]">Critical Risk Threshold</span>
-                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.15em]">{insights.highRiskCount} Identities</span>
+                            <div className="flex justify-between items-end mb-3">
+                                <span className="text-[10px] font-black text-rose-500 uppercase tracking-[0.15em]">CRITICAL RISK LEVEL</span>
+                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.15em]">{insights.highRiskCount} STUDENTS</span>
                             </div>
-                            <div className="w-full bg-slate-100 rounded-full h-3 border border-slate-200 overflow-hidden shadow-inner">
+                            <div className="w-full bg-slate-100 rounded-full h-4 border border-slate-200 overflow-hidden shadow-inner">
                                 <div
-                                    className="bg-rose-500 h-full rounded-full transition-all duration-1000 shadow-[0_0_10px_rgba(244,63,94,0.6)]"
+                                    className="bg-rose-500 h-full rounded-full transition-all duration-1000 shadow-[0_0_15px_rgba(244,63,94,0.4)]"
                                     style={{ width: `${insights.totalStudents > 0 ? (insights.highRiskCount / insights.totalStudents) * 100 : 0}%` }}
                                 />
                             </div>
                         </div>
 
                         <div>
-                            <div className="flex justify-between items-end mb-2">
-                                <span className="text-[10px] font-black text-amber-500 uppercase tracking-[0.15em]">Moderate Instability</span>
-                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.15em]">{insights.mediumRiskCount} Identities</span>
+                            <div className="flex justify-between items-end mb-3">
+                                <span className="text-[10px] font-black text-amber-500 uppercase tracking-[0.15em]">MODERATE RISK LEVEL</span>
+                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.15em]">{insights.mediumRiskCount} STUDENTS</span>
                             </div>
-                            <div className="w-full bg-slate-100 rounded-full h-3 border border-slate-200 overflow-hidden shadow-inner">
+                            <div className="w-full bg-slate-100 rounded-full h-4 border border-slate-200 overflow-hidden shadow-inner">
                                 <div
                                     className="bg-amber-400 h-full rounded-full transition-all duration-1000"
                                     style={{ width: `${insights.totalStudents > 0 ? (insights.mediumRiskCount / insights.totalStudents) * 100 : 0}%` }}
@@ -273,11 +275,11 @@ export default function AdminAIPage() {
                         </div>
 
                         <div>
-                            <div className="flex justify-between items-end mb-2">
-                                <span className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.15em]">Secure Status</span>
-                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.15em]">{insights.lowRiskCount} Identities</span>
+                            <div className="flex justify-between items-end mb-3">
+                                <span className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.15em]">LOW RISK LEVEL</span>
+                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.15em]">{insights.lowRiskCount} STUDENTS</span>
                             </div>
-                            <div className="w-full bg-slate-100 rounded-full h-3 border border-slate-200 overflow-hidden shadow-inner">
+                            <div className="w-full bg-slate-100 rounded-full h-4 border border-slate-200 overflow-hidden shadow-inner">
                                 <div
                                     className="bg-emerald-400 h-full rounded-full transition-all duration-1000"
                                     style={{ width: `${insights.totalStudents > 0 ? (insights.lowRiskCount / insights.totalStudents) * 100 : 0}%` }}
@@ -287,11 +289,13 @@ export default function AdminAIPage() {
                     </div>
                 </div>
 
-                <div className="identity-glass p-6 sm:p-8 md:p-10 rounded-[2rem] md:rounded-[3rem] shadow-2xl border border-rose-500/20 bg-white/40 animate-fade-in relative overflow-hidden">
+                <div className="identity-glass p-10 rounded-[3rem] shadow-2xl border border-rose-500/20 bg-white/40 animate-fade-in relative overflow-hidden">
                     <div className="absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-rose-50 to-transparent pointer-events-none opacity-50" />
-                    <h2 className="text-xl font-black text-rose-500 mb-8 uppercase tracking-tighter italic flex items-center gap-4 relative z-10">
-                        <AlertTriangle className="text-rose-500 w-6 h-6" />
-                        Review At-Risk Students
+                    <h2 className="text-2xl font-black text-rose-500 mb-10 uppercase tracking-tighter font-outfit flex items-center gap-4 relative z-10">
+                        <div className="bg-rose-500/10 rounded-2xl p-2">
+                            <AlertTriangle className="text-rose-500 w-6 h-6" />
+                        </div>
+                        REVIEW AT-RISK STUDENTS
                     </h2>
 
                     {highRiskStudents.length > 0 ? (
@@ -299,33 +303,33 @@ export default function AdminAIPage() {
                             <table className="w-full text-left border-collapse">
                                 <thead>
                                     <tr className="bg-slate-50/80 border-b border-slate-200">
-                                        <th className="px-6 py-5 text-identity-navy font-black uppercase tracking-[0.15em] text-[10px]">Course Code</th>
-                                        <th className="px-6 py-5 text-identity-navy font-black uppercase tracking-[0.15em] text-[10px]">Target Name</th>
-                                        <th className="px-6 py-5 text-identity-navy font-black uppercase tracking-[0.15em] text-[10px] text-center">Compliance Rate</th>
-                                        <th className="px-6 py-5 text-identity-navy font-black uppercase tracking-[0.15em] text-[10px] text-center">Risk Score</th>
-                                        <th className="px-6 py-5 text-identity-navy font-black uppercase tracking-[0.15em] text-[10px] text-center">System Flag</th>
+                                        <th className="px-6 py-5 text-[#041C3C] font-black uppercase tracking-[0.15em] text-[10px]">STUDENT ID</th>
+                                        <th className="px-6 py-5 text-[#041C3C] font-black uppercase tracking-[0.15em] text-[10px]">FULL NAME</th>
+                                        <th className="px-6 py-5 text-[#041C3C] font-black uppercase tracking-[0.15em] text-[10px] text-center">ATTENDANCE RATE</th>
+                                        <th className="px-6 py-5 text-[#041C3C] font-black uppercase tracking-[0.15em] text-[10px] text-center">RISK SCORE</th>
+                                        <th className="px-6 py-5 text-[#041C3C] font-black uppercase tracking-[0.15em] text-[10px] text-center">ACTION STATUS</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-100">
                                     {highRiskStudents.map((student, index) => (
-                                        <tr key={index} className="hover:bg-slate-50/50 transition-colors group">
-                                            <td className="px-6 py-5">
-                                                <code className="text-[10px] bg-white px-3 py-1.5 rounded-2xl text-identity-navy font-mono border border-slate-200 font-bold tracking-[0.15em]">
+                                        <tr key={index} className="hover:bg-white/60 transition-colors group">
+                                            <td className="px-6 py-6">
+                                                <code className="text-[10px] bg-white px-3 py-1.5 rounded-xl text-[#041C3C] font-mono border border-slate-200 font-black tracking-[0.15em]">
                                                     {student.student_id}
                                                 </code>
                                             </td>
-                                            <td className="px-6 py-5 text-identity-navy font-black text-xs uppercase tracking-[0.15em] italic">
+                                            <td className="px-6 py-6 text-[#041C3C] font-black text-xs uppercase tracking-[0.15em]">
                                                 {student.name}
                                             </td>
-                                            <td className="px-6 py-5 text-center">
-                                                <span className="text-amber-500 font-black text-xs">{student.attendance_rate}%</span>
+                                            <td className="px-6 py-6 text-center">
+                                                <span className="text-amber-500 font-black text-xs tracking-[0.15em]">{student.attendance_rate}%</span>
                                             </td>
-                                            <td className="px-6 py-5 text-center">
-                                                <span className="text-rose-500 font-black text-sm">{student.risk_score?.toFixed(0) || 'N/A'}</span>
+                                            <td className="px-6 py-6 text-center">
+                                                <span className="text-rose-500 font-black text-sm tracking-tighter">{student.risk_score?.toFixed(0) || 'N/A'}</span>
                                             </td>
-                                            <td className="px-6 py-5 text-center">
-                                                <span className="px-4 py-2 bg-rose-50 text-rose-500 border border-rose-100 rounded-2xl text-[9px] font-black uppercase tracking-[0.15em]">
-                                                    CRITICAL ALERT
+                                            <td className="px-6 py-6 text-center">
+                                                <span className="px-4 py-2 bg-rose-500 text-white rounded-2xl text-[9px] font-black uppercase tracking-[0.15em] shadow-lg shadow-rose-500/20">
+                                                    ATTENTION REQUIRED
                                                 </span>
                                             </td>
                                         </tr>
@@ -334,9 +338,9 @@ export default function AdminAIPage() {
                             </table>
                         </div>
                     ) : (
-                        <div className="bg-emerald-50 border border-emerald-100 rounded-2xl p-6 text-emerald-600 text-xs flex items-center gap-4 font-black uppercase tracking-[0.15em] shadow-inner relative z-10">
-                            <CheckCircle className="w-5 h-5 shrink-0" />
-                            NO AT-RISK STUDENTS DETECTED.
+                        <div className="bg-emerald-500 text-white rounded-[2rem] p-10 text-xs flex items-center justify-center gap-6 font-black uppercase tracking-[0.15em] shadow-2xl relative z-10 border border-emerald-400">
+                            <CheckCircle className="w-8 h-8 shrink-0" />
+                            NO AT-RISK STUDENTS IDENTIFIED AT THIS TIME
                         </div>
                     )}
                 </div>

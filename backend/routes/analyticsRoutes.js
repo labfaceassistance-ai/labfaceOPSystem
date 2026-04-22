@@ -80,8 +80,8 @@ router.get('/professor/:userId/trends', authenticateToken, requireRole(['profess
 
         const [trends] = await pool.query(`
             SELECT
-                DATE_FORMAT(CONVERT_TZ(al.time_in, '+00:00', '+08:00'), '%a') as period,
-                DATE(CONVERT_TZ(al.time_in, '+00:00', '+08:00')) as full_date,
+                DATE_FORMAT(al.time_in, '%a') as period,
+                DATE(al.time_in) as full_date,
                 COUNT(al.id) as attendance_count,
                 COUNT(DISTINCT al.student_id) as unique_students
             FROM attendance_logs al

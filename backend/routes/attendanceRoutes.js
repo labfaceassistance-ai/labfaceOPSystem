@@ -190,16 +190,18 @@ router.post('/sessions', async (req, res) => {
         // CASE B: Starting a Session (Now)
         // ---------------------------------------------------------
 
+        const phTimeNow = new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Manila', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }).format(now);
+
         // 0. Auto-cleanup: silently end any stuck sessions older than 8 hours
         //    These are clearly orphaned from a previous day/browser crash
         await pool.query(
             `UPDATE sessions
-             SET monitoring_ended_at = NOW(), end_time = NOW()
+             SET monitoring_ended_at = NOW(), end_time = ?
              WHERE class_id = ?
              AND monitoring_started_at IS NOT NULL
              AND monitoring_ended_at IS NULL
              AND monitoring_started_at < DATE_SUB(NOW(), INTERVAL 8 HOUR)`,
-            [classId]
+            [phTimeNow, classId]
         );
 
         // 1. Check for Active Session (Prevent Double Start)
@@ -217,9 +219,9 @@ router.post('/sessions', async (req, res) => {
                 const stuckIds = activeSessions.map(s => s.id);
                 console.log(`[SessionStart] forceEnd=true — ending stuck sessions: ${stuckIds.join(', ')}`);
                 await pool.query(
-                    `UPDATE sessions SET monitoring_ended_at = NOW(), end_time = NOW()
+                    `UPDATE sessions SET monitoring_ended_at = NOW(), end_time = ?
                      WHERE id IN (${stuckIds.map(() => '?').join(',')})`,
-                    stuckIds
+                    [phTimeNow, ...stuckIds]
                 );
                 // Invalidate AI cache after force-ending
                 try {
@@ -377,14 +379,15 @@ router.post('/sessions/:sessionId/stop', async (req, res) => {
     try {
         const { sessionId } = req.params;
         const now = new Date();
+        const phTime = new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Manila', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }).format(now);
 
         // Update session with end_time and monitoring_ended_at
         await pool.query(
             `UPDATE sessions
-             SET end_time = NOW(),
+             SET end_time = ?,
                  monitoring_ended_at = ?
              WHERE id = ?`,
-            [now, sessionId]
+            [phTime, now, sessionId]
         );
 
         // Invalidate AI service cache when stopping session to ensure clean state
@@ -473,6 +476,8 @@ router.get('/sessions/:sessionId/activity', async (req, res) => {
 
         const standardizedActivity = activity.map(log => ({
             ...log,
+            time_in: log.time_in ? new Date(log.time_in).toISOString() : null,
+            created_at: log.created_at ? new Date(log.created_at).toISOString() : null,
             snapshot_url: standardizeImageUrl(log.snapshot_url, SNAPSHOT_BUCKET),
             id_photo: standardizeImageUrl(log.id_photo)
         }));

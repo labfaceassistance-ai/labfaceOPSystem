@@ -1,6 +1,6 @@
-﻿"use client";
+"use client";
 import { useEffect, useState } from 'react';
-import { Calendar, Clock, MapPin, User as UserIcon, X, Zap, BookOpen } from 'lucide-react';
+import { Calendar, Clock, MapPin, User as UserIcon, X, Zap, BookOpen, ChevronRight } from 'lucide-react';
 import Skeleton from '@/components/ui/Skeleton';
 import EmptyState from '@/components/ui/EmptyState';
 
@@ -102,19 +102,24 @@ export default function ScheduleTab({ user }: ScheduleTabProps) {
 
     return (
         <div className="space-y-8 animate-fade-in pb-20 font-outfit">
-            {/* Header Area */}
-            <div className="identity-glass p-6 sm:p-8 md:p-10 rounded-[2rem] md:rounded-[3rem] shadow-xl border border-identity-sky/10 backdrop-blur-md relative overflow-hidden group">
+            {/* Compact Header Area */}
+            <div className="identity-glass p-6 rounded-[2rem] shadow-2xl border border-identity-sky/15 backdrop-blur-xl relative overflow-hidden group">
+                <div className="absolute inset-0 opacity-[0.02] pointer-events-none bg-blueprint-fine" />
+                
                 <div className="flex flex-col sm:flex-row items-center gap-6 relative z-10">
-                    <div className="p-3 bg-identity-sky/10 text-identity-navy rounded-2xl border border-identity-sky/10 shadow-sm">
-                        <Calendar size={32} className="text-identity-sky" />
+                    <div className="p-4 bg-identity-navy text-white rounded-2xl border border-identity-sky/10 shadow-lg group-hover:bg-identity-sky transition-colors duration-500">
+                        <Calendar size={24} className="filter drop-shadow-md" />
                     </div>
-                    <div>
-                        <h2 className="text-3xl font-black text-identity-navy uppercase tracking-tighter italic">Temporal Registry</h2>
-                        <p className="text-[10px] font-black text-identity-sky uppercase tracking-[0.4em] mt-2">Schedule Matrix â€¢ Terminal Active</p>
+                    <div className="text-center sm:text-left">
+                        <h1 className="text-2xl font-black text-identity-navy uppercase tracking-tighter italic leading-none mb-2">WEEKLY SCHEDULE</h1>
+                        <p className="text-[9px] font-black text-identity-sky uppercase tracking-[0.3em] italic flex items-center justify-center sm:justify-start gap-3">
+                            <span className="w-1.5 h-1.5 rounded-full bg-identity-sky/40 animate-pulse" />
+                            SYNCHRONIZED • STATUS VERIFIED
+                        </p>
                     </div>
-                    <div className="ml-auto hidden md:flex items-center gap-4 bg-white/40 px-6 py-3 rounded-full border border-identity-sky/10 shadow-inner">
-                        <Zap size={16} className="text-identity-sky animate-pulse" />
-                        <span className="text-[9px] font-black text-identity-navy uppercase tracking-[0.15em]">Real-time Sync Active</span>
+                    <div className="ml-auto hidden lg:flex items-center gap-4 bg-white/40 px-6 py-3 rounded-2xl border border-identity-sky/10 shadow-sm">
+                        <Zap size={14} className="text-identity-sky animate-pulse" />
+                        <span className="text-[9px] font-black text-identity-navy uppercase tracking-[0.2em] italic">REAL-TIME ACTIVE</span>
                     </div>
                 </div>
             </div>
@@ -123,135 +128,155 @@ export default function ScheduleTab({ user }: ScheduleTabProps) {
             {classes.length === 0 && (
                 <EmptyState
                     icon={Calendar}
-                    title="No Registry Fragments"
-                    description="Your academic schedule is currently unpopulated. Enroll in class modules to manifesting your timeline."
+                    title="No Schedule Found"
+                    description="Your academic schedule is currently empty. Enroll in classes to see your schedule here."
                     className="py-24"
                 />
             )}
 
-            {/* Matrix Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12">
-                {days.map(day => {
+            {/* Weekly Schedule Grid */}
+            <div className="table-responsive-wrapper pb-10">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-4 min-w-[1200px] xl:min-w-0">
+                    {days.map(day => {
                     const dayClasses = scheduleByDay[day] || [];
                     const hasClasses = dayClasses.length > 0;
-
-                    if (!hasClasses) return null; // Only show days with classes to save space
 
                     return (
                         <div
                             key={day}
-                            className="identity-glass rounded-[2rem] md:rounded-[3rem] overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-500 border border-identity-sky/10 h-fit"
+                            className="identity-glass rounded-[2rem] overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-700 border border-identity-sky/15 h-full min-h-[400px] flex flex-col group/day"
                         >
-                            <div className="px-8 sm:px-10 py-6 flex items-center justify-between border-b border-identity-sky/5 bg-identity-sky/5">
-                                <h3 className="text-xl font-black text-identity-navy uppercase tracking-tighter italic">{day}</h3>
-                                <span className="text-[9px] font-black uppercase tracking-[0.2em] px-4 py-2 rounded-full bg-identity-navy text-white shadow-xl shadow-identity-navy/10">
-                                    {dayClasses.length} Modules
-                                </span>
+                            <div className="absolute inset-0 opacity-[0.02] pointer-events-none bg-blueprint" />
+                            <div className="px-4 py-3 flex items-center justify-between border-b border-identity-sky/10 bg-identity-sky/[0.03] group-hover/day:bg-identity-sky/[0.05] transition-colors relative">
+                                <h3 className="text-sm font-black text-identity-navy uppercase tracking-tighter italic leading-none">{day}</h3>
+                                <div className="text-[7px] font-black uppercase tracking-[0.1em] px-2 py-1 rounded-md bg-identity-navy text-white shadow-lg border border-identity-sky/20 italic">
+                                    {dayClasses.length}
+                                </div>
                             </div>
 
-                            <div className="p-6 sm:p-10 space-y-6">
-                                {dayClasses.map((item, index) => (
+                            <div className="p-3 space-y-3 flex-1 flex flex-col">
+                                {hasClasses ? dayClasses.map((item, index) => (
                                     <div
                                         key={index}
                                         onClick={() => setSelectedClass(item.class)}
-                                        className="bg-white/60 rounded-[1.5rem] p-6 sm:p-8 border border-identity-sky/5 hover:border-identity-sky/20 hover:bg-white transition-all duration-500 cursor-pointer group shadow-sm hover:shadow-2xl relative active:scale-[0.97]"
+                                        className="bg-white/80 hover:bg-white rounded-[1.2rem] p-4 border-2 border-slate-100 hover:border-identity-sky/50 transition-all duration-500 cursor-pointer group shadow-lg hover:-translate-y-1 relative active:scale-[0.98] overflow-hidden group/item flex flex-col"
                                     >
-                                        <div className="flex items-start justify-between mb-8">
-                                            <div className="flex-1">
-                                                <h4 className="font-black text-identity-navy text-lg uppercase tracking-tight group-hover:text-identity-sky transition-colors italic leading-none mb-2">
+                                        <div className="absolute top-0 left-0 w-1.5 h-full bg-identity-sky/20 group-hover/item:bg-identity-sky transition-colors" />
+                                        
+                                        <div className="flex flex-col gap-2 mb-4 relative z-10">
+                                            <div className="flex items-center justify-between gap-2">
+                                                <h4 className="font-black text-identity-navy text-sm uppercase tracking-tight group-hover/item:text-identity-sky transition-colors italic leading-none">
                                                     {item.class.subject_code}
                                                 </h4>
-                                                <p className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400 line-clamp-1 pr-10 opacity-70">
-                                                    {item.class.subject_name}
-                                                </p>
+                                                <div className="text-[8px] font-black text-white bg-identity-navy px-2 py-1 rounded shadow-sm italic">
+                                                    {item.class.section}
+                                                </div>
                                             </div>
-                                            <div className="text-[8px] font-black text-identity-sky bg-identity-sky/[0.03] px-3 py-1.5 rounded-lg border border-identity-sky/10 shadow-sm uppercase tracking-[0.2em]">
-                                                {item.class.section}
-                                            </div>
+                                            <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 truncate italic">
+                                                {item.class.subject_name}
+                                            </p>
                                         </div>
-
-                                        <div className="flex flex-wrap items-center gap-8 text-[9px] font-black uppercase tracking-[0.2em] text-slate-400 mt-8 pt-8 border-t border-identity-sky/5">
-                                            <div className="flex items-center gap-4 group-hover:text-identity-navy transition-colors">
-                                                <div className="p-2 bg-identity-sky/5 rounded-lg text-identity-sky">
-                                                    <Clock size={16} />
-                                                </div>
-                                                <span>{item.slot.startTime} - {item.slot.endTime}</span>
+ 
+                                        <div className="flex items-center justify-between mt-auto pt-3 border-t border-slate-50 relative z-10">
+                                            <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-tight text-slate-500 group-hover/item:text-identity-navy transition-colors italic">
+                                                <Clock size={12} className="text-identity-sky" />
+                                                <span>{item.slot.startTime}</span>
                                             </div>
-                                            <div className="flex items-center gap-4 group-hover:text-identity-navy transition-colors">
-                                                <div className="p-2 bg-identity-sky/5 rounded-lg text-identity-sky">
-                                                    <UserIcon size={16} />
-                                                </div>
-                                                <span className="truncate max-w-[150px]">Prof. {item.class.professor_id}</span>
-                                            </div>
+                                            <ChevronRight size={14} className="text-identity-sky group-hover/item:translate-x-1 transition-transform" />
                                         </div>
                                     </div>
-                                ))}
+                                )) : (
+                                    <div className="flex-1 flex flex-col items-center justify-center opacity-20 group-hover/day:opacity-40 transition-all duration-700">
+                                        <div className="w-12 h-12 bg-identity-navy/5 rounded-full flex items-center justify-center mb-4 border border-identity-navy/10">
+                                            <Zap size={20} className="text-identity-navy" />
+                                        </div>
+                                        <p className="text-[9px] font-black text-identity-navy uppercase tracking-[0.3em] italic">No Classes</p>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     );
                 })}
+                </div>
             </div>
 
-            {/* Inspect Protocol Modal */}
+            {/* Class Details Modal */}
             {selectedClass && (
                 <div
                     className="fixed inset-0 bg-identity-navy/40 backdrop-blur-md flex items-center justify-center z-[100] p-6 animate-in fade-in duration-500 overflow-y-auto"
                     onClick={() => setSelectedClass(null)}
                 >
                     <div
-                        className="identity-glass bg-white/95 rounded-[2rem] md:rounded-[3rem] w-full max-w-xl border border-identity-sky/20 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-500 font-outfit"
+                        className="identity-glass bg-white/95 rounded-[2.5rem] md:rounded-[3.5rem] w-full max-w-2xl border-2 border-identity-sky/20 shadow-3xl overflow-hidden animate-in zoom-in-95 duration-500 font-outfit relative"
                         onClick={e => e.stopPropagation()}
                     >
+                        <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-blueprint" />
+                        <div className="corner-bracket-tl opacity-40 scale-75 -top-4 -left-4" />
+                        
                         {/* Header */}
-                        <div className="bg-identity-sky/[0.03] p-8 sm:p-12 border-b border-identity-sky/5 flex justify-between items-start relative overflow-hidden">
-                            <div className="absolute top-0 right-0 w-32 h-32 bg-identity-sky/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
-                            <div className="relative z-10 flex items-center gap-6">
-                                <div className="p-4 bg-identity-sky/10 rounded-2xl border border-identity-sky/10 text-identity-sky shadow-sm">
-                                    <BookOpen size={32} />
+                        <div className="bg-identity-sky/[0.03] p-10 sm:p-14 border-b border-identity-sky/10 flex justify-between items-start relative overflow-hidden">
+                            <div className="absolute top-0 right-0 w-48 h-48 bg-identity-sky/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
+                            <div className="relative z-10 flex flex-col md:flex-row md:items-center gap-8">
+                                <div className="p-6 bg-identity-navy text-white rounded-2.5xl border-2 border-identity-sky/20 shadow-2xl">
+                                    <BookOpen size={40} className="filter drop-shadow-md" />
                                 </div>
                                 <div>
-                                    <h3 className="text-3xl font-black text-identity-navy uppercase tracking-tighter italic">{selectedClass.subject_code}</h3>
-                                    <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.2em] mt-1">{selectedClass.subject_name}</p>
+                                    <h1 className="text-[11px] font-black text-identity-sky uppercase tracking-[0.4em] mb-3 italic opacity-60">Subject Details:</h1>
+                                    <h3 className="text-4xl font-black text-identity-navy uppercase tracking-tighter italic leading-none mb-4">{selectedClass.subject_code}</h3>
+                                    <p className="text-slate-500 text-[12px] font-black uppercase tracking-[0.2em] italic max-w-md">{selectedClass.subject_name}</p>
                                 </div>
                             </div>
                             <button
                                 onClick={() => setSelectedClass(null)}
-                                className="p-3 bg-white hover:bg-rose-500 hover:text-white rounded-2xl text-slate-400 transition-all shadow-xl border border-slate-100 active:scale-90 relative z-20"
+                                className="p-4 bg-white/80 hover:bg-rose-500 hover:text-white rounded-2.5xl text-slate-400 transition-all shadow-2xl border-2 border-slate-100 active:scale-90 relative z-20 group"
                             >
-                                <X size={20} />
+                                <X size={24} className="group-hover:rotate-90 transition-transform duration-500" />
                             </button>
                         </div>
 
                         {/* Content */}
-                        <div className="p-8 sm:p-12 space-y-10">
-                            <div className="grid grid-cols-2 gap-6">
-                                <div className="bg-identity-sky/[0.02] p-8 rounded-3xl border border-identity-sky/5 shadow-inner">
-                                    <span className="text-[10px] text-slate-500 uppercase tracking-[0.2em] font-black block mb-2 opacity-60">Section Node</span>
-                                    <span className="text-identity-navy font-black tracking-tighter text-xl uppercase italic">{selectedClass.section}</span>
+                        <div className="p-10 sm:p-14 space-y-12 relative z-10">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                <div className="bg-identity-sky/[0.03] p-10 rounded-[2.5rem] border-2 border-identity-sky/10 shadow-inner group/stat relative overflow-hidden">
+                                    <div className="absolute inset-0 opacity-[0.02] pointer-events-none bg-blueprint-fine" />
+                                    <span className="text-[11px] text-slate-400 uppercase tracking-[0.3em] font-black block mb-4 italic">Class Section</span>
+                                    <div className="flex items-center gap-6">
+                                        <div className="p-3 bg-identity-navy text-white rounded-xl shadow-xl group-hover/stat:bg-identity-sky transition-colors">
+                                            <Zap size={20} />
+                                        </div>
+                                        <span className="text-identity-navy font-black tracking-tighter text-3xl uppercase italic leading-none">{selectedClass.section}</span>
+                                    </div>
                                 </div>
-                                <div className="bg-identity-sky/[0.02] p-8 rounded-3xl border border-identity-sky/5 shadow-inner overflow-hidden">
-                                    <span className="text-[10px] text-slate-500 uppercase tracking-[0.2em] font-black block mb-2 opacity-60">Primary Proctor</span>
-                                    <span className="text-identity-navy font-black tracking-tighter text-xl truncate block italic" title={selectedClass.professor_id}>
-                                        {selectedClass.professor_id}
-                                    </span>
+                                <div className="bg-identity-sky/[0.03] p-10 rounded-[2.5rem] border-2 border-identity-sky/10 shadow-inner group/stat relative overflow-hidden">
+                                    <div className="absolute inset-0 opacity-[0.02] pointer-events-none bg-blueprint-fine" />
+                                    <span className="text-[11px] text-slate-400 uppercase tracking-[0.3em] font-black block mb-4 italic">Class Professor</span>
+                                    <div className="flex items-center gap-6">
+                                        <div className="p-3 bg-identity-navy text-white rounded-xl shadow-xl group-hover/stat:bg-identity-sky transition-colors">
+                                            <UserIcon size={20} />
+                                        </div>
+                                        <span className="text-identity-navy font-black tracking-tighter text-2xl truncate block italic leading-none" title={selectedClass.professor_id}>
+                                            {selectedClass.professor_id}
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
 
                             <div>
-                                <h4 className="text-[10px] font-black text-identity-sky uppercase tracking-[0.4em] mb-10 flex items-center gap-6">
-                                    <span className="h-px bg-identity-sky/10 flex-1"></span>
-                                    Temporal Slots
-                                    <span className="h-px bg-identity-sky/10 flex-1"></span>
+                                <h4 className="text-[11px] font-black text-identity-sky uppercase tracking-[0.5em] mb-12 flex items-center gap-8 italic">
+                                    <span className="h-0.5 bg-gradient-to-r from-transparent to-identity-sky/20 flex-1"></span>
+                                    CLASS SCHEDULE
+                                    <span className="h-0.5 bg-gradient-to-l from-transparent to-identity-sky/20 flex-1"></span>
                                 </h4>
-                                <div className="space-y-4">
+                                <div className="space-y-5">
                                     {parseSchedule(selectedClass.schedule_json).map((slot, idx) => (
-                                        <div key={idx} className="flex items-center justify-between bg-white/40 p-6 rounded-3xl border border-identity-sky/10 group hover:border-identity-sky/30 transition-all shadow-sm">
-                                            <span className="text-identity-navy font-black uppercase tracking-tight text-sm italic">{slot.day}</span>
-                                            <div className="flex items-center gap-4">
-                                                <div className="p-2 bg-identity-sky/5 rounded-2xl text-identity-sky">
-                                                    <Clock size={16} />
+                                        <div key={idx} className="flex items-center justify-between bg-white/60 p-8 rounded-[2.5rem] border-2 border-identity-sky/10 group hover:border-identity-sky/40 transition-all shadow-md hover:shadow-2xl relative group/slot">
+                                            <div className="absolute top-0 left-0 w-2 h-full bg-identity-sky/5 group-hover/slot:bg-identity-sky transition-colors" />
+                                            <div className="font-black text-identity-navy uppercase tracking-tight text-lg italic">{slot.day}</div>
+                                            <div className="flex items-center gap-6">
+                                                <div className="p-3 bg-identity-sky/5 text-identity-sky rounded-2xl border border-identity-sky/10 group-hover/slot:bg-identity-navy group-hover/slot:text-white transition-all shadow-inner">
+                                                    <Clock size={20} className="anim-pulse" />
                                                 </div>
-                                                <span className="text-slate-600 font-black tracking-[0.1em] uppercase text-[11px]">
+                                                <span className="text-slate-600 font-black tracking-[0.2em] uppercase text-sm italic">
                                                     {slot.startTime} - {slot.endTime}
                                                 </span>
                                             </div>
@@ -262,12 +287,12 @@ export default function ScheduleTab({ user }: ScheduleTabProps) {
                         </div>
 
                         {/* Footer */}
-                        <div className="p-8 sm:p-10 bg-identity-sky/[0.03] border-t border-identity-sky/5 text-center">
+                        <div className="p-10 sm:p-12 bg-identity-sky/[0.03] border-t-2 border-identity-sky/10 text-center relative z-10">
                             <button
                                 onClick={() => setSelectedClass(null)}
-                                className="w-full py-5 bg-identity-navy text-white hover:bg-identity-sky rounded-2xl text-[11px] font-black uppercase tracking-[0.2em] transition-all shadow-xl shadow-identity-navy/20 active:scale-95"
+                                className="w-full py-6 bg-identity-navy text-white hover:bg-identity-sky rounded-2.5xl text-[12px] font-black uppercase tracking-[0.3em] transition-all shadow-3xl shadow-identity-navy/20 active:scale-[0.98] border border-identity-sky/20 italic group"
                             >
-                                Dismiss Protocol Detail
+                                CONFIRM & CLOSE <ChevronRight className="inline ml-2 group-hover:translate-x-2 transition-transform" />
                             </button>
                         </div>
                     </div>

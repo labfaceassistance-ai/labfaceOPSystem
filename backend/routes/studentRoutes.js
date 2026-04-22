@@ -41,7 +41,7 @@ router.post('/confirm-enrollment', authenticateToken, async (req, res) => {
 
         // 1. Get current active academic period
         const [periods] = await pool.query(
-            "SELECT id, school_year, semester FROM academic_periods WHERE effective_date <= CONVERT_TZ(NOW(), 'UTC', 'Asia/Manila') ORDER BY effective_date DESC LIMIT 1"
+            "SELECT id, school_year, semester FROM academic_periods WHERE effective_date <= NOW() ORDER BY effective_date DESC LIMIT 1"
         );
         if (periods.length === 0) {
             return res.status(400).json({ message: 'No active academic period found. Contact admin.' });
@@ -139,7 +139,7 @@ router.post('/update-academic-data', async (req, res) => {
         const [periods] = await pool.query(`
             SELECT id, school_year, semester 
             FROM academic_periods 
-            WHERE effective_date <= CONVERT_TZ(NOW(), 'UTC', 'Asia/Manila')
+            WHERE effective_date <= NOW()
             ORDER BY effective_date DESC 
             LIMIT 1
         `);
@@ -417,7 +417,7 @@ router.get('/dashboard/:id', async (req, res) => {
             // Fetch cancellations for today onwards
             const [cancellationsResult] = await pool.query(
                 `SELECT * FROM class_cancellations 
-                 WHERE class_id IN (?) AND session_date >= DATE(CONVERT_TZ(NOW(), '+00:00', '+08:00'))`,
+                 WHERE class_id IN (?) AND session_date >= DATE(NOW())`,
                 [classIds]
             );
             cancellations = cancellationsResult;
@@ -427,7 +427,7 @@ router.get('/dashboard/:id', async (req, res) => {
                 `SELECT * FROM sessions 
                  WHERE class_id IN (?) 
                  AND monitoring_started_at IS NULL 
-                 AND date >= DATE(CONVERT_TZ(NOW(), '+00:00', '+08:00'))`,
+                 AND date >= DATE(NOW())`,
                 [classIds]
             );
             pendingSessions = sessionsResult;
@@ -584,7 +584,7 @@ router.get('/dashboard/:id', async (req, res) => {
             FROM classes c
             JOIN enrollments e ON c.id = e.class_id
             LEFT JOIN sessions s ON c.id = s.class_id 
-                AND s.date <= DATE(CONVERT_TZ(NOW(), '+00:00', '+08:00'))
+                AND s.date <= DATE(NOW())
                 AND s.monitoring_started_at IS NOT NULL
             LEFT JOIN attendance_logs al ON s.id = al.session_id AND al.student_id = ?
             WHERE (e.student_id = ? OR REPLACE(REPLACE(REPLACE(REPLACE(TRIM(?), '-', ''), ' ', ''), CHAR(13), ''), CHAR(10), '') = REPLACE(REPLACE(REPLACE(REPLACE(TRIM(e.student_number), '-', ''), ' ', ''), CHAR(13), ''), CHAR(10), ''))
@@ -654,7 +654,7 @@ router.get('/dashboard/:id', async (req, res) => {
             JOIN enrollments e ON s.class_id = e.class_id
             JOIN classes c ON s.class_id = c.id
             WHERE (e.student_id = ? OR REPLACE(REPLACE(REPLACE(REPLACE(TRIM(?), '-', ''), ' ', ''), CHAR(13), ''), CHAR(10), '') = REPLACE(REPLACE(REPLACE(REPLACE(TRIM(e.student_number), '-', ''), ' ', ''), CHAR(13), ''), CHAR(10), ''))
-            AND s.date <= DATE(CONVERT_TZ(NOW(), '+00:00', '+08:00'))
+            AND s.date <= DATE(NOW())
             AND s.monitoring_started_at IS NOT NULL
             AND (c.is_archived = 0 OR c.is_archived IS NULL)
             ORDER BY s.date DESC, s.start_time DESC
@@ -726,7 +726,7 @@ router.get('/attendance-summary/:id', async (req, res) => {
             FROM classes c
             JOIN enrollments e ON c.id = e.class_id
             LEFT JOIN sessions s ON c.id = s.class_id 
-                AND s.date <= DATE(CONVERT_TZ(NOW(), '+00:00', '+08:00'))
+                AND s.date <= DATE(NOW())
                 AND s.monitoring_started_at IS NOT NULL
             LEFT JOIN attendance_logs al ON s.id = al.session_id AND al.student_id = ?
             WHERE (e.student_id = ? OR REPLACE(REPLACE(REPLACE(REPLACE(TRIM(?), '-', ''), ' ', ''), CHAR(13), ''), CHAR(10), '') = REPLACE(REPLACE(REPLACE(REPLACE(TRIM(e.student_number), '-', ''), ' ', ''), CHAR(13), ''), CHAR(10), ''))
@@ -803,7 +803,7 @@ router.get('/classes/:classId/details', async (req, res) => {
             LEFT JOIN attendance_logs al ON s.id = al.session_id AND al.student_id = u_student.id
             WHERE s.class_id = ?
             AND (e.student_id = u_student.id OR REPLACE(REPLACE(REPLACE(REPLACE(TRIM(u_student.user_id), '-', ''), ' ', ''), CHAR(13), ''), CHAR(10), '') = REPLACE(REPLACE(REPLACE(REPLACE(TRIM(e.student_number), '-', ''), ' ', ''), CHAR(13), ''), CHAR(10), ''))
-            AND s.date <= DATE(CONVERT_TZ(NOW(), '+00:00', '+08:00'))
+            AND s.date <= DATE(NOW())
             AND s.monitoring_started_at IS NOT NULL
         `, [studentId, classId]);
 
@@ -837,7 +837,7 @@ router.get('/classes/:classId/details', async (req, res) => {
             LEFT JOIN attendance_logs al ON s.id = al.session_id AND al.student_id = u_student.id
             WHERE s.class_id = ?
             AND (e.student_id = u_student.id OR REPLACE(REPLACE(REPLACE(REPLACE(TRIM(u_student.user_id), '-', ''), ' ', ''), CHAR(13), ''), CHAR(10), '') = REPLACE(REPLACE(REPLACE(REPLACE(TRIM(e.student_number), '-', ''), ' ', ''), CHAR(13), ''), CHAR(10), ''))
-            AND s.date <= DATE(CONVERT_TZ(NOW(), '+00:00', '+08:00'))
+            AND s.date <= DATE(NOW())
             AND s.monitoring_started_at IS NOT NULL
             ORDER BY s.date DESC, s.start_time DESC
         `, [studentId, classId]);
@@ -920,7 +920,7 @@ router.get('/recent-activity/:id', async (req, res) => {
             JOIN classes c ON s.class_id = c.id
             CROSS JOIN (SELECT user_id FROM users WHERE id = ?) u_info
             WHERE (e.student_id = ? OR REPLACE(REPLACE(REPLACE(REPLACE(TRIM(u_info.user_id), '-', ''), ' ', ''), CHAR(13), ''), CHAR(10), '') = REPLACE(REPLACE(REPLACE(REPLACE(TRIM(e.student_number), '-', ''), ' ', ''), CHAR(13), ''), CHAR(10), ''))
-                AND s.date <= DATE(CONVERT_TZ(NOW(), '+00:00', '+08:00'))
+                AND s.date <= DATE(NOW())
                 AND (c.is_archived = 0 OR c.is_archived IS NULL)
             ORDER BY s.date DESC, s.start_time DESC
             LIMIT ?
@@ -933,8 +933,10 @@ router.get('/recent-activity/:id', async (req, res) => {
             // Construct timestamp
             let timestamp;
             if (act.log_time_in) {
+                // Ensure act.log_time_in is a Date object and convert to ISO
                 timestamp = new Date(act.log_time_in).toISOString();
             } else {
+                // Fallback for sessions without logs
                 const datePart = new Date(act.date).toISOString().split('T')[0];
                 timestamp = new Date(`${datePart}T${act.start_time}`).toISOString();
             }
@@ -944,8 +946,8 @@ router.get('/recent-activity/:id', async (req, res) => {
                 status: status,
                 recognition_method: act.log_method,
                 date: act.date,
-                timeIn: act.log_time_in || timestamp,
-                timeOut: act.log_time_out,
+                timeIn: timestamp, // Use the ISO timestamp consistently
+                timeOut: act.log_time_out ? new Date(act.log_time_out).toISOString() : null,
                 timestamp: timestamp
             };
         });
@@ -953,6 +955,170 @@ router.get('/recent-activity/:id', async (req, res) => {
         res.json(formattedActivities);
     } catch (err) {
         console.error('Recent activity error:', err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GET /api/student/analytics/:id
+// Returns per-subject analytics: streak, session-by-session trend, class avg
+// ─────────────────────────────────────────────────────────────────────────────
+const SUBJECT_COLOURS = [
+    '#5CB4E4', '#4ade80', '#a78bfa', '#fb923c', '#f472b6', '#34d399'
+];
+
+router.get('/analytics/:id', async (req, res) => {
+    try {
+        const studentId = req.params.id;
+
+        // 1. Resolve the student's string user_id (used in some enrollment rows)
+        const [uRows] = await pool.query('SELECT user_id FROM users WHERE id = ?', [studentId]);
+        if (uRows.length === 0) return res.status(404).json({ message: 'Student not found' });
+        const studentStringId = uRows[0].user_id;
+
+        // 2. Fetch all active enrolled classes for the student
+        const [classes] = await pool.query(`
+            SELECT
+                c.id,
+                c.subject_name,
+                c.subject_code,
+                c.schedule_json,
+                CONCAT(u.first_name, ' ', u.last_name) AS professor_name
+            FROM classes c
+            JOIN enrollments e ON c.id = e.class_id
+            LEFT JOIN users u ON c.professor_id = u.id
+            WHERE (
+                e.student_id = ?
+                OR REPLACE(REPLACE(REPLACE(REPLACE(TRIM(?), '-',''),' ',''), CHAR(13),''), CHAR(10),'')
+                    = REPLACE(REPLACE(REPLACE(REPLACE(TRIM(e.student_number), '-',''),' ',''), CHAR(13),''), CHAR(10),'')
+            )
+            AND (c.is_archived = 0 OR c.is_archived IS NULL)
+        `, [studentId, studentStringId]);
+
+        if (classes.length === 0) return res.json([]);
+
+        const classIds = classes.map(c => c.id);
+
+        // 3. Fetch all completed sessions for these classes (chronological)
+        const [sessions] = await pool.query(`
+            SELECT
+                s.id AS session_id,
+                s.class_id,
+                s.date,
+                s.start_time,
+                al.status AS attendance_status,
+                al.student_id AS log_student_id
+            FROM sessions s
+            LEFT JOIN attendance_logs al
+                ON s.id = al.session_id AND al.student_id = ?
+            WHERE s.class_id IN (?)
+                AND s.date <= DATE(NOW())
+                AND s.monitoring_started_at IS NOT NULL
+            ORDER BY s.class_id, s.date ASC, s.start_time ASC
+        `, [studentId, classIds]);
+
+        // 4. Compute class-average rate per class (all enrolled students)
+        //    One query — aggregate across all students per class.
+        const [classAvgRows] = await pool.query(`
+            SELECT
+                s.class_id,
+                COUNT(DISTINCT s.id) AS total_sessions,
+                COUNT(DISTINCT e.student_id) AS enrolled_count,
+                SUM(CASE WHEN al.status IN ('Present','Late','Excused') THEN 1 ELSE 0 END) AS attended_count
+            FROM sessions s
+            JOIN enrollments e ON s.class_id = e.class_id
+            LEFT JOIN attendance_logs al
+                ON s.id = al.session_id AND al.student_id = e.student_id
+            WHERE s.class_id IN (?)
+                AND s.date <= DATE(NOW())
+                AND s.monitoring_started_at IS NOT NULL
+            GROUP BY s.class_id
+        `, [classIds]);
+
+        const classAvgMap = {};
+        classAvgRows.forEach(row => {
+            const totalPossible = (parseInt(row.total_sessions) || 0) * (parseInt(row.enrolled_count) || 1);
+            classAvgMap[row.class_id] = totalPossible > 0
+                ? Math.round((parseInt(row.attended_count) / totalPossible) * 100)
+                : 0;
+        });
+
+        // 5. Group sessions by class and compute analytics
+        const sessionsByClass = {};
+        sessions.forEach(s => {
+            if (!sessionsByClass[s.class_id]) sessionsByClass[s.class_id] = [];
+            sessionsByClass[s.class_id].push(s);
+        });
+
+        // Helper: format schedule_json into a readable string
+        const formatSchedule = (scheduleJson) => {
+            try {
+                const parsed = typeof scheduleJson === 'string' ? JSON.parse(scheduleJson) : scheduleJson;
+                if (!Array.isArray(parsed) || parsed.length === 0) return '';
+                return parsed.map(slot => {
+                    const day = slot.day ? slot.day.substring(0, 3) : '';
+                    return `${day} ${slot.startTime || ''}`;
+                }).join(', ');
+            } catch {
+                return '';
+            }
+        };
+
+        const result = classes.map((cls, idx) => {
+            const classSessions = sessionsByClass[cls.id] || [];
+            const color = SUBJECT_COLOURS[idx % SUBJECT_COLOURS.length];
+
+            // Per-session streak string and running-rate trend
+            let present = 0, late = 0, excused = 0, absent = 0;
+            let streak = '';
+            const trend = [];
+
+            classSessions.forEach((sess, i) => {
+                const status = sess.attendance_status || 'Absent';
+                if (status === 'Present') { present++; streak += 'P'; }
+                else if (status === 'Late') { late++; streak += 'L'; }
+                else if (status === 'Excused') { excused++; streak += 'E'; }
+                else { absent++; streak += 'A'; }
+
+                // Running rate up to this session (Present+Late+Excused out of sessions so far)
+                const sessionsCount = i + 1;
+                const attended = present + late + excused;
+                trend.push(Math.round((attended / sessionsCount) * 100));
+            });
+
+            const totalSessions = classSessions.length;
+            const attendanceRate = totalSessions > 0
+                ? Math.round(((present + late + excused) / totalSessions) * 100)
+                : 0;
+
+            // Effective absences = raw absences + floor(lates / 3)
+            const effectiveAbsences = absent + Math.floor(late / 3);
+
+            return {
+                id: cls.id,
+                subjectName: cls.subject_name,
+                subjectCode: cls.subject_code,
+                schedule: formatSchedule(cls.schedule_json),
+                color,
+                totalSessions,
+                present,
+                late,
+                excused,
+                absent,
+                effectiveAbsences,
+                attendanceRate,
+                classAverageRate: classAvgMap[cls.id] || 0,
+                streak,
+                trend,
+                classTrend: [], // not used on frontend currently
+                missedTopics: [], // no topic data in schema
+            };
+        });
+
+        res.json(result);
+
+    } catch (err) {
+        console.error('Analytics Error:', err);
         res.status(500).json({ error: err.message });
     }
 });

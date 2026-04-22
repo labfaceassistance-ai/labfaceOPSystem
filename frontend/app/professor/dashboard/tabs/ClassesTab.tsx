@@ -1,11 +1,12 @@
-﻿import { useState, useEffect } from 'react';
+"use client";
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import CreateClassModal from '@/components/CreateClassModal';
 import SessionModal from '@/components/SessionModal';
 import ClassDetailsModal from '@/components/ClassDetailsModal';
 import EditClassModal from '@/components/EditClassModal';
 import ConfirmModal from '@/components/ConfirmModal';
-import { Calendar, BookOpen, Users, Archive, RefreshCw, MoreVertical, Play, Plus, Search, Eye, Edit, Square, Activity, ChevronDown, Filter, Trash2, AlertTriangle, RotateCcw } from 'lucide-react';
+import { Calendar, BookOpen, Users, Archive, RefreshCw, MoreVertical, Play, Plus, Search, Eye, Edit, Square, Activity, ChevronDown, Filter, Trash2, AlertTriangle, RotateCcw, Monitor, Zap, ShieldCheck } from 'lucide-react';
 
 import axios from 'axios';
 import { getToken } from '@/utils/auth';
@@ -43,33 +44,13 @@ export default function ClassesTab({ user, classes, loading, onRefresh, onTabCha
     const [selectedClassId, setSelectedClassId] = useState<number | null>(null);
     const [selectedClassName, setSelectedClassName] = useState('');
     const [selectedClassIsArchived, setSelectedClassIsArchived] = useState(false);
-    const [openMenuId, setOpenMenuId] = useState<number | null>(null);
     const [initialView, setInitialView] = useState<'list' | 'history'>('list');
-    const [isFilterMenuOpen, setIsFilterMenuOpen] = useState(false);
 
     const [stoppingSessionId, setStoppingSessionId] = useState<number | null>(null);
 
     // Filters
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedYearLevel, setSelectedYearLevel] = useState('All');
-
-    // Current school year for display only (not a filter)
-    const [currentSchoolYear, setCurrentSchoolYear] = useState<string>('Loading...');
-    const [currentSemester, setCurrentSemester] = useState<string>('');
-
-    // Date Filters
-    const [selectedDateFilter, setSelectedDateFilter] = useState<'all' | 'day' | 'week' | 'month' | 'custom'>('all');
-    const [selectedDay, setSelectedDay] = useState('');
-    const [selectedWeek, setSelectedWeek] = useState('');
-    const [selectedMonth, setSelectedMonth] = useState('');
-    const [customStartDate, setCustomStartDate] = useState('');
-    const [customEndDate, setCustomEndDate] = useState('');
-    const [deleteSelection, setDeleteSelection] = useState<{
-        isOpen: boolean;
-        classId: number;
-        className: string;
-        isArchived: number;
-    } | null>(null);
 
     // Confirm Modal State
     const [confirmModal, setConfirmModal] = useState<{
@@ -88,14 +69,6 @@ export default function ClassesTab({ user, classes, loading, onRefresh, onTabCha
         onConfirm: () => { }
     });
 
-    // Base availability on the current tab context
-    const tabClasses = classes.filter(c => {
-        const isArchived = Number(c.is_archived) === 1;
-        return activeSubTab === 'active' ? !isArchived : isArchived;
-    });
-
-    // No longer need availableYears or availableSemesters for filtering
-
     const filteredClasses = classes.filter(c => {
         const isArchived = Number(c.is_archived) === 1;
         const matchesTab = activeSubTab === 'active' ? !isArchived : isArchived;
@@ -103,105 +76,27 @@ export default function ClassesTab({ user, classes, loading, onRefresh, onTabCha
             c.subject_code.toLowerCase().includes(searchTerm.toLowerCase()) ||
             (c.section && c.section.toLowerCase().includes(searchTerm.toLowerCase()));
 
-        // Extract year level from section - support multiple formats:
-        // "BSIT-3A" -> "3", "BSIT 3A" -> "3", "3A" -> "3", "3" -> "3"
         const sectionYearLevel = c.section?.match(/(\d)/)?.[1] || '';
         const matchesYearLevel = selectedYearLevel === 'All' || sectionYearLevel === selectedYearLevel;
 
-        // Date filtering logic
-        let startDate: Date | null = null;
-        let endDate: Date | null = null;
-
-        if (selectedDateFilter !== 'all') {
-            switch (selectedDateFilter) {
-                case 'day':
-                    if (selectedDay) {
-                        startDate = new Date(selectedDay + 'T00:00:00');
-                        endDate = new Date(selectedDay + 'T23:59:59');
-                    }
-                    break;
-
-                case 'week':
-                    if (selectedWeek) {
-                        // selectedWeek format: "2026-W05" (year-week)
-                        const [year, week] = selectedWeek.split('-W');
-                        const firstDayOfYear = new Date(parseInt(year), 0, 1);
-                        const daysOffset = (parseInt(week) - 1) * 7;
-                        const dayOfWeek = firstDayOfYear.getDay();
-                        const daysToMonday = dayOfWeek === 0 ? 1 : (8 - dayOfWeek);
-
-                        startDate = new Date(parseInt(year), 0, 1 + daysToMonday + daysOffset);
-                        startDate.setHours(0, 0, 0, 0);
-
-                        endDate = new Date(startDate);
-                        endDate.setDate(startDate.getDate() + 6);
-                        endDate.setHours(23, 59, 59, 999);
-                    }
-                    break;
-
-                case 'month':
-                    if (selectedMonth) {
-                        // selectedMonth format: "2026-01" (year-month)
-                        const [year, month] = selectedMonth.split('-');
-                        startDate = new Date(parseInt(year), parseInt(month) - 1, 1, 0, 0, 0);
-                        endDate = new Date(parseInt(year), parseInt(month), 0, 23, 59, 59);
-                    }
-                    break;
-
-                case 'custom':
-                    if (customStartDate) startDate = new Date(customStartDate + 'T00:00:00');
-                    if (customEndDate) endDate = new Date(customEndDate + 'T23:59:59');
-                    break;
-            }
-        }
-
-        const matchesDateRange = !startDate || !endDate || (() => {
-            if (!c.created_at) return true; // If no created_at, show the class
-            const createdAt = new Date(c.created_at);
-            return createdAt >= startDate && createdAt <= endDate;
-        })();
-
-        return matchesTab && matchesSearch && matchesYearLevel && matchesDateRange;
+        return matchesTab && matchesSearch && matchesYearLevel;
     });
 
     const formatSchedule = (scheduleJson: string) => {
         try {
             const schedule = JSON.parse(scheduleJson);
-            if (!Array.isArray(schedule) || schedule.length === 0) return 'No schedule set';
-
+            if (!Array.isArray(schedule) || schedule.length === 0) return 'NO SCHEDULE SET';
             const days = schedule.map((s: any) => s.day.substring(0, 3)).join(', ');
             const times = schedule[0];
-            return `${days} â€¢ ${times.startTime} - ${times.endTime}`;
+            return `${days.toUpperCase()} · ${times.startTime} - ${times.endTime}`;
         } catch {
-            return 'Invalid schedule';
-        }
-    };
-
-    const fetchAcademicSettings = async () => {
-        try {
-            const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
-            const token = getToken();
-            const axios = (await import('axios')).default;
-            const response = await axios.get(`${API_URL}/api/users/academic-settings`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            setCurrentSchoolYear(response.data.schoolYear);
-            setCurrentSemester(response.data.semester);
-        } catch (error) {
-            console.error('Error fetching academic settings:', error);
-            // Fallback to calculating from available classes if API fails
-            const years = Array.from(new Set(classes.map(c => c.school_year).filter(Boolean))).sort().reverse();
-            setCurrentSchoolYear(years[0] || 'N/A');
-            setCurrentSemester('N/A'); // Fallback for semester
+            return 'INVALID SCHEDULE';
         }
     };
 
     useEffect(() => {
-        // Assuming onRefresh also fetches classes, or you have a separate fetchClasses
         onRefresh();
-        fetchAcademicSettings();
-    }, []); // Empty dependency array means this runs once on mount
-
+    }, []);
 
     const handleArchive = (classId: number, isArchived: number, className: string) => {
         setConfirmModal({
@@ -213,42 +108,24 @@ export default function ClassesTab({ user, classes, loading, onRefresh, onTabCha
             onConfirm: async () => {
                 try {
                     const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
-                    const axios = (await import('axios')).default;
                     const token = localStorage.getItem('token');
-
                     await axios.put(`${API_URL}/api/classes/${classId}/archive`, {
                         is_archived: isArchived ? 0 : 1
                     }, {
                         headers: { 'Authorization': `Bearer ${token}` }
                     });
-
                     await onRefresh();
-
-                    // Small delay to let refresh settle, though state update should be atomic
-                    // Force a new object reference to ensure re-render
-                    setTimeout(() => {
-                        setConfirmModal({
-                            isOpen: true,
-                            title: 'Success',
-                            message: `Class ${isArchived ? 'restored' : 'archived'} successfully.`,
-                            type: 'success',
-                            onConfirm: () => setConfirmModal(prev => ({ ...prev, isOpen: false })),
-                            confirmText: 'OK',
-                            isAlert: true
-                        });
-                    }, 100);
-                } catch (error: any) {
-                    console.error('Failed to archive/restore class:', error);
-                    const msg = error.response?.data?.message || error.message || 'Unknown error';
                     setConfirmModal({
                         isOpen: true,
-                        title: 'Error',
-                        message: `Failed to update class status: ${msg}`,
-                        type: 'danger',
+                        title: 'Action Successful',
+                        message: `Class ${isArchived ? 'restored' : 'archived'} successfully.`,
+                        type: 'success',
                         onConfirm: () => setConfirmModal(prev => ({ ...prev, isOpen: false })),
                         confirmText: 'OK',
                         isAlert: true
                     });
+                } catch (error: any) {
+                    console.error('Failed to archive/restore class:', error);
                 }
             }
         });
@@ -259,63 +136,34 @@ export default function ClassesTab({ user, classes, loading, onRefresh, onTabCha
         try {
             const token = localStorage.getItem('token');
             const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
-
             await axios.post(`${API_URL}/api/attendance/sessions/${sessionId}/stop`, {}, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
-
-            // Delay for UX (1 second)
-            await new Promise(resolve => setTimeout(resolve, 1000));
-
-            // Refresh the class list to update button state
             onRefresh();
-
-            setConfirmModal({
-                isOpen: true,
-                title: 'Success',
-                message: 'Monitoring stopped successfully',
-                type: 'success',
-                onConfirm: () => setConfirmModal(prev => ({ ...prev, isOpen: false })),
-                confirmText: 'OK',
-                isAlert: true
-            });
         } catch (error: any) {
             console.error('Failed to stop monitoring:', error);
-            setConfirmModal({
-                isOpen: true,
-                title: 'Error',
-                message: 'Failed to stop monitoring',
-                type: 'danger',
-                onConfirm: () => setConfirmModal(prev => ({ ...prev, isOpen: false })),
-                confirmText: 'OK',
-                isAlert: true
-            });
         } finally {
             setStoppingSessionId(null);
         }
     };
 
-
     const handleDelete = async (classId: number, className: string) => {
         setConfirmModal({
             isOpen: true,
             title: 'Delete Class',
-            message: `Are you sure you want to permanently delete "${className}"? This action cannot be undone.`,
+            message: `Are you sure you want to permanently delete "${className}"? This cannot be undone.`,
             type: 'danger',
-            confirmText: 'Delete Class',
+            confirmText: 'Delete Forever',
             onConfirm: async () => {
                 try {
                     const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
-                    const axios = (await import('axios')).default;
                     const token = localStorage.getItem('token');
-
                     await axios.delete(`${API_URL}/api/classes/${classId}`, {
                         headers: { 'Authorization': `Bearer ${token}` }
                     });
-
                     setConfirmModal({
                         isOpen: true,
-                        title: 'Deleted',
+                        title: 'Delete Complete',
                         message: 'Class deleted successfully',
                         type: 'success',
                         onConfirm: () => {
@@ -327,384 +175,222 @@ export default function ClassesTab({ user, classes, loading, onRefresh, onTabCha
                     });
                 } catch (error: any) {
                     console.error('Failed to delete class:', error);
-                    const msg = error.response?.data?.message || error.message || 'Unknown error';
-                    setConfirmModal({
-                        isOpen: true,
-                        title: 'Error',
-                        message: `Failed to delete class: ${msg}`,
-                        type: 'danger',
-                        onConfirm: () => setConfirmModal(prev => ({ ...prev, isOpen: false })),
-                        confirmText: 'OK',
-                        isAlert: true
-                    });
                 }
             }
         });
     };
 
     return (
-        <>
-            <div className="identity-glass p-6 sm:p-8 md:p-10 rounded-[2rem] md:rounded-[3rem] shadow-xl border border-identity-sky/10 backdrop-blur-sm overflow-hidden min-h-[600px] font-outfit">
-                <div className="p-4 border-b border-identity-sky/5 flex flex-col xl:flex-row xl:items-center justify-between gap-4">
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-4 flex-1">
-                        {/* Tabs */}
-                        <div className="bg-identity-sky/5 border border-identity-sky/10 rounded-2xl p-1 inline-flex shrink-0 self-start sm:self-auto shadow-inner">
-                            <button
-                                onClick={() => {
-                                    setActiveSubTab('active');
-                                    setSearchTerm('');
-                                    setIsFilterMenuOpen(false);
-                                }}
-                                className={`px-6 py-2 text-[10px] font-black uppercase tracking-[0.15em] rounded-2xl transition-all ${activeSubTab === 'active'
-                                    ? 'bg-identity-sky text-white shadow-xl shadow-identity-sky/10'
-                                    : 'text-slate-400 hover:text-identity-navy hover:bg-identity-sky/5'}`}
-                            >
-                                Active
-                            </button>
-                            <button
-                                onClick={() => {
-                                    setActiveSubTab('archived');
-                                    setSearchTerm('');
-                                    setSelectedYearLevel('All');
-                                }}
-                                className={`px-6 py-2 text-[10px] font-black uppercase tracking-[0.15em] rounded-2xl transition-all ${activeSubTab === 'archived'
-                                    ? 'bg-identity-sky text-white shadow-xl shadow-identity-sky/10'
-                                    : 'text-slate-400 hover:text-identity-navy hover:bg-identity-sky/5'}`}
-                            >
-                                Archived
-                            </button>
+        <div className="space-y-8 font-outfit animate-in fade-in duration-1000">
+            {/* Unified Command Center */}
+            <div className="bg-white/40 backdrop-blur-xl rounded-[2.5rem] p-6 border border-white/20 shadow-2xl relative overflow-hidden group">
+                <div className="absolute inset-0 bg-blueprint opacity-[0.03] pointer-events-none" />
+                
+                <div className="flex flex-col gap-6 relative z-10">
+                    {/* Top Row: Title & Actions */}
+                    <div className="flex flex-col xl:flex-row items-center justify-between gap-4">
+                        <div className="flex items-center gap-4">
+                            <div className="bg-[#041C3C] text-[#5CB4E4] p-3 rounded-xl shadow-lg border border-[#5CB4E4]/20">
+                                <BookOpen size={20} />
+                            </div>
+                            <div className="space-y-0.5">
+                                <h1 className="text-xl font-black text-[#041C3C] uppercase tracking-[0.1em] italic leading-none">
+                                    CLASS MANAGEMENT
+                                </h1>
+                                <p className="text-slate-400 text-[8px] font-black uppercase tracking-[0.2em] italic">
+                                    ACTIVE SESSIONS: {classes.filter(c => c.active_session_id).length}
+                                </p>
+                            </div>
                         </div>
 
-                        {/* Search + Create Container (Sticky on Mobile, Separate on Desktop) */}
-                        <div className="flex flex-1 items-center gap-4 w-full sm:contents">
-                            {/* Search Bar - Compact & Embedded Filter */}
-                            <div className="relative flex-1 group">
-                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-identity-sky transition-colors" size={16} />
-
-                                <input
-                                    type="text"
-                                    placeholder={`Search ${activeSubTab} classes...`}
-                                    value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                    className="w-full pl-10 pr-16 py-2.5 bg-white/40 border border-identity-sky/10 rounded-2xl text-xs font-bold text-identity-navy uppercase tracking-[0.15em] focus:outline-none focus:border-identity-sky/50 focus:ring-1 focus:ring-identity-sky/20 placeholder-slate-300 transition-all shadow-inner"
-                                />
-
-                                {/* Embedded Filter Button */}
-                                <div className="absolute right-2 top-2 bottom-2">
-                                    <button
-                                        onClick={() => setIsFilterMenuOpen(!isFilterMenuOpen)}
-                                        className={`h-full flex items-center justify-center gap-1 w-10 rounded-lg border text-[10px] font-black uppercase tracking-[0.15em] transition-all ${selectedYearLevel !== 'All' || selectedDateFilter !== 'all'
-                                            ? 'bg-identity-sky text-white border-identity-sky shadow-xl shadow-identity-sky/10'
-                                            : 'bg-white/5 text-slate-400 border-identity-sky/10 hover:bg-identity-sky/5 hover:text-identity-navy'
-                                            }`}
-                                        title="Filter"
-                                    >
-                                        <Filter size={14} fill={selectedYearLevel !== 'All' || selectedDateFilter !== 'all' ? "currentColor" : "none"} />
-                                    </button>
-                                </div>
-
-                                {/* Filter Dropdown */}
-                                {isFilterMenuOpen && (
-                                    <div className="absolute top-full right-0 mt-2 w-72 identity-glass p-6 sm:p-8 md:p-10 rounded-[2rem] md:rounded-[3rem] border border-identity-sky/10 shadow-3xl p-4 space-y-4 animate-in fade-in zoom-in-95 duration-100 z-50 origin-top-right">
-                                        <div className="flex justify-between items-center pb-3 border-b border-white/5">
-                                            <span className="text-[10px] font-black text-secondary/40 uppercase tracking-[0.15em] flex items-center gap-2">
-                                                <Filter size={12} /> Filter Options
-                                            </span>
-                                            {(selectedYearLevel !== 'All' || selectedDateFilter !== 'all') && (
-                                                <button
-                                                    onClick={() => {
-                                                        setSelectedYearLevel('All');
-                                                        setSelectedDateFilter('all');
-                                                        setSelectedDay('');
-                                                        setSelectedWeek('');
-                                                        setSelectedMonth('');
-                                                        setCustomStartDate('');
-                                                        setCustomEndDate('');
-                                                    }}
-                                                    className="text-[10px] font-black uppercase tracking-[0.15em] bg-red-500/10 text-red-400 px-2 py-1 rounded hover:bg-red-500/20 transition-colors"
-                                                >
-                                                    Reset All
-                                                </button>
-                                            )}
-                                        </div>
-
-                                        <div className="space-y-4">
-                                            {/* School Year Display - Read Only */}
-                                            <div className="space-y-1.5">
-                                                <label className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-500 ml-1">Current School Year</label>
-                                                <div className="w-full px-3 py-2 bg-white/40 border border-identity-sky/10 rounded-lg text-xs shadow-inner">
-                                                    <span className="font-black text-identity-sky uppercase tracking-tight">{currentSchoolYear}</span>
-                                                </div>
-                                            </div>
-
-                                            {/* Year Level Filter */}
-                                            <div className="space-y-1.5">
-                                                <label className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-500 ml-1">Year Level</label>
-                                                <select
-                                                    value={selectedYearLevel}
-                                                    onChange={(e) => setSelectedYearLevel(e.target.value)}
-                                                    className="w-full px-3 py-2 bg-white/60 border border-identity-sky/10 rounded-lg text-xs font-bold text-identity-navy uppercase tracking-[0.15em] focus:outline-none focus:border-identity-sky/50 focus:ring-1 focus:ring-identity-sky/20 transition-all shadow-inner"
-                                                >
-                                                    <option value="All">All Years</option>
-                                                    <option value="1">1st Year</option>
-                                                    <option value="2">2nd Year</option>
-                                                    <option value="3">3rd Year</option>
-                                                    <option value="4">4th Year</option>
-                                                </select>
-                                            </div>
-                                        </div>
-
-
-                                        {/* Date Filter Section */}
-                                        <div className="space-y-3 pt-3 border-t border-identity-sky/5">
-                                            <label className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-500 ml-1">Date Filter</label>
-
-                                            {/* Single Filter Dropdown */}
-                                            <div className="space-y-2">
-                                                <select
-                                                    value={selectedDateFilter}
-                                                    onChange={(e) => {
-                                                        // ... (rest of logic unchanged)
-                                                    }}
-                                                    className="w-full px-3 py-2 bg-white/60 border border-identity-sky/10 rounded-lg text-xs font-bold text-identity-navy uppercase tracking-[0.15em] focus:outline-none focus:border-identity-sky/50 focus:ring-1 focus:ring-identity-sky/20 transition-all shadow-inner"
-                                                >
-                                                    <option value="all">All Time</option>
-                                                    <option value="today">Today</option>
-                                                    <option value="yesterday">Yesterday</option>
-                                                    <option value="2days">2 Days Ago</option>
-                                                    <option value="3days">3 Days Ago</option>
-                                                    <option value="thisweek">This Week</option>
-                                                    <option value="lastweek">Last Week</option>
-                                                    <option value="thismonth">This Month</option>
-                                                    <option value="lastmonth">Last Month</option>
-                                                    <option value="custom">Custom Range</option>
-                                                </select>
-
-                                                {/* Custom Range Date Pickers - Only show when Custom Range is selected */}
-                                                {selectedDateFilter === 'custom' && (
-                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 pt-1">
-                                                        <div className="space-y-1">
-                                                            <label className="text-[10px] font-black uppercase tracking-[0.15em] text-secondary/40 ml-1">Start Date</label>
-                                                            <input
-                                                                type="date"
-                                                                value={customStartDate}
-                                                                onChange={(e) => {
-                                                                    setCustomStartDate(e.target.value);
-                                                                    if (!e.target.value && !customEndDate) {
-                                                                        setSelectedDateFilter('all');
-                                                                    }
-                                                                }}
-                                                                className="w-full px-2 py-1.5 bg-white/40 border border-identity-sky/10 rounded-lg text-[10px] font-black text-identity-navy uppercase tracking-tighter focus:outline-none focus:border-identity-sky/50 focus:ring-1 focus:ring-identity-sky/20 transition-all [color-scheme:light] shadow-inner"
-                                                            />
-                                                        </div>
-                                                        <div className="space-y-1">
-                                                            <label className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-500 ml-1">End Date</label>
-                                                            <input
-                                                                type="date"
-                                                                value={customEndDate}
-                                                                onChange={(e) => {
-                                                                    setCustomEndDate(e.target.value);
-                                                                    if (!customStartDate && !e.target.value) {
-                                                                        setSelectedDateFilter('all');
-                                                                    }
-                                                                }}
-                                                                className="w-full px-2 py-1.5 bg-white/40 border border-identity-sky/10 rounded-lg text-[10px] font-black text-identity-navy uppercase tracking-tighter focus:outline-none focus:border-identity-sky/50 focus:ring-1 focus:ring-identity-sky/20 transition-all [color-scheme:light] shadow-inner"
-                                                            />
-                                                        </div>
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </div>
-                                    </div>
-                                )}
+                        <div className="flex flex-col sm:flex-row items-center gap-3">
+                            <div className="bg-white/60 p-1 rounded-xl border border-white/50 flex gap-1 shadow-inner">
+                                <button
+                                    onClick={() => setActiveSubTab('active')}
+                                    className={`px-5 py-2 rounded-lg text-[8px] font-black uppercase tracking-[0.1em] transition-all duration-500 flex items-center gap-2 ${activeSubTab === 'active' ? 'bg-[#041C3C] text-white shadow-lg' : 'text-slate-400 hover:text-[#041C3C]'}`}
+                                >
+                                    <Activity size={12} /> ACTIVE
+                                </button>
+                                <button
+                                    onClick={() => setActiveSubTab('archived')}
+                                    className={`px-5 py-2 rounded-lg text-[8px] font-black uppercase tracking-[0.1em] transition-all duration-500 flex items-center gap-2 ${activeSubTab === 'archived' ? 'bg-[#041C3C] text-white shadow-lg' : 'text-slate-400 hover:text-[#041C3C]'}`}
+                                >
+                                    <Archive size={12} /> ARCHIVE
+                                </button>
                             </div>
-
-
-                            {/* Actions - Create Class Button */}
-                            <div className="flex items-center shrink-0">
-                                {activeSubTab === 'active' && (
-                                    <button
-                                        onClick={() => setIsCreateModalOpen(true)}
-                                        className="bg-identity-sky hover:bg-identity-navy text-white px-8 py-3 rounded-2xl text-[10px] font-black uppercase tracking-[0.15em] shadow-xl shadow-identity-sky/10 flex items-center gap-2 transition-all whitespace-nowrap active:scale-95"
-                                        title="Create Class"
-                                    >
-                                        <span className="hidden sm:inline">Create Class</span>
-                                        <Plus size={20} />
-                                    </button>
-                                )}
-                            </div>
+                            <button
+                                onClick={() => setIsCreateModalOpen(true)}
+                                className="bg-[#5CB4E4] hover:bg-[#041C3C] text-white px-6 py-3 rounded-xl text-[9px] font-black uppercase tracking-[0.2em] flex items-center gap-3 shadow-xl transition-all border border-white/10 active:scale-95 italic"
+                            >
+                                <Plus size={16} />
+                                CREATE CLASS
+                            </button>
                         </div>
                     </div>
 
-                    {/* Filter Button (Archived Only) - REMOVED since it's embedded now */}
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6">
-                    {loading ? (
-                        <div className="col-span-full flex flex-col items-center justify-center py-20 gap-4">
-                            <div className="w-12 h-12 relative">
-                                <div className="absolute inset-0 border-4 border-identity-sky/20 rounded-full"></div>
-                                <div className="absolute inset-0 border-4 border-identity-sky border-t-transparent rounded-full animate-spin"></div>
-                            </div>
-                            <p className="text-[10px] font-black text-identity-sky uppercase tracking-[0.2em] animate-pulse">Retrieving Class Directories...</p>
+                    {/* Bottom Row: Search & Filters */}
+                    <div className="flex flex-col lg:flex-row items-center gap-4 pt-4 border-t border-slate-100/30">
+                        <div className="relative flex-1 w-full group">
+                            <Search size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" />
+                            <input
+                                type="text"
+                                placeholder="Search by code or name..."
+                                className="w-full bg-white/80 border border-slate-100 rounded-lg py-3 pl-10 pr-4 focus:outline-none focus:border-[#5CB4E4]/40 transition-all text-[10px] font-black uppercase tracking-[0.1em] placeholder:text-slate-200 italic"
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                            />
                         </div>
-                    ) : (
-                        <>
-                            {filteredClasses.length === 0 && (
-                                <div className="col-span-full flex flex-col items-center justify-center py-12 text-secondary/20">
-                                    <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mb-4 text-secondary/20">
-                                        {activeSubTab === 'archived' ? <Archive size={32} /> : <BookOpen size={32} />}
-                                    </div>
-                                    <p className="text-lg font-black uppercase tracking-tighter">No {activeSubTab === 'archived' ? 'archived' : ''} classes found.</p>
-                                </div>
-                            )}
-
-                            {filteredClasses.map((cls) => (
-                                <div key={cls.id} className={`identity-glass rounded-[2rem] md:rounded-[3rem] border transition-all group relative overflow-hidden ${cls.active_session_type ? 'border-identity-sky/50 shadow-2xl shadow-identity-sky/10' : 'border-identity-sky/10 hover:border-identity-sky/40 shadow-xl hover:shadow-2xl'} flex flex-col`}>
-                                    <div className={`h-1.5 transition-colors ${cls.is_archived ? 'bg-slate-200' : cls.active_session_type ? 'bg-identity-sky animate-pulse' : 'bg-identity-sky group-hover:bg-identity-sky/80'}`}></div>
-                                    <div className="p-8 flex flex-col flex-1">
-                                        <div className="flex justify-between items-start mb-4">
-                                            <div>
-                                                <h3 className="text-xl font-black text-identity-navy group-hover:text-identity-sky transition-colors mb-1 uppercase tracking-tight">{cls.subject_code}</h3>
-                                                <p className="text-xs font-bold text-slate-500 uppercase tracking-[0.15em]">{cls.subject_name}</p>
-                                                <p className="text-[10px] font-black text-identity-sky mt-2 bg-identity-sky/5 px-2 py-0.5 rounded border border-identity-sky/10 w-fit uppercase tracking-[0.15em]">{cls.section}</p>
-                                            </div>
-                                            <div className="flex flex-col items-end gap-2">
-                                                <div className="flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
-                                                    <button
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            setSelectedClassId(cls.id);
-                                                            setSelectedClassName(cls.subject_name);
-                                                            setSelectedClassIsArchived(!!cls.is_archived);
-                                                            setIsEditModalOpen(true);
-                                                        }}
-                                                        className="text-slate-400 hover:text-identity-sky p-2 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-2xl hover:bg-identity-sky/5 transition-all"
-                                                        title="Edit Class"
-                                                    >
-                                                        <Edit size={18} />
-                                                    </button>
-                                                    <button
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            handleArchive(cls.id, cls.is_archived, cls.subject_name);
-                                                        }}
-                                                        className={`p-2 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-2xl transition-all ${cls.is_archived
-                                                            ? 'text-slate-400 hover:text-emerald-500 hover:bg-emerald-50'
-                                                            : 'text-slate-400 hover:text-identity-sky hover:bg-identity-sky/5'}`}
-                                                        title={cls.is_archived ? "Restore Class" : "Archive Class"}
-                                                    >
-                                                        {cls.is_archived ? <RotateCcw size={18} /> : <Archive size={18} />}
-                                                    </button>
-                                                    {!cls.is_archived && (
-                                                        <button
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                handleDelete(cls.id, cls.subject_name);
-                                                            }}
-                                                            className="text-slate-400 hover:text-red-500 p-2 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-2xl hover:bg-red-50 transition-all"
-                                                            title="Delete Class"
-                                                        >
-                                                            <Trash2 size={18} />
-                                                        </button>
-                                                    )}
-                                                </div>
-
-                                                {!!cls.active_session_type && (
-                                                    <div className="flex items-center gap-2 mb-2">
-                                                        <span className="relative flex h-2 w-2">
-                                                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-identity-sky opacity-75"></span>
-                                                            <span className="relative inline-flex rounded-full h-2 w-2 bg-identity-sky"></span>
-                                                        </span>
-                                                        <span className="text-[10px] font-black text-identity-sky uppercase tracking-[0.15em]">{cls.active_session_type} Session</span>
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </div>
-
-                                        <div className="flex items-center gap-4 text-xs text-slate-500 mb-6 uppercase font-black tracking-[0.15em]">
-                                            <div className="flex items-center gap-2 bg-white/40 px-3 py-1.5 rounded-lg border border-identity-sky/10">
-                                                <Calendar size={14} className="text-identity-sky" />
-                                                <span className="text-identity-navy">{formatSchedule(cls.schedule_json)}</span>
-                                            </div>
-                                            <div className="flex items-center gap-2 bg-white/40 px-3 py-1.5 rounded-lg border border-identity-sky/10">
-                                                <Users size={14} className="text-identity-sky" />
-                                                <span className="text-identity-navy">{cls.student_count} Students</span>
-                                            </div>
-                                        </div>
-
-                                        <div className="flex gap-4 mt-auto pt-6 border-t border-identity-sky/5">
-                                            <button
-                                                onClick={() => {
-                                                    setSelectedClassId(cls.id);
-                                                    setSelectedClassName(cls.subject_name);
-                                                    setSelectedClassIsArchived(!!cls.is_archived);
-                                                    setInitialView('list');
-                                                    setIsViewModalOpen(true);
-                                                }}
-                                                className="flex-1 bg-white/40 hover:bg-white/60 text-identity-navy border border-identity-sky/10 py-3 rounded-2xl text-[10px] font-black uppercase tracking-[0.15em] transition-all flex items-center justify-center gap-2 active:scale-95 shadow-sm"
-                                            >
-                                                <Eye size={16} /> View
-                                            </button>
-
-                                            {cls.active_session_id ? (
-                                                <>
-                                                    <button
-                                                        onClick={() => router.push(`/professor/dashboard?tab=monitor&sessionId=${cls.active_session_id}`)}
-                                                        className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white py-3 rounded-2xl text-[10px] font-black uppercase tracking-[0.15em] transition-all flex items-center justify-center gap-2 shadow-xl shadow-emerald-500/10 active:scale-95"
-                                                    >
-                                                        <Activity size={16} /> Monitor
-                                                    </button>
-                                                    <button
-                                                        onClick={() => cls.active_session_id && handleStopMonitoring(cls.active_session_id)}
-                                                        disabled={stoppingSessionId === cls.active_session_id}
-                                                        className="flex-1 bg-rose-500 hover:bg-rose-600 text-white py-3 rounded-2xl text-[10px] font-black uppercase tracking-[0.15em] transition-all flex items-center justify-center gap-2 shadow-xl shadow-rose-500/10 active:scale-95 disabled:opacity-50"
-                                                    >
-                                                        {stoppingSessionId === cls.active_session_id ? (
-                                                            <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                                                        ) : (
-                                                            <Square size={16} fill="currentColor" />
-                                                        )}
-                                                        Stop
-                                                    </button>
-                                                </>
-                                            ) : (
-                                                !cls.is_archived && (
-                                                    <button
-                                                        onClick={() => {
-                                                            setSelectedClassId(cls.id);
-                                                            setSelectedClassName(cls.subject_name);
-                                                            setIsSessionModalOpen(true);
-                                                        }}
-                                                        className="flex-1 bg-identity-sky hover:bg-identity-navy text-white py-3 rounded-2xl text-[10px] font-black uppercase tracking-[0.15em] transition-all flex items-center justify-center gap-2 shadow-xl shadow-identity-sky/10 active:scale-95"
-                                                    >
-                                                        <Play size={16} fill="currentColor" /> Start
-                                                    </button>
-                                                )
-                                            )}
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
-                        </>
-                    )}
+                        <div className="flex items-center gap-3 w-full lg:w-auto">
+                            <select
+                                value={selectedYearLevel}
+                                onChange={(e) => setSelectedYearLevel(e.target.value)}
+                                className="appearance-none bg-white/80 border border-slate-100 rounded-lg py-3 px-6 focus:outline-none focus:border-[#5CB4E4]/40 transition-all text-[9px] font-black uppercase tracking-[0.1em] text-[#041C3C] cursor-pointer italic min-w-[140px]"
+                            >
+                                <option value="All">ALL YEARS</option>
+                                <option value="1">1ST YEAR</option>
+                                <option value="2">2ND YEAR</option>
+                                <option value="3">3RD YEAR</option>
+                                <option value="4">4TH YEAR</option>
+                            </select>
+                            <button
+                                onClick={() => onRefresh()}
+                                className={`p-3 bg-[#041C3C] text-[#5CB4E4] rounded-lg border border-[#5CB4E4]/20 hover:bg-[#5CB4E4] hover:text-white shadow-lg transition-all ${loading ? 'animate-spin' : ''}`}
+                            >
+                                <RefreshCw size={14} />
+                            </button>
+                        </div>
+                    </div>
                 </div>
-            </div >
+            </div>
 
-            {/* ... other modals ... */}
+            {/* Content Grid */}
+            {loading ? (
+                <div className="flex flex-col items-center justify-center py-40 gap-6">
+                    <div className="w-20 h-20 relative">
+                        <div className="absolute inset-0 border-2 border-[#5CB4E4]/10 rounded-2xl rotate-45" />
+                        <div className="absolute inset-0 border-2 border-[#041C3C] border-t-transparent rounded-2xl rotate-45 animate-spin shadow-xl" />
+                    </div>
+                    <div className="text-center space-y-2">
+                        <p className="text-[12px] font-black text-[#041C3C] uppercase tracking-[0.4em] animate-pulse italic">LOADING CLASSES...</p>
+                    </div>
+                </div>
+            ) : filteredClasses.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {filteredClasses.map((cls) => (
+                        <div
+                            key={cls.id}
+                            className="bg-white/40 backdrop-blur-xl rounded-[2rem] border border-white/20 overflow-hidden group shadow-lg hover:shadow-[#5CB4E4]/10 transition-all duration-700 flex flex-col relative"
+                        >
+                            <div className="absolute inset-0 opacity-[0.02] pointer-events-none bg-blueprint" />
+                            <div className="absolute top-4 right-4 z-20 flex items-center gap-1.5">
+                                <div className={`w-2 h-2 rounded-full mr-1 ${cls.active_session_id ? 'bg-emerald-500 animate-pulse' : 'bg-slate-200'}`} />
+                                <button
+                                    onClick={() => {
+                                        setSelectedClassId(cls.id);
+                                        setSelectedClassName(cls.subject_name);
+                                        setSelectedClassIsArchived(activeSubTab === 'archived');
+                                        setIsEditModalOpen(true);
+                                    }}
+                                    className="p-1.5 bg-white/80 hover:bg-[#041C3C] hover:text-white text-slate-400 rounded-lg transition-all border border-slate-100 shadow-sm"
+                                    title="Settings"
+                                >
+                                    <Edit size={12} />
+                                </button>
+                                <button
+                                    onClick={() => handleArchive(cls.id, activeSubTab === 'archived' ? 1 : 0, cls.subject_name)}
+                                    className="p-1.5 bg-white/80 hover:bg-[#041C3C] hover:text-white text-slate-400 rounded-lg transition-all border border-slate-100 shadow-sm"
+                                    title={activeSubTab === 'archived' ? 'Restore' : 'Archive'}
+                                >
+                                    <Archive size={12} />
+                                </button>
+                                <button
+                                    onClick={() => handleDelete(cls.id, cls.subject_name)}
+                                    className="p-1.5 bg-rose-50/50 hover:bg-rose-500 text-rose-400 hover:text-white rounded-lg transition-all border border-rose-100 shadow-sm"
+                                    title="Delete"
+                                >
+                                    <Trash2 size={12} />
+                                </button>
+                            </div>
 
-            {/* Create Class Modal - FIXED */}
+                            <div className="p-6 pb-2 space-y-4 relative z-10">
+                                <div className="space-y-3">
+                                    <div className="inline-flex gap-2 items-center px-3 py-1 bg-[#041C3C] text-white text-[7px] font-black uppercase tracking-[0.1em] rounded-md shadow-md italic">
+                                        SECTION: {cls.section}
+                                    </div>
+                                    <h2 className="text-lg font-black text-[#041C3C] uppercase tracking-tight leading-none group-hover:text-[#5CB4E4] transition-colors italic line-clamp-1">
+                                        {cls.subject_name}
+                                    </h2>
+                                    <div className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] italic">{cls.subject_code}</div>
+                                </div>
+                                
+                                <div className="grid grid-cols-1 gap-2 bg-white/40 p-3 rounded-xl border border-white shadow-inner">
+                                    <div className="flex items-center gap-3 text-slate-500">
+                                        <Calendar size={12} className="text-[#5CB4E4]" />
+                                        <p className="text-[9px] font-black text-[#041C3C] uppercase tracking-tight italic truncate">{formatSchedule(cls.schedule_json)}</p>
+                                    </div>
+                                    <div className="flex items-center gap-3 text-slate-500">
+                                        <Users size={12} className="text-[#041C3C]" />
+                                        <p className="text-[9px] font-black text-[#041C3C] uppercase tracking-tight italic">{cls.student_count} STUDENTS</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="p-6 pt-2 space-y-3 relative z-10">
+                                <button
+                                    onClick={() => {
+                                        setSelectedClassId(cls.id);
+                                        setSelectedClassName(cls.subject_name);
+                                        setSelectedClassIsArchived(activeSubTab === 'archived');
+                                        setInitialView('list');
+                                        setIsViewModalOpen(true);
+                                    }}
+                                    className="w-full h-10 bg-white hover:bg-[#041C3C] hover:text-white text-[#041C3C] rounded-lg text-[9px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 border border-slate-100 shadow-sm active:scale-95 italic"
+                                >
+                                    <Eye size={14} /> VIEW DETAILS
+                                </button>
+
+                                {cls.active_session_id ? (
+                                    <button
+                                        onClick={() => onTabChange?.('monitor')}
+                                        className="w-full h-12 bg-emerald-500 hover:bg-[#041C3C] text-white rounded-xl text-[9px] font-black uppercase tracking-[0.3em] transition-all flex items-center justify-center gap-3 shadow-md active:scale-95 italic"
+                                    >
+                                        <Monitor size={16} className="animate-pulse" /> LIVE NOW
+                                    </button>
+                                ) : (
+                                    <button
+                                        onClick={() => {
+                                            setSelectedClassId(cls.id);
+                                            setSelectedClassName(cls.subject_name);
+                                            setIsSessionModalOpen(true);
+                                        }}
+                                        disabled={activeSubTab === 'archived'}
+                                        className={`w-full h-12 bg-[#041C3C] hover:bg-[#5CB4E4] text-white rounded-xl text-[10px] font-black uppercase tracking-[0.3em] transition-all flex items-center justify-center gap-3 shadow-md active:scale-95 italic ${activeSubTab === 'archived' ? 'opacity-30 cursor-not-allowed' : ''}`}
+                                    >
+                                        <Play size={16} /> START CLASS
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            ) : (
+                <div className="flex flex-col items-center justify-center py-32 bg-white/40 backdrop-blur-xl rounded-[3rem] border-2 border-dashed border-[#5CB4E4]/20 group relative overflow-hidden">
+                    <div className="absolute inset-0 opacity-[0.01] pointer-events-none bg-blueprint" />
+                    <h3 className="text-3xl font-black text-[#041C3C] uppercase tracking-tighter italic mb-4">NO CLASSES FOUND</h3>
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em] italic opacity-50">YOU HAVE NOT CREATED ANY CLASSES YET.</p>
+                </div>
+            )}
+
+            {/* Modals */}
             <CreateClassModal
                 isOpen={isCreateModalOpen}
                 onClose={() => setIsCreateModalOpen(false)}
                 onSuccess={() => {
-                    // Small delay to ensure database consistency before refresh
                     setTimeout(() => onRefresh(false), 500);
                 }}
                 professorId={user.professorId || user.userId}
             />
 
-            {/* Session Modal */}
             <SessionModal
                 isOpen={isSessionModalOpen}
                 onClose={() => setIsSessionModalOpen(false)}
@@ -728,10 +414,9 @@ export default function ClassesTab({ user, classes, loading, onRefresh, onTabCha
                 classId={selectedClassId}
                 className={selectedClassName}
                 isArchived={selectedClassIsArchived}
-                onSuccess={() => {
-                    onRefresh(false);
-                }}
+                onSuccess={() => onRefresh(false)}
             />
+
             <ConfirmModal
                 isOpen={confirmModal.isOpen}
                 onClose={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
@@ -742,6 +427,28 @@ export default function ClassesTab({ user, classes, loading, onRefresh, onTabCha
                 confirmText={confirmModal.confirmText}
                 isAlert={confirmModal.isAlert}
             />
-        </>
+        </div>
     );
+}
+
+// Helper icons
+function History(props: any) {
+  return (
+    <svg
+      {...props}
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+      <path d="M3 3v5h5" />
+      <path d="M12 7v5l4 2" />
+    </svg>
+  );
 }

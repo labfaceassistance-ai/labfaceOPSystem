@@ -93,8 +93,8 @@ export default function BulkActions({ users, onRefresh, onView }: BulkActionsPro
         if (selectedUsers.size === 0) return;
         setConfirmModal({
             isOpen: true,
-            title: 'Authorize Collective',
-            message: `Verify and approve ${selectedUsers.size} nodes within the system?`,
+            title: 'Approve Multiple',
+            message: `Approve ${selectedUsers.size} selected accounts?`,
             type: 'success',
             onConfirm: executeBulkApprove
         });
@@ -130,13 +130,13 @@ export default function BulkActions({ users, onRefresh, onView }: BulkActionsPro
 
     const bulkReject = () => {
         if (selectedUsers.size === 0) return;
-        const reason = prompt('State rejection rationale (applies to all selected nodes):');
+        const reason = prompt('Reason for rejection:');
         if (!reason) return;
 
         setConfirmModal({
             isOpen: true,
-            title: 'Revoke Permissions',
-            message: `Permanently reject ${selectedUsers.size} nodes from system access?`,
+            title: 'Reject Multiple',
+            message: `Reject ${selectedUsers.size} selected accounts?`,
             type: 'danger',
             onConfirm: () => executeBulkReject(reason)
         });
@@ -159,7 +159,7 @@ export default function BulkActions({ users, onRefresh, onView }: BulkActionsPro
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `registry_export_${new Date().toISOString().split('T')[0]}.csv`;
+        a.download = `user_export_${new Date().toISOString().split('T')[0]}.csv`;
         a.click();
         URL.revokeObjectURL(url);
     };
@@ -175,12 +175,12 @@ export default function BulkActions({ users, onRefresh, onView }: BulkActionsPro
                             className="bg-identity-navy hover:bg-identity-sky text-white px-6 py-3 rounded-2xl transition-all font-black uppercase tracking-[0.2em] text-[10px] flex items-center gap-3 shadow-lg shadow-identity-navy/10 active:scale-95 italic"
                         >
                             <Check size={16} />
-                            {selectedUsers.size === users.length ? 'Deselect Collective' : 'Select Collective'}
+                            {selectedUsers.size} Selected
                         </button>
                         <div className="flex items-center gap-3">
                             <div className="w-1.5 h-1.5 rounded-full bg-identity-sky animate-pulse shadow-[0_0_8px_rgba(92,180,228,0.5)]" />
                             <span className="text-identity-navy font-black text-xs uppercase tracking-[0.15em] italic">
-                                {selectedUsers.size} Nodes Targeted
+                                {selectedUsers.size} Selected
                             </span>
                         </div>
                     </div>
@@ -193,7 +193,7 @@ export default function BulkActions({ users, onRefresh, onView }: BulkActionsPro
                                 className="px-6 py-3 bg-identity-sky hover:bg-identity-navy text-white rounded-2xl transition-all font-black uppercase tracking-[0.2em] text-[10px] flex items-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed shadow-xl shadow-identity-sky/10 active:scale-95 italic"
                             >
                                 <CheckCircle size={16} />
-                                Authorize
+                                Approve
                             </button>
                             <button
                                 onClick={bulkReject}
@@ -201,7 +201,7 @@ export default function BulkActions({ users, onRefresh, onView }: BulkActionsPro
                                 className="px-6 py-3 bg-rose-500 hover:bg-rose-600 text-white rounded-2xl transition-all font-black uppercase tracking-[0.2em] text-[10px] flex items-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed shadow-xl shadow-rose-900/10 active:scale-95 italic"
                             >
                                 <XCircle size={16} />
-                                Revoke
+                                Reject
                             </button>
                             <button
                                 onClick={bulkExport}
@@ -220,9 +220,9 @@ export default function BulkActions({ users, onRefresh, onView }: BulkActionsPro
             {isProcessing && (
                 <div className="identity-glass border border-identity-sky/10 rounded-2xl p-8 mb-8 shadow-xl">
                     <div className="flex items-center justify-between mb-4">
-                        <span className="text-identity-navy font-black uppercase tracking-[0.2em] text-[10px] italic">Operation Sequencing...</span>
+                        <span className="text-identity-navy font-black uppercase tracking-[0.2em] text-[10px] italic">Processing...</span>
                         <span className="text-identity-sky font-black uppercase tracking-[0.2em] text-[10px]">
-                            {progress.current} / {progress.total} NODES
+                            {progress.current} / {progress.total} USERS
                         </span>
                     </div>
                     <div className="w-full bg-identity-sky/5 rounded-full h-3 border border-identity-sky/10">

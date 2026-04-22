@@ -1,5 +1,6 @@
-﻿import { useState, useEffect } from 'react';
-import { Calendar, ChevronLeft, ChevronRight, X, Clock, Users, MapPin, Ban } from 'lucide-react';
+"use client";
+import { useState, useEffect } from 'react';
+import { Calendar, ChevronLeft, ChevronRight, X, Clock, Users, MapPin, Ban, CalendarX, Zap, Activity, ShieldCheck, ArrowRight } from 'lucide-react';
 import axios from 'axios';
 import CancelSessionModal from '@/components/CancelSessionModal';
 import { isHoliday } from '@/utils/holidays';
@@ -13,15 +14,6 @@ interface ScheduleSlot {
     day: string;
     startTime: string;
     endTime: string;
-}
-
-interface ClassSchedule {
-    id: number;
-    subject_code: string;
-    subject_name: string;
-    section: string;
-    schedule_json: string;
-    student_count: number;
 }
 
 interface SessionInfo {
@@ -44,19 +36,16 @@ export default function ScheduleTab({ user, classes }: ScheduleTabProps) {
     const [cancellations, setCancellations] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
-    // Cancel modal state
     const [cancelModalOpen, setCancelModalOpen] = useState(false);
     const [selectedSession, setSelectedSession] = useState<SessionInfo | null>(null);
 
-    // Helper function to get the start of the week (Monday)
     function getWeekStart(date: Date): Date {
         const d = new Date(date);
         const day = d.getDay();
-        const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Adjust when day is Sunday
+        const diff = d.getDate() - day + (day === 0 ? -6 : 1);
         return new Date(d.setDate(diff));
     }
 
-    // Helper function to format time with AM/PM
     const formatTime = (time: string) => {
         if (!time) return time;
         const [hours, minutes] = time.split(':');
@@ -66,7 +55,6 @@ export default function ScheduleTab({ user, classes }: ScheduleTabProps) {
         return `${hour12}:${minutes} ${ampm}`;
     };
 
-    // Fetch cancellations
     const fetchCancellations = async () => {
         try {
             const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
@@ -78,17 +66,14 @@ export default function ScheduleTab({ user, classes }: ScheduleTabProps) {
         }
     };
 
-    // Build week schedule
     const buildWeekSchedule = () => {
         const sessions: { [key: string]: SessionInfo[] } = {};
         const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
-        // Initialize each day
         daysOfWeek.forEach(day => {
             sessions[day] = [];
         });
 
-        // Process each class
         classes.forEach(cls => {
             try {
                 const schedule: ScheduleSlot[] = JSON.parse(cls.schedule_json);
@@ -97,18 +82,12 @@ export default function ScheduleTab({ user, classes }: ScheduleTabProps) {
                     const dayIndex = daysOfWeek.indexOf(slot.day);
                     if (dayIndex === -1) return;
 
-                    // Calculate the date for this day in the current week
                     const sessionDate = new Date(currentWeekStart);
                     sessionDate.setDate(currentWeekStart.getDate() + dayIndex);
-
                     const dateStr = sessionDate.toISOString().split('T')[0];
-
-                    // Check if it's a holiday first
                     const holidayName = isHoliday(dateStr);
 
-                    // Check if manually cancelled
                     const cancellation = cancellations.find(c => {
-                        // Normalize cancellation date from DB (which might be full ISO or Date object)
                         const cDate = typeof c.session_date === 'string'
                             ? c.session_date.split('T')[0]
                             : new Date(c.session_date).toISOString().split('T')[0];
@@ -123,10 +102,10 @@ export default function ScheduleTab({ user, classes }: ScheduleTabProps) {
                         startTime: slot.startTime,
                         endTime: slot.endTime,
                         studentCount: cls.student_count || 0,
-                        room: 'Lab 1', // TODO: Get from database
+                        room: 'LABORATORY 01',
                         date: sessionDate,
                         isCancelled: !!(holidayName || cancellation),
-                        cancelReason: holidayName ? `Holiday: ${holidayName}` : cancellation?.reason
+                        cancelReason: holidayName ? `HOLIDAY: ${holidayName.toUpperCase()}` : cancellation?.reason?.toUpperCase()
                     });
                 });
             } catch (error) {
@@ -134,7 +113,6 @@ export default function ScheduleTab({ user, classes }: ScheduleTabProps) {
             }
         });
 
-        // Sort sessions by start time
         Object.keys(sessions).forEach(day => {
             sessions[day].sort((a, b) => a.startTime.localeCompare(b.startTime));
         });
@@ -177,170 +155,182 @@ export default function ScheduleTab({ user, classes }: ScheduleTabProps) {
     const getWeekRange = () => {
         const end = new Date(currentWeekStart);
         end.setDate(end.getDate() + 6);
-        return `${currentWeekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${end.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
+        return `${currentWeekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} — ${end.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
     };
 
     const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
     return (
-        <>
-            <div className="space-y-6 font-outfit">
-                {/* Header */}
-                <div className="identity-glass p-6 sm:p-8 md:p-10 rounded-[2rem] md:rounded-[3rem] border border-identity-sky/10 shadow-xl backdrop-blur-sm">
-                    <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
-                        <div className="flex items-center gap-4">
-                            <div className="bg-identity-sky/10 p-3 rounded-2xl border border-identity-sky/10">
-                                <Calendar className="text-identity-sky" size={28} />
-                            </div>
-                            <div>
-                                <h1 className="text-2xl font-black text-identity-navy uppercase tracking-tight italic">
-                                    Weekly Schedule
-                                </h1>
-                                <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.2em] mt-1">Class timing and structural planning</p>
+        <div className="space-y-12 font-outfit animate-in fade-in duration-1000">
+            {/* Compact Header Area */}
+            <div className="bg-white/40 backdrop-blur-xl rounded-[2.5rem] p-6 mb-8 border border-white/20 shadow-2xl relative overflow-hidden group">
+                <div className="absolute inset-0 bg-blueprint opacity-[0.03] pointer-events-none" />
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
+                    <div className="flex items-center gap-6">
+                        <div className="p-4 bg-[#5CB4E4] rounded-2xl shadow-lg shadow-[#5CB4E4]/20 group-hover:scale-110 transition-transform duration-700">
+                            <Calendar className="text-white" size={24} />
+                        </div>
+                        <div>
+                            <h2 className="text-2xl font-black text-[#041C3C] uppercase tracking-[0.2em] italic leading-none mb-2">
+                                WEEKLY SCHEDULE
+                            </h2>
+                            <div className="flex items-center gap-3">
+                                <div className="w-2 h-2 rounded-full bg-[#5CB4E4] animate-pulse" />
+                                <p className="text-[9px] font-black text-[#5CB4E4] uppercase tracking-[0.3em] italic">
+                                    SYNCHRONIZED • ONLINE STATUS VERIFIED
+                                </p>
                             </div>
                         </div>
-
-                        <div className="flex items-center gap-4 bg-white/40 p-2 rounded-2xl border border-identity-sky/5 shadow-inner">
-                            <button
-                                onClick={handlePreviousWeek}
-                                className="w-12 h-12 flex items-center justify-center bg-white hover:bg-identity-sky/5 text-identity-navy border border-identity-sky/10 rounded-2xl transition-all active:scale-95 shadow-sm"
-                                title="Previous Week"
-                            >
-                                <ChevronLeft size={20} />
-                            </button>
-                            <span className="text-[11px] font-black uppercase tracking-[0.2em] text-identity-sky min-w-[200px] text-center">
-                                {getWeekRange()}
-                            </span>
-                            <button
-                                onClick={handleNextWeek}
-                                className="w-12 h-12 flex items-center justify-center bg-white hover:bg-identity-sky/5 text-identity-navy border border-identity-sky/10 rounded-2xl transition-all active:scale-95 shadow-sm"
-                                title="Next Week"
-                            >
-                                <ChevronRight size={20} />
-                            </button>
+                    </div>
+                    
+                    <div className="hidden lg:flex items-center gap-4 bg-white/60 p-3 px-6 rounded-2xl border border-white/40 shadow-sm">
+                        <Zap size={14} className="text-[#5CB4E4] animate-pulse" />
+                        <p className="text-[9px] font-black text-[#041C3C] uppercase tracking-[0.3em] italic">REAL-TIME SYNC ACTIVE</p>
+                    </div>
+                    
+                    <div className="flex items-center gap-4 bg-white/60 p-3 rounded-2xl border border-white/50 shadow-3xl backdrop-blur-3xl font-outfit">
+                        <button onClick={handlePreviousWeek} className="w-12 h-12 flex items-center justify-center bg-[#041C3C] hover:bg-[#5CB4E4] text-white rounded-xl transition-all shadow-xl active:scale-95 border border-white/10">
+                            <ChevronLeft size={20} />
+                        </button>
+                        <div className="px-6 text-center">
+                            <p className="text-[8px] font-black uppercase tracking-[0.4em] text-slate-400 italic">DATE RANGE</p>
+                            <p className="text-md font-black uppercase tracking-tighter text-[#041C3C] italic">
+                                {getWeekRange().toUpperCase()}
+                            </p>
                         </div>
+                        <button onClick={handleNextWeek} className="w-12 h-12 flex items-center justify-center bg-[#041C3C] hover:bg-[#5CB4E4] text-white rounded-xl transition-all shadow-xl active:scale-95 border border-white/10">
+                            <ChevronRight size={20} />
+                        </button>
                     </div>
                 </div>
-
-                {/* Schedule Grid */}
-                {loading ? (
-                    <div className="flex flex-col items-center justify-center py-20 gap-4">
-                        <div className="w-12 h-12 relative">
-                            <div className="absolute inset-0 border-4 border-identity-sky/20 rounded-full"></div>
-                            <div className="absolute inset-0 border-4 border-identity-sky border-t-transparent rounded-full animate-spin"></div>
-                        </div>
-                        <p className="text-[10px] font-black text-identity-sky uppercase tracking-[0.2em] animate-pulse">Retrieving Weekly Plans...</p>
-                    </div>
-                ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                        {daysOfWeek.map((day, index) => {
-                            const dayDate = new Date(currentWeekStart);
-                            dayDate.setDate(currentWeekStart.getDate() + index);
-                            const isToday = dayDate.toDateString() === new Date().toDateString();
-
-                            return (
-                                <div
-                                    key={day}
-                                    className={`identity-glass p-8 rounded-[2rem] md:rounded-[3rem] border transition-all ${isToday
-                                        ? 'border-identity-sky/50 shadow-2xl shadow-identity-sky/10 bg-identity-sky/[0.02]'
-                                        : 'border-identity-sky/10 shadow-xl'
-                                        }`}
-                                >
-                                    <div className="mb-6">
-                                        <h3 className={`font-black uppercase tracking-[0.2em] text-sm italic ${isToday ? 'text-identity-sky' : 'text-identity-navy'}`}>
-                                            {day}
-                                        </h3>
-                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.15em] mt-1 opacity-70">
-                                            {dayDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                                        </p>
-                                    </div>
-
-                                    <div className="space-y-4">
-                                        {weekSessions[day]?.length > 0 ? (
-                                            weekSessions[day].map((session, idx) => (
-                                                <div
-                                                    key={idx}
-                                                    className={`p-5 rounded-2xl border transition-all overflow-hidden relative group ${session.isCancelled
-                                                        ? 'bg-rose-500/5 border-rose-500/20'
-                                                        : 'bg-white/40 border-identity-sky/10 hover:border-identity-sky/30 shadow-sm'
-                                                        }`}
-                                                >
-                                                    <div className="flex items-start justify-between mb-4">
-                                                        <div className="flex-1">
-                                                            <div className="flex items-center gap-2 mb-1">
-                                                                {session.isCancelled && (
-                                                                    <Ban className="text-rose-500 flex-shrink-0" size={14} />
-                                                                )}
-                                                                <p className={`font-black text-xs uppercase tracking-tight ${session.isCancelled ? 'text-rose-500 line-through decoration-2' : 'text-identity-navy'}`}>
-                                                                    {session.subjectCode}
-                                                                </p>
-                                                            </div>
-                                                            <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">
-                                                                Section {session.section}
-                                                            </p>
-                                                        </div>
-                                                        {session.isCancelled && (
-                                                            <span className="text-[8px] font-black uppercase tracking-[0.2em] bg-rose-500/20 text-rose-500 px-2.5 py-1 rounded-full border border-rose-500/20 absolute -top-1 -right-1 rotate-12 group-hover:rotate-0 transition-transform">
-                                                                Void
-                                                            </span>
-                                                        )}
-                                                    </div>
-
-                                                    <div className="space-y-2 text-[9px] font-black text-slate-500 uppercase tracking-[0.2em]">
-                                                        <div className="flex items-center gap-2">
-                                                            <Clock size={12} className="text-identity-sky" />
-                                                            {formatTime(session.startTime)} - {formatTime(session.endTime)}
-                                                        </div>
-                                                        <div className="flex items-center gap-2">
-                                                            <MapPin size={12} className="text-identity-sky" />
-                                                            {session.room}
-                                                        </div>
-                                                        <div className="flex items-center gap-2">
-                                                            <Users size={12} className="text-identity-sky" />
-                                                            {session.studentCount} students
-                                                        </div>
-                                                    </div>
-
-                                                    {session.isCancelled ? (
-                                                        <div className="mt-4 text-[9px] font-black uppercase tracking-[0.15em] text-rose-500 bg-rose-500/5 p-3 rounded-2xl border border-rose-500/10 italic">
-                                                            Reason: {session.cancelReason?.toUpperCase() || 'EXTERNAL OVERRIDE'}
-                                                        </div>
-                                                    ) : (
-                                                        <button
-                                                            onClick={() => handleCancelClick(session)}
-                                                            className="mt-4 w-full px-4 py-2.5 bg-rose-500/5 hover:bg-rose-500 text-rose-500 hover:text-white rounded-2xl text-[9px] font-black uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-2 border border-rose-500/10 active:scale-95"
-                                                        >
-                                                            <Ban size={14} />
-                                                            Suspend Session
-                                                        </button>
-                                                    )}
-                                                </div>
-                                            ))
-                                        ) : (
-                                            <p className="text-center text-secondary/20 text-[10px] font-black uppercase tracking-[0.15em] py-4">
-                                                No classes
-                                            </p>
-                                        )}
-                                    </div>
-                                </div>
-                            );
-                        })}
-                    </div>
-                )}
             </div>
 
-            {/* Cancel Session Modal */}
+            {/* Grid */}
+            {loading ? (
+                <div className="flex flex-col items-center justify-center py-[240px] gap-12 bg-white/40 backdrop-blur-xl rounded-[6rem] border-4 border-dashed border-[#5CB4E4]/10">
+                    <div className="w-40 h-40 relative">
+                        <div className="absolute inset-0 border-4 border-[#5CB4E4]/10 rounded-[3rem] rotate-45" />
+                        <div className="absolute inset-0 border-4 border-[#041C3C] border-t-transparent rounded-[3rem] rotate-45 animate-spin shadow-4xl" />
+                    </div>
+                    <div className="text-center space-y-4">
+                        <p className="text-[16px] font-black text-[#041C3C] uppercase tracking-[0.6em] animate-pulse italic">LOADING SCHEDULE...</p>
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em] italic opacity-40">Fetching your weekly sessions...</p>
+                    </div>
+                </div>
+            ) : (
+                <div className="table-responsive-wrapper pb-10">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-7 gap-4 min-w-[1200px] xl:min-w-0">
+                        {daysOfWeek.map((day, index) => {
+                        const dayDate = new Date(currentWeekStart);
+                        dayDate.setDate(currentWeekStart.getDate() + index);
+                        const isToday = dayDate.toDateString() === new Date().toDateString();
+
+                        return (
+                            <div
+                                key={day}
+                                className={`bg-white/40 backdrop-blur-xl p-3.5 rounded-[1.5rem] border transition-all duration-700 relative overflow-hidden group h-full shadow-xl font-outfit min-h-[400px] flex flex-col ${isToday
+                                    ? 'border-[#5CB4E4] ring-[4px] ring-[#5CB4E4]/5 z-10 scale-[1.02]'
+                                    : 'border-white/20 hover:border-[#5CB4E4]/40 hover:-translate-y-1'
+                                    }`}
+                            >
+                                <div className="absolute inset-x-0 top-0 h-full z-0 opacity-[0.03] pointer-events-none bg-blueprint" />
+                                {isToday && (
+                                    <div className="absolute top-0 left-0 right-0 h-2 bg-[#5CB4E4] animate-pulse shadow-[0_0_20px_rgba(92,180,228,0.8)]" />
+                                )}
+
+                                <div className="mb-4 border-b border-white/20 pb-4 relative z-10 text-center">
+                                    <h3 className={`font-black uppercase tracking-tight text-sm italic mb-1 leading-none ${isToday ? 'text-[#5CB4E4]' : 'text-[#041C3C]'}`}>
+                                        {day.toUpperCase()}
+                                    </h3>
+                                    <p className={`text-[8px] font-black uppercase tracking-[0.2em] italic ${isToday ? 'text-[#041C3C]' : 'text-slate-400'}`}>
+                                        {dayDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }).toUpperCase()}
+                                    </p>
+                                </div>
+
+                                <div className="space-y-6 relative z-10 flex-1">
+                                    {weekSessions[day]?.length > 0 ? (
+                                        weekSessions[day].map((session, idx) => (
+                                            <div
+                                                key={idx}
+                                                className={`p-4 rounded-[1.2rem] border transition-all duration-700 relative group/row overflow-hidden flex flex-col shadow-lg min-h-[200px] ${session.isCancelled
+                                                    ? 'bg-rose-500/[0.05] border-rose-500/20 grayscale scale-[0.98]'
+                                                    : 'bg-white border-slate-100 hover:border-[#5CB4E4]/40'
+                                                    }`}
+                                            >
+                                                <div className="mb-4 relative z-10 flex-1">
+                                                    <div className="flex items-center gap-2 mb-2">
+                                                        {session.isCancelled && <Ban size={12} className="text-rose-500 animate-pulse" />}
+                                                        <p className={`font-black text-sm md:text-base uppercase tracking-tighter italic leading-none ${session.isCancelled ? 'text-rose-400 line-through opacity-50' : 'text-[#041C3C]'}`}>
+                                                            {session.subjectCode}
+                                                        </p>
+                                                    </div>
+                                                    <div className="space-y-1">
+                                                        <p className="text-[7px] font-black text-slate-300 uppercase tracking-[0.1em] italic">
+                                                            SEC: {session.section}
+                                                        </p>
+                                                        <p className="text-[8px] font-black text-slate-500 uppercase tracking-tighter italic truncate pr-1">
+                                                            {session.className}
+                                                        </p>
+                                                    </div>
+                                                </div>
+
+                                                <div className="space-y-2 relative z-10 mb-4 pt-3 border-t border-slate-100">
+                                                    <div className="flex items-center gap-3 text-[8px] font-black text-[#041C3C] uppercase tracking-tight italic">
+                                                        <Clock size={12} className="text-[#5CB4E4]" />
+                                                        {formatTime(session.startTime)}
+                                                    </div>
+                                                    <div className="flex items-center gap-3 text-[8px] font-black text-[#041C3C] uppercase tracking-tight italic">
+                                                        <MapPin size={12} className="text-[#041C3C]" />
+                                                        {session.room}
+                                                    </div>
+                                                </div>
+
+                                                {session.isCancelled ? (
+                                                    <div className="mt-auto p-3 bg-rose-500/10 rounded-xl border border-rose-500/20 text-center">
+                                                        <p className="text-[8px] font-black text-rose-500 uppercase tracking-widest italic animate-pulse">
+                                                            CANCELLED
+                                                        </p>
+                                                    </div>
+                                                ) : (
+                                                        <button
+                                                            onClick={() => handleCancelClick(session)}
+                                                            className="mt-auto w-full px-3 py-2 bg-white hover:bg-rose-500 text-rose-500 hover:text-white rounded-xl text-[7px] font-black uppercase tracking-wider transition-all duration-700 flex items-center justify-center gap-2 border border-rose-500/20 italic group/cancel"
+                                                        >
+                                                            <Ban size={10} /> CANCEL
+                                                        </button>
+                                                )}
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <div className="flex-1 flex flex-col items-center justify-center py-12 opacity-30 group-hover:opacity-100 transition-all duration-1000">
+                                            <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mb-6 border border-white/50 shadow-inner group-hover:scale-110 transition-transform">
+                                                <CalendarX size={28} className="text-[#041C3C]/10" />
+                                            </div>
+                                            <p className="text-center text-[10px] font-black text-[#041C3C] uppercase tracking-[0.4em] italic">
+                                                EMPTY
+                                            </p>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        );
+                    })}
+                    </div>
+                </div>
+            )}
+
+            {/* Cancel Modal */}
             {selectedSession && (
                 <CancelSessionModal
                     isOpen={cancelModalOpen}
                     onClose={() => setCancelModalOpen(false)}
                     classId={selectedSession.classId}
-                    className={`${selectedSession.subjectCode} - ${selectedSession.className}`}
+                    className={`${selectedSession.subjectCode} — ${selectedSession.className}`}
                     sessionDate={selectedSession.date.toISOString()}
-                    sessionTime={`${formatTime(selectedSession.startTime)} - ${formatTime(selectedSession.endTime)}`}
+                    sessionTime={`${formatTime(selectedSession.startTime)} — ${formatTime(selectedSession.endTime)}`}
                     onSuccess={handleCancelSuccess}
                 />
             )}
-        </>
+        </div>
     );
 }

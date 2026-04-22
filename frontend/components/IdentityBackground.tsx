@@ -22,27 +22,26 @@ const IdentityNode = ({ className = "" }) => (
 
 export default function IdentityBackground() {
     return (
-        <div className="fixed inset-0 pointer-events-none z-[-1] overflow-hidden bg-bg-base">
-            {/* Layer 1: Base Canvas is handled by bg-bg-base above */}
+        <div className="fixed inset-0 pointer-events-none z-[-1] overflow-hidden bg-[#F8FAFC]">
+            {/* Layer 1: Enhanced Blueprint Grid (Primary - 20px) */}
+            <div className="absolute inset-0 bg-blueprint opacity-10"></div>
+
+            {/* Layer 2: Enhanced Blueprint Grid (Fine - 8px) */}
+            <div className="absolute inset-0 bg-blueprint-fine opacity-5"></div>
             
-            {/* Layer 2: IdentityNodes at responsive opacity and size */}
-            <div className="absolute inset-0 opacity-[0.10] sm:opacity-[0.15]">
-                {/* 3 Active Nodes on Mobile, Scaling up to 30% -> Desktop */}
+            {/* Layer 3: IdentityNodes (Subtle Face wireframe SVGs) */}
+            <div className="absolute inset-0 opacity-[0.07]">
                 <IdentityNode className="top-[5%] md:top-[15%] left-[-5%] md:left-[0%] w-16 h-16 sm:w-24 sm:h-24 md:w-[180px] md:h-[180px]" />
                 <IdentityNode className="top-[35%] md:top-[45%] right-[-5%] md:right-[-2%] w-16 h-16 sm:w-24 sm:h-24 md:w-[240px] md:h-[240px]" />
                 <IdentityNode className="bottom-[10%] md:bottom-[15%] left-[2%] md:left-[5%] w-16 h-16 sm:w-24 sm:h-24 md:w-[200px] md:h-[200px]" />
                 
-                {/* Extra nodes hidden on mobile to optimize performance and prevent clutter */}
                 <IdentityNode className="hidden md:block top-[25%] right-[15%] w-[130px] h-[130px]" />
                 <IdentityNode className="hidden md:block bottom-[40%] left-[20%] w-[160px] h-[160px]" />
                 <IdentityNode className="hidden md:block top-[60%] left-[2%] w-[110px] h-[110px]" />
             </div>
 
-            {/* Layer 3: Blueprint Grid at 5% opacity */}
-            <div className="absolute inset-0 bg-blueprint opacity-[0.05]"></div>
-
-            {/* Layer 4: Mesh Glows */}
-            <div className="absolute inset-0 bg-mesh opacity-80 mix-blend-multiply"></div>
+            {/* Subtle Vignette for depth without using heavy Mesh gradients */}
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,rgba(4,28,60,0.02)_100%)] opacity-50"></div>
         </div>
     );
 }

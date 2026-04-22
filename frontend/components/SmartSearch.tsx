@@ -147,7 +147,7 @@ export default function SmartSearch() {
                             value={query}
                             onChange={(e) => setQuery(e.target.value)}
                             onKeyDown={handleKeyDown}
-                            placeholder="Search the system registry..."
+                            placeholder="Search for anything..."
                             className="w-full pl-16 pr-12 py-5 bg-white/60 border border-slate-200 rounded-2xl text-identity-navy placeholder-slate-300 focus:border-identity-sky/50 focus:ring-4 focus:ring-identity-sky/5 focus:outline-none transition-all font-black text-[11px] uppercase tracking-[0.2em] shadow-inner shadow-slate-100/50 italic"
                         />
                         <button
@@ -165,7 +165,7 @@ export default function SmartSearch() {
                     {isLoading ? (
                         <div className="p-20 text-center">
                             <div className="inline-block w-12 h-12 border-4 border-identity-sky/10 border-t-identity-sky rounded-full animate-spin mb-6 shadow-sm"></div>
-                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] italic">Retrieving Node Data...</p>
+                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] italic">Searching...</p>
                         </div>
                     ) : results.length > 0 ? (
                         <div className="space-y-2">
@@ -199,16 +199,16 @@ export default function SmartSearch() {
                             <div className="bg-slate-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-8 shadow-inner">
                                 <Search className="text-slate-200" size={40} />
                             </div>
-                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] italic">Zero matching records detected.</p>
-                            <p className="text-[8px] font-black text-slate-300 uppercase tracking-[0.2em] mt-3 italic">Verify the subject identifier or protocol name.</p>
+                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] italic">No results found.</p>
+                            <p className="text-[8px] font-black text-slate-300 uppercase tracking-[0.2em] mt-3 italic">Try searching for something else.</p>
                         </div>
                     ) : (
                         <div className="p-20 text-center">
                             <div className="w-24 h-24 bg-identity-sky/5 rounded-full flex items-center justify-center mx-auto mb-10 shadow-inner border border-identity-sky/10">
                                 <Search className="text-identity-sky/40" size={48} />
                             </div>
-                            <p className="text-[11px] font-black text-identity-navy uppercase tracking-[0.4em] italic mb-3">System Registry Search</p>
-                            <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em] italic">Enter query to scan the global system register</p>
+                            <p className="text-[11px] font-black text-identity-navy uppercase tracking-[0.4em] italic mb-3">Search</p>
+                            <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em] italic">Enter a word to search the system</p>
                             
                             <div className="flex items-center justify-center gap-8 mt-12 text-[9px] font-black text-slate-300 uppercase tracking-[0.2em] italic">
                                 <div className="flex items-center gap-3">
@@ -221,7 +221,7 @@ export default function SmartSearch() {
                                 </div>
                                 <div className="flex items-center gap-3">
                                     <kbd className="px-4 py-2 bg-white rounded-xl border border-slate-100 shadow-sm font-outfit text-slate-500">Esc</kbd>
-                                    <span>Abort</span>
+                                    <span>Cancel</span>
                                 </div>
                             </div>
                         </div>
@@ -234,11 +234,11 @@ export default function SmartSearch() {
                         <div className="flex items-center gap-4">
                             <div className="flex items-center gap-3">
                                 <kbd className="px-3 py-2 bg-white rounded-xl border border-slate-200 shadow-sm text-slate-500 font-outfit">Ctrl + K</kbd>
-                                <span className="text-identity-sky/40 font-black">Global Access Protocol</span>
+                                <span className="text-identity-sky/40 font-black">Search Shortcut</span>
                             </div>
                         </div>
                         <div className="text-identity-sky bg-identity-sky/10 px-4 py-2 rounded-full border border-identity-sky/20 shadow-sm">
-                            {results.length} Active Node Link{results.length !== 1 ? 's' : ''}
+                            {results.length} result{results.length !== 1 ? 's' : ''} found
                         </div>
                     </div>
                 </div>

@@ -3,7 +3,7 @@ const nextConfig = {
     reactStrictMode: true,
     swcMinify: true,
     // Disable standalone and experimental features for better dev stability
-    // output: 'standalone',
+    output: 'standalone',
     // Force restart timestamp: 2026-02-06T14:55:00
 
     // Experimental optimizations

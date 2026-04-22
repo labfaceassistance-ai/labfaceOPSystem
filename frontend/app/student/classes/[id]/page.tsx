@@ -140,7 +140,7 @@ export default function ClassDetailsPage() {
                 <IdentityBackground />
                 <div className="relative z-10 text-center">
                     <div className="w-16 h-16 border-4 border-identity-sky/20 border-t-identity-sky rounded-full animate-spin mx-auto mb-6 shadow-2xl shadow-identity-sky/10"></div>
-                    <p className="text-identity-navy font-black text-[10px] uppercase tracking-[0.15em] animate-pulse">Initializing LabFace System...</p>
+                    <p className="text-identity-navy font-black text-[10px] uppercase tracking-[0.15em] animate-pulse">Loading Class Details...</p>
                 </div>
             </div>
         );
@@ -157,7 +157,7 @@ export default function ClassDetailsPage() {
                         <h1 className="text-2xl font-black text-identity-navy mb-3 uppercase tracking-tighter italic">Error Loading Class</h1>
                         <p className="text-slate-400 font-bold uppercase text-[10px] tracking-[0.15em] mb-10">{error}</p>
                         <Link href="/student/dashboard" className="px-10 py-4 bg-identity-navy hover:bg-identity-sky text-white rounded-2xl font-black uppercase text-[10px] tracking-[0.15em] transition-all shadow-xl active:scale-95">
-                            Return to Dashboard
+                            Back to Dashboard
                         </Link>
                     </div>
                 </div>
@@ -196,7 +196,7 @@ export default function ClassDetailsPage() {
                                 {data.stats.rate}%
                             </div>
                             <div className="text-[9px] text-slate-400 font-black uppercase tracking-[0.15em] leading-relaxed">
-                                OVERALL<br />ATTENDANCE RATE
+                                ACADEMIC<br />ATTENDANCE RATE
                             </div>
                         </div>
                     </div>
@@ -242,7 +242,7 @@ export default function ClassDetailsPage() {
                             <div className="bg-identity-sky/10 p-3 rounded-2xl border border-identity-sky/10">
                                 <Calendar className="text-identity-sky" size={24} />
                             </div>
-                            <h2 className="text-2xl font-black text-identity-navy uppercase tracking-tighter italic font-outfit">Attendance Directory</h2>
+                            <h2 className="text-2xl font-black text-identity-navy uppercase tracking-tighter italic font-outfit">Attendance History</h2>
                         </div>
 
                         {/* Filters Container */}
@@ -255,7 +255,7 @@ export default function ClassDetailsPage() {
                                     onChange={(e) => setStatusFilter(e.target.value)}
                                     className="bg-white/60 border border-slate-100 text-identity-navy pl-10 pr-10 py-4 rounded-2xl focus:outline-none focus:border-identity-sky font-black uppercase text-[10px] tracking-[0.15em] transition-all appearance-none cursor-pointer hover:bg-white shadow-sm min-w-[160px]"
                                 >
-                                    <option value="All">All Status</option>
+                                    <option value="All">All Records</option>
                                     <option value="Present">Present</option>
                                     <option value="Late">Late</option>
                                     <option value="Excused">Excused</option>
@@ -271,9 +271,9 @@ export default function ClassDetailsPage() {
                                     onChange={(e) => setDateFilterType(e.target.value)}
                                     className="bg-white/60 border border-slate-100 text-identity-navy pl-10 pr-10 py-4 rounded-2xl focus:outline-none focus:border-identity-sky font-black uppercase text-[10px] tracking-[0.15em] transition-all appearance-none cursor-pointer hover:bg-white shadow-sm min-w-[160px]"
                                 >
-                                    <option value="All">All Time</option>
-                                    <option value="Week">This Week</option>
-                                    <option value="Month">This Month</option>
+                                    <option value="All">Full History</option>
+                                    <option value="Week">Past 7 Days</option>
+                                    <option value="Month">Current Month</option>
                                     <option value="Date">Specific Date</option>
                                 </select>
                             </div>
@@ -314,7 +314,7 @@ export default function ClassDetailsPage() {
                                                 record.type?.toLowerCase().includes('batch') ? 'text-amber-500' :
                                                     'text-identity-navy group-hover:text-identity-sky transition-colors'
                                                 }`}>
-                                                {record.type ? (record.type.charAt(0).toUpperCase() + record.type.slice(1) + ' Session') : 'Regular Session'}
+                                                {record.type ? (record.type.charAt(0).toUpperCase() + record.type.slice(1) + ' Session') : 'Scheduled Lecture'}
                                             </div>
                                             <div className="text-[10px] text-slate-400 font-bold uppercase tracking-[0.2em] flex items-center gap-3">
                                                 <Clock size={16} className="text-identity-sky/40" /> {formatTime(record.startTime)}
@@ -322,12 +322,12 @@ export default function ClassDetailsPage() {
                                             <div className="flex items-center gap-4 flex-wrap pt-2">
                                                 {record.timeIn && (
                                                     <span className="inline-flex items-center gap-2 bg-emerald-500/10 text-emerald-500 px-4 py-1.5 rounded-2xl text-[9px] font-black border border-emerald-500/10 uppercase tracking-[0.1em] italic">
-                                                        <Clock size={12} /> Time In: {record.timeIn}
+                                                        <Clock size={12} /> Recorded Time: {record.timeIn}
                                                     </span>
                                                 )}
                                                 {record.snapshotUrl ? (
                                                     <span className="inline-flex items-center gap-2 bg-identity-sky/10 text-identity-sky px-4 py-1.5 rounded-2xl text-[9px] font-black border border-identity-sky/10 uppercase tracking-[0.1em] italic group-hover:bg-identity-sky group-hover:text-white transition-all shadow-sm">
-                                                        <Camera size={14} /> View Identity Snapshot
+                                                        <Camera size={14} /> View Biometric Proof
                                                     </span>
                                                 ) : null}
                                             </div>
@@ -355,8 +355,8 @@ export default function ClassDetailsPage() {
                                 <div className="bg-slate-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
                                     <Calendar size={40} className="opacity-20 text-identity-navy" />
                                 </div>
-                                <p className="text-xl font-black text-identity-navy uppercase tracking-tighter italic">Directory Empty</p>
-                                <p className="text-[10px] font-black uppercase tracking-[0.2em]">No {statusFilter !== 'All' ? statusFilter.toLowerCase() : ''} validated records matched your query.</p>
+                                <p className="text-xl font-black text-identity-navy uppercase tracking-tighter italic">No Attendance Records Found</p>
+                                <p className="text-[10px] font-black uppercase tracking-[0.2em]">No entries matching the selected criteria were identified.</p>
                             </div>
                         )}
                     </div>
@@ -375,7 +375,7 @@ export default function ClassDetailsPage() {
                         </button>
 
                         <div className="text-center mb-10">
-                            <h3 className="text-3xl font-black text-identity-navy uppercase tracking-tighter italic font-outfit">Identity Verification Proof</h3>
+                            <h3 className="text-3xl font-black text-identity-navy uppercase tracking-tighter italic font-outfit">Attendance Verification Record</h3>
                             <p className="text-identity-sky text-[10px] font-black uppercase tracking-[0.3em] mt-3 italic">{selectedRecord.date} · {selectedRecord.timeIn}</p>
                         </div>
 
@@ -390,13 +390,13 @@ export default function ClassDetailsPage() {
                                     className="w-full h-full object-cover relative z-10"
                                 />
                             ) : (
-                                <div className="text-slate-400 font-black uppercase tracking-[0.2em] text-[10px] relative z-10">Image Link Severed</div>
+                                <div className="text-slate-400 font-black uppercase tracking-[0.2em] text-[10px] relative z-10">Record Image Unavailable</div>
                             )}
                         </div>
 
                         <div className="grid grid-cols-2 gap-6">
                             <div className="bg-slate-50 p-6 rounded-3xl border border-identity-sky/5 shadow-inner">
-                                <span className="text-[9px] text-slate-400 font-black uppercase tracking-[0.2em] block mb-2">Protocol Status</span>
+                                <span className="text-[9px] text-slate-400 font-black uppercase tracking-[0.2em] block mb-2">Status</span>
                                 <span className={`text-lg font-black uppercase tracking-tighter italic ${selectedRecord.status === 'Present' ? 'text-emerald-500' :
                                     selectedRecord.status === 'Late' ? 'text-amber-500' : 'text-identity-navy'
                                     }`}>
@@ -404,7 +404,7 @@ export default function ClassDetailsPage() {
                                 </span>
                             </div>
                             <div className="bg-slate-50 p-6 rounded-3xl border border-identity-sky/5 shadow-inner">
-                                <span className="text-[9px] text-slate-400 font-black uppercase tracking-[0.2em] block mb-2">Validation Method</span>
+                                <span className="text-[9px] text-slate-400 font-black uppercase tracking-[0.2em] block mb-2">Recognition Protocol</span>
                                 <span className="text-lg font-black text-identity-navy uppercase tracking-tighter italic">{selectedRecord.recognitionMethod}</span>
                             </div>
                         </div>

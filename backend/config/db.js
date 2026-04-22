@@ -12,7 +12,7 @@ const pool = mysql.createPool({
     waitForConnections: true,
     connectionLimit: 10,
     queueLimit: 0,
-    charset: 'utf8mb4' // Ensure UTF-8 support for special characters
+    charset: 'utf8mb4'
 });
 
 module.exports = pool;

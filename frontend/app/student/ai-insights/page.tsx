@@ -25,7 +25,7 @@ export default function AIInsightsPage() {
             <IdentityBackground />
             <div className="relative z-10 text-center">
                 <div className="w-16 h-16 border-4 border-identity-sky/20 border-t-identity-sky rounded-full animate-spin mx-auto mb-6 shadow-2xl shadow-identity-sky/10"></div>
-                <p className="text-identity-navy font-black text-[10px] uppercase tracking-[0.15em] animate-pulse">Initializing Neural Link...</p>
+                <p className="text-identity-navy font-black text-[10px] uppercase tracking-[0.15em] animate-pulse">Preparing Academic Insights...</p>
             </div>
         </div>
     );
@@ -40,8 +40,8 @@ export default function AIInsightsPage() {
                         <Sparkles size={32} className="group-hover:scale-110 transition-transform duration-500" />
                     </div>
                     <div>
-                        <h1 className="text-3xl font-black text-identity-navy tracking-tighter uppercase font-outfit italic">Cognitive Analytics</h1>
-                        <p className="text-[10px] font-black text-identity-sky uppercase tracking-[0.4em] mt-1">Advanced System Performance Insights</p>
+                        <h1 className="text-3xl font-black text-identity-navy tracking-tighter uppercase font-outfit italic">Academic Performance Insights</h1>
+                        <p className="text-[10px] font-black text-identity-sky uppercase tracking-[0.4em] mt-1">Personalized attendance analysis and academic forecasting.</p>
                     </div>
                 </div>
 

@@ -5,10 +5,17 @@ export const metadata: Metadata = {
     description: 'Sign in to LabFace',
 };
 
+import IdentityBackground from '@/components/IdentityBackground';
+
 export default function LoginLayout({
     children,
 }: {
     children: React.ReactNode;
 }) {
-    return children;
+    return (
+        <div className="relative min-h-screen">
+            <IdentityBackground />
+            {children}
+        </div>
+    );
 }

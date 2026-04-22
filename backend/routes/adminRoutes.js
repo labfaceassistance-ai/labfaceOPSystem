@@ -848,7 +848,7 @@ router.get('/academic-settings', authenticateToken, async (req, res) => {
                 end_date as endDate,
                 created_at as updatedAt
             FROM academic_periods
-            WHERE effective_date <= CONVERT_TZ(NOW(), 'UTC', 'Asia/Manila')
+            WHERE effective_date <= NOW()
             ORDER BY effective_date DESC
             LIMIT 1
         `);
@@ -934,7 +934,7 @@ router.patch('/academic-settings', authenticateToken, async (req, res) => {
             WHERE id = (
                 SELECT id FROM (
                     SELECT id FROM academic_periods 
-                    WHERE effective_date <= CONVERT_TZ(NOW(), 'UTC', 'Asia/Manila')
+                    WHERE effective_date <= NOW()
                     ORDER BY effective_date DESC LIMIT 1
                 ) as active
             )
@@ -965,7 +965,7 @@ router.get('/classes/current', authenticateToken, requireLabHead, async (req, re
         const [settings] = await pool.query(`
             SELECT id, school_year, semester 
             FROM academic_periods 
-            WHERE effective_date <= CONVERT_TZ(NOW(), 'UTC', 'Asia/Manila')
+            WHERE effective_date <= NOW()
             ORDER BY effective_date DESC 
             LIMIT 1
         `);

@@ -1,6 +1,6 @@
-﻿"use client";
+"use client";
 import React, { useState, useEffect } from 'react';
-import IdentityFooter from '../components/IdentityFooter';
+
 import Link from 'next/link';
 import Navbar from '../components/Navbar';
 import { Shield, Clock, BarChart3, CheckCircle, ArrowRight, Lock, Users, Zap, MapPin, Monitor, Calendar, ScanFace, FileText, ChevronRight, ShieldCheck, GraduationCap, School } from 'lucide-react';
@@ -65,17 +65,17 @@ export default function Home() {
                   <span className="text-[10px] font-black uppercase tracking-[0.3em] text-identity-navy/90">PUP Lopez Computer Laboratory</span>
                </div>
 
-               <h1 className="text-4xl md:text-5xl sm:text-5xl md:text-7xl md:text-[11rem] font-black tracking-tight mb-4 leading-none font-outfit relative z-20">
+               <h1 className="text-6xl md:text-8xl lg:text-[11rem] font-black tracking-tight mb-4 leading-none font-outfit relative z-20">
                   <span className="text-identity-navy">Lab</span>
                   <span className="text-identity-sky">Face</span>
                </h1>
 
-               <h2 className="text-[10px] md:text-xl font-bold text-identity-navy/60 uppercase tracking-[0.2em] mb-8 font-outfit max-w-4xl mx-auto leading-relaxed text-center px-4">
+               <h2 className="text-lg md:text-xl font-black text-identity-navy/60 uppercase tracking-[0.2em] mb-8 font-outfit max-w-4xl mx-auto leading-relaxed text-center px-4">
                   Digital Face-Based Attendance Monitoring System for <br className="hidden md:block" />
                   PUP Lopez Campus Computer Laboratory 1
                </h2>
 
-               <p className="max-w-xl mx-auto text-xs md:text-sm text-slate-700 font-bold leading-relaxed mb-16 uppercase tracking-[0.15em] text-center">
+               <p className="max-w-xl mx-auto text-xs md:text-sm text-slate-700 font-black leading-relaxed mb-16 uppercase tracking-[0.15em] text-center force-bold">
                   Secure, real-time facial recognition for the <br className="hidden md:block" />
                   Polytechnic University of the Philippines.
                </p>
@@ -106,11 +106,11 @@ export default function Home() {
 
                   <div className="inline-flex items-center gap-2 py-1.5 px-4 rounded-full bg-identity-sky/10 text-identity-sky text-[8px] font-black uppercase tracking-[0.2em] mb-6 w-fit border border-identity-sky/20">
                      <span className="w-1.5 h-1.5 rounded-full bg-identity-sky animate-pulse"></span>
-                     Scanning Enabled
+                     Attendance Monitoring Enabled
                   </div>
 
                   <h3 className="text-3xl md:text-4xl md:text-5xl font-black text-identity-navy mb-4 leading-tight font-outfit uppercase">
-                     Automated Face <br /> Recognition
+                     Biometric Attendance <br /> Monitoring
                   </h3>
 
                   <p className="text-slate-800 text-[10px] md:text-xs font-bold leading-relaxed mb-10 uppercase tracking-[0.15em] max-w-sm">
@@ -123,8 +123,8 @@ export default function Home() {
                            <ScanFace size={24} />
                         </div>
                         <div className="text-identity-navy">
-                           <p className="text-[12px] font-black uppercase tracking-[0.15em]">Easy Face</p>
-                           <p className="text-[9px] font-bold opacity-40 uppercase tracking-[0.15em]">Scan</p>
+                           <p className="text-[12px] font-black uppercase tracking-[0.15em]">Face</p>
+                           <p className="text-[9px] font-bold opacity-40 uppercase tracking-[0.15em]">Documentation</p>
                         </div>
                      </div>
                      <div className="flex items-center gap-4">
@@ -133,7 +133,7 @@ export default function Home() {
                         </div>
                         <div className="text-identity-navy">
                            <p className="text-[12px] font-black uppercase tracking-[0.15em]">Instant</p>
-                           <p className="text-[9px] font-bold opacity-40 uppercase tracking-[0.15em]">Records</p>
+                           <p className="text-[9px] font-bold opacity-40 uppercase tracking-[0.15em]">Documentation</p>
                         </div>
                      </div>
                   </div>
@@ -250,8 +250,8 @@ export default function Home() {
             {/* Opaque Mask for Header */}
             <div className="max-w-7xl mx-auto px-6 relative z-10">
                <h3 className="text-3xl md:text-5xl md:text-7xl font-black text-identity-navy uppercase tracking-tighter mb-4 font-outfit bg-slate-50 inline-block px-4 md:px-8">
-                  Security Framework
-               </h3>
+                   Standard Operating Protocol
+                </h3>
                <p className="text-slate-600 font-bold uppercase text-[10px] md:text-xs tracking-[0.4em] mb-16">
                   A seamless three-step verification process
                </p>
@@ -260,11 +260,11 @@ export default function Home() {
                   {/* Connecting Line */}
                   <div className="hidden md:block absolute top-[60px] left-[15%] right-[15%] h-[1px] bg-slate-200 z-0"></div>
                   {[
-                     { n: "01", t: "Face Registration", d: "Quickly enroll your face into the secure system ledger." },
+                     { n: "01", t: "Face Enrollment", d: "Quickly enroll your biometric profile into the university system." },
                      { n: "02", t: "Automatic Detection", d: "The system identifies you upon laboratory entry." },
                      { n: "03", t: "Instant Logging", d: "Your attendance is updated immediately on the dashboard." }
                   ].map((step, i) => (
-                     <div key={i} className="relative z-10 group">
+                      <div key={i} className="relative z-10 group">
                         {/* Protocol Badge - Enlarged and high contrast */}
                         <div className="w-[160px] h-[160px] bg-white rounded-[4rem] border border-slate-100 flex flex-col items-center justify-center mx-auto mb-10 group-hover:bg-identity-navy group-hover:text-white transition-all duration-500 shadow-2xl relative overflow-hidden group-hover:scale-105">
                            {/* Subtle blueprint grid inside circle */}
@@ -311,7 +311,8 @@ export default function Home() {
             </div>
          </section>
 
-         <IdentityFooter />
+
+
       </div>
    );
 }

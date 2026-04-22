@@ -1,6 +1,6 @@
-﻿"use client";
+"use client";
 import { useEffect, useState } from 'react';
-import { BarChart3, Clock, XCircle, ChevronDown, Activity, ShieldCheck, CheckCircle } from 'lucide-react';
+import { BarChart3, Clock, XCircle, ChevronDown, Activity, ShieldCheck, CheckCircle, Calendar } from 'lucide-react';
 import Skeleton from '@/components/ui/Skeleton';
 import EmptyState from '@/components/ui/EmptyState';
 
@@ -75,13 +75,13 @@ export default function AttendanceTab({ user }: AttendanceTabProps) {
 
     if (loading) {
         return (
-            <div className="space-y-8 animate-fade-in">
-                <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+            <div className="space-y-12 animate-fade-in">
+                <div className="grid grid-cols-2 lg:grid-cols-5 gap-6">
                     {[...Array(5)].map((_, i) => (
-                        <Skeleton key={i} variant="card" height="100px" />
+                        <Skeleton key={i} variant="card" height="150px" />
                     ))}
                 </div>
-                <Skeleton variant="card" height="400px" />
+                <Skeleton variant="card" height="500px" />
             </div>
         );
     }
@@ -93,106 +93,130 @@ export default function AttendanceTab({ user }: AttendanceTabProps) {
     }, {} as Record<string, RecentActivity[]>);
 
     return (
-        <div className="space-y-8 animate-fade-in pb-20 font-outfit">
-            {/* Summary Matrix */}
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-6">
+        <div className="space-y-12 animate-fade-up pb-12 font-outfit">
+            {/* Attendance Summary */}
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-10">
                 {[
-                    { label: 'Overall Rate', val: `${attendanceData?.attendanceRate || 0}%`, icon: BarChart3, color: 'text-identity-sky', bg: 'bg-identity-sky/10' },
-                    { label: 'Present', val: attendanceData?.presentCount || 0, icon: CheckCircle, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
-                    { label: 'Late', val: attendanceData?.lateCount || 0, icon: Clock, color: 'text-amber-500', bg: 'bg-amber-500/10' },
-                    { label: 'Excused', val: attendanceData?.excusedCount || 0, icon: ShieldCheck, color: 'text-indigo-500', bg: 'bg-indigo-500/10' },
-                    { label: 'Absent', val: attendanceData?.absentCount || 0, icon: XCircle, color: 'text-rose-500', bg: 'bg-rose-500/10' }
+                    { label: 'ATTENDANCE RATE', val: `${attendanceData?.attendanceRate || 0}%`, icon: BarChart3, color: 'text-identity-sky', bg: 'bg-identity-sky/10' },
+                    { label: 'PRESENT', val: attendanceData?.presentCount || 0, icon: CheckCircle, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
+                    { label: 'LATE', val: attendanceData?.lateCount || 0, icon: Clock, color: 'text-amber-500', bg: 'bg-amber-500/10' },
+                    { label: 'EXCUSED', val: attendanceData?.excusedCount || 0, icon: ShieldCheck, color: 'text-indigo-500', bg: 'bg-indigo-500/10' },
+                    { label: 'ABSENT', val: attendanceData?.absentCount || 0, icon: XCircle, color: 'text-rose-500', bg: 'bg-rose-500/10' }
                 ].map((stat, i) => (
-                    <div key={i} className="identity-glass p-8 rounded-[2rem] md:rounded-[3rem] border border-identity-sky/10 shadow-xl transition-all group hover:scale-[1.02] active:scale-100 flex flex-col items-center text-center gap-4">
-                        <div className={`w-14 h-14 ${stat.bg} ${stat.color} rounded-2xl flex items-center justify-center border border-identity-sky/5 group-hover:scale-110 transition-transform duration-500`}>
-                            <stat.icon size={28} />
+                    <div key={i} className="identity-glass p-8 sm:p-10 rounded-[3rem] md:rounded-[3.5rem] border-2 border-identity-sky/15 shadow-2xl transition-all group hover:scale-[1.05] active:scale-100 flex flex-col items-center text-center gap-6 relative overflow-hidden bg-white/40 backdrop-blur-xl">
+                        <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-blueprint-fine" />
+                        <div className={`w-18 h-18 ${stat.bg} ${stat.color} rounded-3xl flex items-center justify-center border-2 border-identity-sky/10 group-hover:scale-110 group-hover:rotate-6 transition-all duration-700 shadow-2xl relative z-10`}>
+                            <stat.icon size={36} className="filter drop-shadow-md" />
                         </div>
-                        <div>
-                            <div className="text-3xl font-black text-identity-navy italic tracking-tighter leading-none mb-2">{stat.val}</div>
-                            <div className="text-[10px] text-slate-500 font-black uppercase tracking-[0.2em]">{stat.label}</div>
+                        <div className="relative z-10 w-full">
+                            <div className="text-4xl sm:text-5xl font-black text-identity-navy italic tracking-tighter leading-none mb-4 drop-shadow-sm">{stat.val}</div>
+                            <div className="text-[10px] text-slate-500 font-black uppercase tracking-[0.4em] italic opacity-60 flex items-center justify-center gap-2">
+                                <div className="w-1.5 h-[1px] bg-slate-400" />
+                                {stat.label}
+                                <div className="w-1.5 h-[1px] bg-slate-400" />
+                            </div>
                         </div>
                     </div>
                 ))}
             </div>
 
             {/* Protocol Logs Section */}
-            <div className="identity-glass p-6 sm:p-8 md:p-10 rounded-[2rem] md:rounded-[3rem] border border-identity-sky/10 shadow-xl relative overflow-hidden group">
-                <div className="flex items-center gap-6 mb-12">
-                    <div className="p-3 bg-identity-sky/10 text-identity-navy rounded-2xl border border-identity-sky/10 shadow-sm">
-                        <Activity size={28} className="text-identity-sky" />
+            <div className="identity-glass p-12 sm:p-14 md:p-20 rounded-[4rem] md:rounded-[5rem] border-2 border-identity-sky/15 shadow-3xl relative overflow-hidden group bg-white/40 backdrop-blur-2xl">
+                <div className="absolute inset-0 opacity-[0.05] pointer-events-none bg-blueprint" />
+                <div className="corner-bracket-tl scale-110 -top-4 -left-4" />
+                <div className="corner-bracket-br scale-110 -bottom-4 -right-4" />
+
+                <div className="flex flex-col md:flex-row md:items-center gap-10 mb-20 relative z-10">
+                    <div className="p-7 bg-identity-navy text-white rounded-3xl border-2 border-identity-sky/25 shadow-3xl group-hover:bg-identity-sky transition-all duration-700 shadow-identity-navy/20">
+                        <Activity size={48} className="filter drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]" />
                     </div>
                     <div>
-                        <h2 className="text-3xl font-black text-identity-navy uppercase tracking-tighter italic">Protocol Logs</h2>
-                        <p className="text-[10px] font-black text-identity-sky uppercase tracking-[0.4em] mt-2">Registry Synchronization History</p>
+                        <p className="text-[11px] font-black text-identity-sky uppercase tracking-[0.6em] mb-4 italic flex items-center gap-3">
+                            <span className="w-3 h-3 rounded-full bg-identity-sky animate-status-pulse shadow-[0_0_10px_rgba(92,180,228,0.8)]" />
+                            Biometric Attendance Records
+                        </p>
+                        <h2 className="text-5xl md:text-6xl font-black text-identity-navy uppercase tracking-tighter italic leading-none">ATTENDANCE HISTORY</h2>
                     </div>
                 </div>
 
-                <div className="space-y-6">
+                <div className="space-y-10 relative z-10">
                     {Object.entries(groupedActivity).length > 0 ? (
                         Object.entries(groupedActivity).map(([className, activities]) => (
-                            <div key={className} className="border border-identity-sky/5 rounded-[2rem] md:rounded-[3rem] overflow-hidden shadow-sm bg-white/40 hover:border-identity-sky/20 transition-all duration-500">
-                                <details className="group/details">
-                                    <summary className="flex items-center justify-between p-8 cursor-pointer hover:bg-white transition-all list-none select-none">
-                                        <div className="flex items-center gap-6">
-                                            <div className="w-14 h-14 rounded-2xl bg-white border border-identity-sky/10 flex items-center justify-center text-identity-navy font-black shadow-sm uppercase text-2xl italic group-hover/details:bg-identity-navy group-hover/details:text-white transition-all duration-500">
+                            <div key={className} className="border-2 border-identity-sky/15 rounded-[3rem] md:rounded-[4rem] overflow-hidden shadow-2xl bg-white/60 hover:border-identity-sky/35 transition-all duration-700 group/module relative backdrop-blur-md">
+                                <div className="absolute inset-x-0 top-0 h-2 bg-identity-sky/20 group-hover/module:bg-identity-sky transition-colors duration-500" />
+                                <details className="group/details" open={Object.entries(groupedActivity).length === 1}>
+                                    <summary className="flex items-center justify-between p-12 cursor-pointer hover:bg-white/40 transition-all list-none select-none">
+                                        <div className="flex items-center gap-10">
+                                            <div className="w-20 h-20 rounded-[1.75rem] bg-identity-navy text-white border-2 border-identity-sky/25 flex items-center justify-center text-4xl font-black shadow-3xl italic group-hover/details:bg-identity-sky group-hover/details:rotate-6 transition-all duration-700 uppercase font-outfit shadow-identity-navy/20">
                                                 {className.split(' - ')[0].replace(/[^A-Za-z]/g, '').substring(0, 2) || className[0]}
                                             </div>
                                             <div>
-                                                <div className="font-black text-identity-navy text-lg uppercase tracking-tight italic">{className}</div>
-                                                <div className="text-[10px] text-slate-500 font-black uppercase tracking-[0.2em] mt-2">
-                                                    {activities.length} Node Fragments â€¢ Status: <span className="text-identity-sky">{activities[0].status.toUpperCase()}</span>
+                                                <div className="font-black text-identity-navy text-2xl uppercase tracking-tight italic group-hover/details:text-identity-sky transition-colors">{className}</div>
+                                                <div className="text-[11px] font-black text-slate-400 uppercase tracking-[0.4em] mt-5 italic flex items-center gap-4">
+                                                    <span className="text-identity-sky shadow-sm px-4 py-1.5 bg-identity-sky/10 rounded-full border border-identity-sky/20">TOTAL RECORDS: {activities.length}</span>
+                                                    <div className="w-2 h-2 rounded-full bg-slate-300" />
+                                                    <span className="text-identity-navy/60">STATUS: ACTIVE</span>
                                                 </div>
                                             </div>
                                         </div>
-                                        <div className="group-open/details:rotate-180 transition-transform duration-500 text-identity-sky p-3 bg-white/80 rounded-2xl shadow-xl border border-identity-sky/10">
-                                            <ChevronDown size={20} />
+                                        <div className="group-open/details:rotate-180 transition-all duration-700 text-identity-navy p-6 bg-white shadow-3xl border-2 border-identity-sky/15 rounded-[2rem] group-hover/details:bg-identity-navy group-hover/details:text-white">
+                                            <ChevronDown size={28} className="filter drop-shadow-sm" />
                                         </div>
                                     </summary>
 
-                                    <div className="px-6 pb-6 space-y-4">
+                                    <div className="px-10 pb-12 space-y-6">
                                         {activities.map((activity, index) => (
                                             <div
                                                 key={index}
-                                                className="flex items-center justify-between p-6 bg-white/60 rounded-2xl border border-identity-sky/5 hover:border-identity-sky/20 group/item shadow-sm hover:shadow-2xl transition-all"
+                                                className="flex flex-col md:flex-row md:items-center justify-between p-10 bg-white/90 rounded-[2.5rem] border-2 border-identity-sky/5 hover:border-identity-sky/30 group/item shadow-xl hover:shadow-4xl transition-all relative overflow-hidden group/row"
                                             >
-                                                <div className="flex items-center gap-8">
-                                                    <div className="text-center min-w-[80px] px-4 py-3 bg-identity-sky/5 rounded-2xl border border-identity-sky/10 group-hover/item:bg-identity-navy group-hover/item:text-white transition-all duration-500">
-                                                        <div className="text-[9px] text-slate-500 group-hover/item:text-white/60 uppercase font-black tracking-[0.2em] mb-1">
+                                                <div className="absolute top-0 left-0 w-2.5 h-full bg-identity-sky/10 group-hover/row:bg-identity-sky transition-colors duration-500" />
+                                                <div className="flex flex-col sm:flex-row sm:items-center gap-12 relative z-10 mb-8 md:mb-0">
+                                                    <div className="text-center min-w-[120px] px-8 py-5 bg-identity-navy text-white rounded-3xl border-2 border-identity-sky/30 shadow-3xl group-hover/item:rotate-3 transition-all duration-700 shadow-identity-navy/20">
+                                                        <div className="text-[11px] text-identity-sky uppercase font-black tracking-[0.4em] mb-2 italic">
                                                             {new Date(activity.timeIn).toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase()}
                                                         </div>
-                                                        <div className="text-2xl font-black italic tracking-tighter">
+                                                        <div className="text-4xl font-black italic tracking-tighter">
                                                             {new Date(activity.timeIn).getDate()}
                                                         </div>
                                                     </div>
                                                     <div>
-                                                        <div className="text-[10px] font-black text-identity-navy uppercase tracking-[0.2em] mb-2 opacity-60 italic">
-                                                            {new Date(activity.timeIn).toLocaleString('en-US', { month: 'long', year: 'numeric' }).toUpperCase()}
+                                                        <div className="text-[11px] font-black text-identity-sky uppercase tracking-[0.4em] mb-4 italic opacity-80 flex items-center gap-3">
+                                                            <div className="w-8 h-[1px] bg-identity-sky/30" />
+                                                            ATTENDANCE LOGGED
                                                         </div>
-                                                        <div className="flex items-center gap-4 text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">
-                                                            <Clock size={16} className="text-identity-sky" />
-                                                            {new Date(activity.timeIn).toLocaleString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}
+                                                        <div className="flex flex-wrap items-center gap-8">
+                                                            <div className="flex items-center gap-4 text-[14px] font-black text-identity-navy uppercase tracking-[0.2em] italic">
+                                                                <Calendar size={20} className="text-identity-sky" />
+                                                                {new Date(activity.timeIn).toLocaleString('en-US', { month: 'long', year: 'numeric' }).toUpperCase()}
+                                                            </div>
+                                                            <div className="hidden sm:block w-2.5 h-2.5 rounded-full bg-slate-300" />
+                                                            <div className="flex items-center gap-4 text-[14px] font-black text-slate-500 uppercase tracking-[0.2em] italic">
+                                                                <Clock size={20} className="text-identity-sky animate-pulse" />
+                                                                {new Date(activity.timeIn).toLocaleString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 </div>
 
-                                                <div className="flex items-center gap-6">
+                                                <div className="flex items-center gap-10 relative z-10">
                                                     {(activity as any).recognition_method && (
-                                                        <div className="hidden sm:flex items-center gap-4 text-[9px] text-slate-500 bg-white/80 px-5 py-2.5 rounded-full border border-identity-sky/10 font-black uppercase tracking-[0.2em] shadow-inner">
+                                                        <div className="hidden lg:flex items-center gap-5 text-[11px] text-slate-500 bg-white px-8 py-4 rounded-2.5xl border-2 border-identity-sky/10 font-black uppercase tracking-[0.3em] italic shadow-inner group-hover/row:border-identity-sky/30 transition-all duration-700">
                                                             {(activity as any).recognition_method.toLowerCase() === 'manual' 
-                                                                ? <div className="w-2 h-2 rounded-full bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.5)]"></div>
-                                                                : <div className="w-2 h-2 rounded-full bg-identity-sky animate-pulse shadow-[0_0_8px_rgba(92,180,228,0.5)]"></div>}
-                                                            {(activity as any).recognition_method.toLowerCase() === 'manual' ? 'Manual Sync' : 'Biometric Auth'}
+                                                                ? <div className="w-3 h-3 rounded-full bg-amber-400 shadow-[0_0_15px_rgba(251,191,36,0.8)] animate-pulse"></div>
+                                                                : <div className="w-3 h-3 rounded-full bg-identity-sky shadow-[0_0_15px_rgba(92,180,228,0.8)] animate-status-pulse"></div>}
+                                                            {(activity as any).recognition_method.toLowerCase() === 'manual' ? 'MANUAL RECORD' : 'BIOMETRIC RECOGNITION'}
                                                         </div>
                                                     )}
                                                     <div
-                                                        className={`px-6 py-2.5 rounded-2xl text-[9px] font-black uppercase tracking-[0.2em] border transition-all ${
-                                                            activity.status.toLowerCase() === 'present' ? 'text-emerald-600 bg-emerald-500/10 border-emerald-500/20 shadow-emerald-500/5' : 
-                                                            activity.status.toLowerCase() === 'late' ? 'text-amber-600 bg-amber-500/10 border-amber-500/20 shadow-amber-500/5' : 
-                                                            activity.status.toLowerCase() === 'excused' ? 'text-indigo-600 bg-indigo-500/10 border-indigo-500/20 shadow-indigo-500/5' : 
-                                                            'text-rose-600 bg-rose-500/10 border-rose-500/20 shadow-rose-500/5'
+                                                        className={`px-12 py-4.5 rounded-[2rem] text-[13px] font-black uppercase tracking-[0.4em] border-2 shadow-3xl italic transition-all group-hover/row:scale-110 ${
+                                                            activity.status.toLowerCase() === 'present' ? 'text-emerald-700 bg-emerald-500/10 border-emerald-500/30' : 
+                                                            activity.status.toLowerCase() === 'late' ? 'text-amber-700 bg-amber-500/10 border-amber-500/30' : 
+                                                            activity.status.toLowerCase() === 'excused' ? 'text-identity-sky bg-identity-sky/10 border-identity-sky/30' : 
+                                                            'text-rose-700 bg-rose-500/10 border-rose-500/30'
                                                         }`}
                                                     >
-                                                        {activity.status}
+                                                        {activity.status.toLowerCase() === 'present' ? 'PRESENT' : activity.status.toLowerCase() === 'late' ? 'LATE' : activity.status.toLowerCase() === 'excused' ? 'EXCUSED' : 'ABSENT'}
                                                     </div>
                                                 </div>
                                             </div>
@@ -204,9 +228,9 @@ export default function AttendanceTab({ user }: AttendanceTabProps) {
                     ) : (
                         <EmptyState
                             icon={Activity}
-                            title="Registry History Empty"
-                            description="No attendance protocol fragments detected in this academic cycle."
-                            className="py-24"
+                            title="NO ATTENDANCE RECORDS"
+                            description="No attendance records found. Your history will appear here once you attend classes."
+                            className="py-32 bg-white/40 rounded-[4.5rem] border-2 border-dashed border-identity-sky/20"
                         />
                     )}
                 </div>

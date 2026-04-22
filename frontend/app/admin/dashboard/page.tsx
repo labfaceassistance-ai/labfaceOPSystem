@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -18,25 +18,8 @@ import Skeleton from '@/components/ui/Skeleton';
 import EmptyState from '@/components/ui/EmptyState';
 import InputField from '@/components/ui/InputField';
 
-const IdentityNode = ({ className = "", size = 120 }) => (
-    <div className={`identity-node opacity-[0.15] ${className}`} style={{ width: size, height: size }}>
-       <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
-          <g>
-             <path d="M100,30 Q60,30 50,80 T100,170 T150,80 Q140,30 100,30 Z" fill="none" stroke="currentColor" className="text-identity-sky" strokeWidth="2" />
-             <line x1="100" y1="30" x2="100" y2="170" stroke="currentColor" className="text-identity-navy" strokeWidth="1" />
-             <line x1="60" y1="80" x2="140" y2="80" stroke="currentColor" className="text-identity-navy" strokeWidth="1" />
-             <line x1="55" y1="110" x2="145" y2="110" stroke="currentColor" className="text-identity-navy" strokeWidth="1" />
-             <circle cx="75" cy="80" r="3" fill="currentColor" className="text-identity-sky" />
-             <circle cx="125" cy="80" r="3" fill="currentColor" className="text-identity-sky" />
-             <circle cx="100" cy="110" r="3" fill="currentColor" className="text-identity-sky" />
-             <circle cx="100" cy="30" r="2" fill="currentColor" className="text-identity-navy" />
-             <circle cx="100" cy="170" r="2" fill="currentColor" className="text-identity-navy" />
-             <line x1="75" y1="80" x2="100" y2="110" stroke="currentColor" className="text-identity-sky" strokeWidth="1" strokeDasharray="3 2" />
-             <line x1="125" y1="80" x2="100" y2="110" stroke="currentColor" className="text-identity-sky" strokeWidth="1" strokeDasharray="3 2" />
-          </g>
-       </svg>
-    </div>
- );
+import IdentityBackground from '@/components/IdentityBackground';
+
 
 interface PendingProfessor {
     id: number;
@@ -132,6 +115,8 @@ export default function AdminDashboard() {
     const [reports, setReports] = useState<IdentityTheftReport[]>([]);
     const [reportStatusFilter, setReportStatusFilter] = useState<string>('all');
     const [selectedReport, setSelectedReport] = useState<IdentityTheftReport | null>(null);
+    const [loadingReports, setLoadingReports] = useState(false);
+
 
     // Users Tab State
     const [systemUsers, setSystemUsers] = useState<SystemUser[]>([]);
@@ -139,12 +124,12 @@ export default function AdminDashboard() {
     const [userStatusFilter, setUserStatusFilter] = useState('all');
     const [loadingUsers, setLoadingUsers] = useState(false);
     const [userSearch, setUserSearch] = useState('');
-    const [isPDF, setIsPDF] = useState<(url: string | undefined | null) => boolean>(() => (url: string | undefined | null) => {
-        if (!url) return false;
-        // Detect PDF by extension or content type in data URI
-        return url.toLowerCase().endsWith('.pdf') || url.startsWith('data:application/pdf');
-    });
 
+    // FIX: isPDF should be a plain function, not a useState
+    const isPDF = (url: string | undefined | null): boolean => {
+        if (!url) return false;
+        return url.toLowerCase().endsWith('.pdf') || url.startsWith('data:application/pdf');
+    };
 
     // Sessions Tab State
     const [activeSessions, setActiveSessions] = useState<ActiveSession[]>([]);
@@ -221,7 +206,6 @@ export default function AdminDashboard() {
         }
     };
 
-
     const fetchData = async () => {
         try {
             const token = getToken();
@@ -232,18 +216,15 @@ export default function AdminDashboard() {
 
             const axios = (await import('axios')).default;
 
-            // Fetch current user from token to verify role
             const userResponse = await axios.get(`${API_URL}/api/auth/me`, {
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
+                headers: { 'Authorization': `Bearer ${token}` }
             });
 
             const userData = userResponse.data;
 
-            // Role Guard: Ensure user is an admin in this session
+            // Role Guard
             if (userData.role !== 'admin') {
-                console.warn(`[RoleGuard] Access denied for role: ${userData.role}. Redirecting to appropriate workspace.`);
+                console.warn(`[RoleGuard] Access denied for role: ${userData.role}. Redirecting.`);
                 if (userData.role === 'student') window.location.href = '/student/dashboard';
                 else if (userData.role === 'professor') window.location.href = '/professor/dashboard';
                 else window.location.href = '/login';
@@ -272,6 +253,7 @@ export default function AdminDashboard() {
     };
 
     const fetchReports = async () => {
+        setLoadingReports(true);
         try {
             const token = getToken();
             if (!token) return;
@@ -289,6 +271,8 @@ export default function AdminDashboard() {
             setReports(response.data);
         } catch (error) {
             console.error('Error fetching reports:', error);
+        } finally {
+            setLoadingReports(false);
         }
     };
 
@@ -394,7 +378,6 @@ export default function AdminDashboard() {
         }
     };
 
-
     const handleApprove = async (professor: PendingProfessor) => {
         setActionLoading(true);
         try {
@@ -412,7 +395,6 @@ export default function AdminDashboard() {
             fetchData();
         } catch (error: any) {
             console.error('Error approving professor:', error);
-            // Better error extraction
             const msg = error.response?.data?.message || error.response?.data?.error || 'Failed to approve professor';
             showToast(msg, 'error');
         } finally {
@@ -485,8 +467,6 @@ export default function AdminDashboard() {
         }
     };
 
-    // useSwipe removed â€” hook was deleted in Phase 2 cleanup
-
     const handleLogout = () => {
         logout('/admin/login');
     };
@@ -498,15 +478,10 @@ export default function AdminDashboard() {
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-6 relative overflow-hidden">
-                <div className="fixed inset-0 pointer-events-none z-0 opacity-10">
-                    <IdentityNode className="top-[10%] left-[5%]" size={160} />
-                    <IdentityNode className="bottom-[10%] right-[5%]" size={220} />
-                    <div className="absolute inset-0 bg-blueprint opacity-[0.05]"></div>
-                </div>
+            <div className="min-h-screen bg-transparent flex flex-col items-center justify-center p-6 relative overflow-hidden">
                 <div className="relative z-10 text-center">
                     <div className="w-16 h-16 border-4 border-identity-sky/20 border-t-identity-sky rounded-full animate-spin mx-auto mb-6 shadow-2xl shadow-identity-sky/10"></div>
-                    <p className="text-identity-navy font-black text-[10px] uppercase tracking-[0.15em] animate-pulse">Initializing LabFace System...</p>
+                    <p className="text-identity-navy font-black text-[10px] uppercase tracking-[0.15em] animate-pulse">Loading...</p>
                 </div>
             </div>
         );
@@ -543,16 +518,9 @@ export default function AdminDashboard() {
     };
 
     return (
-        <div className="min-h-screen bg-slate-50 font-sans text-slate-900 relative selection:bg-identity-sky/10 selection:text-identity-navy page-transition transition-colors duration-500">
-             {/* System Identity Nodes - 4 Layer Background */}
-             <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
-                <div className="absolute top-[-10%] right-[-5%] w-[500px] h-[500px] bg-identity-sky/5 rounded-full blur-[120px] animate-pulse" />
-                <div className="absolute bottom-[-10%] left-[-5%] w-[500px] h-[500px] bg-identity-navy/5 rounded-full blur-[120px] animate-pulse" />
-                <IdentityNode className="top-[10%] left-[5%]" size={160} />
-                <IdentityNode className="bottom-[10%] right-[5%]" size={220} />
-                <div className="absolute inset-0 bg-blueprint opacity-[0.05] pointer-events-none"></div>
-            </div>
-
+        <div className="min-h-screen bg-white font-outfit text-slate-900 relative selection:bg-identity-sky/20 selection:text-identity-navy page-transition overflow-x-hidden">
+            <IdentityBackground />
+            
             <SessionTimeout
                 sessionDuration={30 * 60 * 1000}
                 warningTime={5 * 60 * 1000}
@@ -561,496 +529,441 @@ export default function AdminDashboard() {
             />
             <Navbar />
 
-            <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-28 pb-12 relative z-10">
-                {/* Standard Page Header */}
-                <div className="flex items-center gap-6 mb-12 animate-fade-up">
-                    <div className="p-4 bg-identity-sky/10 text-identity-navy rounded-2xl border border-identity-sky/10 shadow-inner group">
-                        <LayoutDashboard size={32} className="group-hover:scale-110 transition-transform duration-500" />
-                    </div>
-                    <div>
-                        <h1 className="text-3xl font-black text-identity-navy tracking-tighter uppercase font-outfit italic">Control Center</h1>
-                        <p className="text-[10px] font-black text-identity-sky uppercase tracking-[0.4em] mt-1">High-Authority System Administration</p>
+            <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-20 relative z-10">
+                {/* Page Header */}
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12 animate-in fade-in slide-in-from-top-6 duration-700">
+                    <div className="flex items-center gap-6 group">
+                        <div className="p-4 identity-glass text-identity-navy rounded-xl border-2 border-white/40 shadow-sm relative overflow-hidden bg-white/20">
+                            <LayoutDashboard size={28} className="relative z-10 group-hover:scale-110 transition-transform duration-500 text-identity-sky" />
+                        </div>
+                        <div>
+                            <p className="text-[9px] font-black text-identity-sky uppercase tracking-[0.3em] mb-1 italic opacity-60">System Controller</p>
+                            <h1 className="text-3xl font-black text-identity-navy tracking-tighter uppercase italic leading-none">ADMIN DASHBOARD</h1>
+                        </div>
                     </div>
                 </div>
 
-                {/* Standardized Tabs */}
-                <DashboardTabs 
-                    tabs={tabs} 
-                    activeTab={activeTab} 
-                    onTabChange={handleTabChange} 
-                />
+                {/* Tabs */}
+                <div className="mb-12">
+                    <DashboardTabs
+                        tabs={tabs}
+                        activeTab={activeTab}
+                        onTabChange={handleTabChange}
+                    />
+                </div>
 
                 <div key={activeTab} className="tab-content-fade">
                     {activeTab === 'dashboard' ? (
-                        <>
-                            <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
-                                <div
-                                    onClick={() => {
-                                        setActiveTab('users');
-                                        setUserRoleFilter('professor');
-                                        setUserStatusFilter('pending');
-                                    }}
-                                    className="identity-glass p-6 sm:p-8 md:p-10 rounded-[2rem] md:rounded-[3rem] shadow-xl border border-identity-sky/5 relative overflow-hidden group hover:scale-[1.02] active:scale-95 transition-all cursor-pointer bg-white/40"
-                                >
-                                    <div className="flex items-center gap-4 relative z-10">
-                                        <div className="w-12 h-12 bg-identity-sky/10 rounded-2xl flex items-center justify-center text-identity-sky border border-identity-sky/20 group-hover:scale-110 transition-transform">
-                                            <Clock size={24} />
+                        <div className="space-y-12 animate-in fade-in duration-700">
+                            {/* Stats Grid */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-8">
+                                {[
+                                    { label: "Pending Approvals", value: stats?.pendingProfessors || 0, icon: Clock, color: "identity-sky", onClick: () => { setActiveTab('users'); setUserRoleFilter('professor'); setUserStatusFilter('pending'); } },
+                                    { label: "Administrators", value: totalAdmins, icon: Shield, color: "rose-500", onClick: () => { setActiveTab('users'); setUserRoleFilter('admin'); setUserStatusFilter('all'); } },
+                                    { label: "Students", value: totalStudents, icon: Users, color: "emerald-500", onClick: () => { setActiveTab('users'); setUserRoleFilter('student'); setUserStatusFilter('all'); } },
+                                    { label: "Professors", value: totalProfessors, icon: Briefcase, color: "identity-navy", onClick: () => { setActiveTab('users'); setUserRoleFilter('professor'); setUserStatusFilter('all'); } },
+                                    { label: "Live Sessions", value: activeSessionsCount, icon: Activity, color: "purple-500", onClick: () => { setActiveTab('sessions'); fetchSessions(); } },
+                                ].map((stat, idx) => (
+                                    <div
+                                        key={idx}
+                                        onClick={stat.onClick}
+                                        className="identity-glass p-8 rounded-[2rem] border border-white/40 relative overflow-hidden group hover:scale-[1.03] active:scale-95 transition-all cursor-pointer shadow-xl bg-white/30"
+                                    >
+                                        <div className="absolute top-0 right-0 p-4 opacity-[0.02] group-hover:opacity-10 transition-opacity">
+                                            <stat.icon size={80} />
                                         </div>
-                                        <div>
-                                            <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.2em] italic">Pending</p>
-                                            <p className="text-2xl font-black text-identity-navy tracking-tighter italic">{stats?.pendingProfessors || 0}</p>
+                                        <div className="flex flex-col items-center text-center gap-4 relative z-10">
+                                            <div className="bg-identity-sky/10 p-3 rounded-xl border border-identity-sky/20 group-hover:scale-110 transition-transform duration-700">
+                                                <stat.icon size={24} className="text-identity-navy" />
+                                            </div>
+                                            <div>
+                                                <p className="text-[8px] text-slate-400 font-black uppercase tracking-[0.2em] mb-1 italic">{stat.label}</p>
+                                                <p className="text-4xl font-black text-identity-navy tracking-tighter italic leading-none">{stat.value}</p>
+                                            </div>
                                         </div>
+                                        <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-identity-sky/30 scale-x-0 group-hover:scale-x-100 transition-transform duration-700" />
                                     </div>
-                                </div>
-
-                                <div
-                                    onClick={() => {
-                                        setActiveTab('users');
-                                        setUserRoleFilter('admin');
-                                        setUserStatusFilter('all');
-                                    }}
-                                    className="identity-glass p-6 sm:p-8 md:p-10 rounded-[2rem] md:rounded-[3rem] shadow-xl border border-identity-sky/5 relative overflow-hidden group hover:scale-[1.02] active:scale-95 transition-all cursor-pointer bg-white/40"
-                                >
-                                    <div className="flex items-center gap-4 relative z-10">
-                                        <div className="w-12 h-12 bg-rose-500/10 rounded-2xl flex items-center justify-center text-rose-500 border border-rose-500/20 group-hover:scale-110 transition-transform">
-                                            <Shield size={24} />
-                                        </div>
-                                        <div>
-                                            <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.2em] italic">Admins</p>
-                                            <p className="text-2xl font-black text-identity-navy tracking-tighter italic">{totalAdmins}</p>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div
-                                    onClick={() => {
-                                        setActiveTab('users');
-                                        setUserRoleFilter('student');
-                                        setUserStatusFilter('all');
-                                    }}
-                                    className="identity-glass p-6 sm:p-8 md:p-10 rounded-[2rem] md:rounded-[3rem] shadow-xl border border-identity-sky/5 relative overflow-hidden group hover:scale-[1.02] active:scale-95 transition-all cursor-pointer bg-white/40"
-                                >
-                                    <div className="flex items-center gap-4 relative z-10">
-                                        <div className="w-12 h-12 bg-emerald-500/10 rounded-2xl flex items-center justify-center text-emerald-500 border border-emerald-500/20 group-hover:scale-110 transition-transform">
-                                            <Users size={24} />
-                                        </div>
-                                        <div>
-                                            <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.2em] italic">Students</p>
-                                            <p className="text-2xl font-black text-identity-navy tracking-tighter italic">{totalStudents}</p>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div
-                                    onClick={() => {
-                                        setActiveTab('users');
-                                        setUserRoleFilter('professor');
-                                        setUserStatusFilter('all');
-                                    }}
-                                    className="identity-glass p-6 sm:p-8 md:p-10 rounded-[2rem] md:rounded-[3rem] shadow-xl border border-identity-sky/5 relative overflow-hidden group hover:scale-[1.02] active:scale-95 transition-all cursor-pointer bg-white/40"
-                                >
-                                    <div className="flex items-center gap-4 relative z-10">
-                                        <div className="w-12 h-12 bg-identity-sky/10 rounded-2xl flex items-center justify-center text-identity-sky border border-identity-sky/20 group-hover:scale-110 transition-transform">
-                                            <Briefcase size={24} />
-                                        </div>
-                                        <div>
-                                            <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.2em] italic">Professors</p>
-                                            <p className="text-2xl font-black text-identity-navy tracking-tighter italic">{totalProfessors}</p>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div
-                                    onClick={() => {
-                                        setActiveTab('sessions');
-                                        fetchSessions();
-                                    }}
-                                    className="identity-glass p-6 sm:p-8 md:p-10 rounded-[2rem] md:rounded-[3rem] shadow-xl border border-identity-sky/5 relative overflow-hidden group hover:scale-[1.02] active:scale-95 transition-all cursor-pointer bg-white/40"
-                                >
-                                    <div className="flex items-center gap-4 relative z-10">
-                                        <div className="w-12 h-12 bg-purple-500/10 rounded-2xl flex items-center justify-center text-purple-500 border border-purple-500/20 group-hover:scale-110 transition-transform">
-                                            <Activity size={24} />
-                                        </div>
-                                        <div>
-                                            <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.2em] italic">Sessions</p>
-                                            <p className="text-2xl font-black text-identity-navy tracking-tighter italic">{activeSessionsCount}</p>
-                                        </div>
-                                    </div>
-                                </div>
+                                ))}
                             </div>
-                            <div className="identity-glass p-6 sm:p-8 md:p-10 rounded-[2rem] md:rounded-[3rem] shadow-xl border border-identity-sky/10 backdrop-blur-sm p-8 mb-8">
-                                <h2 className="text-2xl font-black text-identity-navy mb-8 flex items-center gap-4 uppercase tracking-tighter italic font-outfit">
-                                    <div className="bg-identity-sky/10 p-3 rounded-2xl border border-identity-sky/10">
-                                        <Clock className="w-6 h-6 text-identity-sky" />
+
+                            {/* Pending Approvals */}
+                            <div className="identity-glass p-10 rounded-[3rem] border-2 border-white/40 shadow-2xl relative overflow-hidden group">
+                                <div className="corner-bracket-tl opacity-40" />
+                                <div className="corner-bracket-br opacity-40" />
+                                
+                                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10 relative z-10">
+                                    <div className="flex items-center gap-4">
+                                        <div className="bg-identity-sky/10 p-3 rounded-2xl border border-identity-sky/20 shadow-inner">
+                                            <Clock className="w-6 h-6 text-identity-sky" />
+                                        </div>
+                                        <h2 className="text-2xl font-black text-identity-navy uppercase tracking-tighter italic">PENDING USER VERIFICATIONS</h2>
                                     </div>
-                                    Pending Approvals
                                     {filteredProfessors.length > 0 && (
-                                        <span className="bg-identity-sky/10 text-identity-sky border border-identity-sky/20 px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-[0.15em] ml-auto">
-                                            {filteredProfessors.length} PENDING
-                                        </span>
-                                    )}
-                                </h2>
-
-                                {filteredProfessors.length === 0 ? (
-                                    <div className="text-center py-20 bg-slate-50/50 rounded-[24px] border border-slate-100">
-                                        <div className="bg-slate-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
-                                            <UserCheck className="w-10 h-10 text-slate-300" />
+                                        <div className="flex items-center gap-3">
+                                            <span className="w-2 h-2 rounded-full bg-identity-sky animate-ping" />
+                                            <span className="identity-glass border border-identity-sky/20 px-6 py-2 rounded-2xl text-[10px] font-black uppercase tracking-[0.15em] text-identity-sky shadow-inner">
+                                                {filteredProfessors.length} PENDING REVIEW
+                                            </span>
                                         </div>
-                                        <p className="text-identity-navy text-lg font-black uppercase tracking-tight italic">Queue Depleted</p>
-                                        <p className="text-slate-400 text-[10px] mt-3 uppercase tracking-[0.15em] font-black">All requests processed</p>
-                                    </div>
-                                ) : (
-                                    <BulkActions
-                                        users={filteredProfessors.map(prof => ({
-                                            id: prof.user_id,
-                                            professor_id: prof.user_id,
-                                            name: `${prof.first_name} ${prof.middle_name} ${prof.last_name}`,
-                                            email: prof.email,
-                                            role: 'professor',
-                                            approval_status: 'pending'
-                                        }))}
-                                        onRefresh={fetchData}
-                                        onView={(userId) => {
-                                            const prof = pendingProfessors.find(p => p.user_id === userId);
-                                            if (prof) setSelectedProfessor(prof);
-                                        }}
-                                    />
-                                )}
-                            </div>
-                             <div className="flex justify-between items-center mt-16 mb-8">
-                                <h2 className="text-2xl font-black text-identity-navy flex items-center gap-4 uppercase tracking-tighter italic font-outfit">
-                                    <div className="bg-identity-sky/10 p-3 rounded-2xl border border-identity-sky/10">
-                                        <Camera className="w-6 h-6 text-identity-sky" />
-                                    </div>
-                                    Live Security Feed
-                                </h2>
-                                <Link 
-                                    href="/admin/camera-test" 
-                                    className="bg-identity-navy text-white px-8 py-4 rounded-2xl text-[10px] font-black uppercase tracking-[0.15em] flex items-center gap-4 transition-all hover:bg-identity-sky hover:scale-[1.02] active:scale-95 shadow-xl shadow-identity-navy/10"
-                                >
-                                    <Monitor className="w-4 h-4 text-white" />
-                                    Test Face Recognition
-                                </Link>
-                            </div>                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-16">
-                                <div className="identity-glass rounded-[2rem] md:rounded-[3rem] border border-identity-sky/10 p-4 shadow-xl group overflow-hidden relative overflow-hidden transition-all hover:shadow-2xl">
-                                    <div className="absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-identity-sky/5 to-transparent pointer-events-none opacity-50" />
-                                    <div className="px-6 py-4 flex justify-between items-center relative z-10">
-                                        <h3 className="text-[10px] font-black text-identity-navy flex items-center gap-4 uppercase tracking-[0.15em] italic font-outfit">
-                                            <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse shadow-[0_0_8px_rgba(244,63,94,0.4)]" />
-                                            CAMERA 01 <span className="text-identity-sky/60 font-bold ml-2">MAIN ENTRANCE</span>
-                                        </h3>
-                                        <div className="text-[8px] font-black text-slate-300 tracking-[0.15em] font-mono">192.168.1.220:554</div>
-                                    </div>
-                                    <div className="aspect-video w-full relative">
-                                        <VideoFeed
-                                            src="/api/ai/video_feed/1"
-                                            alt="Camera 1"
-                                            label="MAIN ENTRANCE"
-                                            className="w-full h-full rounded-[2rem]"
-                                        />
-                                    </div>
+                                    )}
                                 </div>
-                                <div className="identity-glass rounded-[2rem] md:rounded-[3rem] border border-identity-sky/10 p-4 shadow-xl group overflow-hidden relative overflow-hidden transition-all hover:shadow-2xl">
-                                    <div className="absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-identity-sky/5 to-transparent pointer-events-none opacity-50" />
-                                    <div className="px-6 py-4 flex justify-between items-center relative z-10">
-                                        <h3 className="text-[10px] font-black text-identity-navy flex items-center gap-4 uppercase tracking-[0.15em] italic font-outfit">
-                                            <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse shadow-[0_0_8px_rgba(244,63,94,0.4)]" />
-                                            CAMERA 02 <span className="text-identity-sky/60 font-bold ml-2">EXIT CORRIDOR</span>
-                                        </h3>
-                                        <div className="text-[8px] font-black text-slate-300 tracking-[0.15em] font-mono">192.168.1.221:554</div>
-                                    </div>
-                                    <div className="aspect-video w-full relative">
-                                        <VideoFeed
-                                            src="/api/ai/video_feed/2"
-                                            alt="Camera 2"
-                                            label="EXIT CORRIDOR"
-                                            className="w-full h-full rounded-[2rem]"
-                                        />
-                                    </div>
+
+                                <div className="relative z-10">
+                                    {filteredProfessors.length === 0 ? (
+                                        <div className="text-center py-24 rounded-[2rem] border-2 border-dashed border-slate-100 bg-white/30 backdrop-blur-sm">
+                                            <div className="bg-slate-100/50 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-8 border-2 border-white">
+                                                <UserCheck className="w-12 h-12 text-slate-300" />
+                                            </div>
+                                            <p className="text-identity-navy text-xl font-black uppercase tracking-tight italic">VERIFICATION COMPLETE</p>
+                                            <p className="text-slate-400 text-[10px] mt-4 uppercase tracking-[0.2em] font-black">All user accounts have been verified.</p>
+                                        </div>
+                                    ) : (
+                                        <div className="animate-in slide-in-from-bottom-5 duration-700">
+                                            <BulkActions
+                                                users={filteredProfessors.map(prof => ({
+                                                    id: prof.user_id,
+                                                    professor_id: prof.user_id,
+                                                    name: `${prof.first_name} ${prof.middle_name} ${prof.last_name}`,
+                                                    email: prof.email,
+                                                    role: 'professor',
+                                                    approval_status: 'pending'
+                                                }))}
+                                                onRefresh={fetchData}
+                                                onView={(userId) => {
+                                                    const prof = pendingProfessors.find(p => p.user_id === userId);
+                                                    if (prof) setSelectedProfessor(prof);
+                                                }}
+                                            />
+                                        </div>
+                                    )}
                                 </div>
                             </div>
 
-                             <h2 className="text-2xl font-black text-identity-navy mb-8 flex items-center gap-4 uppercase tracking-tighter italic mt-16 font-outfit">
-                                <div className="bg-identity-sky/10 p-3 rounded-2xl border border-identity-sky/10">
-                                    <History className="w-6 h-6 text-identity-sky" />
+                            {/* Telemetry Diagnostics Section */}
+                            <div className="space-y-10 pt-10 border-t border-slate-100">
+                                <div className="flex flex-col md:flex-row justify-between items-center gap-6">
+                                    <div className="flex items-center gap-4 group">
+                                        <div className="bg-rose-500/10 p-4 rounded-xl border border-rose-500/20 shadow-sm group-hover:scale-105 transition-transform duration-700">
+                                            <Camera className="w-6 h-6 text-rose-500" />
+                                        </div>
+                                        <div>
+                                            <h2 className="text-xl font-black text-identity-navy uppercase tracking-tighter italic group-hover:text-rose-600 transition-colors leading-none">MONITORING FEEDS</h2>
+                                            <p className="text-[8px] text-rose-500/60 font-black uppercase tracking-[0.2em] mt-2 italic">LIVE STREAMS ACTIVE</p>
+                                        </div>
+                                    </div>
+                                    <Link
+                                        href="/admin/camera-test"
+                                        className="identity-glass border border-identity-navy/10 text-identity-navy px-8 py-4 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] flex items-center gap-4 transition-all hover:bg-identity-navy hover:text-white hover:scale-[1.02] active:scale-95 shadow-lg group italic"
+                                    >
+                                        <Monitor className="w-5 h-5 text-identity-sky animate-pulse group-hover:animate-none" />
+                                        DIAGNOSTICS
+                                    </Link>
                                 </div>
-                                System Audit Log
-                            </h2>
-                             <div className="identity-glass border border-identity-sky/10 rounded-[2rem] md:rounded-[3rem] overflow-hidden shadow-xl relative bg-white/40">
-                                {stats?.recentActions && stats.recentActions.length > 0 ? (
-                                    <div className="divide-y divide-slate-100 relative z-10">
-                                        {stats.recentActions.slice(0, 10).map((action) => (
-                                            <div key={action.id} className="p-6 flex items-center justify-between hover:bg-identity-navy/[0.02] transition-colors group">
-                                                <div className="flex items-center gap-6">
-                                                    <div className="w-12 h-12 rounded-2xl bg-identity-sky/10 flex items-center justify-center text-identity-sky border border-identity-sky/20 group-hover:bg-identity-navy group-hover:text-identity-navy transition-all font-black uppercase text-xs">
-                                                        {action.action_type[0]}
-                                                    </div>
-                                                    <div>
-                                                        <p className="text-identity-navy font-black text-xs uppercase tracking-[0.15em] group-hover:text-identity-sky transition-colors">
-                                                            {action.action_type.replace('_', ' ')}
-                                                        </p>
-                                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.15em] mt-1">
-                                                            MODERATOR: {action.first_name} {action.last_name}
-                                                        </p>
-                                                    </div>
+
+                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                                    {[
+                                        { id: "01", unit: "ENTRANCE", ip: "192.168.1.220", feed: "/api/ai/video_feed/1" },
+                                        { id: "02", unit: "EXIT", ip: "192.168.1.221", feed: "/api/ai/video_feed/2" }
+                                    ].map((cam, idx) => (
+                                        <div key={idx} className="identity-glass rounded-[2rem] border border-white/40 p-6 shadow-xl group hover:shadow-identity-sky/5 transition-all duration-1000 relative overflow-hidden bg-white/20">
+                                            <div className="flex justify-between items-center mb-6 px-2">
+                                                <div className="flex items-center gap-3">
+                                                    <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse shadow-[0_0_10px_rgba(244,63,94,1)]" />
+                                                    <h3 className="text-[10px] font-black text-identity-navy uppercase tracking-[0.1em] italic">
+                                                        CAM {cam.id}: <span className="text-identity-sky">{cam.unit}</span>
+                                                    </h3>
                                                 </div>
-                                                <div className="text-right">
-                                                    <p className="text-[9px] font-black text-slate-300 uppercase tracking-[0.15em]">
-                                                        {new Date(action.created_at).toLocaleString()}
-                                                    </p>
-                                                    {action.details && (
-                                                        <p className="text-[9px] font-bold text-slate-400 mt-2 max-w-xs truncate uppercase tracking-[0.15em]">
-                                                            {action.details}
-                                                        </p>
-                                                    )}
+                                                <div className="text-[8px] font-black text-slate-300 tracking-[0.2em] font-mono">
+                                                    {cam.ip}
                                                 </div>
                                             </div>
-                                        ))}
-                                    </div>
-                                ) : (
-                                    <div className="p-20 text-center relative z-10">
-                                        <div className="bg-slate-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
-                                            <History className="w-10 h-10 text-slate-200" />
+                                            <div className="aspect-video w-full relative group-hover:scale-[1.01] transition-transform duration-1000 bg-identity-navy rounded-2xl overflow-hidden border border-white/40 shadow-inner">
+                                                <VideoFeed
+                                                    src={cam.feed}
+                                                    alt={`Camera ${cam.id}`}
+                                                    label={cam.unit.split('_')[0]}
+                                                    className="w-full h-full grayscale brightness-110 group-hover:grayscale-0 transition-all duration-1000 object-cover opacity-80"
+                                                />
+                                                <div className="absolute top-4 left-4 z-30 bg-black/40 backdrop-blur-md px-3 py-1.5 border border-white/10 text-[8px] font-black text-white/90 uppercase tracking-[0.2em] italic animate-pulse rounded-lg">
+                                                    LIVE
+                                                </div>
+                                            </div>
                                         </div>
-                                        <p className="text-identity-navy text-lg font-black uppercase tracking-tight italic">System Log is Empty</p>
-                                        <p className="text-slate-400 text-[10px] mt-3 uppercase tracking-[0.15em] font-black">No recent system interactions found</p>
-                                    </div>
-                                )}
+                                    ))}
+                                </div>
                             </div>
 
-                        </>
+                             {/* Archived Actions Log */}
+                            <div className="pt-16 border-t border-slate-100">
+                                <div className="flex items-center gap-4 mb-10 group">
+                                    <div className="bg-identity-navy/5 p-4 rounded-xl border border-identity-navy/10 shadow-sm group-hover:scale-105 transition-transform duration-700">
+                                        <History className="w-6 h-6 text-identity-navy" />
+                                    </div>
+                                    <div>
+                                        <h2 className="text-xl font-black text-identity-navy uppercase tracking-tighter italic leading-none">SYSTEM AUDIT</h2>
+                                        <p className="text-[8px] text-identity-sky font-black uppercase tracking-[0.2em] mt-2 italic opacity-60">ADMINISTRATIVE ACTION HISTORY</p>
+                                    </div>
+                                </div>
+                                <div className="identity-glass border border-slate-100 rounded-[2.5rem] overflow-hidden shadow-xl relative group bg-white/40">
+                                    {stats?.recentActions && stats.recentActions.length > 0 ? (
+                                        <div className="divide-y divide-slate-50 relative z-10">
+                                            {stats.recentActions.slice(0, 8).map((action) => (
+                                                <div key={action.id} className="p-8 flex flex-col md:flex-row items-center justify-between hover:bg-slate-50 transition-all group/item gap-8 text-center md:text-left relative">
+                                                    <div className="flex flex-col md:flex-row items-center gap-6 flex-1">
+                                                        <div className="w-16 h-16 rounded-xl bg-identity-navy text-identity-sky flex items-center justify-center shadow-lg group-hover/item:scale-105 transition-all duration-700 font-black uppercase text-xl relative overflow-hidden border border-white/20">
+                                                            <span className="relative z-10 italic">{action.action_type[0]}</span>
+                                                        </div>
+                                                        <div className="space-y-2 flex-1">
+                                                            <p className="text-identity-navy font-black text-lg uppercase tracking-tight group-hover/item:text-identity-sky transition-colors italic leading-none">
+                                                                {action.action_type.replace(/_/g, ' ')}
+                                                            </p>
+                                                            <p className="text-[8px] font-black text-slate-400 uppercase tracking-[0.1em] italic opacity-80">
+                                                                ADMIN: <span className="text-identity-navy">{action.first_name} {action.last_name}</span>
+                                                            </p>
+                                                            {action.details && (
+                                                                <p className="text-[9px] font-black text-slate-400 max-w-xl uppercase tracking-tight italic leading-relaxed border-l-2 border-identity-sky/20 pl-4 mt-2">
+                                                                    — {action.details}
+                                                                </p>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex flex-col items-center md:items-end gap-3 min-w-[180px]">
+                                                        <p className="text-[9px] font-black text-identity-navy uppercase tracking-widest font-mono italic">
+                                                            {new Date(action.created_at).toLocaleString('en-PH', { dateStyle: 'short', timeStyle: 'short' }).toUpperCase()}
+                                                        </p>
+                                                        <span className="text-[7px] text-identity-sky/40 font-black uppercase tracking-[0.2em] italic">ID: {action.id.toString().padStart(4, '0')}</span>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <div className="p-24 text-center relative z-10 flex flex-col items-center gap-8">
+                                            <History className="w-12 h-12 text-slate-200" />
+                                            <div>
+                                                <p className="text-identity-navy text-xl font-black uppercase tracking-tight italic">NO LOGS FOUND</p>
+                                                <p className="text-slate-400 text-[8px] mt-2 uppercase tracking-[0.2em] font-black italic opacity-60">MONITORING IDLE</p>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
                     ) : activeTab === 'privacy' ? (
                         <DeletionRequestsTab />
                     ) : activeTab === 'users' ? (
-                        <div className="space-y-6">
-                            <div className="space-y-8 animate-fade-in">
-                                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-                                    <h2 className="text-2xl font-black text-identity-navy flex items-center gap-4 uppercase tracking-tighter italic font-outfit">
-                                        <div className="bg-identity-sky/10 p-3 rounded-2xl border border-identity-sky/10">
-                                            <Users className="w-6 h-6 text-identity-sky" />
-                                        </div>
-                                        Registered Accounts
-                                    </h2>
-                                    <div className="flex flex-wrap items-center gap-4">
-                                        <div className="relative group min-w-[280px]">
-                                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-identity-sky transition-colors" />
-                                            <input
-                                                type="text"
-                                                placeholder="Search Signature..."
-                                                value={userSearch}
-                                                onChange={(e) => {
-                                                    setUserSearch(e.target.value);
-                                                }}
-                                                onKeyDown={(e) => {
-                                                    if (e.key === 'Enter') fetchUsers(userRoleFilter, userSearch);
-                                                }}
-                                                className="bg-white/60 border border-slate-100 text-identity-navy pl-12 pr-10 py-4 rounded-2xl focus:outline-none focus:border-identity-sky w-full placeholder:text-slate-200 font-bold uppercase text-[10px] tracking-[0.15em] transition-all shadow-sm"
-                                            />
-                                            {userSearch && (
-                                                <button
-                                                    onClick={() => {
-                                                        setUserSearch('');
-                                                        fetchUsers(userRoleFilter, '');
-                                                    }}
-                                                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-300 hover:text-identity-navy transition-colors p-2 min-h-[44px] min-w-[44px] flex items-center justify-center"
-                                                >
-                                                    <XCircle className="w-4 h-4" />
-                                                </button>
-                                            )}
-                                        </div>
-                                        <select
-                                            value={userRoleFilter}
-                                            onChange={(e) => setUserRoleFilter(e.target.value)}
-                                            className="bg-white/60 border border-slate-100 text-identity-navy px-6 py-4 rounded-2xl focus:outline-none focus:border-identity-sky font-black uppercase text-[10px] tracking-[0.15em] transition-all appearance-none cursor-pointer hover:bg-white shadow-sm min-w-[140px]"
-                                        >
-                                            <option value="all">All Roles</option>
-                                            <option value="student">Students</option>
-                                            <option value="professor">Professors</option>
-                                            <option value="admin">Admins</option>
-                                        </select>
-                                        <select
-                                            value={userStatusFilter}
-                                            onChange={(e) => setUserStatusFilter(e.target.value)}
-                                            className="bg-white/60 border border-slate-100 text-identity-navy px-6 py-4 rounded-2xl focus:outline-none focus:border-identity-sky font-black uppercase text-[10px] tracking-[0.15em] transition-all appearance-none cursor-pointer hover:bg-white shadow-sm min-w-[140px]"
-                                        >
-                                            <option value="all">All Status</option>
-                                            <option value="approved">Approved</option>
-                                            <option value="pending">Pending</option>
-                                            <option value="rejected">Rejected/Deactivated</option>
-                                        </select>
-                                        <button
-                                            onClick={() => fetchUsers()}
-                                            className="bg-identity-navy hover:bg-identity-sky text-white p-4 min-h-[44px] min-w-[44px] rounded-2xl transition-all shadow-xl shadow-identity-navy/10 active:scale-95 flex items-center justify-center group"
-                                            title="Refresh List"
-                                        >
-                                            <RefreshCw className={`w-5 h-5 transition-transform group-hover:rotate-180 ${loadingUsers ? 'animate-spin' : ''}`} />
-                                        </button>
+                        <div className="space-y-12 animate-in fade-in duration-700">
+                            {/* Population Registry Header & Filters */}                            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-8">
+                                <div className="flex items-center gap-4 group">
+                                    <div className="bg-identity-sky/5 p-3 rounded-xl border border-identity-sky/10 shadow-sm group-hover:scale-105 transition-transform">
+                                        <Users className="w-5 h-5 text-identity-sky" />
                                     </div>
+                                    <h2 className="text-xl font-black text-identity-navy uppercase tracking-tighter italic">USER DIRECTORY</h2>
                                 </div>
+                                
+                                <div className="flex flex-wrap items-center gap-3">
+                                    <div className="relative group min-w-[280px]">
+                                        <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 group-focus-within:text-identity-sky transition-colors" />
+                                        <input
+                                            type="text"
+                                            placeholder="SEARCH USERS..."
+                                            value={userSearch}
+                                            onChange={(e) => setUserSearch(e.target.value)}
+                                            onKeyDown={(e) => { if (e.key === 'Enter') fetchUsers(userRoleFilter, userSearch); }}
+                                            className="identity-glass border border-slate-100 text-identity-navy pl-12 pr-10 py-3.5 rounded-xl focus:outline-none focus:border-identity-sky w-full placeholder:text-slate-300 font-black uppercase text-[9px] tracking-[0.1em] transition-all shadow-sm"
+                                        />
+                                    </div>
+                                    
+                                    <select
+                                        value={userRoleFilter}
+                                        onChange={(e) => setUserRoleFilter(e.target.value)}
+                                        className="identity-glass border border-slate-100 text-identity-navy px-6 py-3.5 rounded-xl focus:outline-none focus:border-identity-sky font-black uppercase text-[9px] tracking-[0.1em] transition-all appearance-none cursor-pointer hover:bg-white shadow-sm min-w-[140px] italic"
+                                    >
+                                        <option value="all">ALL STATUS</option>
+                                        <option value="approved">ACTIVE</option>
+                                        <option value="pending">PENDING</option>
+                                        <option value="rejected">INACTIVE</option>
+                                    </select>
+                                    
+                                    <button
+                                        onClick={() => fetchUsers()}
+                                        className="identity-glass border border-slate-100 text-identity-navy p-3.5 rounded-xl transition-all hover:bg-slate-50 active:scale-90 shadow-sm group"
+                                    >
+                                        <RefreshCw className={`w-4 h-4 transition-transform group-hover:rotate-180 ${loadingUsers ? 'animate-spin' : ''}`} />
+                                    </button>
+                                </div>
+                            </div>
 
-                                <div className="identity-glass border border-slate-100 rounded-[2rem] md:rounded-[3rem] overflow-hidden shadow-xl relative bg-white/40">
-                                    <div className="absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-identity-sky/5 to-transparent pointer-events-none opacity-30" />
-                                    {loadingUsers ? (
-                                        <div className="p-20 relative z-10 space-y-4">
-                                            <Skeleton className="h-16 w-full rounded-2xl" />
-                                            <Skeleton className="h-16 w-full rounded-2xl" />
-                                            <Skeleton className="h-16 w-full rounded-2xl" />
-                                            <Skeleton className="h-16 w-full rounded-2xl" />
-                                            <Skeleton className="h-16 w-full rounded-2xl" />
+
+                            {/* Registry Table */}
+                            <div className="identity-glass border border-slate-100 rounded-[2.5rem] overflow-hidden shadow-xl relative group bg-white/40">
+                                {loadingUsers ? (
+                                    <div className="p-12 space-y-6">
+                                        {[...Array(5)].map((_, idx) => (
+                                            <div key={idx} className="flex gap-8 items-center">
+                                                <Skeleton className="h-12 w-12 rounded-xl" />
+                                                <Skeleton className="h-10 flex-1 rounded-xl" />
+                                                <Skeleton className="h-10 w-32 rounded-xl" />
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : systemUsers.length === 0 ? (
+                                    <div className="p-24 text-center relative z-10 flex flex-col items-center gap-6">
+                                        <Users className="w-12 h-12 text-slate-200" />
+                                        <div>
+                                            <p className="text-identity-navy text-xl font-black uppercase tracking-tight italic">NO RECORDS</p>
+                                            <p className="text-slate-400 text-[9px] mt-2 uppercase tracking-[0.2em] font-black italic opacity-60">NO USERS MATCH YOUR CRITERIA</p>
                                         </div>
-                                    ) : systemUsers.length === 0 ? (
-                                        <div className="p-20 text-center relative z-10">
-                                            <EmptyState
-                                                icon={Users}
-                                                title="No Match Found"
-                                                description="Search criteria returned no validated records."
-                                            />
-                                        </div>
-                                    ) : (
-                                        <div className="overflow-x-auto relative z-10 table-responsive-wrapper">
-                                            <table className="w-full text-left border-collapse">
-                                                <thead>
-                                                    <tr className="bg-slate-50/80 border-b border-identity-sky/10 italic">
-                                                        <th className="px-8 py-6 text-identity-navy font-black uppercase tracking-[0.15em] text-[10px] font-outfit">Subject Identity</th>
-                                                        <th className="px-8 py-6 text-identity-navy font-black uppercase tracking-[0.15em] text-[10px]">Course Code</th>
-                                                        <th className="px-8 py-6 text-identity-navy font-black uppercase tracking-[0.15em] text-[10px]">User Role</th>
-                                                        <th className="px-8 py-6 text-identity-navy font-black uppercase tracking-[0.15em] text-[10px]">Verification Status</th>
-                                                        <th className="px-8 py-6 text-identity-navy font-black uppercase tracking-[0.15em] text-[10px]">Establishment Date</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody className="divide-y divide-slate-50">
-                                                    {systemUsers.map((u) => (
-                                                        <tr key={u.id} className="hover:bg-identity-navy/[0.02] transition-colors group">
-                                                            <td className="px-8 py-6">
-                                                                <div className="flex items-center gap-5">
-                                                                    <div className="w-12 h-12 rounded-2xl bg-identity-sky/10 flex items-center justify-center text-identity-sky border border-identity-sky/20 font-black group-hover:bg-identity-navy group-hover:text-identity-navy transition-all shadow-sm uppercase text-xs">
-                                                                        {u.first_name?.[0] || 'U'}{u.last_name?.[0] || 'N'}
-                                                                    </div>
-                                                                    <div>
-                                                                        <p className="text-identity-navy font-black text-xs uppercase tracking-[0.15em] italic">{u.first_name} {u.last_name}</p>
-                                                                        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-[0.15em] mt-1.5">{u.email}</p>
-                                                                    </div>
+                                    </div>
+                                ) : (
+                                    <div className="overflow-x-auto relative z-10">
+                                        <table className="w-full text-left border-collapse">
+                                            <thead>
+                                                <tr className="border-b border-slate-50 bg-slate-50/30">
+                                                    <th className="px-10 py-6 text-identity-navy font-black uppercase tracking-[0.2em] text-[9px] italic">USER NAME</th>
+                                                    <th className="px-10 py-6 text-identity-navy font-black uppercase tracking-[0.2em] text-[9px] italic text-center">ID</th>
+                                                    <th className="px-10 py-6 text-identity-navy font-black uppercase tracking-[0.2em] text-[9px] italic text-center">ROLE</th>
+                                                    <th className="px-10 py-6 text-identity-navy font-black uppercase tracking-[0.2em] text-[9px] italic text-center">STATUS</th>
+                                                    <th className="px-10 py-6 text-identity-navy font-black uppercase tracking-[0.2em] text-[9px] italic text-right">REGISTERED</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-slate-50">
+                                                {systemUsers.map((u) => (
+                                                    <tr key={u.id} className="hover:bg-slate-50/50 transition-all group/row">
+                                                        <td className="px-10 py-6">
+                                                            <div className="flex items-center gap-6">
+                                                                <div className="w-12 h-12 rounded-xl bg-identity-navy text-identity-sky border border-white/20 flex items-center justify-center font-black group-hover/row:scale-105 transition-all shadow-lg uppercase text-sm italic relative overflow-hidden">
+                                                                    <span className="relative z-10">{u.first_name?.[0] || 'U'}{u.last_name?.[0] || 'N'}</span>
                                                                 </div>
-                                                            </td>
-                                                            <td className="px-8 py-6">
-                                                                <code className="text-[10px] bg-slate-50 px-3 py-1.5 rounded-2xl text-identity-sky font-mono border border-slate-100 font-bold tracking-[0.15em] group-hover:border-identity-sky/30 transition-colors">
-                                                                    {u.user_id}
-                                                                </code>
-                                                            </td>
-                                                            <td className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.15em]">
-                                                                <div className="flex items-center gap-2">
-                                                                    <div className={`w-1.5 h-1.5 rounded-full ${u.role === 'admin' ? 'bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.5)]' :
-                                                                        u.role === 'professor' ? 'bg-identity-sky shadow-[0_0_8px_rgba(92,180,228,0.5)]' :
-                                                                            'bg-slate-400'
-                                                                        }`} />
-                                                                    <span className={`${u.role === 'admin' ? 'text-rose-500' :
-                                                                        u.role === 'professor' ? 'text-identity-sky' :
-                                                                            'text-slate-400'
-                                                                        }`}>
-                                                                        {u.role}
-                                                                    </span>
+                                                                <div>
+                                                                    <p className="text-identity-navy font-black text-sm uppercase tracking-tight group-hover/row:text-identity-sky transition-colors italic leading-none">{u.first_name} {u.last_name}</p>
+                                                                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.1em] mt-2 group-hover/row:text-slate-500 italic lowercase opacity-80">{u.email}</p>
                                                                 </div>
-                                                            </td>
-                                                            <td className="px-8 py-6">
-                                                                <span className={`px-4 py-1.5 rounded-2xl text-[9px] font-black uppercase tracking-[0.2em] border shadow-sm italic ${u.approval_status === 'approved' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
-                                                                    u.approval_status === 'pending' ? 'bg-identity-sky/10 text-identity-sky border-identity-sky/20' :
-                                                                        'bg-red-500/10 text-red-500 border-red-500/20'
-                                                                    }`}>
-                                                                    {u.approval_status}
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-10 py-6 text-center">
+                                                            <code className="text-[10px] text-slate-400 font-mono font-black italic">
+                                                                #{u.user_id}
+                                                            </code>
+                                                        </td>
+                                                        <td className="px-10 py-6 text-center">
+                                                            <div className="inline-flex items-center gap-3 bg-white/40 px-4 py-1.5 rounded-lg border border-slate-100 shadow-sm">
+                                                                <div className={`w-1.5 h-1.5 rounded-full ${u.role === 'admin' ? 'bg-rose-500' : u.role === 'professor' ? 'bg-identity-sky' : 'bg-emerald-500'}`} />
+                                                                <span className={`text-[9px] font-black uppercase tracking-[0.1em] italic ${u.role === 'admin' ? 'text-rose-500' : u.role === 'professor' ? 'text-identity-sky' : 'text-emerald-500'}`}>
+                                                                    {u.role === 'professor' ? 'PROF' : u.role === 'admin' ? 'ADMIN' : 'STUDENT'}
                                                                 </span>
-                                                            </td>
-                                                            <td className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.15em]">
-                                                                {new Date(u.created_at).toLocaleDateString('en-PH', { month: 'short', day: '2-digit', year: 'numeric' })}
-                                                            </td>
-                                                        </tr>
-                                                    ))}
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    )}
-                                    <div className="px-8 py-6 bg-identity-navy/[0.02] border-t border-identity-sky/10 flex justify-between items-center relative z-10">
-                                        <p className="text-[9px] text-slate-300 italic font-black uppercase tracking-[0.15em]">Database Â· Secure</p>
-                                        <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.15em] flex items-center gap-2">
-                                            <span className="w-1.5 h-1.5 rounded-full bg-identity-sky animate-pulse" />
-                                            {systemUsers.length} Validated Signatures
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-10 py-6 text-center">
+                                                            <span className={`px-4 py-1.5 rounded-xl text-[8px] font-black uppercase tracking-[0.2em] italic transition-all ${u.approval_status === 'approved' ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' : u.approval_status === 'pending' ? 'bg-amber-500/10 text-amber-600 border border-amber-500/20' : 'bg-rose-500/10 text-rose-500 border border-rose-500/20'}`}>
+                                                                {u.approval_status === 'approved' ? 'ACTIVE' : u.approval_status.toUpperCase()}
+                                                            </span>
+                                                        </td>
+                                                        <td className="px-10 py-6 text-right">
+                                                            <p className="text-[9px] font-black text-slate-300 uppercase tracking-[0.1em] italic">
+                                                                {new Date(u.created_at).toLocaleDateString('en-PH', { month: 'short', day: '2-digit', year: 'numeric' }).toUpperCase()}
+                                                            </p>
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                )}
+                                <div className="px-12 py-8 bg-identity-navy text-white border-t-2 border-white/10 flex justify-between items-center relative z-10 overflow-hidden">
+                                    <div className="absolute inset-0 bg-identity-sky/5 animate-pulse" />
+                                    <p className="text-[10px] font-black uppercase tracking-[0.5em] font-mono italic relative z-20 opacity-60">SECURE USER MANAGEMENT SYSTEM</p>
+                                    <div className="flex items-center gap-6 relative z-20">
+                                        <p className="text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-5">
+                                            <span className="w-2.5 h-2.5 rounded-full bg-identity-sky animate-pulse shadow-[0_0_12px_rgba(92,180,228,1)]" />
+                                            TOTAL USERS: <span className="text-identity-sky">{systemUsers.length}</span>
                                         </p>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     ) : activeTab === 'academic' ? (
-                        <AcademicSettingsTab />
+                        <div className="animate-in fade-in slide-in-from-bottom-10 duration-1000">
+                            <AcademicSettingsTab />
+                        </div>
                     ) : activeTab === 'sessions' ? (
-                        <div className="space-y-8 animate-fade-in">
-                            <div className="flex items-center justify-between">
-                                <h2 className="text-2xl font-black text-identity-navy flex items-center gap-4 uppercase tracking-tighter italic font-outfit">
-                                    <div className="bg-identity-sky/10 p-3 rounded-2xl border border-identity-sky/10">
-                                        <Activity className="w-6 h-6 text-identity-sky" />
+                        <div className="space-y-12 animate-in fade-in duration-700">
+                            {/* Operational Sessions Header */}
+                            <div className="flex items-center justify-between mb-8">
+                                <div className="flex items-center gap-4 group">
+                                    <div className="bg-identity-sky/5 p-3 rounded-xl border border-identity-sky/10 shadow-sm group-hover:scale-105 transition-transform">
+                                        <Activity className="w-5 h-5 text-identity-sky" />
                                     </div>
-                                    Live Monitoring
-                                </h2>
+                                    <h2 className="text-xl font-black text-identity-navy uppercase tracking-tighter italic">ACTIVE SESSIONS</h2>
+                                </div>
                                 <button
                                     onClick={() => fetchSessions()}
-                                    className="bg-identity-navy hover:bg-identity-navy/90 text-identity-navy p-3 min-h-[44px] min-w-[44px] rounded-2xl transition-all shadow-xl shadow-identity-navy/10 active:scale-95 flex items-center justify-center group"
-                                    title="Refresh List"
+                                    className="identity-glass border border-slate-100 text-identity-navy p-3.5 rounded-xl transition-all hover:bg-slate-50 active:scale-95 shadow-sm group flex items-center gap-3"
                                 >
-                                    <RefreshCw className={`w-5 h-5 transition-transform group-hover:rotate-180 ${loadingSessions ? 'animate-spin' : ''}`} />
+                                    <RefreshCw className={`w-4 h-4 transition-transform group-hover:rotate-180 ${loadingSessions ? 'animate-spin' : ''}`} />
+                                    <span className="text-[9px] font-black uppercase tracking-wider hidden md:block">REFRESH</span>
                                 </button>
                             </div>
 
-                            <div className="identity-glass border border-identity-sky/10 rounded-[2rem] md:rounded-[3rem] overflow-hidden shadow-xl relative bg-white/40">
+                            {/* Sessions Registry */}
+                            <div className="identity-glass border border-slate-100 rounded-[2.5rem] overflow-hidden shadow-xl relative group bg-white/40">
                                 {loadingSessions ? (
-                                    <div className="p-20 relative z-10 space-y-4">
-                                        <Skeleton className="h-16 w-full rounded-2xl" />
-                                        <Skeleton className="h-16 w-full rounded-2xl" />
-                                        <Skeleton className="h-16 w-full rounded-2xl" />
+                                    <div className="p-12 space-y-6">
+                                        <Skeleton className="h-20 w-full rounded-2xl" />
+                                        <Skeleton className="h-20 w-full rounded-2xl" />
                                     </div>
                                 ) : activeSessions.length === 0 ? (
-                                    <div className="p-20 text-center relative z-10">
-                                        <EmptyState
-                                            icon={Activity}
-                                            title="No Active Sessions"
-                                            description="No active attendance protocols are currently running."
-                                        />
+                                    <div className="p-24 text-center relative z-10 flex flex-col items-center gap-8">
+                                        <Activity className="w-12 h-12 text-slate-200" />
+                                        <div>
+                                            <p className="text-identity-navy text-xl font-black uppercase tracking-tight italic">SYSTEM IDLE</p>
+                                            <p className="text-slate-400 text-[9px] mt-2 uppercase tracking-[0.2em] font-black italic opacity-60">NO ACTIVE CLASS SESSIONS</p>
+                                        </div>
                                     </div>
                                 ) : (
-                                    <div className="overflow-x-auto relative z-10 table-responsive-wrapper">
+                                    <div className="overflow-x-auto relative z-10">
                                         <table className="w-full text-left border-collapse">
                                             <thead>
-                                                <tr className="bg-identity-navy/[0.02] border-b border-identity-sky/10">
-                                                    <th className="px-8 py-6 text-identity-navy font-black uppercase tracking-[0.15em] text-[10px]">Class Name</th>
-                                                    <th className="px-8 py-6 text-identity-navy font-black uppercase tracking-[0.15em] text-[10px]">Authorized Proctor</th>
-                                                    <th className="px-8 py-6 text-identity-navy font-black uppercase tracking-[0.15em] text-[10px]">Type</th>
-                                                    <th className="px-8 py-6 text-identity-navy font-black uppercase tracking-[0.15em] text-[10px]">Initialization</th>
-                                                    <th className="px-8 py-6 text-identity-navy font-black uppercase tracking-[0.15em] text-[10px]">Active Units</th>
+                                                <tr className="border-b border-slate-50 bg-slate-50/30">
+                                                    <th className="px-10 py-6 text-identity-navy font-black uppercase tracking-[0.2em] text-[9px] italic">SUBJECT</th>
+                                                    <th className="px-10 py-6 text-identity-navy font-black uppercase tracking-[0.2em] text-[9px] italic">PROFESSOR</th>
+                                                    <th className="px-10 py-6 text-identity-navy font-black uppercase tracking-[0.2em] text-[9px] italic text-center">TYPE</th>
+                                                    <th className="px-10 py-6 text-identity-navy font-black uppercase tracking-[0.2em] text-[9px] italic text-center">START</th>
+                                                    <th className="px-10 py-6 text-identity-navy font-black uppercase tracking-[0.2em] text-[9px] italic text-right">PRESENT</th>
                                                 </tr>
                                             </thead>
-                                            <tbody className="divide-y divide-slate-100">
+                                            <tbody className="divide-y divide-slate-50">
                                                 {activeSessions.map((session) => (
-                                                    <tr key={session.id} className="hover:bg-identity-navy/[0.02] transition-colors group">
-                                                        <td className="px-8 py-6">
-                                                            <div>
-                                                                <p className="text-identity-navy font-black text-xs uppercase tracking-[0.15em] italic">{session.subject_code}</p>
-                                                                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-[0.15em] mt-1.5">{session.subject_name} â€” SECTION {session.section}</p>
+                                                    <tr key={session.id} className="hover:bg-slate-50/50 transition-all group/row">
+                                                        <td className="px-10 py-6">
+                                                            <div className="space-y-1.5">
+                                                                <p className="text-identity-navy font-black text-sm uppercase tracking-tight italic leading-none">{session.subject_code}</p>
+                                                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.1em] italic opacity-60">
+                                                                    {session.section}
+                                                                </p>
                                                             </div>
                                                         </td>
-                                                        <td className="px-8 py-6">
-                                                            <p className="text-identity-navy text-xs font-black uppercase tracking-[0.15em]">{session.professor_name}</p>
+                                                        <td className="px-10 py-6">
+                                                            <div className="flex items-center gap-4">
+                                                                <div className="w-10 h-10 rounded-lg bg-identity-navy text-identity-sky flex items-center justify-center font-black text-[9px] italic border border-white/20 shadow-md">
+                                                                    {session.professor_name?.split(' ').map(n => n[0]).join('')}
+                                                                </div>
+                                                                <p className="text-identity-navy text-[11px] font-black uppercase tracking-tight italic">{session.professor_name}</p>
+                                                            </div>
                                                         </td>
-                                                        <td className="px-8 py-6">
-                                                            <span className={`px-4 py-1.5 rounded-2xl text-[9px] font-black uppercase tracking-[0.2em] border shadow-sm italic ${session.session_type === 'regular' ? 'bg-identity-sky/10 text-identity-sky border-identity-sky/20' :
-                                                                'bg-amber-100 text-amber-600 border-amber-200'
-                                                                }`}>
-                                                                {(session.session_name || session.session_type).toUpperCase()}
+                                                        <td className="px-10 py-6 text-center">
+                                                            <span className={`px-4 py-1.5 rounded-xl text-[8px] font-black uppercase tracking-[0.1em] italic transition-all ${session.session_type === 'regular' ? 'bg-identity-sky/5 text-identity-sky border border-identity-sky/10' : 'bg-amber-500/5 text-amber-600 border border-amber-500/10'}`}>
+                                                                {session.session_name ? session.session_name.toUpperCase() : session.session_type.toUpperCase()}
                                                             </span>
                                                         </td>
-                                                        <td className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.15em]">
-                                                            {new Date(session.start_time).toLocaleString('en-PH', { timeZone: 'Asia/Manila', hour: '2-digit', minute: '2-digit', hour12: true })}
+                                                        <td className="px-10 py-6 text-center">
+                                                            <div className="text-[10px] font-black text-slate-400 font-mono italic">
+                                                                {new Date(session.start_time).toLocaleString('en-PH', { timeZone: 'Asia/Manila', hour: '2-digit', minute: '2-digit', hour12: true }).toUpperCase()}
+                                                            </div>
                                                         </td>
-                                                        <td className="px-8 py-6">
-                                                            <div className="flex items-center gap-4">
-                                                                <div className="w-1.5 h-1.5 rounded-full bg-identity-sky animate-pulse shadow-[0_0_8px_rgba(92,180,228,0.5)]" />
-                                                                <span className="text-identity-navy font-black text-xs uppercase tracking-[0.15em]">{session.student_count} NODES</span>
+                                                        <td className="px-10 py-6 text-right">
+                                                            <div className="flex flex-col items-end">
+                                                                <p className="text-identity-navy font-black text-[11px] uppercase tracking-tight italic leading-none">{session.student_count} STUDENTS</p>
+                                                                <p className="text-[7px] text-emerald-500 font-black uppercase tracking-[0.2em] mt-1.5 italic animate-pulse">ACTIVE</p>
                                                             </div>
                                                         </td>
                                                     </tr>
@@ -1059,90 +972,100 @@ export default function AdminDashboard() {
                                         </table>
                                     </div>
                                 )}
-                                <div className="px-8 py-6 bg-identity-navy/[0.02] border-t border-identity-sky/10 flex justify-between items-center relative z-10">
-                                    <p className="text-[9px] text-slate-300 italic font-black uppercase tracking-[0.15em]">Live Camera Feed</p>
-                                    <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.15em] flex items-center gap-2">
-                                        <span className="w-1.5 h-1.5 rounded-full bg-identity-sky animate-pulse" />
-                                        {activeSessions.length} MONITORING NODES
-                                    </p>
+                                <div className="px-12 py-8 bg-identity-navy text-white border-t-2 border-white/10 flex justify-between items-center relative z-10 overflow-hidden">
+                                    <div className="absolute inset-0 bg-identity-sky/5 animate-pulse" />
+                                    <p className="text-[10px] font-black uppercase tracking-[0.5em] font-mono italic relative z-20 opacity-60">SYSTEM SESSION MONITOR</p>
+                                    <div className="flex items-center gap-6 relative z-20">
+                                        <p className="text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-5">
+                                            <span className="w-2.5 h-2.5 rounded-full bg-identity-sky animate-bounce shadow-[0_0_12px_rgba(92,180,228,1)]" />
+                                            ACTIVE SESSIONS: <span className="text-identity-sky">{activeSessions.length}</span>
+                                        </p>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     ) : (
-                        <div className="space-y-8 animate-fade-in">
-                            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-                                <h2 className="text-2xl font-black text-identity-navy flex items-center gap-4 uppercase tracking-tighter italic font-outfit">
-                                    <div className="bg-rose-500/10 p-3 rounded-2xl border border-rose-500/20">
+                        // Security Telemetry tab (Reports)
+                        <div className="space-y-10 animate-in fade-in duration-700 relative z-10">
+                            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+                                <div className="flex items-center gap-4 group">
+                                    <div className="bg-rose-500/5 p-4 rounded-xl border border-rose-500/10 shadow-sm group-hover:scale-105 transition-transform duration-700">
                                         <AlertTriangle className="w-6 h-6 text-rose-500" />
                                     </div>
-                                    Identity Verification Logs
-                                </h2>
-                                <div className="flex items-center gap-4">
-                                    <select
-                                        value={reportStatusFilter}
-                                        onChange={(e) => {
-                                            setReportStatusFilter(e.target.value);
-                                            setTimeout(() => fetchReports(), 100);
-                                        }}
-                                        className="bg-white/60 border border-slate-100 text-identity-navy px-6 py-3 rounded-2xl focus:outline-none focus:border-identity-sky font-black uppercase text-[10px] tracking-[0.15em] transition-all appearance-none cursor-pointer shadow-sm min-w-[200px]"
+                                    <div>
+                                        <h2 className="text-xl font-black text-identity-navy uppercase tracking-tighter italic leading-none">SECURITY LOGS</h2>
+                                        <p className="text-[8px] text-rose-500 font-black uppercase tracking-[0.2em] mt-2 italic opacity-60">INCIDENT MONITORING</p>
+                                    </div>
+                                </div>
+                                <div className="flex flex-wrap items-center gap-4">
+                                    <div className="identity-glass border border-slate-100 p-1.5 rounded-xl shadow-sm flex gap-1.5 bg-white/40">
+                                        {['all', 'pending', 'resolved'].map((status) => (
+                                            <button
+                                                key={status}
+                                                onClick={() => { setReportStatusFilter(status); setTimeout(() => fetchReports(), 100); }}
+                                                className={`px-4 py-2 rounded-lg text-[9px] font-black uppercase tracking-[0.1em] transition-all italic ${reportStatusFilter === status ? 'bg-identity-navy text-white shadow-lg' : 'text-slate-400 hover:text-identity-navy'}`}
+                                            >
+                                                {status.toUpperCase()}
+                                            </button>
+                                        ))}
+                                    </div>
+                                    <button
+                                        onClick={() => fetchReports()}
+                                        className="identity-glass border border-slate-100 text-identity-navy p-3.5 rounded-xl transition-all hover:bg-slate-50 active:scale-95 shadow-sm group"
                                     >
-                                        <option value="all">Display All Cameras</option>
-                                        <option value="pending">Awaiting Review</option>
-                                        <option value="investigating">Under Investigation</option>
-                                        <option value="resolved">Resolved / Secure</option>
-                                        <option value="dismissed">Dismissed / Void</option>
-                                    </select>
+                                        <RefreshCw className={`w-4 h-4 transition-transform group-hover:rotate-180 ${loadingReports ? 'animate-spin' : ''}`} />
+                                    </button>
                                 </div>
                             </div>
 
-                            <div className="identity-glass border border-identity-sky/10 rounded-[2rem] md:rounded-[3rem] p-10 shadow-xl relative overflow-hidden bg-white/40">
-                                <div className="absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-rose-50 to-transparent pointer-events-none opacity-50" />
+                            <div className="identity-glass border border-slate-100 rounded-[2.5rem] p-10 shadow-xl relative overflow-hidden group/container min-h-[400px] bg-white/40">
                                 {reports.length === 0 ? (
-                                    <div className="text-center py-24 relative z-10">
-                                        <EmptyState
-                                            icon={Shield}
-                                            title="No Anomalies Detected"
-                                            description="There are no security violations to report."
-                                        />
+                                    <div className="flex flex-col items-center justify-center py-24 relative z-10 gap-8">
+                                        <Shield className="w-12 h-12 text-emerald-400" />
+                                        <div className="text-center">
+                                            <p className="text-identity-navy text-xl font-black uppercase tracking-tight italic">NO SECURITY ISSUES</p>
+                                            <p className="text-slate-400 text-[9px] mt-3 uppercase tracking-[0.2em] font-black italic opacity-60">SYSTEM STATUS: CLEAR</p>
+                                        </div>
                                     </div>
                                 ) : (
-                                    <div className="space-y-6 relative z-10">
+                                    <div className="grid grid-cols-1 gap-8 relative z-10">
                                         {reports.map((report) => (
-                                            <div key={report.id} className="identity-glass border border-identity-sky/10 rounded-[1.5rem] md:rounded-[2rem] p-8 hover:border-identity-sky/30 transition-all group shadow-xl relative overflow-hidden bg-white/50 backdrop-blur-sm">
-                                                <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative z-10">
-                                                    <div className="flex-1">
-                                                        <div className="flex items-center gap-4 mb-4">
-                                                            <div className="bg-rose-500/5 text-rose-500 px-4 py-1.5 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] border border-rose-500/10 italic">
-                                                                LOG_ENTRY #{report.id}
-                                                            </div>
-                                                            <span className={`px-4 py-1.5 rounded-2xl text-[9px] font-black uppercase tracking-[0.2em] border shadow-sm italic ${
-                                                                report.status === 'pending' ? 'bg-amber-500/10 text-amber-600 border-amber-500/20' :
-                                                                report.status === 'investigating' ? 'bg-identity-sky/10 text-identity-sky border-identity-sky/20' :
-                                                                report.status === 'resolved' ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20' :
-                                                                'bg-slate-500/10 text-slate-400 border-slate-500/20'
-                                                            }`}>
-                                                                {report.status === 'pending' ? 'LOG_AWAITING' : `LOG_${report.status.toUpperCase()}`}
-                                                            </span>
+                                            <div key={report.id} className="identity-glass border border-slate-100 rounded-3xl p-8 hover:border-identity-sky/30 transition-all group/item shadow-lg relative overflow-hidden flex flex-col lg:flex-row items-center justify-between gap-8 bg-white/60">
+                                                <div className="flex-1 w-full space-y-6">
+                                                    <div className="flex flex-wrap items-center gap-4">
+                                                        <div className="bg-rose-500 text-white px-4 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-[0.1em] shadow-sm italic">
+                                                            LOG: #{report.id}
                                                         </div>
-                                                        <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 gap-8">
-                                                            <div>
-                                                                <p className="text-slate-400 text-[9px] font-black uppercase tracking-[0.15em] mb-2">Target Face Profile</p>
-                                                                <p className="text-identity-sky font-mono bg-slate-50 px-3 py-1.5 rounded-2xl border border-slate-100 inline-block text-xs font-bold font-mono tracking-[0.15em]">{report.reported_user_id}</p>
-                                                            </div>
-                                                            <div>
-                                                                <p className="text-slate-400 text-[9px] font-black uppercase tracking-[0.15em] mb-2">Claimant Profile</p>
-                                                                <p className="text-identity-navy font-black text-xs uppercase tracking-[0.15em] italic">{report.reporter_name}</p>
-                                                            </div>
+                                                        <span className={`px-4 py-1.5 rounded-lg text-[8px] font-black uppercase tracking-[0.1em] italic backdrop-blur-md transition-all ${report.status === 'pending' ? 'bg-amber-500/10 text-amber-600 border border-amber-500/20' : report.status === 'resolved' ? 'bg-emerald-500/10 text-emerald-600 border border-emerald-500/20' : 'bg-identity-sky/10 text-identity-sky border border-identity-sky/20'}`}>
+                                                            {report.status.toUpperCase()}
+                                                        </span>
+                                                    </div>
+                                                    
+                                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                                                        <div className="space-y-2">
+                                                            <p className="text-slate-400 text-[8px] font-black uppercase tracking-[0.2em] italic opacity-60">SUBJECT ID</p>
+                                                            <p className="font-mono text-identity-navy text-[10px] font-black italic">#{report.reported_user_id}</p>
+                                                        </div>
+                                                        <div className="space-y-2">
+                                                            <p className="text-slate-400 text-[8px] font-black uppercase tracking-[0.2em] italic opacity-60">REPORTER</p>
+                                                            <p className="text-identity-navy font-black text-sm uppercase tracking-tight italic">{report.reporter_name}</p>
+                                                        </div>
+                                                        <div className="space-y-2">
+                                                            <p className="text-slate-400 text-[8px] font-black uppercase tracking-[0.2em] italic opacity-60">TIMESTAMP</p>
+                                                            <p className="text-slate-500 font-mono text-[9px] font-black italic">
+                                                                {new Date(report.created_at).toLocaleString('en-PH', { dateStyle: 'short', timeStyle: 'short' }).toUpperCase()}
+                                                            </p>
                                                         </div>
                                                     </div>
-                                                    <button
-                                                        onClick={() => setSelectedReport(report)}
-                                                        className="w-full md:w-auto bg-identity-navy hover:bg-identity-sky text-white px-8 py-4 rounded-2xl transition-all font-black uppercase tracking-[0.15em] text-[10px] flex items-center justify-center gap-4 group active:scale-95 shadow-xl shadow-identity-navy/10"
-                                                    >
-                                                        <Eye className="w-4 h-4 text-identity-sky transition-transform group-hover:scale-125" />
-                                                        Verify Case
-                                                    </button>
                                                 </div>
+                                                
+                                                <button
+                                                    onClick={() => setSelectedReport(report)}
+                                                    className="w-full lg:w-auto bg-identity-navy text-white px-10 py-4 rounded-xl transition-all font-black uppercase tracking-[0.2em] text-[10px] flex items-center justify-center gap-4 hover:bg-identity-sky active:scale-95 shadow-lg italic"
+                                                >
+                                                    <Eye className="w-5 h-5" />
+                                                    DETAILS
+                                                </button>
                                             </div>
                                         ))}
                                     </div>
@@ -1152,390 +1075,404 @@ export default function AdminDashboard() {
                     )}
                 </div>
 
+                {/* Report Detail Modal */}
                 {selectedReport && (
-                    <div className="fixed inset-0 bg-identity-navy/60 backdrop-blur-md flex items-center justify-center p-6 z-50 animate-in fade-in zoom-in duration-300">
-                        <div className="bg-white border border-identity-sky/10 rounded-[2rem] md:rounded-[3rem] p-10 max-w-4xl w-full shadow-2xl relative overflow-hidden">
-                            <div className="absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-rose-50 to-transparent pointer-events-none opacity-50" />
+                    <div className="fixed inset-0 bg-identity-navy/95 backdrop-blur-3xl flex items-center justify-center p-6 z-[100] animate-in fade-in duration-500 overflow-y-auto">
+                        <div className="identity-glass border-2 border-white/20 rounded-[4rem] p-16 max-w-6xl w-full shadow-[0_64px_128px_rgba(0,0,0,0.5)] relative overflow-hidden my-auto pointer-events-auto">
+                            <div className="absolute inset-0 bg-gradient-to-br from-rose-500/[0.05] via-transparent to-identity-sky/[0.05] pointer-events-none" />
                             
-                            <div className="flex justify-between items-start mb-10 relative z-10">
-                                <h3 className="text-3xl font-black text-rose-500 flex items-center gap-4 uppercase tracking-tighter italic">
-                                    <div className="bg-rose-500/10 p-3 rounded-2xl border border-rose-500/20">
-                                        <AlertTriangle className="w-8 h-8" />
+                            <div className="flex flex-col md:flex-row justify-between items-start mb-16 gap-10 relative z-10 border-b-2 border-white/10 pb-12">
+                                <div className="space-y-6">
+                                    <div className="flex items-center gap-8">
+                                        <div className="bg-rose-500 p-5 rounded-[2.5rem] shadow-[0_0_40px_rgba(244,63,94,0.3)]">
+                                            <Shield className="w-12 h-12 text-white animate-pulse" />
+                                        </div>
+                                        <div>
+                                            <p className="text-[10px] font-black text-rose-400 uppercase tracking-[0.5em] mb-2 italic">Security Intelligence Division</p>
+                                            <h3 className="text-4xl font-black text-white uppercase tracking-tighter italic">SECURITY INCIDENT DETAILS</h3>
+                                        </div>
                                     </div>
-                                    Anomalous Flag
-                                    <span className="text-slate-200 text-sm ml-4 font-mono tracking-[0.15em] text-[10px]">#{selectedReport.id}</span>
-                                </h3>
-                                <button onClick={() => setSelectedReport(null)} className="text-slate-300 hover:text-identity-navy transition-all hover:rotate-90">
-                                    <XCircle className="w-8 h-8" />
+                                    <div className="inline-flex items-center gap-4 bg-white/10 px-6 py-2 rounded-2xl border border-white/20 text-white/60 font-mono text-xs tracking-widest italic">
+                                        REFERENCE ID: <span className="text-identity-sky">0x{selectedReport.id.toString(16).padStart(8, '0')}</span>
+                                    </div>
+                                </div>
+                                <button onClick={() => setSelectedReport(null)} className="identity-glass border-2 border-white/20 text-white/50 hover:text-white hover:border-white transition-all p-4 rounded-full group">
+                                    <XCircle className="w-10 h-10 group-hover:rotate-90 transition-transform duration-700" />
                                 </button>
                             </div>
 
-                            <div className="space-y-8 mb-10 relative z-10">
-                                <div className="bg-slate-50 rounded-[2rem] p-8 border border-identity-sky/5 shadow-inner">
-                                    <h4 className="text-slate-400 font-black uppercase tracking-[0.15em] text-[9px] mb-6 flex items-center gap-4 italic">
-                                        <div className="w-1.5 h-1.5 bg-identity-sky rounded-full" />
-                                        Student Search
-                                    </h4>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 text-[9px] uppercase tracking-[0.15em] font-black italic">
-                                        <div>
-                                            <p className="text-slate-300 mb-2.5">Face Profile</p>
-                                            <p className="text-identity-sky font-mono bg-white px-3 py-1.5 rounded-2xl border border-slate-100 inline-block text-xs font-bold">{selectedReport.reported_user_id}</p>
-                                        </div>
-                                        <div>
-                                            <p className="text-slate-300 mb-2.5">Current Status</p>
-                                            <p className="text-identity-navy bg-white px-3 py-1.5 rounded-2xl border border-slate-100 inline-block text-xs font-bold">{selectedReport.status.toUpperCase()}</p>
-                                        </div>
-                                        <div>
-                                            <p className="text-slate-300 mb-2.5">Claimant Profile</p>
-                                            <p className="text-identity-navy text-xs font-bold">{selectedReport.reporter_name}</p>
-                                        </div>
-                                        <div>
-                                            <p className="text-slate-300 mb-2.5">Contact Link</p>
-                                            <p className="text-identity-navy text-xs font-bold lowercase">{selectedReport.reporter_email}</p>
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 mb-16 relative z-10">
+                                {/* Technical Metadata */}
+                                <div className="space-y-10">
+                                    <div className="identity-glass border-2 border-white/10 rounded-[3rem] p-10 shadow-inner relative overflow-hidden group">
+                                        <div className="absolute inset-0 bg-white/[0.02] pointer-events-none" />
+                                        <h4 className="text-[10px] font-black text-identity-sky uppercase tracking-[0.4em] mb-10 flex items-center gap-5 italic text-shadow-blue">
+                                            <div className="w-3 h-3 bg-identity-sky rounded-full animate-pulse shadow-glow-blue" />
+                                            INCIDENT METADATA
+                                        </h4>
+                                        <div className="grid grid-cols-2 gap-12">
+                                            <div className="space-y-4">
+                                                <p className="text-white/40 text-[9px] font-black uppercase tracking-widest italic">REPORTED USER ID</p>
+                                                <div className="inline-block bg-identity-navy px-4 py-2 rounded-xl text-identity-sky text-sm font-mono font-black border border-identity-sky/30 shadow-lg italic">
+                                                    {selectedReport.reported_user_id}
+                                                </div>
+                                            </div>
+                                            <div className="space-y-4 text-right">
+                                                <p className="text-white/40 text-[9px] font-black uppercase tracking-widest italic">CURRENT STATUS</p>
+                                                <span className="inline-block px-5 py-2 rounded-xl text-[10px] font-black uppercase text-white bg-white/20 border border-white/30 italic">
+                                                    {selectedReport.status.toUpperCase()}
+                                                </span>
+                                            </div>
+                                            <div className="space-y-4">
+                                                <p className="text-white/40 text-[9px] font-black uppercase tracking-widest italic">REPORTED BY</p>
+                                                <p className="text-white font-black text-sm uppercase italic tracking-tighter">{selectedReport.reporter_name}</p>
+                                            </div>
+                                            <div className="space-y-4 text-right">
+                                                <p className="text-white/40 text-[9px] font-black uppercase tracking-widest italic">REPORTER EMAIL</p>
+                                                <p className="text-white/60 font-black text-[10px] lowercase italic truncate">{selectedReport.reporter_email}</p>
+                                            </div>
                                         </div>
                                     </div>
 
-                                    <div className="mt-10 pt-10 border-t border-white/5">
-                                        <h4 className="text-rose-500 font-black uppercase tracking-[0.15em] text-[10px] mb-6 flex items-center gap-4">
-                                            <div className="w-1.5 h-1.5 bg-rose-500 rounded-full" />
-                                            Reported Student Details
+                                    <div className="identity-glass border-2 border-white/10 rounded-[3rem] p-10 shadow-inner relative overflow-hidden min-h-[200px]">
+                                        <h4 className="text-[10px] font-black text-rose-500 uppercase tracking-[0.4em] mb-10 flex items-center gap-5 italic text-shadow-red">
+                                            <div className="w-3 h-3 bg-rose-500 rounded-full animate-pulse shadow-glow-red" />
+                                            REPORTED USER PROFILE
                                         </h4>
                                         {(selectedReport.user_primary_id || selectedReport.first_name) ? (
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-10 text-[10px] uppercase tracking-[0.15em] font-black">
-                                                <div>
-                                                    <p className="text-slate-400 mb-2.5">Legal Name</p>
-                                                    <p className="text-identity-navy text-xs font-bold italic tracking-tight">{selectedReport.first_name} {selectedReport.last_name}</p>
+                                            <div className="grid grid-cols-2 gap-10">
+                                                <div className="col-span-2 space-y-4">
+                                                    <p className="text-white/40 text-[9px] font-black uppercase tracking-widest italic">USER FULL NAME</p>
+                                                    <p className="text-white font-black text-2xl uppercase tracking-tighter italic text-shadow-glow">
+                                                        {selectedReport.first_name} {selectedReport.last_name}
+                                                    </p>
                                                 </div>
-                                                <div>
-                                                    <p className="text-slate-400 mb-2.5">Class Access</p>
-                                                    <span className={`inline-block px-3 py-1.5 rounded-2xl text-[9px] font-black uppercase tracking-[0.15em] border shadow-sm ${selectedReport.role === 'admin' ? 'bg-rose-50 text-rose-500 border-rose-100' :
-                                                        selectedReport.role === 'professor' ? 'bg-identity-sky/10 text-identity-sky border-identity-sky/20' :
-                                                            'bg-emerald-50 text-emerald-600 border-emerald-100'
-                                                        }`}>
+                                                <div className="space-y-4">
+                                                    <p className="text-white/40 text-[9px] font-black uppercase tracking-widest italic">USER ROLE</p>
+                                                    <span className="text-identity-sky font-extra-black text-[11px] uppercase tracking-[0.2em] italic border-b border-identity-sky/20 pb-1">
                                                         {selectedReport.role?.toUpperCase()}
                                                     </span>
                                                 </div>
-                                                <div>
-                                                    <p className="text-slate-400 mb-2.5">Main Contact</p>
-                                                    <p className="text-identity-navy text-xs lowercase font-bold italic tracking-tight">{selectedReport.email}</p>
-                                                </div>
-                                                <div>
-                                                    <p className="text-slate-400 mb-2.5">Database ID</p>
-                                                    <p className="text-slate-200 font-mono text-xs">#{selectedReport.user_primary_id}</p>
+                                                <div className="space-y-4 text-right">
+                                                    <p className="text-white/40 text-[9px] font-black uppercase tracking-widest italic">SYSTEM ID</p>
+                                                    <p className="text-white/40 font-mono text-[10px] uppercase tracking-widest italic">ID:{selectedReport.user_primary_id}</p>
                                                 </div>
                                             </div>
                                         ) : (
-                                            <div className="bg-rose-500/10 border border-rose-500/20 rounded-2xl p-6 text-rose-500 text-[10px] flex items-center gap-4 font-black uppercase tracking-[0.15em] shadow-inner">
-                                                <AlertTriangle className="w-6 h-6 shrink-0" />
-                                                Student not found in the database. The account may have been deleted.
+                                            <div className="flex flex-col items-center justify-center gap-6 py-4 text-rose-500/60 font-black uppercase text-[10px] tracking-[0.4em] italic text-center animate-pulse">
+                                                <AlertCircle size={48} />
+                                                FAILED TO RETRIEVE USER DATA
                                             </div>
                                         )}
                                     </div>
-                                    {selectedReport.description && (
-                                        <div className="mt-8 pt-8 border-t border-slate-100">
-                                            <p className="text-slate-400 text-[9px] uppercase font-black tracking-[0.15em] mb-4">Report Description</p>
-                                            <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100 italic text-identity-navy text-xs leading-relaxed font-bold">
-                                                "{selectedReport.description}"
-                                            </div>
-                                        </div>
-                                    )}
                                 </div>
-                                
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div className="bg-slate-50 rounded-[2rem] p-6 border border-identity-sky/5 shadow-inner">
-                                        <h4 className="text-slate-400 font-black uppercase tracking-[0.15em] text-[9px] mb-4 italic">Evidence: COR Proof</h4>
-                                        {selectedReport.certificate_of_registration ? (
-                                            <div className="aspect-video bg-white rounded-2xl border border-identity-sky/10 overflow-hidden relative group shadow-sm">
-                                                {isPDF(selectedReport.certificate_of_registration) ? (
-                                                    <div className="w-full h-full flex flex-col items-center justify-center text-identity-sky bg-slate-50">
-                                                        <FileText size={40} className="mb-3" />
-                                                        <span className="text-[9px] font-black uppercase tracking-[0.15em]">PDF ARCHIVE</span>
-                                                    </div>
-                                                ) : (
-                                                    <img
-                                                        src={getProfilePictureUrl(selectedReport.certificate_of_registration) || ''}
-                                                        alt="COR"
-                                                        className="w-full h-full object-contain grayscale brightness-90 transition-all group-hover:grayscale-0 group-hover:brightness-100"
-                                                    />
-                                                )}
-                                                <a href={getProfilePictureUrl(selectedReport.certificate_of_registration) || '#'} target="_blank" rel="noopener noreferrer" 
-                                                   className="absolute inset-0 bg-identity-navy/80 opacity-0 group-hover:opacity-100 transition-all flex flex-col items-center justify-center gap-4 text-identity-navy backdrop-blur-sm">
-                                                    <ExternalLink size={24} />
-                                                    <span className="text-[9px] font-black uppercase tracking-[0.15em]">EXPAND SOURCE</span>
-                                                </a>
-                                            </div>
+
+                                {/* Evidence Telemetry */}
+                                <div className="space-y-10 group">
+                                     <div className="identity-glass border-2 border-white/10 rounded-[3rem] p-10 shadow-inner h-full flex flex-col">
+                                        <h4 className="text-[10px] font-black text-emerald-400 uppercase tracking-[0.4em] mb-10 flex items-center gap-5 italic text-shadow-green">
+                                            <div className="w-3 h-3 bg-emerald-400 rounded-full animate-pulse shadow-glow-green" />
+                                            INCIDENT DESCRIPTION
+                                        </h4>
+                                        {selectedReport.description ? (
+                                            <blockquote className="flex-1 bg-black/40 rounded-[2.5rem] p-10 border-2 border-white/5 relative overflow-hidden">
+                                                <div className="absolute top-0 left-0 p-6 opacity-10">
+                                                    <FileText size={40} className="text-white" />
+                                                </div>
+                                                <p className="text-white/80 italic text-lg font-black leading-relaxed tracking-tight relative z-10 text-center uppercase">
+                                                    "{selectedReport.description}"
+                                                </p>
+                                            </blockquote>
                                         ) : (
-                                            <div className="aspect-video flex items-center justify-center border border-slate-100 border-dashed rounded-2xl text-slate-200 text-[9px] font-black uppercase tracking-[0.15em] italic">MISSING_COR</div>
-                                        )}
-                                    </div>
-                                    <div className="bg-slate-50 rounded-[2rem] p-6 border border-identity-sky/5 shadow-inner">
-                                        <h4 className="text-slate-400 font-black uppercase tracking-[0.15em] text-[9px] mb-4 italic">Evidence: ID Profile</h4>
-                                        {selectedReport.id_photo ? (
-                                            <div className="aspect-video bg-white rounded-2xl border border-identity-sky/10 overflow-hidden relative group shadow-sm">
-                                                {isPDF(selectedReport.id_photo) ? (
-                                                    <div className="w-full h-full flex flex-col items-center justify-center text-identity-sky bg-slate-50">
-                                                        <FileText size={40} className="mb-3" />
-                                                        <span className="text-[9px] font-black uppercase tracking-[0.15em]">PDF ARCHIVE</span>
-                                                    </div>
-                                                ) : (
-                                                    <img
-                                                        src={getProfilePictureUrl(selectedReport.id_photo) || ''}
-                                                        alt="ID"
-                                                        className="w-full h-full object-contain grayscale brightness-90 transition-all group-hover:grayscale-0 group-hover:brightness-100"
-                                                    />
-                                                )}
-                                                <a href={getProfilePictureUrl(selectedReport.id_photo) || '#'} target="_blank" rel="noopener noreferrer" 
-                                                   className="absolute inset-0 bg-identity-navy/80 opacity-0 group-hover:opacity-100 transition-all flex flex-col items-center justify-center gap-4 text-identity-navy backdrop-blur-sm">
-                                                    <ExternalLink size={24} />
-                                                    <span className="text-[9px] font-black uppercase tracking-[0.15em]">EXPAND SOURCE</span>
-                                                </a>
+                                            <div className="flex-1 flex flex-col items-center justify-center border-2 border-dashed border-white/5 rounded-[2.5rem] p-20 opacity-30 text-white italic text-[10px] font-black uppercase tracking-[0.6em]">
+                                                NO DESCRIPTION PROVIDED
                                             </div>
-                                        ) : (
-                                            <div className="aspect-video flex items-center justify-center border border-slate-100 border-dashed rounded-2xl text-slate-200 text-[9px] font-black uppercase tracking-[0.15em] italic">MISSING_ID</div>
                                         )}
-                                    </div>
+                                     </div>
                                 </div>
                             </div>
 
-                            <div className="flex flex-wrap gap-4 relative z-10 pt-4 border-t border-slate-100">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-12 mb-16 relative z-10">
+                                <div className="identity-glass border-2 border-white/10 rounded-[3rem] p-8 shadow-inner group/card overflow-hidden">
+                                    <h5 className="text-[9px] font-black text-white/30 uppercase tracking-[0.5em] mb-8 italic">STUDENT ENROLLMENT CERTIFICATE</h5>
+                                    {selectedReport.certificate_of_registration ? (
+                                        <div className="aspect-video bg-black/60 rounded-[2rem] border-2 border-white/5 overflow-hidden relative group/img shadow-2xl">
+                                            <img
+                                                src={getProfilePictureUrl(selectedReport.certificate_of_registration) || ''}
+                                                alt="COR"
+                                                className="w-full h-full object-contain grayscale transition-all duration-1000 group-hover/img:grayscale-0 group-hover/img:scale-110"
+                                            />
+                                            <div className="absolute inset-0 bg-identity-navy/90 opacity-0 group-hover/img:opacity-100 transition-all flex flex-col items-center justify-center gap-6 cursor-pointer backdrop-blur-md">
+                                                <ExternalLink size={40} className="text-identity-sky animate-bounce" />
+                                                <a href={getProfilePictureUrl(selectedReport.certificate_of_registration) || '#'} target="_blank" className="text-[10px] font-black text-white uppercase tracking-[0.3em]">VIEW FULL IMAGE</a>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="aspect-video flex items-center justify-center bg-white/5 border-2 border-dashed border-white/10 rounded-[2rem] text-white/20 text-[10px] font-black uppercase tracking-[0.5em] italic">NO IMAGE PROVIDED</div>
+                                    )}
+                                </div>
+                                <div className="identity-glass border-2 border-white/10 rounded-[3rem] p-8 shadow-inner group/card overflow-hidden">
+                                    <h5 className="text-[9px] font-black text-white/30 uppercase tracking-[0.5em] mb-8 italic">SCHOOL ID PHOTO</h5>
+                                    {selectedReport.id_photo ? (
+                                        <div className="aspect-video bg-black/60 rounded-[2rem] border-2 border-white/5 overflow-hidden relative group/img shadow-2xl">
+                                            <img
+                                                src={getProfilePictureUrl(selectedReport.id_photo) || ''}
+                                                alt="ID Badge"
+                                                className="w-full h-full object-contain grayscale transition-all duration-1000 group-hover/img:grayscale-0 group-hover/img:scale-110"
+                                            />
+                                            <div className="absolute inset-0 bg-identity-navy/90 opacity-0 group-hover/img:opacity-100 transition-all flex flex-col items-center justify-center gap-6 cursor-pointer backdrop-blur-md">
+                                                <ExternalLink size={40} className="text-identity-sky animate-bounce" />
+                                                <a href={getProfilePictureUrl(selectedReport.id_photo) || '#'} target="_blank" className="text-[10px] font-black text-white uppercase tracking-[0.3em]">VIEW FULL IMAGE</a>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="aspect-video flex items-center justify-center bg-white/5 border-2 border-dashed border-white/10 rounded-[2rem] text-white/20 text-[10px] font-black uppercase tracking-[0.5em] italic">NO IMAGE PROVIDED</div>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Execution Controls */}
+                            <div className="flex flex-wrap gap-8 relative z-10 pt-16 border-t-2 border-white/10">
                                 <button
-                                    onClick={() => handleInitiateStatusUpdate(selectedReport.id, 'resolved')}
-                                    className="flex-1 bg-identity-navy hover:bg-identity-sky text-white px-6 py-4 rounded-2xl transition-all font-black uppercase tracking-[0.15em] text-[10px] shadow-xl shadow-identity-navy/10 active:scale-95 italic"
+                                    onClick={() => handleInitiateStatusUpdate(selectedReport.id, 'investigating')}
+                                    className="flex-1 bg-white/[0.03] hover:bg-identity-sky hover:text-identity-navy text-identity-sky px-10 py-6 rounded-[1.5rem] border-2 border-identity-sky/40 transition-all font-black uppercase tracking-[0.2em] text-[11px] shadow-glow-blue italic active:scale-95"
                                 >
-                                    Initiate Investigation
+                                    START INVESTIGATION
                                 </button>
                                 <button
                                     onClick={() => handleInitiateStatusUpdate(selectedReport.id, 'resolved')}
-                                    className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-4 rounded-2xl transition-all font-black uppercase tracking-[0.15em] text-[10px] shadow-xl shadow-emerald-900/10 active:scale-95 italic"
+                                    className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white px-10 py-6 rounded-[1.5rem] border-2 border-emerald-500/40 transition-all font-black uppercase tracking-[0.3em] text-[11px] shadow-glow-green italic active:scale-95"
                                 >
-                                    Resolve & Close
+                                    RESOLVE INCIDENT
                                 </button>
                                 <button
                                     onClick={() => handleInitiateStatusUpdate(selectedReport.id, 'dismissed')}
-                                    className="flex-1 bg-rose-500 hover:bg-rose-600 text-white px-6 py-4 rounded-2xl transition-all font-black uppercase tracking-[0.15em] text-[10px] active:scale-95 shadow-xl shadow-rose-900/10 italic"
+                                    className="flex-1 bg-rose-600 hover:bg-rose-500 text-white px-10 py-6 rounded-[1.5rem] border-2 border-rose-500/40 transition-all font-black uppercase tracking-[0.3em] text-[11px] shadow-glow-red italic active:scale-95"
                                 >
-                                    Void Report
-                                </button>
-                                <button
-                                    onClick={() => setSelectedReport(null)}
-                                    className="bg-slate-50 hover:bg-slate-100 text-slate-400 px-8 py-4 rounded-2xl transition-all font-black uppercase tracking-[0.15em] text-[10px] border border-slate-100 hover:text-identity-navy italic"
-                                >
-                                    Exit
+                                    DISMISS REPORT
                                 </button>
                             </div>
                         </div>
                     </div>
                 )}
 
+                {/* Operation Confirmation */}
                 {actionModal.isOpen && (
-                    <div className="fixed inset-0 bg-identity-navy/60 backdrop-blur-md flex items-center justify-center p-6 z-[60] animate-in fade-in zoom-in duration-300">
-                        <div className="bg-white border border-identity-sky/10 rounded-[2rem] md:rounded-[3rem] p-10 max-w-md w-full shadow-2xl relative overflow-hidden">
-                            <div className="absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-identity-sky/5 to-transparent pointer-events-none opacity-30" />
-                            
-                            <h3 className="text-2xl font-black text-identity-navy mb-8 uppercase tracking-tighter relative z-10 flex items-center gap-4 italic">
-                                <div className="w-2 h-8 bg-identity-sky rounded-full" />
-                                {actionModal.type === 'resolved' ? 'Resolution Protocol' : 'Dismissal Protocol'}
-                            </h3>
+                    <div className="fixed inset-0 bg-identity-navy/98 backdrop-blur-3xl flex items-center justify-center p-12 z-[150] animate-in zoom-in-95 duration-500">
+                        <div className="identity-glass border-2 border-white/20 rounded-[3.5rem] p-16 max-w-2xl w-full shadow-[0_64px_128px_rgba(0,0,0,0.8)] relative overflow-hidden">
+                             <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-transparent via-identity-sky to-transparent animate-pulse" />
+                             
+                             <div className="flex items-center gap-8 mb-16">
+                                <div className={`p-4 rounded-[1.5rem] shadow-glow- ${actionModal.type === 'resolved' ? 'bg-emerald-500 text-emerald-100 shadow-emerald-500/40' : 'bg-rose-500 text-rose-100 shadow-rose-500/40'}`}>
+                                    {actionModal.type === 'resolved' ? <CheckCircle size={40} /> : <AlertTriangle size={40} />}
+                                </div>
+                                <h3 className="text-3xl font-black text-white italic tracking-tighter uppercase">
+                                    {actionModal.type === 'resolved' ? 'CONFIRM RESOLUTION' : 'CONFIRM DISMISSAL'}
+                                </h3>
+                             </div>
 
-                            <div className="space-y-8 relative z-10">
-                                <div>
-                                    <label className="block text-slate-400 text-[9px] font-black uppercase tracking-[0.15em] mb-4">
-                                        {actionModal.type === 'resolved' ? 'Resolution Dispatch (Email Content)' : 'Rejection Rationale (Email Content)'}
-                                    </label>
+                             <div className="space-y-12 mb-16">
+                                <div className="space-y-6">
+                                    <label className="text-white/40 text-[10px] font-black uppercase tracking-[0.4em] italic mb-4 block">RESOLUTION NOTES</label>
                                     <textarea
                                         value={actionNote}
                                         onChange={(e) => setActionNote(e.target.value)}
-                                        className="w-full bg-slate-50 border border-slate-100 text-identity-navy rounded-[2rem] p-8 focus:outline-none focus:border-identity-sky h-40 placeholder:text-slate-200 font-bold uppercase text-[10px] tracking-[0.2em] leading-relaxed shadow-inner italic"
-                                        placeholder={actionModal.type === 'resolved' ? 'Define the mitigation steps taken...' : 'State the reason for voiding this claim...'}
+                                        className="w-full bg-black/40 border-2 border-white/10 text-white rounded-[2rem] p-10 focus:outline-none focus:border-identity-sky/60 h-60 placeholder:text-white/10 font-bold uppercase text-[12px] tracking-[0.1em] leading-relaxed shadow-inner italic"
+                                        placeholder="ENTER NOTES FOR THE SYSTEM LOG..."
                                     />
                                 </div>
 
                                 {actionModal.type === 'resolved' && (
-                                    <>
-                                        <div className="bg-slate-50 border border-identity-sky/5 rounded-[2rem] p-8 shadow-inner">
-                                            <label className="block text-slate-400 text-[9px] font-black uppercase tracking-[0.15em] mb-6">
-                                                Classification Outcome
-                                            </label>
-                                            <div className="space-y-4">
-                                                <div className="flex items-start gap-4 p-4 bg-white border border-slate-100 rounded-2xl hover:border-identity-sky/50 transition-all cursor-pointer group">
-                                                    <input
-                                                        type="radio"
-                                                        id="outcome-reported"
-                                                        name="outcome"
-                                                        value="reported_is_impostor"
-                                                        checked={resolutionOutcome === 'reported_is_impostor'}
-                                                        onChange={(e) => setResolutionOutcome(e.target.value)}
-                                                        className="w-5 h-5 mt-0.5 text-identity-sky bg-white border-slate-200 focus:ring-identity-sky cursor-pointer"
-                                                    />
-                                                    <label htmlFor="outcome-reported" className="cursor-pointer">
-                                                        <div className="font-bold uppercase tracking-[0.15em] text-[10px] text-identity-navy italic">Target is Impostor</div>
-                                                        <div className="text-[8px] text-slate-300 font-bold uppercase tracking-[0.15em] mt-1 italic">Confirmed account misuse</div>
-                                                    </label>
+                                    <div className="space-y-8 p-10 bg-white/5 rounded-[2.5rem] border-2 border-white/5 shadow-inner">
+                                        <p className="text-identity-sky/60 text-[9px] font-black uppercase tracking-[0.5em] mb-4 italic text-center">FINAL DECISION</p>
+                                        <div className="grid grid-cols-1 gap-6">
+                                            {[
+                                                { id: "reported_is_impostor", label: "VERIFIED SECURITY BREACH", desc: "USER WILL BE FLAGGED" },
+                                                { id: "reporter_is_impostor", label: "DISMISS AS FALSE ALARM", desc: "NO ACTION TAKEN" }
+                                            ].map((opt) => (
+                                                <div 
+                                                    key={opt.id}
+                                                    onClick={() => setResolutionOutcome(opt.id)}
+                                                    className={`p-6 rounded-2xl border-2 cursor-pointer transition-all flex items-center justify-between group ${resolutionOutcome === opt.id ? 'bg-identity-sky/20 border-identity-sky shadow-glow-blue' : 'bg-white/5 border-white/10 hover:border-white/30'}`}
+                                                >
+                                                    <div>
+                                                        <p className={`text-[11px] font-black uppercase tracking-widest italic ${resolutionOutcome === opt.id ? 'text-white' : 'text-white/40'}`}>{opt.label}</p>
+                                                        <p className="text-[9px] text-white/20 font-bold uppercase tracking-widest mt-1 italic">{opt.desc}</p>
+                                                    </div>
+                                                    <div className={`w-6 h-6 rounded-full border-2 transition-all flex items-center justify-center ${resolutionOutcome === opt.id ? 'border-identity-sky bg-identity-sky scale-110' : 'border-white/10'}`}>
+                                                        {resolutionOutcome === opt.id && <CheckCircle size={14} className="text-identity-navy" />}
+                                                    </div>
                                                 </div>
-                                                <div className="flex items-start gap-4 p-4 bg-white border border-slate-100 rounded-2xl hover:border-identity-sky/50 transition-all cursor-pointer group">
-                                                    <input
-                                                        type="radio"
-                                                        id="outcome-reporter"
-                                                        name="outcome"
-                                                        value="reporter_is_impostor"
-                                                        checked={resolutionOutcome === 'reporter_is_impostor'}
-                                                        onChange={(e) => setResolutionOutcome(e.target.value)}
-                                                        className="w-5 h-5 mt-0.5 text-identity-sky bg-white border-slate-200 focus:ring-identity-sky cursor-pointer"
-                                                    />
-                                                    <label htmlFor="outcome-reporter" className="cursor-pointer">
-                                                        <div className="font-bold uppercase tracking-[0.15em] text-[10px] text-identity-navy italic">False Claim Detected</div>
-                                                        <div className="text-[8px] text-slate-300 font-bold uppercase tracking-[0.15em] mt-1 italic">Claimant filed unfounded report</div>
-                                                    </label>
-                                                </div>
+                                            ))}
+                                        </div>
+
+                                        <div 
+                                            onClick={() => setDeleteUser(!deleteUser)}
+                                            className={`mt-6 p-6 rounded-2xl border-2 cursor-pointer transition-all flex items-center justify-center gap-6 group ${deleteUser ? 'bg-rose-500/20 border-rose-500 shadow-glow-red' : 'bg-white/5 border-white/10 hover:border-rose-500/30'}`}
+                                        >
+                                            <div className={`w-8 h-8 rounded-lg border-2 flex items-center justify-center transition-all ${deleteUser ? 'bg-rose-500 border-rose-400 rotate-90 scale-110' : 'border-white/10 group-hover:rotate-12'}`}>
+                                                {deleteUser && <XCircle size={20} className="text-white" />}
                                             </div>
+                                            <p className={`text-[10px] font-extra-black uppercase tracking-[0.3em] italic ${deleteUser ? 'text-rose-400' : 'text-white/20 group-hover:text-rose-400/50'}`}>PERMANENTLY DELETE USER FROM SYSTEM</p>
                                         </div>
-
-                                        <div className="flex items-center gap-4 p-5 bg-rose-50 border border-rose-100 rounded-2xl group cursor-pointer hover:bg-rose-100 transition-all shadow-sm">
-                                            <input
-                                                type="checkbox"
-                                                id="deleteUser"
-                                                checked={deleteUser}
-                                                onChange={(e) => setDeleteUser(e.target.checked)}
-                                                className="w-6 h-6 rounded-lg border-slate-300 bg-white text-rose-500 focus:ring-rose-500 cursor-pointer transition-all"
-                                            />
-                                            <label htmlFor="deleteUser" className="text-rose-500 font-black uppercase tracking-[0.15em] text-[9px] cursor-pointer group-hover:text-rose-600 italic">
-                                                Permanently Delete Fraudulent Account
-                                            </label>
-                                        </div>
-                                    </>
+                                    </div>
                                 )}
-                            </div>
+                             </div>
 
-                            <div className="flex gap-4 mt-10 relative z-10 pt-6 border-t border-slate-100">
+                             <div className="flex gap-8 relative z-10">
                                 <button
                                     onClick={closeActionModal}
-                                    className="flex-1 bg-slate-50 hover:bg-slate-100 text-slate-400 px-6 py-4 rounded-2xl transition-all font-black uppercase tracking-[0.15em] text-[10px] border border-slate-100 hover:text-identity-navy italic"
+                                    className="flex-1 bg-white/5 hover:bg-white/10 text-white/40 hover:text-white px-10 py-6 rounded-[1.5rem] border-2 border-white/10 transition-all font-black uppercase tracking-[0.3em] text-[11px] italic"
                                 >
-                                    Abort
+                                    CANCEL
                                 </button>
                                 <button
                                     onClick={confirmAction}
-                                    className={`flex-1 px-6 py-4 rounded-2xl text-white transition-all font-black uppercase tracking-[0.15em] text-[10px] shadow-xl active:scale-95 italic ${actionModal.type === 'resolved'
-                                        ? 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-900/10'
-                                        : 'bg-rose-500 hover:bg-rose-600 shadow-rose-900/10'
-                                        }`}
+                                    className={`flex-1 px-10 py-6 rounded-[1.5rem] text-white transition-all font-black uppercase tracking-[0.3em] text-[11px] shadow-2xl active:scale-95 italic border-2 ${actionModal.type === 'resolved' ? 'bg-emerald-600 border-emerald-400 shadow-emerald-500/30 hover:bg-emerald-500' : 'bg-rose-600 border-rose-400 shadow-rose-500/30 hover:bg-rose-500'}`}
                                 >
-                                    Execute {actionModal.type === 'resolved' ? 'Resolution' : 'Dismissal'}
+                                    CONFIRM ACTION
                                 </button>
-                            </div>
+                             </div>
                         </div>
                     </div>
                 )}
 
+                {/* Professor Sync Authentication */}
                 {selectedProfessor && (
-                    <div className="fixed inset-0 bg-identity-navy/60 backdrop-blur-md flex items-center justify-center p-6 z-50 animate-in fade-in zoom-in duration-300">
-                        <div className="bg-white border border-identity-sky/10 rounded-[2rem] md:rounded-[3rem] p-10 max-w-3xl w-full shadow-2xl relative overflow-hidden">
-                            <div className="absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-identity-sky/5 to-transparent pointer-events-none opacity-50" />
+                    <div className="fixed inset-0 bg-identity-navy/98 backdrop-blur-3xl flex items-center justify-center p-8 z-[100] animate-in fade-in duration-500 overflow-y-auto">
+                        <div className="identity-glass border-2 border-white/20 rounded-[4rem] p-16 max-w-6xl w-full shadow-[0_64px_128px_rgba(0,0,0,0.8)] relative overflow-hidden my-auto">
+                            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(92,180,228,0.08),transparent_40%)]" />
                             
-                            <div className="flex justify-between items-start mb-10 relative z-10">
-                                <h3 className="text-3xl font-black text-identity-navy flex items-center gap-4 uppercase tracking-tighter italic">
-                                    <div className="bg-identity-sky/10 p-3 rounded-2xl border border-identity-sky/10">
-                                        <UserCheck className="w-8 h-8 text-identity-sky" />
+                            <div className="flex justify-between items-start mb-16 relative z-10 border-b-2 border-white/10 pb-12">
+                                <div className="flex items-center gap-10">
+                                    <div className="bg-identity-sky p-5 rounded-[2.2rem] shadow-glow-blue relative group overflow-hidden">
+                                        <div className="absolute inset-0 bg-white/20 animate-pulse" />
+                                        <UserCheck className="w-14 h-14 text-identity-navy relative z-10" />
                                     </div>
-                                    Identity Verification
-                                </h3>
-                                <button onClick={() => setSelectedProfessor(null)} className="text-slate-300 hover:text-identity-navy transition-all hover:rotate-90">
-                                    <XCircle className="w-8 h-8" />
+                                    <div>
+                                        <p className="text-[10px] font-black text-identity-sky/60 uppercase tracking-[0.6em] mb-3 italic">Identity Authentication Protocol</p>
+                                        <h3 className="text-5xl font-black text-white italic uppercase tracking-tighter text-shadow-glow">PROFESSOR APPROVAL</h3>
+                                    </div>
+                                </div>
+                                <button onClick={() => setSelectedProfessor(null)} className="identity-glass border-2 border-white/20 text-white/50 hover:text-white hover:border-white transition-all p-5 rounded-full group">
+                                    <XCircle className="w-12 h-12 group-hover:scale-110 group-hover:rotate-90 transition-transform duration-700" />
                                 </button>
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-12 gap-10 relative z-10">
-                                <div className="md:col-span-4 lg:col-span-3 space-y-6">
-                                    <div className="aspect-[3/4] bg-slate-50 rounded-[2rem] overflow-hidden border border-identity-sky/5 relative group shadow-inner">
+                            <div className="grid grid-cols-1 lg:grid-cols-12 gap-20 relative z-10 items-start">
+                                <div className="lg:col-span-4 space-y-10 group">
+                                    <div className="aspect-[3/4] bg-black/40 rounded-[3rem] overflow-hidden border-2 border-white/10 relative shadow-[0_48px_96px_rgba(0,0,0,0.5)] group-hover:border-identity-sky/40 transition-all duration-700">
                                         {selectedProfessor.id_photo ? (
                                             <>
-                                                {isPDF(selectedProfessor.id_photo) ? (
-                                                    <div className="w-full h-full flex flex-col items-center justify-center bg-slate-100 text-identity-sky p-4 border border-slate-100 rounded-[24px]">
-                                                        <FileText size={48} className="mb-3" />
-                                                        <span className="text-[9px] font-black uppercase tracking-[0.15em] text-center">PDF ENCRYPTED ARCHIVE</span>
-                                                    </div>
-                                                ) : (
-                                                    <img
-                                                        src={getProfilePictureUrl(selectedProfessor.id_photo) || ''}
-                                                        alt="Identity Badge"
-                                                        className="w-full h-full object-cover grayscale brightness-90 transition-all group-hover:grayscale-0 group-hover:brightness-100 group-hover:scale-105"
-                                                    />
-                                                )}
-                                                <a href={getProfilePictureUrl(selectedProfessor.id_photo) || '#'} target="_blank" rel="noopener noreferrer" 
-                                                   className="absolute inset-0 bg-identity-navy/80 opacity-0 group-hover:opacity-100 transition-all flex flex-col items-center justify-center gap-4 text-identity-navy backdrop-blur-sm">
-                                                    <ExternalLink size={24} />
-                                                    <span className="text-[9px] font-black uppercase tracking-[0.15em]">VERIFY SOURCE</span>
-                                                </a>
+                                                <img
+                                                    src={getProfilePictureUrl(selectedProfessor.id_photo) || ''}
+                                                    alt="Identity Badge"
+                                                    className="w-full h-full object-cover grayscale transition-all duration-1000 group-hover:grayscale-0 group-hover:scale-105"
+                                                />
+                                                <div className="absolute inset-0 bg-identity-navy/90 opacity-0 group-hover:opacity-100 transition-all flex flex-col items-center justify-center gap-10 text-white backdrop-blur-xl">
+                                                    <div className="w-24 h-24 rounded-full border-4 border-identity-sky/40 border-t-identity-sky animate-spin" />
+                                                    <a href={getProfilePictureUrl(selectedProfessor.id_photo) || '#'} target="_blank" className="text-[10px] font-black uppercase tracking-[0.4em] italic bg-white/5 px-10 py-4 rounded-xl border border-white/10 hover:bg-identity-sky hover:text-identity-navy transition-all animate-in fade-in slide-in-from-bottom-5 duration-700">VIEW FULL IMAGE</a>
+                                                </div>
+                                                <div className="absolute top-8 left-8 z-20 identity-glass px-5 py-2 border border-white/30 text-[9px] font-black text-white/80 uppercase tracking-widest backdrop-blur-md italic">
+                                                    Identity_ID: VERIFIED
+                                                </div>
                                             </>
                                         ) : (
-                                            <div className="w-full h-full flex flex-col items-center justify-center text-slate-200 bg-slate-50">
-                                                <Camera className="w-12 h-12 mb-3" />
-                                                <span className="text-[8px] font-black uppercase tracking-[0.4rem]">NO_DATA</span>
+                                            <div className="w-full h-full flex flex-col items-center justify-center bg-white/5 space-y-8">
+                                                <Camera className="w-24 h-24 text-white/5 animate-pulse" />
+                                                <p className="text-[10px] font-black text-white/10 uppercase tracking-[0.5em] italic">NO IMAGE</p>
                                             </div>
                                         )}
                                     </div>
+                                    <div className="identity-glass border-2 border-white/5 rounded-[2rem] p-8 text-center shadow-inner group-hover:border-white/10 transition-all">
+                                        <p className="text-white/20 text-[9px] font-black uppercase tracking-[0.5em] mb-2 italic">PROFESSOR ID</p>
+                                        <code className="text-identity-sky font-mono text-xs font-black tracking-widest uppercase">ID:{selectedProfessor.user_id}</code>
+                                    </div>
                                 </div>
 
-                                <div className="md:col-span-8 lg:col-span-9 space-y-8">
-                                    <div className="bg-slate-50 border border-identity-sky/10 rounded-[2rem] p-8 shadow-inner">
-                                        <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 gap-10">
-                                            <div className="space-y-6">
-                                                <div>
-                                                    <p className="text-slate-300 text-[9px] font-black uppercase tracking-[0.15em] mb-2 italic">Subject Header</p>
-                                                    <p className="text-identity-navy font-black text-xl uppercase tracking-tighter leading-none italic">{selectedProfessor.first_name} {selectedProfessor.last_name}</p>
-                                                    <p className="text-slate-400 text-[9px] font-black uppercase tracking-[0.15em] mt-3 italic">PROCTOR LEVEL ACCESS</p>
+                                <div className="lg:col-span-8 space-y-16">
+                                    <div className="identity-glass border-2 border-white/10 rounded-[3.5rem] p-12 shadow-inner relative overflow-hidden group/meta">
+                                        <div className="absolute inset-0 bg-white/[0.01] pointer-events-none group-hover/meta:bg-identity-sky/[0.02] transition-colors" />
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-16 relative z-10">
+                                            <div className="space-y-12">
+                                                <div className="space-y-4">
+                                                    <p className="text-white/30 text-[9px] font-black uppercase tracking-[0.4em] mb-4 italic flex items-center gap-4">
+                                                        <div className="w-2 h-2 rounded-full bg-identity-sky/40" />
+                                                        PROFESSOR FULL NAME
+                                                    </p>
+                                                    <p className="text-white font-black text-4xl uppercase tracking-tighter leading-tight italic text-shadow-glow">
+                                                        {selectedProfessor.first_name} <span className="text-identity-sky">{selectedProfessor.last_name}</span>
+                                                    </p>
+                                                    <div className="inline-flex items-center gap-4 bg-identity-sky/10 px-6 py-2 rounded-2xl border border-identity-sky/20">
+                                                        <span className="w-2 h-2 rounded-full bg-identity-sky shadow-glow-blue" />
+                                                        <p className="text-identity-sky text-[10px] font-black uppercase tracking-[0.3em] font-outfit italic">PENDING APPROVAL</p>
+                                                    </div>
                                                 </div>
-                                                <div>
-                                                    <p className="text-slate-300 text-[9px] font-black uppercase tracking-[0.15em] mb-2 italic">Student Identification</p>
-                                                    <code className="text-identity-sky font-mono bg-white px-4 py-2 rounded-2xl border border-slate-100 inline-block text-xs font-bold tracking-[0.15em]">
-                                                        {selectedProfessor.user_id}
-                                                    </code>
+                                                <div className="space-y-4">
+                                                    <p className="text-white/30 text-[9px] font-black uppercase tracking-[0.4em] mb-4 italic flex items-center gap-4">
+                                                        <div className="w-2 h-2 rounded-full bg-white/20" />
+                                                        EMAIL ADDRESS
+                                                    </p>
+                                                    <p className="text-white/60 font-black text-[12px] uppercase tracking-[0.2em] font-outfit lowercase italic border-l-2 border-identity-sky/40 pl-6 bg-white/5 py-4 rounded-r-2xl shadow-inner">
+                                                        {selectedProfessor.email}
+                                                    </p>
                                                 </div>
                                             </div>
-                                            <div className="space-y-6">
-                                                <div>
-                                                    <p className="text-slate-300 text-[9px] font-black uppercase tracking-[0.15em] mb-2 italic">Email Address</p>
-                                                    <p className="text-identity-navy font-bold text-xs uppercase tracking-[0.15em] lowercase">{selectedProfessor.email}</p>
-                                                </div>
-                                                <div>
-                                                    <p className="text-slate-300 text-[9px] font-black uppercase tracking-[0.15em] mb-2 italic">Initialization Timestamp</p>
-                                                    <p className="text-slate-400 font-black text-[10px] uppercase tracking-[0.15em] italic">
-                                                        {new Date(selectedProfessor.created_at).toLocaleString('en-PH', { month: 'short', day: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                                                    </p>
+                                            <div className="space-y-12">
+                                                <div className="bg-black/30 border-2 border-white/5 p-10 rounded-[2.5rem] shadow-inner space-y-6">
+                                                    <h5 className="text-white/20 text-[9px] font-black uppercase tracking-[0.4em] italic mb-6">REGISTRATION DETAILS</h5>
+                                                    <div className="space-y-10">
+                                                        <div className="flex justify-between items-center">
+                                                              <span className="text-white/40 text-[9px] font-black uppercase tracking-widest italic">DATE REGISTERED</span>
+                                                            <span className="text-white font-mono text-[10px] font-black">{new Date(selectedProfessor.created_at).toLocaleDateString()}</span>
+                                                        </div>
+                                                        <div className="flex justify-between items-center">
+                                                              <span className="text-white/40 text-[9px] font-black uppercase tracking-widest italic">APPROVAL STATUS</span>
+                                                            <span className="text-identity-sky bg-identity-sky/10 px-4 py-1 rounded-xl text-[9px] font-black border border-identity-sky/20 italic">PENDING_REVIEW</span>
+                                                        </div>
+                                                        <div className="flex justify-between items-center">
+                                                              <span className="text-white/40 text-[9px] font-black uppercase tracking-widest italic">USER ROLE</span>
+                                                              <span className="text-white/80 text-[10px] font-black italic">PROFESSOR</span>
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
 
-                                    <div className="pt-6">
-                                        <p className="text-slate-400 text-[9px] font-black uppercase tracking-[0.15em] mb-6 flex items-center gap-4 italic">
-                                            <div className="w-1 h-1 bg-identity-sky rounded-full" />
-                                            Manual Verification Override
+                                    <div className="space-y-10 pt-10">
+                                        <p className="text-white/30 text-[10px] font-black uppercase tracking-[0.6em] mb-6 flex items-center gap-6 italic text-shadow-glow">
+                                            <div className="h-[2px] flex-1 bg-gradient-to-r from-transparent to-white/10" />
+                                            APPROVAL ACTIONS
+                                            <div className="h-[2px] flex-1 bg-gradient-to-l from-transparent to-white/10" />
                                         </p>
-                                        <div className="flex flex-col sm:flex-row gap-4">
+                                        <div className="flex flex-col sm:flex-row gap-10">
                                             <button
                                                 onClick={() => handleApprove(selectedProfessor)}
                                                 disabled={actionLoading}
-                                                className="flex-[2] bg-identity-sky hover:bg-identity-navy text-white px-8 py-5 rounded-2xl font-black uppercase tracking-[0.15em] text-[10px] transition-all shadow-xl shadow-identity-sky/10 flex items-center justify-center gap-4 active:scale-95 disabled:opacity-50 italic"
+                                                className="flex-1 bg-identity-sky hover:bg-white text-identity-navy px-16 py-8 rounded-[2rem] font-black uppercase tracking-[0.4em] text-[13px] transition-all shadow-[0_32px_64px_rgba(92,180,228,0.3)] flex items-center justify-center gap-10 active:scale-95 disabled:opacity-50 italic group/auth overflow-hidden relative"
                                             >
-                                                <CheckCircle className="w-5 h-5" />
-                                                Verify Account
+                                                <div className="absolute inset-0 bg-white/10 -translate-x-full group-hover/auth:translate-x-full transition-transform duration-1000" />
+                                                <CheckCircle className="w-8 h-8 group-hover/auth:scale-125 transition-transform" />
+                                                APPROVE PROFESSOR
                                             </button>
-                                            <div className="flex-[3] flex gap-4">
-                                                <input
-                                                    type="text"
-                                                    value={rejectReason}
-                                                    onChange={(e) => setRejectReason(e.target.value)}
-                                                    placeholder="State rejection rationale..."
-                                                    className="flex-1 bg-white border border-slate-200 text-identity-navy px-6 py-4 rounded-2xl focus:outline-none focus:border-rose-500 font-black uppercase text-[10px] tracking-[0.15em] placeholder:text-slate-300 transition-all shadow-sm italic"
-                                                />
-                                                <button
-                                                    onClick={handleRejectClick}
-                                                    disabled={actionLoading || !rejectReason}
-                                                    className="bg-rose-500 hover:bg-rose-600 text-white px-6 py-4 rounded-2xl font-black uppercase tracking-[0.15em] text-[10px] transition-all shadow-xl shadow-rose-900/10 disabled:opacity-50 active:scale-95 border border-rose-400/20"
-                                                >
-                                                    <XCircle className="w-5 h-5" />
-                                                </button>
+                                            <div className="flex-[1.2] flex flex-col gap-6 group/rej">
+                                                <div className="flex gap-4">
+                                                    <input
+                                                        type="text"
+                                                        value={rejectReason}
+                                                        onChange={(e) => setRejectReason(e.target.value)}
+                                                        placeholder="ENTER REASON FOR REJECTION..."
+                                                        className="flex-1 bg-white/5 border-2 border-white/10 text-white px-10 py-6 rounded-[2rem] focus:outline-none focus:border-rose-500/60 font-black uppercase text-[11px] tracking-[0.2em] placeholder:text-white/10 transition-all shadow-inner italic"
+                                                    />
+                                                    <button
+                                                        onClick={handleRejectClick}
+                                                        disabled={actionLoading || !rejectReason}
+                                                        className="bg-rose-600 hover:bg-rose-500 text-white px-10 py-6 rounded-[2rem] font-black uppercase tracking-[0.3em] text-[12px] transition-all shadow-[0_32px_64px_rgba(244,63,94,0.2)] disabled:opacity-30 active:scale-95 border-2 border-rose-400/20 flex items-center justify-center group-hover/rej:shadow-glow-red italic"
+                                                    >
+                                                        <XCircle className="w-8 h-8" />
+                                                    </button>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>

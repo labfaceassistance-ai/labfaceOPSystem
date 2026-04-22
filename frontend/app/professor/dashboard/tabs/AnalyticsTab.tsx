@@ -4,7 +4,7 @@ import axios from 'axios';
 import { getToken } from '@/utils/auth';
 import {
     BarChart3, Users, AlertTriangle, TrendingDown, Activity,
-    ChevronRight, Brain, Copy, Check
+    ChevronRight, Brain, Copy, Check, CheckCircle, Zap, ShieldCheck, ArrowRight, Signal, History, Monitor, PieChart
 } from 'lucide-react';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
@@ -48,39 +48,44 @@ interface AllData {
 // ─── Small presentational components (defined outside to avoid re-init) ───
 function StatusBadge({ status }: { status: string }) {
     const map: Record<string, string> = {
-        Dropout: 'bg-red-500/20 text-red-400 border-red-500/30',
-        Critical: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
-        'High Risk': 'bg-amber-400/15 text-amber-300 border-amber-400/20',
-        Good: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/20',
+        Dropout: 'bg-rose-500/20 text-rose-500 border-rose-500/30 shadow-[0_0_20px_rgba(239,68,68,0.3)]',
+        Critical: 'bg-[#F59E0B]/20 text-[#F59E0B] border-[#F59E0B]/30 shadow-[0_0_20px_rgba(245,158,11,0.3)]',
+        'High Risk': 'bg-[#F59E0B]/15 text-[#F59E0B] border-[#F59E0B]/20 shadow-[0_0_15px_rgba(245,158,11,0.2)]',
+        Good: 'bg-emerald-500/20 text-emerald-500 border-emerald-500/30 shadow-[0_0_20px_rgba(16,185,129,0.3)]',
     };
     return (
-        <span className={`inline-flex px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.1em] rounded border ${map[status] || map.Good}`}>
-            {status}
+        <span className={`inline-flex px-6 py-2 text-[10px] font-black uppercase tracking-[0.3em] rounded-xl border italic ${map[status] || map.Good}`}>
+            {status === 'Dropout' ? 'DROPPED' : status === 'Critical' ? 'CRITICAL' : status === 'High Risk' ? 'AT RISK' : 'GOOD'}
         </span>
     );
 }
 
 function InterventionBadge({ status }: { status: string }) {
     const map: Record<string, string> = {
-        Improved: 'bg-emerald-500/20 text-emerald-400',
-        'No change': 'bg-amber-500/20 text-amber-400',
-        Pending: 'bg-slate-500/20 text-slate-400',
-        None: 'bg-slate-800/60 text-slate-600',
+        Improved: 'bg-emerald-500/20 text-emerald-500 border-emerald-500/30',
+        'No change': 'bg-[#F59E0B]/20 text-[#F59E0B] border-[#F59E0B]/30',
+        Pending: 'bg-[#5CB4E4]/20 text-[#5CB4E4] border-[#5CB4E4]/30',
+        None: 'bg-white/5 text-slate-400 border-white/10',
     };
     return (
-        <span className={`inline-flex px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.1em] rounded ${map[status] || map.None}`}>
-            {status}
+        <span className={`inline-flex px-6 py-2 text-[10px] font-black uppercase tracking-[0.3em] rounded-xl border italic ${map[status] || map.None}`}>
+            {(status || 'NONE').toUpperCase().replace(' ', '_')}
         </span>
     );
 }
 
 function StreakDots({ streak }: { streak: string[] }) {
+    // Reverse the streak so that the latest session is on the right
+    const displayStreak = [...streak].reverse();
     return (
-        <div className="flex gap-1 flex-wrap">
-            {streak.slice(0, 8).map((s, i) => (
-                <div key={i} className="w-2.5 h-2.5 rounded-full flex-shrink-0"
-                    style={{ backgroundColor: s === 'Present' ? '#10B981' : s === 'Late' ? '#F59E0B' : '#EF4444' }}
-                    title={s}
+        <div className="flex gap-2 flex-wrap">
+            {displayStreak.slice(-10).map((s, i) => (
+                <div key={i} className="w-3 h-3 rounded-full flex-shrink-0 shadow-lg transition-transform hover:scale-150 cursor-help"
+                    style={{ 
+                        backgroundColor: s === 'Present' ? '#10B981' : s === 'Late' ? '#F59E0B' : '#EF4444',
+                        boxShadow: `0 0 10px ${s === 'Present' ? 'rgba(16,185,129,0.4)' : s === 'Late' ? 'rgba(245,158,11,0.4)' : 'rgba(239,68,68,0.4)'}`
+                    }}
+                    title={s.toUpperCase()}
                 />
             ))}
         </div>
@@ -90,30 +95,43 @@ function StreakDots({ streak }: { streak: string[] }) {
 function RiskMiniBar({ score }: { score: number }) {
     const color = score >= 80 ? '#EF4444' : score >= 50 ? '#F59E0B' : '#10B981';
     return (
-        <div className="flex items-center gap-1.5">
-            <div className="w-14 h-1.5 rounded-full bg-slate-700/60 overflow-hidden">
-                <div className="h-full rounded-full" style={{ width: `${score}%`, backgroundColor: color }} />
+        <div className="flex items-center gap-4">
+            <div className="w-24 h-2 rounded-full bg-[#041C3C]/10 overflow-hidden shadow-inner border border-white/20">
+                <div className="h-full rounded-full transition-all duration-1000 shadow-[0_0_15px_rgba(0,0,0,0.3)]" style={{ width: `${score}%`, backgroundColor: color }} />
             </div>
-            <span className="text-[9px] font-black" style={{ color }}>{score}%</span>
+            <span className="text-[11px] font-black italic tracking-tight" style={{ color }}>{score}%</span>
         </div>
     );
 }
 
 // ─── Heatmap colour helper ─────────────────────────────────────────────────
 function heatColor(val: number): string {
-    if (val === 0) return 'rgba(92,180,228,0.05)';
-    if (val <= 1) return 'rgba(59,130,246,0.45)';
-    if (val <= 4) return 'rgba(245,158,11,0.55)';
-    if (val <= 7) return 'rgba(248,113,113,0.55)';
-    return 'rgba(239,68,68,0.82)';
+    if (val === 0) return 'rgba(4,28,60,0.03)';
+    if (val <= 1) return 'rgba(92,180,228,0.55)';
+    if (val <= 4) return 'rgba(245,158,11,0.65)';
+    if (val <= 7) return 'rgba(248,113,113,0.65)';
+    return 'rgba(239,68,68,0.85)';
 }
 
 // ─── Spinner ───────────────────────────────────────────────────────────────
 function Spinner() {
     return (
-        <div className="w-8 h-8 relative">
-            <div className="absolute inset-0 border-3 border-identity-sky/20 rounded-full" />
-            <div className="absolute inset-0 border-3 border-identity-sky border-t-transparent rounded-full animate-spin" />
+        <div className="flex flex-col items-center justify-center p-[240px] gap-12 font-outfit">
+            <div className="w-32 h-32 relative">
+                <div className="absolute inset-0 border-4 border-[#5CB4E4]/10 rounded-[3rem] rotate-45" />
+                <div className="absolute inset-0 border-4 border-[#041C3C] border-t-transparent rounded-[3rem] rotate-45 animate-spin shadow-[0_0_50px_rgba(92,180,228,0.5)]" />
+                <div className="absolute inset-0 flex items-center justify-center -rotate-45">
+                    <Brain className="text-[#041C3C]/20 w-12 h-12" />
+                </div>
+            </div>
+            <div className="text-center space-y-4">
+                <p className="text-[16px] font-black text-[#041C3C] uppercase tracking-[0.6em] animate-pulse italic leading-none">
+                    Loading Analytics...
+                </p>
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em] italic opacity-60">
+                    Connecting to data source
+                </p>
+            </div>
         </div>
     );
 }
@@ -124,7 +142,6 @@ function Spinner() {
 export default function AnalyticsTab({ user, classes }: AnalyticsTabProps) {
     const activeClasses = useMemo(() => classes.filter(c => !c.is_archived), [classes]);
 
-    // Dynamic section colour mapping built from professor's actual classes
     const sections = useMemo(() => {
         const unique = [...new Set(activeClasses.map(c => c.section).filter(Boolean))];
         return unique.map((s, i) => ({ id: s as string, label: s as string, color: SECTION_PALETTE[i % SECTION_PALETTE.length] }));
@@ -249,27 +266,24 @@ export default function AnalyticsTab({ user, classes }: AnalyticsTabProps) {
         document.head.appendChild(s);
     }, []);
 
-    // ── Destroy helper ───────────────────────────────────────────────────
     const kill = (inst: React.MutableRefObject<any>) => {
         if (inst.current) { inst.current.destroy(); inst.current = null; }
     };
 
-    // ── Initialise / update all charts ───────────────────────────────────
     useEffect(() => {
         if (!chartJsLoaded || !filteredData || activeSubTab !== 'dashboard') return;
         const C = (window as any).Chart;
         if (!C) return;
 
-        // Global defaults for dark theme
         try {
-            C.defaults.color = '#94a3b8';
-            C.defaults.borderColor = 'rgba(92,180,228,0.08)';
-            C.defaults.font = { family: 'Outfit, sans-serif', size: 11 };
-        } catch (_) { /* ignore */ }
+            C.defaults.color = 'rgba(4,28,60,0.5)';
+            C.defaults.borderColor = 'rgba(92,180,228,0.1)';
+            C.defaults.font = { family: 'Outfit, sans-serif', size: 12, weight: 'bold' };
+        } catch (_) { }
 
-        const scale = { grid: { color: 'rgba(92,180,228,0.07)' }, ticks: { color: '#64748b' } };
+        const scale = { grid: { color: 'rgba(92,180,228,0.08)' }, ticks: { color: '#041C3C' } };
 
-        /* ▼ 1. Line — attendance rate per session ──────────────────────── */
+        /* ▼ 1. Line — attendance rate per session */
         kill(lineInst);
         if (lineRef.current) {
             lineInst.current = new C(lineRef.current, {
@@ -281,13 +295,13 @@ export default function AnalyticsTab({ user, classes }: AnalyticsTabProps) {
                             label: sec.section,
                             data: sec.rates,
                             borderColor: sectionColor(sec.section),
-                            backgroundColor: `${sectionColor(sec.section)}18`,
-                            fill: false, tension: 0.4, pointRadius: 4, borderWidth: 2, spanGaps: true,
+                            backgroundColor: `${sectionColor(sec.section)}20`,
+                            fill: true, tension: 0.4, pointRadius: 5, pointHoverRadius: 8, borderWidth: 3, spanGaps: true,
                         })),
                         {
-                            label: '75% Threshold',
+                            label: 'Threshold',
                             data: filteredData.sessionData.sessions.map(() => 75),
-                            borderColor: '#EF4444', borderDash: [6, 3], borderWidth: 1.5,
+                            borderColor: '#EF4444', borderDash: [10, 5], borderWidth: 2,
                             pointRadius: 0, fill: false,
                         },
                     ],
@@ -295,8 +309,8 @@ export default function AnalyticsTab({ user, classes }: AnalyticsTabProps) {
                 options: {
                     responsive: true, maintainAspectRatio: false,
                     plugins: {
-                        legend: { labels: { color: '#94a3b8', boxWidth: 10, padding: 14, font: { size: 11 } } },
-                        tooltip: { callbacks: { label: (c: any) => `${c.dataset.label}: ${c.raw ?? 'N/A'}%` } },
+                        legend: { labels: { color: '#041C3C', boxWidth: 12, padding: 20, font: { size: 11, weight: '900' } } },
+                        tooltip: { backgroundColor: '#041C3C', titleFont: { size: 14 }, bodyFont: { size: 12 }, padding: 12, cornerRadius: 12 },
                     },
                     scales: {
                         x: scale,
@@ -306,32 +320,33 @@ export default function AnalyticsTab({ user, classes }: AnalyticsTabProps) {
             });
         }
 
-        /* ▼ 2. Doughnut — status breakdown ─────────────────────────────── */
+        /* ▼ 2. Doughnut — status breakdown */
         kill(doughnutInst);
         if (doughnutRef.current) {
             const bd = filteredData.statusBreakdown;
             doughnutInst.current = new C(doughnutRef.current, {
                 type: 'doughnut',
                 data: {
-                    labels: ['Present', 'Late', 'Absent'],
+                    labels: ['PRESENT', 'LATE', 'ABSENT'],
                     datasets: [{
                         data: [bd.present, bd.late, bd.absent],
                         backgroundColor: ['#10B981', '#F59E0B', '#EF4444'],
-                        borderColor: '#041C3C', borderWidth: 3,
+                        borderColor: '#ffffff', borderWidth: 8,
+                        hoverOffset: 20
                     }],
                 },
                 options: {
-                    responsive: true, maintainAspectRatio: false, cutout: '62%',
+                    responsive: true, maintainAspectRatio: false, cutout: '70%',
                     plugins: {
                         legend: {
                             position: 'bottom' as const,
                             labels: {
-                                color: '#94a3b8', boxWidth: 10, padding: 12,
+                                color: '#041C3C', boxWidth: 12, padding: 20, font: { size: 11, weight: '900' },
                                 generateLabels: (chart: any) => {
                                     const d = chart.data;
                                     const total = bd.total || 1;
                                     return d.labels.map((lbl: string, i: number) => ({
-                                        text: `${lbl}  ${d.datasets[0].data[i]}  (${Math.round(d.datasets[0].data[i] / total * 100)}%)`,
+                                        text: `${lbl} · ${d.datasets[0].data[i]} (${Math.round(d.datasets[0].data[i] / total * 100)}%)`,
                                         fillStyle: d.datasets[0].backgroundColor[i],
                                         index: i,
                                     }));
@@ -343,7 +358,7 @@ export default function AnalyticsTab({ user, classes }: AnalyticsTabProps) {
             });
         }
 
-        /* ▼ 3. Grouped bar — P / L / A by section ──────────────────────── */
+        /* ▼ 3. Grouped bar — P / L / A by section */
         kill(groupedInst);
         if (groupedRef.current) {
             groupedInst.current = new C(groupedRef.current, {
@@ -351,20 +366,20 @@ export default function AnalyticsTab({ user, classes }: AnalyticsTabProps) {
                 data: {
                     labels: filteredData.bySection.map(s => s.section),
                     datasets: [
-                        { label: 'Present', data: filteredData.bySection.map(s => s.present), backgroundColor: '#10B981', borderRadius: 3 },
-                        { label: 'Late', data: filteredData.bySection.map(s => s.late), backgroundColor: '#F59E0B', borderRadius: 3 },
-                        { label: 'Absent', data: filteredData.bySection.map(s => s.absent), backgroundColor: '#EF4444', borderRadius: 3 },
+                        { label: 'PRESENT', data: filteredData.bySection.map(s => s.present), backgroundColor: '#10B981', borderRadius: 8 },
+                        { label: 'LATE', data: filteredData.bySection.map(s => s.late), backgroundColor: '#F59E0B', borderRadius: 8 },
+                        { label: 'ABSENT', data: filteredData.bySection.map(s => s.absent), backgroundColor: '#EF4444', borderRadius: 8 },
                     ],
                 },
                 options: {
                     responsive: true, maintainAspectRatio: false,
-                    plugins: { legend: { labels: { color: '#94a3b8', boxWidth: 10 } } },
+                    plugins: { legend: { labels: { color: '#041C3C', boxWidth: 12, font: { weight: '900' } } } },
                     scales: { x: scale, y: { ...scale, beginAtZero: true } },
                 },
             });
         }
 
-        /* ▼ 4. Horizontal bar — absence rate ranking ────────────────────── */
+        /* ▼ 4. Horizontal bar — absence rate ranking */
         kill(rankInst);
         if (rankRef.current) {
             const ranked = [...filteredData.bySection].map(s => {
@@ -372,20 +387,11 @@ export default function AnalyticsTab({ user, classes }: AnalyticsTabProps) {
                 return { section: s.section, rate: tot > 0 ? Math.round((s.absent / tot) * 100) : 0 };
             }).sort((a, b) => b.rate - a.rate);
 
-            const rankColors = ranked.map((_, i, arr) => {
-                if (arr.length <= 1) return '#F59E0B';
-                const t = arr.length === 1 ? 0.5 : i / (arr.length - 1);
-                const r = Math.round(239 * (1 - t) + 16 * t);
-                const g = Math.round(68 * (1 - t) + 185 * t);
-                const b2 = Math.round(68 * (1 - t) + 129 * t);
-                return `rgb(${r},${g},${b2})`;
-            });
-
             rankInst.current = new C(rankRef.current, {
                 type: 'bar',
                 data: {
                     labels: ranked.map(r => r.section),
-                    datasets: [{ label: 'Absence Rate', data: ranked.map(r => r.rate), backgroundColor: rankColors, borderRadius: 4 }],
+                    datasets: [{ label: 'Absence Rank', data: ranked.map(r => r.rate), backgroundColor: '#041C3C', borderRadius: 12, barThickness: 24 }],
                 },
                 options: {
                     indexAxis: 'y' as const, responsive: true, maintainAspectRatio: false,
@@ -395,7 +401,7 @@ export default function AnalyticsTab({ user, classes }: AnalyticsTabProps) {
             });
         }
 
-        /* ▼ 5. Stacked bar — actual abs + late-converted abs ───────────── */
+        /* ▼ 5. Stacked bar — actual abs + late-converted abs */
         kill(stackedInst);
         if (stackedRef.current) {
             stackedInst.current = new C(stackedRef.current, {
@@ -403,29 +409,26 @@ export default function AnalyticsTab({ user, classes }: AnalyticsTabProps) {
                 data: {
                     labels: filteredData.bySection.map(s => s.section),
                     datasets: [
-                        { label: 'Actual Absences', data: filteredData.bySection.map(s => s.absent), backgroundColor: '#EF4444', stack: 'a', borderRadius: 3 },
-                        { label: 'Abs from Lates (÷3)', data: filteredData.bySection.map(s => Math.floor(s.late / 3)), backgroundColor: '#F59E0B', stack: 'a', borderRadius: 3 },
+                        { label: 'Direct Absences', data: filteredData.bySection.map(s => s.absent), backgroundColor: '#EF4444', stack: 'a', borderRadius: 8 },
+                        { label: 'Absences from Lates (3 Lates = 1 Absence)', data: filteredData.bySection.map(s => Math.floor(s.late / 3)), backgroundColor: '#F59E0B', stack: 'a', borderRadius: 8 },
                     ],
                 },
                 options: {
                     responsive: true, maintainAspectRatio: false,
-                    plugins: { legend: { labels: { color: '#94a3b8', boxWidth: 10 } } },
+                    plugins: { legend: { labels: { color: '#041C3C', boxWidth: 12, font: { weight: '900' } } } },
                     scales: { x: scale, y: { ...scale, stacked: true, beginAtZero: true } },
                 },
             });
         }
 
-        /* ▼ 6. Bar — absences by day of week ───────────────────────────── */
+        /* ▼ 6. Bar — absences by day of week */
         kill(dayInst);
         if (dayRef.current) {
-            const weekColors = (filteredData.byDay ?? []).map(d =>
-                ['Monday', 'Friday'].includes(d.day) ? '#EF4444' : d.day === 'Wednesday' ? '#F59E0B' : '#10B981'
-            );
             dayInst.current = new C(dayRef.current, {
                 type: 'bar',
                 data: {
-                    labels: (filteredData.byDay ?? []).map(d => d.shortDay),
-                    datasets: [{ label: 'Absences', data: (filteredData.byDay ?? []).map(d => d.count), backgroundColor: weekColors, borderRadius: 6 }],
+                    labels: (filteredData.byDay ?? []).map(d => d.shortDay.toUpperCase()),
+                    datasets: [{ label: 'Absences', data: (filteredData.byDay ?? []).map(d => d.count), backgroundColor: '#5CB4E4', borderRadius: 12 }],
                 },
                 options: {
                     responsive: true, maintainAspectRatio: false,
@@ -435,7 +438,7 @@ export default function AnalyticsTab({ user, classes }: AnalyticsTabProps) {
             });
         }
 
-        /* ▼ 7. Grouped bar — semester comparison ───────────────────────── */
+        /* ▼ 7. Grouped bar — semester comparison */
         kill(semInst);
         if (semRef.current && (filteredData.semComparison ?? []).length > 0) {
             semInst.current = new C(semRef.current, {
@@ -443,18 +446,18 @@ export default function AnalyticsTab({ user, classes }: AnalyticsTabProps) {
                 data: {
                     labels: (filteredData.semComparison ?? []).map(s => s.section),
                     datasets: [
-                        { label: 'Last Semester', data: (filteredData.semComparison ?? []).map(s => s.lastSem), backgroundColor: '#475569', borderRadius: 4 },
+                        { label: 'Last Semester', data: (filteredData.semComparison ?? []).map(s => s.lastSem), backgroundColor: 'rgba(4,28,60,0.1)', borderRadius: 12 },
                         {
-                            label: 'This Semester',
+                            label: 'Current Semester',
                             data: (filteredData.semComparison ?? []).map(s => s.thisSem),
-                            backgroundColor: (filteredData.semComparison ?? []).map(s => sectionColor(s.section)),
-                            borderRadius: 4,
+                            backgroundColor: '#041C3C',
+                            borderRadius: 12,
                         },
                     ],
                 },
                 options: {
                     responsive: true, maintainAspectRatio: false,
-                    plugins: { legend: { labels: { color: '#94a3b8', boxWidth: 10 } } },
+                    plugins: { legend: { labels: { color: '#041C3C', boxWidth: 12, font: { weight: '900' } } } },
                     scales: {
                         x: scale,
                         y: { ...scale, min: 0, max: 100, ticks: { ...scale.ticks, callback: (v: any) => `${v}%` } },
@@ -467,10 +470,8 @@ export default function AnalyticsTab({ user, classes }: AnalyticsTabProps) {
             kill(lineInst); kill(doughnutInst); kill(groupedInst);
             kill(rankInst); kill(stackedInst); kill(dayInst); kill(semInst);
         };
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [chartJsLoaded, filteredData, activeSubTab]);
 
-    // ── Fetch interventions when student selected ─────────────────────────
     useEffect(() => {
         if (!selectedStudent || !user) return;
         const uid = user.professorId || user.userId || user.user_id;
@@ -487,11 +488,9 @@ export default function AnalyticsTab({ user, classes }: AnalyticsTabProps) {
         load();
     }, [selectedStudent, user]);
 
-    // ── Generate AI intervention prompt ──────────────────────────────────
     const handleGenerateIntervention = useCallback(() => {
         if (!selectedStudent) return;
         const prompt = `You are a professor's AI assistant. Generate an intervention plan for this student:
-
 Student: ${selectedStudent.name}
 Section: ${selectedStudent.section}
 Effective Absences: ${selectedStudent.effAbs} out of 3 allowed
@@ -505,43 +504,62 @@ Generate:
 2. Catch-up material and activity suggestions for each missed session
 3. A 2-week follow-up timeline with checkpoints on Day 3, Day 7, and Day 14`;
 
-        // Dispatch for any in-page AI widget
         if (typeof window !== 'undefined') {
             window.dispatchEvent(new CustomEvent('labface-ai-prompt', { detail: { prompt, student: selectedStudent } }));
         }
-        // Clipboard fallback
         if (navigator.clipboard) {
             navigator.clipboard.writeText(prompt).then(() => {
                 setAiCopied(true); setTimeout(() => setAiCopied(false), 3000);
             });
-        } else {
-            const ta = document.createElement('textarea');
-            ta.value = prompt; document.body.appendChild(ta); ta.select();
-            document.execCommand('copy'); document.body.removeChild(ta);
-            setAiCopied(true); setTimeout(() => setAiCopied(false), 3000);
         }
     }, [selectedStudent]);
 
-    // ── Small UI building blocks ──────────────────────────────────────────
     const KpiCard = ({ label, value, unit = '', color, icon }: { label: string; value: number; unit?: string; color: string; icon: React.ReactNode }) => (
-        <div className="identity-glass rounded-2xl border border-identity-sky/10 p-5 relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-20 h-20 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2"
-                style={{ backgroundColor: `${color}12` }} />
-            <div className="relative z-10">
-                <div className="w-8 h-8 rounded-xl flex items-center justify-center border mb-3"
-                    style={{ backgroundColor: `${color}18`, borderColor: `${color}30`, color }}>
-                    {icon}
+        <div className="bg-white/40 backdrop-blur-xl rounded-[4rem] border border-white/20 p-12 relative overflow-hidden group shadow-3xl transition-all duration-700 hover:-translate-y-4 font-outfit">
+            <div className="absolute top-0 right-0 w-64 h-64 rounded-full blur-[120px] opacity-[0.1] -translate-y-1/2 translate-x-1/2 group-hover:scale-150 transition-transform duration-1000"
+                style={{ backgroundColor: color }} />
+            <div className="absolute inset-0 opacity-[0.05] pointer-events-none bg-blueprint" />
+            
+            <div className="relative z-10 space-y-8">
+                <div className="flex items-center justify-between">
+                    <div className="p-6 rounded-[1.8rem] bg-[#041C3C] text-[#5CB4E4] shadow-2xl border border-[#5CB4E4]/20 group-hover:bg-[#5CB4E4] group-hover:text-white transition-all duration-700">
+                        {icon}
+                    </div>
+                    <div className="w-3 h-3 rounded-full bg-[#5CB4E4] animate-pulse shadow-[0_0_15px_rgba(92,180,228,0.8)]" />
                 </div>
-                <div className="text-2xl font-black tracking-tighter" style={{ color }}>{value}{unit}</div>
-                <div className="text-[9px] font-black text-slate-500 uppercase tracking-[0.15em] mt-0.5">{label}</div>
+                <div className="space-y-2">
+                    <div className="flex items-baseline gap-4">
+                        <span className="text-6xl font-black italic tracking-tighter text-[#041C3C] leading-none">{value}</span>
+                        <span className="text-2xl font-black text-[#5CB4E4] italic tracking-tight">{unit}</span>
+                    </div>
+                    <p className="text-[11px] font-black text-slate-400 uppercase tracking-[0.5em] italic">{label.toUpperCase().replace(' ', '_')}</p>
+                </div>
             </div>
         </div>
     );
 
-    const ChartCard = ({ title, height = 280, children }: { title: string; height?: number; children: React.ReactNode }) => (
-        <div className="identity-glass rounded-2xl border border-identity-sky/10 p-5">
-            <h3 className="text-[9px] font-black text-slate-500 uppercase tracking-[0.15em] mb-4">{title}</h3>
-            <div style={{ height, position: 'relative' }}>{children}</div>
+    const ChartCard = ({ title, height = 320, children }: { title: string; height?: number; children: React.ReactNode }) => (
+        <div className="bg-white/40 backdrop-blur-xl rounded-[4.5rem] border border-white/20 p-12 relative overflow-hidden shadow-3xl font-outfit group transition-all duration-700">
+            <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-blueprint" />
+            <div className="absolute inset-x-0 h-[2px] bg-gradient-to-r from-transparent via-[#5CB4E4]/30 to-transparent top-0 z-20 animate-scan-y opacity-30 pointer-events-none" />
+
+            <div className="flex items-center justify-between mb-12 relative z-10">
+                <div className="flex items-center gap-6">
+                    <div className="p-3 bg-[#041C3C] text-[#5CB4E4] rounded-2xl shadow-xl transition-all duration-500 group-hover:scale-110">
+                         <Signal size={20} />
+                    </div>
+                    <h3 className="text-[13px] font-black text-[#041C3C] uppercase tracking-[0.5em] italic">
+                        {title.toUpperCase().replace(' ', '_')}
+                    </h3>
+                </div>
+                <div className="flex gap-3">
+                    {[1, 2, 3].map(i => <div key={i} className={`w-2 h-2 rounded-full bg-[#5CB4E4] ${i === 1 ? 'animate-pulse' : 'opacity-20'}`} />)}
+                </div>
+            </div>
+
+            <div className="relative z-10" style={{ height }}>
+                {children}
+            </div>
         </div>
     );
 
@@ -549,424 +567,378 @@ Generate:
         const active = activeSection === id;
         return (
             <button onClick={() => setActiveSection(id)}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.12em] transition-all duration-150 border"
+                className="flex items-center gap-4 px-8 py-4 text-[12px] font-black uppercase tracking-[0.3em] transition-all duration-500 border italic shadow-2xl active:scale-95 group/pill"
                 style={{
-                    borderRadius: '8px',
-                    borderColor: active ? color : 'rgba(92,180,228,0.14)',
-                    backgroundColor: active ? `${color}22` : 'transparent',
-                    color: active ? color : '#64748b',
+                    borderRadius: '2.5rem',
+                    borderColor: active ? color : 'rgba(4,28,60,0.1)',
+                    backgroundColor: active ? `${color}15` : 'rgba(255,255,255,0.6)',
+                    color: active ? color : '#041C3C',
                 }}>
-                <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
-                {label}
+                <div className={`w-4 h-4 rounded-full flex-shrink-0 transition-transform ${active ? 'animate-pulse scale-110' : 'group-hover/pill:scale-125'}`} 
+                    style={{ backgroundColor: color, boxShadow: active ? `0 0 15px ${color}` : 'none' }} />
+                {label.toUpperCase().replace(' ', '_')}
             </button>
         );
     };
 
     const PillToggle = ({ value, options, onChange }: { value: string; options: { id: string; label: string }[]; onChange: (v: string) => void }) => (
-        <div className="flex gap-1">
+        <div className="flex gap-4 bg-white/60 p-3 rounded-[3rem] border border-white shadow-inner font-outfit backdrop-blur-xl">
             {options.map(o => {
                 const a = value === o.id;
                 return (
                     <button key={o.id} onClick={() => onChange(o.id)}
-                        className="px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.12em] transition-all duration-150 border"
-                        style={{
-                            borderRadius: '8px',
-                            borderColor: a ? '#5CB4E4' : 'rgba(92,180,228,0.14)',
-                            backgroundColor: a ? 'rgba(92,180,228,0.15)' : 'transparent',
-                            color: a ? '#5CB4E4' : '#64748b',
-                        }}>
-                        {o.label}
+                        className={`px-12 py-4 text-[11px] font-black uppercase tracking-[0.4em] transition-all duration-700 rounded-[2.2rem] italic active:scale-95 ${
+                            a ? 'bg-[#041C3C] text-white shadow-4xl scale-105' : 'text-slate-400 hover:text-[#041C3C] hover:bg-white/80'
+                        }`}
+                    >
+                        {o.label.toUpperCase().replace(' ', '_')}
                     </button>
                 );
             })}
         </div>
     );
 
-    // ── No data placeholder ───────────────────────────────────────────────
-    const NoData = ({ msg = 'No data available' }: { msg?: string }) => (
-        <div className="flex items-center justify-center h-full text-slate-600 text-sm">{msg}</div>
+    const NoData = ({ msg = 'NO DATA AVAILABLE' }: { msg?: string }) => (
+        <div className="flex flex-col items-center justify-center h-full gap-6 opacity-30 text-[#041C3C] font-outfit">
+            <PieChart size={64} className="animate-pulse" />
+            <p className="text-[12px] font-black uppercase tracking-[0.6em] italic">{msg}</p>
+        </div>
     );
 
-    // ─────────────────────────────────────────────────────────────────────
-    //  LOADING STATE
-    // ─────────────────────────────────────────────────────────────────────
-    if (loading) {
-        return (
-            <div className="space-y-6">
-                <div className="h-16 identity-glass rounded-2xl border border-identity-sky/10 animate-pulse" />
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                    {[...Array(4)].map((_, i) => <div key={i} className="h-28 identity-glass rounded-2xl border border-identity-sky/10 animate-pulse" />)}
-                </div>
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    {[...Array(4)].map((_, i) => <div key={i} className="h-72 identity-glass rounded-2xl border border-identity-sky/10 animate-pulse" />)}
-                </div>
-            </div>
-        );
-    }
+    if (loading) return <Spinner />;
 
-    // ─────────────────────────────────────────────────────────────────────
-    //  DASHBOARD TAB
-    // ─────────────────────────────────────────────────────────────────────
     const dashboardContent = (
-        <div className="space-y-6">
-            {/* ── KPI Row ── */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                <KpiCard label="Avg Attendance Rate" value={allData?.kpis.avgAttendance ?? 0} unit="%" color="#F59E0B" icon={<Activity size={16} />} />
-                <KpiCard label="Absent Today" value={allData?.kpis.absentToday ?? 0} color="#EF4444" icon={<Users size={16} />} />
-                <KpiCard label="At-Risk Students" value={allData?.kpis.atRisk ?? 0} color="#F59E0B" icon={<AlertTriangle size={16} />} />
-                <KpiCard label="Dropout Triggered" value={allData?.kpis.dropoutTriggered ?? 0} color="#EF4444" icon={<TrendingDown size={16} />} />
+        <div className="space-y-12 animate-in fade-in duration-1000">
+            {/* KPI Row */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                <KpiCard label="Average Attendance" value={allData?.kpis.avgAttendance ?? 0} unit="%" color="#5CB4E4" icon={<Activity size={24} />} />
+                <KpiCard label="Absences Today" value={allData?.kpis.absentToday ?? 0} color="#EF4444" icon={<Users size={24} />} />
+                <KpiCard label="At Risk Students" value={allData?.kpis.atRisk ?? 0} color="#F59E0B" icon={<AlertTriangle size={24} />} />
+                <KpiCard label="Dropped Students" value={allData?.kpis.dropoutTriggered ?? 0} color="#EF4444" icon={<TrendingDown size={24} />} />
             </div>
 
-            {/* ── Row 2: Line + Doughnut ── */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <ChartCard title="Attendance Rate Per Session" height={280}>
-                    {(filteredData?.sessionData?.sections?.length ?? 0) > 0
-                        ? <canvas ref={lineRef} />
-                        : <NoData msg="No completed sessions yet" />}
+            {/* Row 2: Line + Doughnut */}
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-12">
+                <ChartCard title="Attendance Trends">
+                    {(filteredData?.sessionData?.sections?.length ?? 0) > 0 ? <canvas ref={lineRef} /> : <NoData />}
                 </ChartCard>
 
-                <ChartCard title="Overall Attendance Breakdown" height={280}>
-                    {(filteredData?.statusBreakdown.total ?? 0) > 0
-                        ? <canvas ref={doughnutRef} />
-                        : <NoData msg="No attendance records yet" />}
+                <ChartCard title="Attendance Status">
+                    {(filteredData?.statusBreakdown.total ?? 0) > 0 ? <canvas ref={doughnutRef} /> : <NoData />}
                 </ChartCard>
             </div>
 
-            {/* ── Full-width grouped bar ── */}
-            <ChartCard title="Present / Late / Absent by Section" height={240}>
-                {(filteredData?.bySection?.length ?? 0) > 0
-                    ? <canvas ref={groupedRef} />
-                    : <NoData />}
+            {/* Full-width grouped bar */}
+            <ChartCard title="Section Comparison" height={380}>
+                {(filteredData?.bySection?.length ?? 0) > 0 ? <canvas ref={groupedRef} /> : <NoData />}
             </ChartCard>
 
-            {/* ── Row 4: Ranking + Stacked ── */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <ChartCard title="Section Absence Rate Ranking" height={220}>
-                    {(filteredData?.bySection?.length ?? 0) > 0
-                        ? <canvas ref={rankRef} />
-                        : <NoData />}
+            {/* Row 4: Ranking + Stacked */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+                <ChartCard title="Absence Ranking" height={300}>
+                    {(filteredData?.bySection?.length ?? 0) > 0 ? <canvas ref={rankRef} /> : <NoData />}
                 </ChartCard>
-                <ChartCard title="Actual Absences vs Late-Converted (÷3)" height={220}>
-                    {(filteredData?.bySection?.length ?? 0) > 0
-                        ? <canvas ref={stackedRef} />
-                        : <NoData />}
+                <ChartCard title="Absence Sources" height={300}>
+                    {(filteredData?.bySection?.length ?? 0) > 0 ? <canvas ref={stackedRef} /> : <NoData />}
                 </ChartCard>
             </div>
 
-            {/* ── Row 5: Heatmap + Day bar ── */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* CSS-grid heatmap */}
-                <div className="identity-glass rounded-2xl border border-identity-sky/10 p-5">
-                    <h3 className="text-[9px] font-black text-slate-500 uppercase tracking-[0.15em] mb-4">
-                        Absence Heatmap — Time Slot × Day
+            {/* Row 5: Heatmap + Day bar */}
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-12">
+                <div className="bg-white/40 backdrop-blur-xl rounded-[4.5rem] border border-white/20 p-12 shadow-3xl relative overflow-hidden font-outfit">
+                    <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-blueprint" />
+                    <div className="absolute inset-x-0 h-[2px] bg-gradient-to-r from-transparent via-[#5CB4E4]/30 to-transparent top-0 z-20 animate-scan-y opacity-30 pointer-events-none" />
+                    
+                    <h3 className="text-[13px] font-black text-[#041C3C] uppercase tracking-[0.5em] mb-14 italic flex items-center gap-6 relative z-10">
+                        <Monitor size={20} className="text-[#5CB4E4]" /> ABSENCE HEATMAP
                     </h3>
+                    
                     {(allData?.heatmap?.slots?.length ?? 0) > 0 ? (
-                        <div>
-                            {/* Day labels */}
-                            <div className="grid gap-1 mb-1" style={{ gridTemplateColumns: '52px repeat(5, 1fr)' }}>
+                        <div className="relative z-10">
+                            <div className="grid gap-6 mb-8" style={{ gridTemplateColumns: '100px repeat(5, 1fr)' }}>
                                 <div />
                                 {allData!.heatmap.days.map(d => (
-                                    <div key={d} className="text-center text-[8px] font-black text-slate-600 uppercase tracking-[0.1em]">{d}</div>
+                                    <div key={d} className="text-center text-[12px] font-black text-slate-400 uppercase tracking-[0.4em] italic">{d.substring(0,3).toUpperCase()}</div>
                                 ))}
                             </div>
                             {allData!.heatmap.slots.map((slot, si) => (
-                                <div key={slot} className="grid gap-1 mb-1" style={{ gridTemplateColumns: '52px repeat(5, 1fr)' }}>
-                                    <div className="text-[8px] font-black text-slate-500 uppercase tracking-[0.1em] flex items-center">{slot}</div>
+                                <div key={slot} className="grid gap-6 mb-6" style={{ gridTemplateColumns: '100px repeat(5, 1fr)' }}>
+                                    <div className="text-[11px] font-black text-[#041C3C] uppercase tracking-[0.2em] flex items-center italic">{slot}</div>
                                     {allData!.heatmap.days.map((d, di) => {
                                         const val = allData!.heatmap.data[si]?.[di] ?? 0;
                                         return (
-                                            <div key={d} title={`${slot} ${d}: ${val} absences`}
-                                                className="h-9 rounded-lg flex items-center justify-center text-[9px] font-black text-white/70 transition-colors"
-                                                style={{ backgroundColor: heatColor(val) }}>
+                                            <div key={d} className="h-16 rounded-2.5xl flex items-center justify-center text-[18px] font-black text-[#041C3C] transition-all duration-500 hover:scale-110 hover:z-20 cursor-crosshair border border-white/30 group/heat shadow-2xl relative"
+                                                style={{ backgroundColor: heatColor(val), opacity: val === 0 ? 0.1 : 1 }}>
                                                 {val > 0 ? val : ''}
+                                                <div className="absolute inset-0 bg-white opacity-0 group-hover/heat:opacity-20 rounded-2.5xl transition-opacity" />
                                             </div>
                                         );
                                     })}
                                 </div>
                             ))}
-                            {/* Legend */}
-                            <div className="flex items-center gap-2 mt-3 flex-wrap">
-                                <span className="text-[7px] text-slate-600 uppercase tracking-[0.1em]">Scale:</span>
+                            <div className="flex items-center gap-8 mt-16 flex-wrap border-t border-slate-100 pt-10">
+                                <span className="text-[11px] font-black text-slate-400 uppercase tracking-[0.4em] italic">HEAT LEVEL:</span>
                                 {[
-                                    { l: '0', c: 'rgba(92,180,228,0.05)' },
-                                    { l: '1', c: 'rgba(59,130,246,0.45)' },
-                                    { l: '2–4', c: 'rgba(245,158,11,0.55)' },
-                                    { l: '5–7', c: 'rgba(248,113,113,0.55)' },
-                                    { l: '8+', c: 'rgba(239,68,68,0.82)' },
+                                    { l: 'NONE', c: 'rgba(4,28,60,0.03)' },
+                                    { l: 'LOW', c: 'rgba(92,180,228,0.55)' },
+                                    { l: 'MOD', c: 'rgba(245,158,11,0.65)' },
+                                    { l: 'HIGH', c: 'rgba(239,68,68,0.85)' },
                                 ].map(item => (
-                                    <div key={item.l} className="flex items-center gap-1">
-                                        <div className="w-3.5 h-3.5 rounded" style={{ backgroundColor: item.c }} />
-                                        <span className="text-[7px] text-slate-600">{item.l}</span>
+                                    <div key={item.l} className="flex items-center gap-4">
+                                        <div className="w-8 h-8 rounded-xl border border-white/20 shadow-xl" style={{ backgroundColor: item.c }} />
+                                        <span className="text-[10px] font-black text-slate-400 tracking-[0.3em] uppercase italic">{item.l}</span>
                                     </div>
                                 ))}
                             </div>
                         </div>
-                    ) : <NoData msg="No heatmap data" />}
+                    ) : <NoData />}
                 </div>
 
-                <ChartCard title="Absences by Day of Week" height={220}>
+                <ChartCard title="Daily Absence Distribution" height={350}>
                     {(allData?.byDay?.some(d => d.count > 0)) ? <canvas ref={dayRef} /> : <NoData />}
                 </ChartCard>
             </div>
 
-            {/* ── Row 6: Consecutive detectors + Peer groups ── */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Consecutive absence list */}
-                <div className="identity-glass rounded-2xl border border-identity-sky/10 p-5">
-                    <h3 className="text-[9px] font-black text-slate-500 uppercase tracking-[0.15em] mb-4">Consecutive Absence Detector</h3>
+            {/* Row 6: Consecutive detectors + Peer groups */}
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-12">
+                <div className="bg-white/40 backdrop-blur-xl rounded-[4.5rem] border border-white/20 p-12 shadow-3xl relative overflow-hidden font-outfit">
+                    <div className="absolute inset-x-0 h-[2px] bg-gradient-to-r from-transparent via-rose-500/30 to-transparent bottom-0 z-20 animate-scan-y opacity-30 pointer-events-none" />
+                    <h3 className="text-[13px] font-black text-[#041C3C] uppercase tracking-[0.5em] mb-12 italic flex items-center gap-6">
+                        <History size={20} className="text-rose-500 animate-pulse" /> CONSECUTIVE ABSENCES
+                    </h3>
                     {(allData?.consecutiveAbsences?.length ?? 0) > 0 ? (
-                        <div className="space-y-2.5 max-h-64 overflow-y-auto pr-1">
+                        <div className="space-y-6 max-h-[400px] overflow-y-auto pr-4 custom-scrollbar">
                             {allData!.consecutiveAbsences.map(s => (
-                                <div key={s.studentId}
-                                    className="flex items-center justify-between bg-red-500/5 border border-red-500/10 rounded-xl p-3">
-                                    <div>
-                                        <div className="text-sm font-black text-white">{s.name}</div>
-                                        <div className="text-[8px] text-slate-500 uppercase tracking-[0.1em] mt-0.5">{s.section}</div>
-                                        <div className="mt-2"><StreakDots streak={s.streak} /></div>
+                                <div key={s.studentId} className="flex items-center justify-between bg-white/60 border border-slate-100 rounded-[2.5rem] p-8 shadow-2xl transition-all hover:-translate-x-3 duration-500">
+                                    <div className="space-y-4">
+                                        <div>
+                                            <div className="text-xl font-black text-[#041C3C] uppercase tracking-tighter italic">{s.name}</div>
+                                            <div className="text-[10px] text-[#5CB4E4] font-black uppercase tracking-[0.3em] mt-1 italic">{s.section.toUpperCase()}</div>
+                                        </div>
+                                        <StreakDots streak={s.streak} />
                                     </div>
-                                    <span className="ml-3 px-2 py-1 bg-red-500/20 text-red-400 text-[9px] font-black rounded-lg border border-red-500/20 flex-shrink-0">
-                                        {s.consecutiveAbs} in a row
-                                    </span>
+                                    <div className="bg-rose-500/10 text-rose-600 px-8 py-4 rounded-2.5xl border border-rose-200 text-[11px] font-black uppercase tracking-[0.4em] italic shadow-lg">
+                                        {s.consecutiveAbs}× ABSENCES
+                                    </div>
                                 </div>
                             ))}
                         </div>
-                    ) : (
-                        <div className="flex flex-col items-center justify-center h-40 gap-2">
-                            <div className="text-emerald-400 text-3xl">✓</div>
-                            <p className="text-slate-500 text-sm">No consecutive absences</p>
-                        </div>
-                    )}
+                    ) : <NoData msg="NO RECENT ABSENCES" />}
                 </div>
 
-                {/* Peer group clusters */}
-                <div className="identity-glass rounded-2xl border border-identity-sky/10 p-5">
-                    <h3 className="text-[9px] font-black text-slate-500 uppercase tracking-[0.15em] mb-4">Peer Group Clusters</h3>
+                <div className="bg-white/40 backdrop-blur-xl rounded-[4.5rem] border border-white/20 p-12 shadow-3xl relative overflow-hidden font-outfit">
+                    <div className="absolute inset-x-0 h-[2px] bg-gradient-to-r from-transparent via-[#5CB4E4]/30 to-transparent top-0 z-20 animate-scan-y opacity-30 pointer-events-none" />
+                    <h3 className="text-[13px] font-black text-[#041C3C] uppercase tracking-[0.5em] mb-12 italic flex items-center gap-6">
+                        <Users size={20} className="text-[#5CB4E4]" /> PEER GROUP ABSENCES
+                    </h3>
                     {(allData?.peerGroups?.length ?? 0) > 0 ? (
-                        <div className="space-y-2.5 max-h-64 overflow-y-auto pr-1">
+                        <div className="space-y-6 max-h-[400px] overflow-y-auto pr-4 custom-scrollbar">
                             {allData!.peerGroups.map((group, i) => (
-                                <div key={i} className="bg-identity-sky/5 border border-identity-sky/10 rounded-xl p-3">
-                                    <div className="flex items-start justify-between gap-2">
-                                        <div className="flex flex-wrap gap-1 flex-1">
+                                <div key={i} className="bg-white/60 border border-slate-100 rounded-[2.5rem] p-8 shadow-2xl transition-all hover:-translate-x-3 duration-500">
+                                    <div className="flex flex-col gap-6">
+                                        <div className="flex flex-wrap gap-3">
                                             {group.students.map(name => (
-                                                <span key={name} className="text-[10px] text-slate-300 bg-slate-700/60 px-2 py-0.5 rounded-full">{name}</span>
+                                                <span key={name} className="text-[11px] font-black text-white bg-[#041C3C] px-6 py-2.5 rounded-xl italic tracking-tight uppercase border border-[#5CB4E4]/20 shadow-lg">
+                                                    {name.replace(' ', '_')}
+                                                </span>
                                             ))}
                                         </div>
-                                        <span className="px-2 py-1 bg-identity-sky/15 text-identity-sky text-[9px] font-black rounded-lg border border-identity-sky/20 flex-shrink-0">
-                                            {group.count}×
-                                        </span>
-                                    </div>
-                                    <div className="text-[7px] text-slate-600 mt-1.5 uppercase tracking-[0.1em]">
-                                        Absent together in {group.count} sessions
+                                        <div className="flex items-center justify-between border-t border-slate-100 pt-6">
+                                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] italic">SIMULTANEOUS ABSENCE EVENTS</span>
+                                            <span className="text-2xl font-black text-[#5CB4E4] italic">{group.count}×</span>
+                                        </div>
                                     </div>
                                 </div>
                             ))}
                         </div>
-                    ) : (
-                        <div className="flex items-center justify-center h-40 text-slate-500 text-sm">
-                            No peer group patterns detected
-                        </div>
-                    )}
+                    ) : <NoData msg="NO CLUSTERS FOUND" />}
                 </div>
             </div>
 
-            {/* ── Full-width semester comparison ── */}
+            {/* Full-width semester comparison */}
             {(filteredData?.semComparison?.some(s => s.lastSem > 0) ?? false) && (
-                <ChartCard title="Semester-over-Semester Attendance Rate" height={240}>
+                <ChartCard title="Semester Comparison" height={380}>
                     <canvas ref={semRef} />
                 </ChartCard>
             )}
         </div>
     );
 
-    // ─────────────────────────────────────────────────────────────────────
-    //  STUDENT PROFILE
-    // ─────────────────────────────────────────────────────────────────────
     const studentProfile = selectedStudent && (
-        <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Left card */}
-            <div className="identity-glass rounded-2xl border border-identity-sky/10 p-6 space-y-4">
-                {/* Avatar + name row */}
-                <div className="flex items-start gap-4">
-                    <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-white font-black text-lg flex-shrink-0"
-                        style={{
-                            background: `linear-gradient(135deg, ${sectionColor(selectedStudent.section)}, ${sectionColor(selectedStudent.section)}77)`,
-                        }}>
-                        {selectedStudent.name.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                        <div className="font-black text-white text-base truncate">{selectedStudent.name}</div>
-                        <div className="text-[8px] text-slate-500 uppercase tracking-[0.15em]">{selectedStudent.section}</div>
-                        <div className="mt-1.5"><StatusBadge status={selectedStudent.status} /></div>
-                    </div>
-                    <div className="text-right flex-shrink-0">
-                        <div className="text-4xl font-black leading-none"
-                            style={{ color: selectedStudent.riskScore >= 80 ? '#EF4444' : selectedStudent.riskScore >= 50 ? '#F59E0B' : '#10B981' }}>
-                            {selectedStudent.riskScore}%
+        <div className="mt-16 grid grid-cols-1 xl:grid-cols-2 gap-12 animate-in zoom-in-95 duration-1000">
+            {/* Surveillance Dossier - Left Card */}
+            <div className="bg-white/40 backdrop-blur-xl rounded-[4.5rem] border border-white/20 p-12 space-y-12 relative overflow-hidden shadow-4xl font-outfit group">
+                <div className="absolute inset-x-0 h-[2px] bg-gradient-to-r from-transparent via-[#5CB4E4]/40 to-transparent top-0 z-20 animate-scan-y opacity-30 pointer-events-none" />
+                <div className="absolute inset-0 opacity-[0.05] pointer-events-none bg-blueprint" />
+                
+                <div className="flex items-start gap-12 relative z-10">
+                    <div className="relative">
+                        <div className="w-32 h-32 rounded-[2.8rem] flex items-center justify-center text-white font-black text-4xl shadow-4xl relative z-10 border-4 border-white/50 group-hover:rotate-6 transition-transform duration-700"
+                            style={{ background: `linear-gradient(135deg, ${sectionColor(selectedStudent.section)}, #041C3C)` }}>
+                            {selectedStudent.name.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()}
                         </div>
-                        <div className="text-[7px] text-slate-600 uppercase tracking-[0.1em] mt-0.5">Risk Score</div>
+                        <div className="absolute -inset-8 bg-[#5CB4E4]/20 blur-3xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
+                    </div>
+                    <div className="flex-1 min-w-0 pt-4">
+                        <h2 className="font-black text-[#041C3C] text-5xl truncate tracking-tighter italic leading-none">{selectedStudent.name.toUpperCase()}</h2>
+                        <div className="text-[12px] text-slate-400 uppercase tracking-[0.5em] mt-6 italic flex items-center gap-4">
+                            <div className="w-4 h-4 rounded-full bg-[#5CB4E4] animate-pulse shadow-[0_0_15px_rgba(92,180,228,1)]" />
+                            SECTION: {selectedStudent.section.toUpperCase()}
+                        </div>
+                        <div className="mt-8"><StatusBadge status={selectedStudent.status} /></div>
                     </div>
                 </div>
 
-                {/* 3 stat boxes */}
-                <div className="grid grid-cols-3 gap-2.5">
+                <div className="grid grid-cols-3 gap-8 relative z-10">
                     {[
-                        { label: 'Absences', value: `${selectedStudent.absences}/3`, color: '#EF4444' },
-                        { label: 'Eff. Absences', value: `${selectedStudent.effAbs}/3`, color: '#F59E0B' },
-                        {
-                            label: 'Trajectory',
-                            value: selectedStudent.attendanceRate >= 75 ? '↑' : '↓',
-                            color: selectedStudent.attendanceRate >= 75 ? '#10B981' : '#EF4444',
-                        },
+                        { label: 'ABSENCES', value: `${selectedStudent.absences}/3`, color: '#EF4444' },
+                        { label: 'TOTAL ABSENCES', value: `${selectedStudent.effAbs}/3`, color: '#F59E0B' },
+                        { label: 'ATTENDANCE %', value: `${selectedStudent.attendanceRate}%`, color: selectedStudent.attendanceRate >= 75 ? '#10B981' : '#EF4444' },
                     ].map(stat => (
-                        <div key={stat.label} className="bg-slate-800/40 rounded-xl p-3 text-center border border-slate-700/30">
-                            <div className="text-xl font-black" style={{ color: stat.color }}>{stat.value}</div>
-                            <div className="text-[7px] text-slate-500 uppercase tracking-[0.1em] mt-1">{stat.label}</div>
+                        <div key={stat.label} className="bg-white/80 backdrop-blur-xl rounded-[2.8rem] p-8 text-center border border-white shadow-3xl transition-all hover:scale-105 duration-500">
+                            <div className="text-3xl font-black italic tracking-tighter mb-4" style={{ color: stat.color }}>{stat.value}</div>
+                            <div className="text-[10px] text-slate-300 uppercase tracking-[0.4em] italic font-black">{stat.label}</div>
                         </div>
                     ))}
                 </div>
 
-                {/* Streak */}
-                <div>
-                    <div className="text-[8px] text-slate-500 uppercase tracking-[0.15em] mb-2">Recent Sessions</div>
-                    <div className="flex items-center gap-2 flex-wrap">
+                <div className="space-y-6 relative z-10">
+                    <div className="text-[11px] text-[#041C3C] uppercase tracking-[0.5em] mb-4 italic font-black">RECENT ATTENDANCE</div>
+                    <div className="bg-white/60 backdrop-blur-xl shadow-inner p-10 rounded-[3rem] border border-white">
                         <StreakDots streak={selectedStudent.streak} />
-                        <div className="flex gap-2 ml-1">
-                            {[['#10B981', 'Present'], ['#F59E0B', 'Late'], ['#EF4444', 'Absent']].map(([c, l]) => (
-                                <div key={l} className="flex items-center gap-1">
-                                    <div className="w-2 h-2 rounded-full" style={{ backgroundColor: c }} />
-                                    <span className="text-[7px] text-slate-600">{l}</span>
+                    </div>
+                </div>
+
+                {selectedStudent.missedTopics.length > 0 && (
+                    <div className="space-y-6 relative z-10">
+                        <div className="text-[11px] text-[#041C3C] uppercase tracking-[0.5em] mb-4 italic font-black">MISSED LESSONS</div>
+                        <div className="flex flex-wrap gap-4">
+                            {selectedStudent.missedTopics.map((t, i) => (
+                                <span key={i} className="text-[11px] px-8 py-4 bg-[#041C3C] text-white rounded-2.5xl font-black italic tracking-widest shadow-2xl hover:bg-[#5CB4E4] hover:text-[#041C3C] transition-all cursor-default border border-[#5CB4E4]/30 uppercase">
+                                    {t.replace(' ', '_')}
+                                </span>
+                            ))}
+                        </div>
+                    </div>
+                )}
+            </div>
+
+            {/* Right card - Intervention Panel */}
+            <div className="bg-white/40 backdrop-blur-xl rounded-[4.5rem] border border-white/20 p-12 space-y-12 flex flex-col relative overflow-hidden shadow-4xl font-outfit">
+                <div className="absolute inset-x-0 h-[2px] bg-gradient-to-r from-transparent via-[#5CB4E4]/40 to-transparent bottom-0 z-20 animate-scan-y opacity-30 pointer-events-none" />
+                <div className="absolute inset-0 opacity-[0.05] pointer-events-none bg-blueprint" />
+                
+                <h3 className="text-[13px] font-black text-[#041C3C] uppercase tracking-[0.5em] mb-6 italic flex items-center gap-6 relative z-10">
+                    <Brain size={24} className="text-[#5CB4E4]" /> AI RECOMMENDATION
+                </h3>
+
+                <div className="flex-1 space-y-10 relative z-10">
+                    {interventionLog.length > 0 ? (
+                        <div className="grid grid-cols-2 gap-8">
+                            {[
+                                { label: 'LAST CONTACT', value: interventionLog[0].date_contacted ? new Date(interventionLog[0].date_contacted).toLocaleDateString() : 'NONE' },
+                                { label: 'METHOD', value: interventionLog[0].method?.toUpperCase() || 'N/A' },
+                                { label: 'STUDENT RESPONSE', value: interventionLog[0].response?.toUpperCase() || 'N/A' },
+                                { label: 'OUTCOME', value: interventionLog[0].outcome?.toUpperCase() || 'N/A' },
+                            ].map(item => (
+                                <div key={item.label} className="bg-white/80 p-8 rounded-[2.8rem] border border-white shadow-2xl group/sub transition-all hover:bg-slate-50">
+                                    <div className="text-[10px] text-slate-300 uppercase tracking-[0.4em] mb-4 italic font-black">{item.label}</div>
+                                    <div className="text-md font-black text-[#041C3C] italic tracking-tight">{item.value}</div>
                                 </div>
                             ))}
                         </div>
-                    </div>
-                </div>
-
-                {/* Missed topics */}
-                {selectedStudent.missedTopics.length > 0 && (
-                    <div>
-                        <div className="text-[8px] text-slate-500 uppercase tracking-[0.15em] mb-2">Missed Sessions</div>
-                        <div className="flex flex-wrap gap-1.5">
-                            {selectedStudent.missedTopics.map((t, i) => (
-                                <span key={i} className="text-[9px] px-2 py-1 bg-red-500/10 text-red-400 border border-red-500/20 rounded-lg">{t}</span>
-                            ))}
+                    ) : (
+                        <div className="bg-white/40 backdrop-blur-xl rounded-[3rem] p-16 border-4 border-dashed border-white/40 text-center flex flex-col items-center gap-8">
+                            <Activity size={48} className="text-slate-300 animate-pulse" />
+                            <p className="text-slate-400 text-[12px] font-black uppercase tracking-[0.5em] italic leading-relaxed max-w-xs">NO PREVIOUS ACTIONS RECORDED FOR THIS STUDENT</p>
                         </div>
-                    </div>
-                )}
-
-                {/* Pattern note */}
-                <div className="bg-slate-800/40 rounded-xl p-3 border border-slate-700/30">
-                    <div className="text-[8px] text-slate-500 uppercase tracking-[0.1em] mb-1">Absence Pattern</div>
-                    <div className="text-sm font-black text-slate-300">{selectedStudent.pattern}</div>
-                    {selectedStudent.consecutiveAbs >= 2 && (
-                        <div className="text-[9px] text-red-400 mt-1">{selectedStudent.consecutiveAbs} consecutive absences</div>
                     )}
-                </div>
-            </div>
 
-            {/* Right card */}
-            <div className="identity-glass rounded-2xl border border-identity-sky/10 p-6 space-y-4 flex flex-col">
-                <h3 className="text-[9px] font-black text-slate-500 uppercase tracking-[0.15em]">Intervention Record</h3>
-
-                {/* Latest in 2×2 grid */}
-                {interventionLog.length > 0 ? (
-                    <div className="grid grid-cols-2 gap-2.5">
-                        {[
-                            { label: 'Date Contacted', value: interventionLog[0].date_contacted ? new Date(interventionLog[0].date_contacted).toLocaleDateString('en-PH') : '—' },
-                            { label: 'Method', value: interventionLog[0].method || '—' },
-                            { label: 'Response', value: interventionLog[0].response || '—' },
-                            { label: 'Outcome', value: interventionLog[0].outcome || '—' },
-                        ].map(item => (
-                            <div key={item.label} className="bg-slate-800/40 rounded-xl p-3 border border-slate-700/30">
-                                <div className="text-[7px] text-slate-500 uppercase tracking-[0.1em] mb-1">{item.label}</div>
-                                <div className="text-xs font-black text-slate-200">{item.value}</div>
+                    <div className="rounded-[3rem] p-12 border-l-[16px] relative shadow-4xl"
+                        style={{
+                            backgroundColor: `${selectedStudent.riskScore >= 80 ? '#EF4444' : selectedStudent.riskScore >= 50 ? '#F59E0B' : '#10B981'}10`,
+                            borderLeftColor: selectedStudent.riskScore >= 80 ? '#EF4444' : selectedStudent.riskScore >= 50 ? '#F59E0B' : '#10B981',
+                        }}>
+                        <div className="flex items-center gap-6 mb-6">
+                            <ShieldCheck size={28} style={{ color: selectedStudent.riskScore >= 80 ? '#EF4444' : selectedStudent.riskScore >= 50 ? '#F59E0B' : '#10B981' }} />
+                            <div className="text-[13px] font-black uppercase tracking-[0.6em] italic"
+                                style={{ color: selectedStudent.riskScore >= 80 ? '#EF4444' : selectedStudent.riskScore >= 50 ? '#F59E0B' : '#10B981' }}>
+                                AI SUMMARY
                             </div>
-                        ))}
-                    </div>
-                ) : (
-                    <div className="bg-slate-800/40 rounded-xl p-4 border border-slate-700/30 text-center">
-                        <div className="text-slate-600 text-xs">No intervention recorded yet</div>
-                    </div>
-                )}
-
-                {/* History */}
-                {interventionLog.length > 1 && (
-                    <div className="max-h-28 overflow-y-auto space-y-1.5 text-xs border-t border-slate-700/30 pt-3">
-                        {interventionLog.slice(1).map((iv: any) => (
-                            <div key={iv.id} className="flex items-center justify-between gap-3 py-1">
-                                <span className="text-slate-500">{new Date(iv.date_contacted || iv.created_at).toLocaleDateString()}</span>
-                                <span className="text-slate-400 flex-1 truncate">{iv.method}</span>
-                                <span style={{ color: iv.outcome === 'Improved' ? '#10B981' : '#F59E0B' }}>{iv.outcome}</span>
-                            </div>
-                        ))}
-                    </div>
-                )}
-
-                {/* Risk warning box */}
-                <div className="rounded-xl p-4 border-l-4 flex-1"
-                    style={{
-                        backgroundColor: `${selectedStudent.riskScore >= 80 ? '#EF4444' : selectedStudent.riskScore >= 50 ? '#F59E0B' : '#10B981'}12`,
-                        borderLeftColor: selectedStudent.riskScore >= 80 ? '#EF4444' : selectedStudent.riskScore >= 50 ? '#F59E0B' : '#10B981',
-                    }}>
-                    <div className="text-[8px] font-black uppercase tracking-[0.15em] mb-1"
-                        style={{ color: selectedStudent.riskScore >= 80 ? '#EF4444' : selectedStudent.riskScore >= 50 ? '#F59E0B' : '#10B981' }}>
-                        Risk Assessment
-                    </div>
-                    <div className="text-xs text-slate-300 leading-relaxed">
-                        {selectedStudent.status === 'Dropout' && `This student has ${selectedStudent.effAbs} effective absences — dropout threshold reached.`}
-                        {selectedStudent.status === 'Critical' && `1 effective absence away from the dropout threshold.`}
-                        {selectedStudent.status === 'High Risk' && `Attendance rate is ${selectedStudent.attendanceRate}%, below the 75% minimum.`}
-                        {selectedStudent.status === 'Good' && `Attendance at ${selectedStudent.attendanceRate}% — currently within safe standing.`}
+                        </div>
+                        <p className="text-xl text-[#041C3C] leading-snug font-black italic font-outfit uppercase tracking-tighter">
+                            {selectedStudent.status === 'Dropout' && `Action Required: Student has reached the absence limit (${selectedStudent.effAbs} total absences).`}
+                            {selectedStudent.status === 'Critical' && `Warning: Student is one absence away from being dropped.`}
+                            {selectedStudent.status === 'High Risk' && `Risk Warning: Attendance rate is ${selectedStudent.attendanceRate}%, which is below the threshold.`}
+                            {selectedStudent.status === 'Good' && `Status: Good. Student attendance is stable at ${selectedStudent.attendanceRate}%.`}
+                        </p>
                     </div>
                 </div>
 
-                {/* Generate button */}
-                <button onClick={handleGenerateIntervention}
-                    className={`w-full py-3 px-5 rounded-2xl font-black text-[10px] uppercase tracking-[0.15em] transition-all duration-200 border flex items-center justify-center gap-2 active:scale-95 ${aiCopied
-                        ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
-                        : 'bg-identity-sky/10 text-identity-sky border-identity-sky/30 hover:bg-identity-sky/20 hover:border-identity-sky/50'
-                        }`}>
-                    {aiCopied ? <><Check size={14} /> Prompt Copied!</> : <><Brain size={14} /> Generate Intervention Plan</>}
-                </button>
-                <p className="text-[7px] text-slate-600 text-center uppercase tracking-[0.1em]">
-                    Dispatches AI event · Copies prompt to clipboard
-                </p>
+                <div className="relative group/btn z-10 pt-8">
+                    <div className="absolute -inset-4 bg-gradient-to-r from-[#5CB4E4] to-[#041C3C] blur-[40px] opacity-0 group-hover/btn:opacity-60 transition-all duration-1000 rounded-[4rem]" />
+                    <button onClick={handleGenerateIntervention}
+                        className={`relative w-full py-8 px-12 rounded-[3.2rem] font-black text-[14px] uppercase tracking-[0.5em] transition-all duration-700 border-2 flex items-center justify-center gap-8 active:scale-95 italic shadow-4xl ${aiCopied
+                            ? 'bg-emerald-500 text-white border-white scale-105'
+                            : 'bg-[#041C3C] text-white border-[#5CB4E4]/30 hover:bg-[#5CB4E4] hover:text-[#041C3C]'
+                            }`}>
+                        {aiCopied ? <><CheckCircle size={32} /> TEXT COPIED</> : <><Brain size={32} /> GET AI ADVICE</>}
+                    </button>
+                    <p className="text-[10px] text-slate-400 text-center uppercase tracking-[0.6em] italic font-black mt-10 animate-pulse">
+                        AI ENGINE: CONNECTED
+                    </p>
+                </div>
             </div>
         </div>
     );
 
-    // ─────────────────────────────────────────────────────────────────────
-    //  STUDENTS TAB
-    // ─────────────────────────────────────────────────────────────────────
     const studentsContent = (
-        <div className="space-y-6">
-            {/* Student KPIs */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                <KpiCard label="Dropout Triggered" value={studentKPIs.dropout} color="#EF4444" icon={<TrendingDown size={16} />} />
-                <KpiCard label="Critical — 1 Away" value={studentKPIs.critical} color="#F59E0B" icon={<AlertTriangle size={16} />} />
-                <KpiCard label="High Risk" value={studentKPIs.highRisk} color="#F59E0B" icon={<BarChart3 size={16} />} />
-                <KpiCard label="Interventions Pending" value={studentKPIs.pending} color="#8B5CF6" icon={<Activity size={16} />} />
+        <div className="space-y-12 animate-in fade-in duration-1000">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                <KpiCard label="Dropout Alerts" value={studentKPIs.dropout} color="#EF4444" icon={<TrendingDown size={24} />} />
+                <KpiCard label="Critical Breach" value={studentKPIs.critical} color="#F59E0B" icon={<AlertTriangle size={24} />} />
+                <KpiCard label="High Stability Risk" value={studentKPIs.highRisk} color="#F59E0B" icon={<Signal size={24} />} />
+                <KpiCard label="Recently Absent" value={studentKPIs.pending} color="#8B5CF6" icon={<Activity size={24} />} />
             </div>
 
-            {/* At-risk table */}
-            <div className="identity-glass rounded-2xl border border-identity-sky/10 overflow-hidden">
-                <div className="p-4 border-b border-identity-sky/10 flex items-center justify-between">
-                    <h3 className="text-[9px] font-black text-slate-500 uppercase tracking-[0.15em]">Student Risk Table</h3>
-                    <span className="text-[8px] text-slate-600">Click a row to view profile</span>
+            <div className="bg-white/40 backdrop-blur-xl rounded-[4.5rem] border border-white/20 overflow-hidden shadow-4xl font-outfit relative">
+                <div className="absolute inset-0 opacity-[0.05] pointer-events-none bg-blueprint" />
+                <div className="p-12 border-b border-slate-100 flex items-center justify-between bg-white relative z-10 transition-colors hover:bg-slate-50">
+                    <div className="flex items-center gap-8">
+                        <div className="p-4 bg-[#041C3C] text-[#5CB4E4] rounded-2xl shadow-xl">
+                            <Users size={28} />
+                        </div>
+                        <h3 className="text-[14px] font-black text-[#041C3C] uppercase tracking-[0.6em] italic">
+                            STUDENT ATTENDANCE ASSESSMENT
+                        </h3>
+                    </div>
+                    <div className="hidden md:flex items-center gap-6">
+                         <div className="w-4 h-4 rounded-full bg-[#5CB4E4] animate-pulse" />
+                         <span className="text-[11px] font-black text-slate-300 uppercase tracking-[0.5em] italic">UPDATING LIVE</span>
+                    </div>
                 </div>
-                <div className="overflow-x-auto">
-                    <table className="w-full min-w-[720px]">
+                <div className="overflow-x-auto relative z-10 custom-scrollbar">
+                    <table className="w-full min-w-[1100px]">
                         <thead>
-                            <tr className="border-b border-identity-sky/8">
-                                {['Student', 'Section', 'Abs', 'Lates', 'Eff.Abs', 'Streak', 'Risk Score', 'Status', 'Intervention'].map(h => (
-                                    <th key={h} className="px-3 py-3 text-[7px] font-black text-slate-600 uppercase tracking-[0.12em] text-left whitespace-nowrap">{h}</th>
+                            <tr className="bg-[#041C3C] border-b border-[#5CB4E4]/30">
+                                {['STUDENT NAME', 'SECTION', 'ABSENCES', 'LATES', 'TOTAL', 'RECENT', 'RISK', 'STATUS', 'ACTION'].map(h => (
+                                    <th key={h} className="px-10 py-8 text-[11px] font-black text-[#5CB4E4] uppercase tracking-[0.4em] text-left italic">{h}</th>
                                 ))}
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody className="divide-y divide-slate-100/50">
                             {atRiskStudents.length === 0 && (
-                                <tr>
-                                    <td colSpan={9} className="px-3 py-10 text-center text-slate-600 text-sm">
-                                        No at-risk students in selected filter ✓
+                                <tr className="bg-white/40 group">
+                                    <td colSpan={9} className="px-10 py-48 text-center pb-64">
+                                        <div className="flex flex-col items-center gap-10">
+                                            <div className="w-32 h-32 bg-emerald-500/10 rounded-full flex items-center justify-center border-4 border-emerald-500/20 shadow-4xl group-hover:scale-110 transition-transform duration-700">
+                                                <CheckCircle size={64} className="text-emerald-500" />
+                                            </div>
+                                            <div className="space-y-4">
+                                                <p className="text-2xl font-black text-[#041C3C] uppercase tracking-[0.6em] italic">ALL STUDENTS STABLE</p>
+                                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em] italic">No students are currently at risk.</p>
+                                            </div>
+                                        </div>
                                     </td>
                                 </tr>
                             )}
@@ -975,33 +947,31 @@ Generate:
                                 return (
                                     <tr key={`${student.id}-${student.classId}`}
                                         onClick={() => { setSelectedStudent(student); setInterventionLog([]); }}
-                                        className={`border-b border-identity-sky/5 cursor-pointer transition-all duration-100 hover:bg-identity-sky/5 ${isSelected ? 'bg-identity-sky/8 border-identity-sky/15' : ''}`}>
-                                        <td className="px-3 py-3 text-sm font-black text-white whitespace-nowrap">
-                                            <div className="flex items-center gap-2">
-                                                {isSelected && <ChevronRight size={12} className="text-identity-sky flex-shrink-0" />}
-                                                {student.name}
-                                            </div>
+                                        className={`cursor-pointer transition-all duration-700 group/row relative ${isSelected ? 'bg-[#5CB4E4]/15' : 'bg-white/40 hover:bg-white/80'}`}>
+                                        <td className="px-10 py-8 text-lg font-black text-[#041C3C] whitespace-nowrap italic group-hover/row:translate-x-4 transition-transform flex items-center gap-6">
+                                            {isSelected ? <div className="w-3.5 h-3.5 rounded-full bg-[#5CB4E4] animate-pulse shadow-[0_0_20px_rgba(92,180,228,1)]" /> : <div className="w-2.5 h-2.5 rounded-full bg-slate-200" />}
+                                            {student.name.toUpperCase()}
                                         </td>
-                                        <td className="px-3 py-3">
-                                            <span className="text-[9px] font-black px-2 py-0.5 rounded-full border whitespace-nowrap"
+                                        <td className="px-10 py-8">
+                                            <span className="text-[11px] font-black px-6 py-2.5 rounded-xl border-2 italic shadow-2xl transition-all group-hover/row:scale-110"
                                                 style={{
-                                                    backgroundColor: `${sectionColor(student.section)}15`,
-                                                    borderColor: `${sectionColor(student.section)}28`,
+                                                    backgroundColor: `${sectionColor(student.section)}10`,
+                                                    borderColor: `${sectionColor(student.section)}40`,
                                                     color: sectionColor(student.section),
                                                 }}>
-                                                {student.section}
+                                                {student.section.toUpperCase()}
                                             </span>
                                         </td>
-                                        <td className="px-3 py-3 text-sm text-slate-400 text-center">{student.absences}</td>
-                                        <td className="px-3 py-3 text-sm text-slate-400 text-center">{student.lates}</td>
-                                        <td className="px-3 py-3 text-sm font-black text-center"
-                                            style={{ color: student.effAbs >= 3 ? '#EF4444' : student.effAbs >= 2 ? '#F59E0B' : '#94a3b8' }}>
-                                            {student.effAbs}
+                                        <td className="px-10 py-8 text-xl font-black text-rose-500 italic text-center opacity-60 group-hover/row:opacity-100">{student.absences.toString().padStart(2, '0')}</td>
+                                        <td className="px-10 py-8 text-xl font-black text-[#F59E0B] italic text-center opacity-60 group-hover/row:opacity-100">{student.lates.toString().padStart(2, '0')}</td>
+                                        <td className="px-10 py-8 text-xl font-black italic text-center"
+                                            style={{ color: student.effAbs >= 3 ? '#EF4444' : student.effAbs >= 2 ? '#F59E0B' : '#041C3C' }}>
+                                            {student.effAbs.toString().padStart(2, '0')}
                                         </td>
-                                        <td className="px-3 py-3"><StreakDots streak={student.streak.slice(0, 6)} /></td>
-                                        <td className="px-3 py-3"><RiskMiniBar score={student.riskScore} /></td>
-                                        <td className="px-3 py-3"><StatusBadge status={student.status} /></td>
-                                        <td className="px-3 py-3"><InterventionBadge status={student.interventionStatus} /></td>
+                                        <td className="px-10 py-8"><StreakDots streak={student.streak.slice(0, 8)} /></td>
+                                        <td className="px-10 py-8"><RiskMiniBar score={student.riskScore} /></td>
+                                        <td className="px-10 py-8"><StatusBadge status={student.status} /></td>
+                                        <td className="px-10 py-8"><InterventionBadge status={student.interventionStatus} /></td>
                                     </tr>
                                 );
                             })}
@@ -1010,93 +980,129 @@ Generate:
                 </div>
             </div>
 
-            {/* Pill buttons for quick student switching */}
+            {/* Quick Selection Hub */}
             {atRiskStudents.length > 0 && (
-                <div className="flex flex-wrap gap-2 items-center">
-                    <span className="text-[8px] text-slate-600 uppercase tracking-[0.1em]">Quick select:</span>
+                <div className="flex flex-wrap gap-4 items-center bg-white/40 p-6 rounded-[2.5rem] border border-white/20 shadow-2xl backdrop-blur-xl">
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em] italic mr-4">QUICK SELECT:</span>
                     {atRiskStudents.map(s => {
                         const active = selectedStudent?.id === s.id && selectedStudent?.classId === s.classId;
                         return (
                             <button key={`${s.id}-${s.classId}`}
                                 onClick={() => { setSelectedStudent(s); setInterventionLog([]); }}
-                                className="px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.1em] rounded-[8px] transition-all duration-150 border"
+                                className="px-6 py-2.5 text-[10px] font-black uppercase tracking-[0.2em] rounded-xl transition-all duration-700 border-2 italic active:scale-90 hover:shadow-2xl"
                                 style={{
-                                    borderColor: active ? sectionColor(s.section) : 'rgba(92,180,228,0.14)',
-                                    backgroundColor: active ? `${sectionColor(s.section)}20` : 'transparent',
-                                    color: active ? sectionColor(s.section) : '#64748b',
+                                    borderColor: active ? sectionColor(s.section) : 'rgba(92,180,228,0.2)',
+                                    backgroundColor: active ? `${sectionColor(s.section)}20` : 'rgba(255,255,255,0.4)',
+                                    color: active ? sectionColor(s.section) : '#041C3C',
                                 }}>
-                                {s.name.split(' ')[0]}
+                                {s.name.split(' ')[0].toUpperCase()}
                             </button>
                         );
                     })}
                 </div>
             )}
 
-            {/* Student profile panel */}
             {selectedStudent ? studentProfile : (
-                <div className="identity-glass rounded-2xl border border-identity-sky/10 p-10 text-center">
-                    <div className="text-slate-600 text-sm">Select a student row above to view their full profile</div>
+                <div className="bg-white/40 backdrop-blur-xl rounded-[4.5rem] border-4 border-dashed border-white/40 p-[120px] text-center shadow-3xl relative overflow-hidden group">
+                    <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-blueprint" />
+                    <div className="relative z-10 flex flex-col items-center gap-10">
+                        <div className="w-32 h-32 bg-[#041C3C]/5 rounded-full flex items-center justify-center border border-[#041C3C]/10 group-hover:scale-110 group-hover:rotate-12 transition-all duration-1000 shadow-inner">
+                            <Activity size={48} className="text-[#041C3C]/20" />
+                        </div>
+                        <div className="space-y-4">
+                            <h3 className="text-2xl font-black text-[#041C3C] uppercase tracking-[0.6em] italic">SELECT A STUDENT</h3>
+                            <p className="text-[11px] text-slate-400 font-black uppercase tracking-[0.4em] italic max-w-md">Select a student from the list above to view their detailed attendance report.</p>
+                        </div>
+                    </div>
                 </div>
             )}
         </div>
     );
 
-    // ─────────────────────────────────────────────────────────────────────
-    //  MAIN RENDER
-    // ─────────────────────────────────────────────────────────────────────
     return (
-        <div className="space-y-5 font-outfit">
-            {/* ── Filter Bar ── */}
-            <div className="identity-glass rounded-2xl border border-identity-sky/10 p-4 space-y-3">
+        <div className="space-y-12 font-outfit relative">
+            {/* Environmental Header Grid */}
+            <div className="absolute inset-x-0 h-[2px] bg-gradient-to-r from-transparent via-[#5CB4E4]/40 to-transparent top-0 pointer-events-none z-20" />
+
+            {/* Filter Hub Redesigned */}
+            <div className="bg-white/40 backdrop-blur-xl rounded-[4.5rem] border border-white/20 p-12 space-y-10 shadow-4xl relative overflow-hidden font-outfit">
+                <div className="absolute inset-x-0 h-[2px] bg-gradient-to-r from-transparent via-[#5CB4E4]/30 to-transparent bottom-0 z-20 animate-scan-y opacity-30 pointer-events-none" />
+                <div className="absolute inset-0 opacity-[0.05] pointer-events-none bg-blueprint" />
+                
                 {/* Row 1 — Section pills */}
-                <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-[8px] font-black text-slate-600 uppercase tracking-[0.15em] mr-1 flex-shrink-0">Section</span>
-                    <SectionPill id="all" label="All Sections" color="#5CB4E4" />
-                    {sections.map(s => <SectionPill key={s.id} id={s.id} label={s.label} color={s.color} />)}
+                <div className="flex flex-col lg:flex-row lg:items-center gap-10 relative z-10">
+                    <div className="flex items-center gap-6 flex-shrink-0">
+                        <div className="p-4 bg-[#041C3C] text-[#5CB4E4] rounded-2xl shadow-xl">
+                            <Users size={24} />
+                        </div>
+                        <span className="text-[12px] font-black text-[#041C3C] uppercase tracking-[0.6em] italic">FILTER BY SECTION:</span>
+                    </div>
+                    <div className="flex flex-wrap gap-5">
+                        <SectionPill id="all" label="ALL SECTIONS" color="#041C3C" />
+                        {sections.map(s => <SectionPill key={s.id} id={s.id} label={s.label} color={s.color} />)}
+                    </div>
                 </div>
-                {/* Row 2 — Period + Day filter */}
-                <div className="flex items-center gap-3 flex-wrap">
-                    <PillToggle
-                        value={activePeriod}
-                        options={[{ id: 'semester', label: 'Full Semester' }, { id: 'week', label: 'This Week' }]}
-                        onChange={v => setActivePeriod(v as any)}
-                    />
-                    <div className="w-px h-4 bg-slate-700/60 flex-shrink-0" />
-                    <PillToggle
-                        value={activeDay}
-                        options={[{ id: 'all', label: 'All' }, { id: 'mwf', label: 'MWF Only' }, { id: 'tth', label: 'TTh Only' }]}
-                        onChange={v => setActiveDay(v as any)}
-                    />
+
+                {/* Row 2 — Filters */}
+                <div className="flex flex-col xl:flex-row xl:items-center gap-10 relative z-10 pt-10 border-t border-slate-100/50">
+                    <div className="flex items-center gap-10 flex-wrap">
+                        <div className="flex items-center gap-6">
+                            <div className="p-4 bg-[#5CB4E4] text-white rounded-2xl shadow-xl">
+                                <History size={24} />
+                            </div>
+                            <span className="text-[12px] font-black text-[#041C3C] uppercase tracking-[0.6em] italic">TIME PERIOD:</span>
+                        </div>
+                        <PillToggle
+                            value={activePeriod}
+                            options={[{ id: 'semester', label: 'FULL SEMESTER' }, { id: 'week', label: 'CURRENT WEEK' }]}
+                            onChange={v => setActivePeriod(v as any)}
+                        />
+                    </div>
+                    <div className="hidden xl:block w-px h-12 bg-slate-200 mx-6" />
+                    <div className="flex items-center gap-10 flex-wrap">
+                        <div className="flex items-center gap-6">
+                            <div className="p-4 bg-[#041C3C] text-[#5CB4E4] rounded-2xl shadow-xl">
+                                <Zap size={24} />
+                            </div>
+                            <span className="text-[12px] font-black text-[#041C3C] uppercase tracking-[0.6em] italic">DAY FILTER:</span>
+                        </div>
+                        <PillToggle
+                            value={activeDay}
+                            options={[{ id: 'all', label: 'ALL DAYS' }, { id: 'mwf', label: 'MWF CLASSES' }, { id: 'tth', label: 'TTH CLASSES' }]}
+                            onChange={v => setActiveDay(v as any)}
+                        />
+                    </div>
                 </div>
             </div>
 
-            {/* ── Sub-tab bar ── */}
-            <div className="flex items-center gap-2">
-                {/* Dashboard tab */}
+            {/* Sub-tab navigation */}
+            <div className="flex items-center gap-8 bg-white/60 p-4 rounded-[3.5rem] border border-white backdrop-blur-2xl shadow-3xl self-start font-outfit">
                 <button onClick={() => setActiveSubTab('dashboard')}
-                    className={`px-5 py-2.5 text-[10px] font-black uppercase tracking-[0.15em] rounded-[8px] border transition-all duration-150 ${activeSubTab === 'dashboard'
-                        ? 'bg-identity-sky/15 text-identity-sky border-identity-sky/35 shadow-sm'
-                        : 'bg-transparent text-slate-500 border-transparent hover:text-slate-300 hover:border-identity-sky/15'
+                    className={`relative px-16 py-6 text-[13px] font-black uppercase tracking-[0.4em] rounded-[2.5rem] transition-all duration-1000 italic active:scale-95 ${activeSubTab === 'dashboard'
+                        ? 'bg-[#041C3C] text-white shadow-4xl scale-110'
+                        : 'bg-transparent text-slate-400 hover:text-[#041C3C] hover:bg-white'
                         }`}>
-                    Dashboard
+                    STATISTICS DASHBOARD
+                    {activeSubTab === 'dashboard' && <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 w-3 h-3 bg-[#5CB4E4] rounded-full shadow-[0_0_15px_rgba(92,180,228,1)] animate-pulse" />}
                 </button>
-                {/* Students tab with at-risk badge */}
+                
                 <button onClick={() => setActiveSubTab('students')}
-                    className={`relative px-5 py-2.5 text-[10px] font-black uppercase tracking-[0.15em] rounded-[8px] border transition-all duration-150 ${activeSubTab === 'students'
-                        ? 'bg-identity-sky/15 text-identity-sky border-identity-sky/35 shadow-sm'
-                        : 'bg-transparent text-slate-500 border-transparent hover:text-slate-300 hover:border-identity-sky/15'
+                    className={`relative px-16 py-6 text-[13px] font-black uppercase tracking-[0.4em] rounded-[2.5rem] transition-all duration-1000 italic active:scale-95 ${activeSubTab === 'students'
+                        ? 'bg-[#041C3C] text-white shadow-4xl scale-110'
+                        : 'bg-transparent text-slate-400 hover:text-[#041C3C] hover:bg-white'
                         }`}>
-                    Students
+                    RISK DASHBOARD
                     {(allData?.students.filter(s => s.status !== 'Good').length ?? 0) > 0 && (
-                        <span className="ml-2 inline-flex items-center justify-center px-1.5 py-px text-[8px] font-black bg-red-500 text-white rounded-full min-w-[18px]">
-                            {allData!.students.filter(s => s.status !== 'Good').length} at risk
+                        <span className="ml-6 inline-flex items-center justify-center px-5 py-2 text-[11px] font-black bg-rose-500 text-white rounded-xl shadow-2xl animate-pulse">
+                            {allData!.students.filter(s => s.status !== 'Good').length} ALERT
                         </span>
                     )}
+                    {activeSubTab === 'students' && <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 w-3 h-3 bg-rose-500 rounded-full shadow-[0_0_15px_rgba(244,63,94,1)] animate-pulse" />}
                 </button>
             </div>
 
-            {/* ── Tab content (key forces chart remount on tab switch) ── */}
-            <div key={`${activeSubTab}__${activeSection}`}>
+            {/* Tab content */}
+            <div key={`${activeSubTab}__${activeSection}`} className="animate-in fade-in slide-in-from-bottom-8 duration-1000">
                 {activeSubTab === 'dashboard' && dashboardContent}
                 {activeSubTab === 'students' && studentsContent}
             </div>

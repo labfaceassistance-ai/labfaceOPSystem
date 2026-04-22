@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import IdentityBackground from '@/components/IdentityBackground';
 
 export const metadata: Metadata = {
     title: {
@@ -14,8 +15,11 @@ export default function ProfessorLayout({
     children: React.ReactNode;
 }) {
     return (
-        <div className="relative min-h-screen bg-identity-navy selection:bg-identity-sky/20 selection:text-white">
-            {children}
+        <div className="relative min-h-screen selection:bg-[#5CB4E4]/30 selection:text-[#041C3C]">
+            <IdentityBackground />
+            <div className="relative z-10 w-full min-h-screen">
+                {children}
+            </div>
         </div>
     );
 }

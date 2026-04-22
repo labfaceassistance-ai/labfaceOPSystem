@@ -46,7 +46,7 @@ const DashboardTabs: React.FC<DashboardTabsProps> = ({ tabs, activeTab, onTabCha
                                 <div className={`p-2 rounded-2xl transition-all ${isActive ? 'bg-identity-sky/10 scale-110' : ''}`}>
                                     <Icon size={22} strokeWidth={isActive ? 2.5 : 2} />
                                 </div>
-                                <span className="text-[8px] font-black uppercase tracking-[0.15em]">{tab.label}</span>
+                                <span className="text-[8px] font-black uppercase">{tab.label}</span>
                             </button>
                         );
                     })}
@@ -56,8 +56,8 @@ const DashboardTabs: React.FC<DashboardTabsProps> = ({ tabs, activeTab, onTabCha
     }
 
     return (
-        <div className="sticky top-20 z-40 bg-white/80 backdrop-blur-xl border-b border-identity-sky/10 mb-10 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-0 transition-all duration-300">
-            <div className="flex gap-2 overflow-x-auto justify-start md:justify-center px-4 no-scrollbar">
+        <div className="sticky top-20 z-40 bg-white/40 backdrop-blur-2xl border-b border-identity-sky/15 mb-12 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-0 transition-all duration-500 shadow-sm">
+            <div className="flex gap-4 overflow-x-auto justify-start md:justify-center px-4 no-scrollbar">
                 {tabs.map((tab) => {
                     const Icon = tab.icon;
                     const isActive = activeTab === tab.id;
@@ -65,17 +65,20 @@ const DashboardTabs: React.FC<DashboardTabsProps> = ({ tabs, activeTab, onTabCha
                         <button
                             key={tab.id}
                             onClick={() => handleTabClick(tab.id)}
-                            className={`px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] transition-all border-b-2 flex items-center gap-3 whitespace-nowrap group relative
+                            className={`px-10 py-7 text-[11px] font-black uppercase transition-all border-b-2 flex items-center gap-4 whitespace-nowrap group relative italic font-outfit
                                 ${isActive 
-                                    ? 'text-identity-navy border-identity-sky bg-identity-sky/5' 
-                                    : 'text-identity-navy/50 border-transparent hover:text-identity-navy hover:bg-identity-navy/5'
+                                    ? 'text-identity-navy border-identity-sky bg-identity-sky/10 shadow-[0_5px_15px_rgba(92,180,228,0.1)]' 
+                                    : 'text-identity-navy/40 border-transparent hover:text-identity-navy hover:bg-identity-sky/[0.03]'
                                 }
                             `}
                         >
-                            <Icon size={16} className={`transition-transform group-hover:scale-110 ${isActive ? 'text-identity-sky' : 'opacity-50'}`} />
+                            <Icon size={18} className={`transition-all duration-500 ${isActive ? 'text-identity-sky scale-110' : 'opacity-40 group-hover:opacity-80 group-hover:scale-110'}`} />
                             {tab.label}
                             {isActive && (
-                                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-identity-sky animate-in fade-in duration-300" />
+                                <>
+                                    <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-identity-sky animate-in slide-in-from-left duration-500" />
+                                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-identity-sky/[0.02] -z-10 blur-xl opacity-50" />
+                                </>
                             )}
                         </button>
                     );

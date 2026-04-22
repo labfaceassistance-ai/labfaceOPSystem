@@ -62,7 +62,7 @@ const InputField: React.FC<InputFieldProps> = ({
 
     return (
         <div className={`w-full space-y-2 ${className}`}>
-            <label className="flex items-center text-[10px] font-black uppercase tracking-[0.2em] text-identity-navy/60 ml-2">
+            <label className="flex items-center text-[10px] font-black uppercase tracking-[0.15em] text-[#041C3C]/60 ml-2">
                 {label}
                 {isRequired && <span className="text-rose-500 ml-1">*</span>}
             </label>
@@ -78,8 +78,8 @@ const InputField: React.FC<InputFieldProps> = ({
                     value={value}
                     onBlur={handleBlur}
                     onChange={onChange}
-                    className={`w-full ${Icon ? 'pl-14' : 'px-5'} py-4 rounded-2xl bg-white/40 border-2 transition-all outline-none text-identity-navy font-bold text-sm
-                        ${touched && error ? 'border-rose-400' : touched && isValid ? 'border-emerald-400' : 'border-identity-sky/10 group-hover:border-identity-sky/30 focus:border-identity-sky'}
+                    className={`w-full ${Icon ? 'pl-14' : 'px-5'} py-4 rounded-xl bg-white border border-slate-200 transition-all outline-none text-[#041C3C] font-bold text-sm
+                        ${touched && error ? 'border-rose-400 focus:ring-rose-400' : touched && isValid ? 'border-emerald-400 focus:ring-emerald-400' : 'border-slate-200 group-hover:border-[#5CB4E4]/30 focus:border-[#5CB4E4] focus:ring-2 focus:ring-[#5CB4E4]/20'}
                     `}
                     {...props}
                 />

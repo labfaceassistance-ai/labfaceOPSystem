@@ -1,5 +1,5 @@
 // Service Worker for Offline Support
-const CACHE_NAME = 'labface-v3';
+const CACHE_NAME = 'labface-v2.a90197e-dirty-1591883900';
 const urlsToCache = [
     '/',
     '/login',

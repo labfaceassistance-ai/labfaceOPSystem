@@ -29,7 +29,7 @@ class VerificationService {
             let activePeriod = null;
             try {
                 const [periods] = await pool.query(
-                    "SELECT id, school_year as schoolYear, semester FROM academic_periods WHERE effective_date <= CONVERT_TZ(NOW(), 'UTC', 'Asia/Manila') ORDER BY effective_date DESC LIMIT 1"
+                    "SELECT id, school_year as schoolYear, semester FROM academic_periods WHERE effective_date <= NOW() ORDER BY effective_date DESC LIMIT 1"
                 );
                 if (periods.length > 0) {
                     activePeriod = periods[0];

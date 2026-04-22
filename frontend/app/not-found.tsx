@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import Link from 'next/link';
 import { Home, ArrowLeft, Search, AlertCircle } from 'lucide-react';
@@ -28,10 +28,10 @@ export default function NotFound() {
                         404
                     </h1>
                     <h2 className="text-2xl md:text-3xl font-black text-identity-navy uppercase tracking-[0.15em] mb-4">
-                        SYSTEM PATH UNREACHABLE
+                        REQUESTED PAGE NOT FOUND
                     </h2>
                     <p className="text-sm md:text-base font-bold text-identity-navy/70 uppercase tracking-[0.15em] max-w-md mx-auto leading-relaxed">
-                        The requested page could not be located in the current workspace.
+                        The requested resource could not be located in the current environment.
                     </p>
                 </div>
 
@@ -39,7 +39,7 @@ export default function NotFound() {
                 <div className="mb-10 p-6 bg-identity-bg rounded-2xl border border-identity-navy/10 text-center max-w-md mx-auto flex flex-col items-center gap-4">
                     <Search className="w-6 h-6 text-identity-sky" strokeWidth={2} />
                     <p className="text-xs font-bold text-identity-navy/70 uppercase tracking-[0.15em] leading-relaxed">
-                        <span className="text-identity-navy font-black">TIP:</span> VERIFY THE URL OR USE THE SYSTEM CONTROLS BELOW TO REALIGN.
+                        <span className="text-identity-navy font-black">TIP:</span> VERIFY THE URL OR USE THE SYSTEM CONTROLS BELOW TO RETURN.
                     </p>
                 </div>
 

@@ -20,7 +20,7 @@ const ensureUserSchema = async () => {
         //    but a NULL period ID (registered before this column existed).
         //    Uses the current active academic period as the period they belong to.
         const [periods] = await pool.query(
-            "SELECT id FROM academic_periods WHERE effective_date <= CONVERT_TZ(NOW(), 'UTC', 'Asia/Manila') ORDER BY effective_date DESC LIMIT 1"
+            "SELECT id FROM academic_periods WHERE effective_date <= NOW() ORDER BY effective_date DESC LIMIT 1"
         );
 
         if (periods.length > 0) {
@@ -198,7 +198,7 @@ router.post('/register/student', async (req, res) => {
                     req.currentPeriodId = corVerification.corPeriodId;
                     console.log(`[Register Student] Using COR-resolved period ID: ${req.currentPeriodId}`);
                 } else {
-                    const [periods] = await connection.query(`SELECT id FROM academic_periods WHERE effective_date <= CONVERT_TZ(NOW(), 'UTC', 'Asia/Manila') ORDER BY effective_date DESC LIMIT 1`);
+                    const [periods] = await connection.query(`SELECT id FROM academic_periods WHERE effective_date <= NOW() ORDER BY effective_date DESC LIMIT 1`);
                     if (periods.length > 0) {
                         req.currentPeriodId = periods[0].id;
                     }
@@ -1217,26 +1217,39 @@ router.post('/reset-password', async (req, res) => {
         const [users] = await pool.query('SELECT role FROM users WHERE email = ?', [email]);
         if (users.length > 0) {
             const roles = users[0].role ? users[0].role.split(',').map(r => r.trim()) : [];
+            const { targetRole } = req.body;
+
             if (!roles.includes('professor') && !roles.includes('student') && !roles.includes('admin')) {
                 return res.status(403).json({ message: 'Password reset is only available for professor, student, and admin accounts.' });
             }
 
-            // Determine which password hash to update based on role
             const hashedPassword = await bcrypt.hash(newPassword, 10);
-            let updateQuery;
+            const updates = [];
 
-            if (roles.includes('professor')) {
-                updateQuery = 'UPDATE users SET professor_password_hash = ? WHERE email = ?';
-            } else if (roles.includes('student')) {
-                updateQuery = 'UPDATE users SET student_password_hash = ? WHERE email = ?';
+            // Determine which hashes to update
+            if (targetRole === 'all') {
+                if (roles.includes('professor')) updates.push('professor_password_hash = ?');
+                if (roles.includes('student')) updates.push('student_password_hash = ?');
+                if (roles.includes('admin')) updates.push('admin_password_hash = ?');
+            } else if (targetRole === 'professor' && roles.includes('professor')) {
+                updates.push('professor_password_hash = ?');
+            } else if (targetRole === 'student' && roles.includes('student')) {
+                updates.push('student_password_hash = ?');
+            } else if (targetRole === 'admin' && roles.includes('admin')) {
+                updates.push('admin_password_hash = ?');
             } else {
-                return res.status(400).json({ message: 'Invalid role for password reset' });
+                return res.status(400).json({ message: 'Invalid target role for password reset' });
             }
 
-            await pool.query(updateQuery, [hashedPassword, email]);
-            await pool.query('DELETE FROM password_resets WHERE email = ?', [email]);
-
-            res.json({ message: 'Password reset successfully' });
+            if (updates.length > 0) {
+                const query = `UPDATE users SET ${updates.join(', ')} WHERE email = ?`;
+                const params = [...updates.map(() => hashedPassword), email];
+                await pool.query(query, params);
+                await pool.query('DELETE FROM password_resets WHERE email = ?', [email]);
+                res.json({ message: 'Password reset successfully for ' + (targetRole === 'all' ? 'all roles' : targetRole) });
+            } else {
+                return res.status(400).json({ message: 'No valid roles found for password update' });
+            }
         } else {
             return res.status(404).json({ message: 'User not found' });
         }

@@ -4,8 +4,7 @@ import { useState, useEffect, useCallback, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import axios from 'axios';
 import Navbar from '@/components/Navbar';
-import DashboardTabs from '@/components/ui/DashboardTabs';
-import Breadcrumbs from '@/components/ui/Breadcrumbs';
+import { useNavigation } from '@/context/NavigationContext';
 import { logout, getToken, getUser } from '@/utils/auth';
 import SessionTimeout from '@/components/SessionTimeout';
 import { Home, BookOpen, Monitor, BarChart3, Calendar } from 'lucide-react';
@@ -14,6 +13,7 @@ import ClassesTab from './tabs/ClassesTab';
 import AnalyticsTab from './tabs/AnalyticsTab';
 import MonitorTab from './tabs/MonitorTab';
 import ScheduleTab from './tabs/ScheduleTab';
+import DashboardTabs from '@/components/ui/DashboardTabs';
 
 interface Class {
     id: number;
@@ -26,17 +26,25 @@ interface Class {
 }
 
 const IdentityNode = ({ className = "", size = 120 }) => (
-    <div className={`identity-node opacity-[0.15] ${className}`} style={{ width: size, height: size }}>
-        <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
-            <path d="M50 5L95 27.5V72.5L50 95L5 72.5V27.5L50 5Z" stroke="currentColor" strokeWidth="0.5" />
-            <path d="M50 25L71.6506 37.5V62.5L50 75L28.3494 62.5V37.5L50 25Z" stroke="currentColor" strokeWidth="0.5" />
-            <circle cx="50" cy="50" r="2" fill="currentColor" />
-            <path d="M50 5V25M95 27.5L71.6506 37.5M95 72.5L71.6506 62.5M50 95V75M5 72.5L28.3494 62.5M5 27.5L28.3494 37.5" stroke="currentColor" strokeWidth="0.5" />
+    <div className={`identity-node opacity-40 ${className}`} style={{ width: size, height: size }}>
+        <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full text-[#5CB4E4]">
+            <path d="M50 5L95 27.5V72.5L50 95L5 72.5V27.5L50 5Z" stroke="currentColor" strokeWidth="1" />
+            <path d="M50 25L71.6506 37.5V62.5L50 75L28.3494 62.5V37.5L50 25Z" stroke="currentColor" strokeWidth="1" strokeDasharray="2 2" />
+            <circle cx="50" cy="50" r="3" fill="#041C3C" />
+            <path d="M50 5V25M95 27.5L71.6506 37.5M95 72.5L71.6506 62.5M50 95V75M5 72.5L28.3494 62.5M5 27.5L28.3494 37.5" stroke="currentColor" strokeWidth="1" opacity="0.5" />
         </svg>
     </div>
 );
 
 type TabType = 'home' | 'classes' | 'schedule' | 'monitor' | 'analytics';
+
+const DASHBOARD_TABS = [
+    { id: 'home' as TabType, label: 'Home', icon: Home },
+    { id: 'classes' as TabType, label: 'Classes', icon: BookOpen },
+    { id: 'schedule' as TabType, label: 'Schedule', icon: Calendar },
+    { id: 'monitor' as TabType, label: 'Monitor', icon: Monitor },
+    { id: 'analytics' as TabType, label: 'Analytics', icon: BarChart3 },
+];
 
 function DashboardContent() {
     const router = useRouter();
@@ -45,18 +53,13 @@ function DashboardContent() {
     const [classes, setClasses] = useState<Class[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [activeTab, setActiveTab] = useState<TabType>('home');
-
-    // Handle URL Tab Switching
-    useEffect(() => {
-        const tabParam = searchParams.get('tab') as TabType;
-        if (tabParam && ['home', 'classes', 'schedule', 'monitor', 'analytics'].includes(tabParam)) {
-            setActiveTab(tabParam);
-        }
-    }, [searchParams]);
+    const { setTabs, activeTab, setActiveTab } = useNavigation();
 
     // Initial Data Fetch
     useEffect(() => {
+        setTabs(DASHBOARD_TABS);
+        setActiveTab('home');
+
         const fetchUserData = async () => {
             const token = getToken();
             if (!token) {
@@ -127,6 +130,9 @@ function DashboardContent() {
                 setActiveTab(savedTab);
             }
         }
+
+        // Cleanup tabs on unmount
+        return () => setTabs([]);
     }, []);
 
     const fetchClasses = async (professorId: string, isBackgroundRefresh = false) => {
@@ -160,14 +166,14 @@ function DashboardContent() {
     // Swipe Navigation Logic
     const tabOrder: TabType[] = ['home', 'classes', 'schedule', 'monitor', 'analytics'];
     const handleSwipeLeft = () => {
-        const currentIndex = tabOrder.indexOf(activeTab);
+        const currentIndex = tabOrder.indexOf(activeTab as TabType);
         if (currentIndex < tabOrder.length - 1) {
             handleTabChange(tabOrder[currentIndex + 1]);
         }
     };
 
     const handleSwipeRight = () => {
-        const currentIndex = tabOrder.indexOf(activeTab);
+        const currentIndex = tabOrder.indexOf(activeTab as TabType);
         if (currentIndex > 0) {
             handleTabChange(tabOrder[currentIndex - 1]);
         }
@@ -218,51 +224,42 @@ function DashboardContent() {
     }, []);
 
     if (!user || loading) return (
-        <div className="min-h-screen bg-identity-navy flex flex-col items-center justify-center gap-8 relative overflow-hidden">
-            {/* Background layers for loading state */}
-            <div className="absolute inset-0 opacity-20">
-                <IdentityNode className="absolute top-10 left-10 text-identity-sky animate-pulse" size={200} />
-                <IdentityNode className="absolute bottom-10 right-10 text-identity-sky animate-pulse" size={240} />
-            </div>
-            
+        <div className="min-h-screen flex flex-col items-center justify-center gap-12 relative overflow-hidden bg-[#F8FAFC]">
+            <div className="fixed inset-0 z-0 opacity-[0.03] pointer-events-none bg-blueprint" />
             <div className="relative z-10 flex flex-col items-center">
-                <div className="w-24 h-24 mb-6 relative">
-                    <div className="absolute inset-0 border-4 border-identity-sky/20 rounded-full"></div>
-                    <div className="absolute inset-0 border-4 border-identity-sky border-t-transparent rounded-full animate-spin"></div>
+                <div className="w-32 h-32 mb-10 relative">
+                    <div className="absolute inset-0 border-4 border-[#5CB4E4]/10 rounded-[2.5rem] rotate-45"></div>
+                    <div className="absolute inset-0 border-4 border-[#041C3C] border-t-transparent rounded-[2.5rem] rotate-45 animate-spin"></div>
+                    <div className="absolute inset-0 flex items-center justify-center">
+                        <img src="/logo.png" alt="LabFace" className="w-12 h-12 object-contain opacity-50 -rotate-45" />
+                    </div>
                 </div>
-                <div className="text-identity-sky text-[10px] font-black uppercase tracking-[0.2em] animate-pulse font-outfit">Synchronizing Credentials...</div>
+                <div className="flex flex-col items-center gap-3">
+                    <div className="text-[#041C3C] text-[11px] font-black uppercase tracking-[0.4em] animate-pulse font-outfit italic">Loading Faculty Workspace...</div>
+                    <div className="h-1 w-48 bg-slate-100 rounded-full overflow-hidden">
+                        <div className="h-full bg-[#5CB4E4] animate-loading-bar" />
+                    </div>
+                </div>
             </div>
         </div>
     );
 
-    const tabs = [
-        { id: 'home' as TabType, label: 'Home', icon: Home },
-        { id: 'classes' as TabType, label: 'Classes', icon: BookOpen },
-        { id: 'schedule' as TabType, label: 'Schedule', icon: Calendar },
-        { id: 'monitor' as TabType, label: 'Monitor', icon: Monitor },
-        { id: 'analytics' as TabType, label: 'Analytics', icon: BarChart3 },
-
-    ];
-
     return (
-        <div className="min-h-screen bg-identity-navy text-slate-200 relative overflow-hidden font-outfit">
-            {/* LAYER 1: Core Blueprints */}
-            <div className="absolute inset-0 pointer-events-none overflow-hidden">
-                <div className="absolute inset-0 bg-[url('/grid.svg')] bg-[length:40px_40px] opacity-[0.05]" />
-                <div className="absolute inset-0 bg-gradient-to-tr from-identity-navy via-transparent to-identity-navy/20" />
-            </div>
+        <div className="min-h-screen text-identity-navy relative overflow-hidden font-outfit">
+            {/* Background Decorations */}
 
-            {/* LAYER 2: Identity Nodes */}
-            <div className="absolute inset-0 pointer-events-none">
-                <IdentityNode className="absolute -top-20 -left-20 text-identity-sky" size={400} />
-                <IdentityNode className="absolute top-1/3 -right-32 text-identity-navy" size={500} />
-                <IdentityNode className="absolute -bottom-40 left-1/4 text-identity-sky" size={600} />
-            </div>
+            <div className="fixed inset-0 z-0 opacity-[0.05] pointer-events-none bg-blueprint" />
+            <div className="fixed inset-0 z-0 opacity-[0.03] pointer-events-none bg-blueprint-fine" />
+            
+            {/* Background Layers */}
 
-            {/* LAYER 3: Mesh Glows */}
-            <div className="absolute inset-x-0 top-0 h-[50vh] bg-gradient-to-b from-identity-sky/5 to-transparent pointer-events-none" />
-            <div className="absolute top-0 right-0 w-[40vw] h-[40vw] bg-identity-sky/5 blur-[120px] rounded-full pointer-events-none" />
-
+            <div className="fixed top-[-20%] right-[-10%] w-[1000px] h-[1000px] bg-[#5CB4E4]/10 rounded-full blur-[200px] pointer-events-none z-0 animate-pulse" />
+            <div className="fixed bottom-[-20%] left-[-10%] w-[1000px] h-[1000px] bg-[#041C3C]/10 rounded-full blur-[200px] pointer-events-none z-0 animate-pulse" />
+            <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1200px] h-[1200px] bg-[#5CB4E4]/[0.05] rounded-full blur-[250px] animate-bloom pointer-events-none z-0" />
+            
+            <IdentityNode className="fixed top-20 right-20 animate-float" size={180} />
+            <IdentityNode className="fixed bottom-20 left-20 animate-float-delayed" size={240} />
+            
             <SessionTimeout
                 sessionDuration={30 * 60 * 1000}
                 warningTime={5 * 60 * 1000}
@@ -270,20 +267,9 @@ function DashboardContent() {
                 onLogout={handleLogout}
             />
             <Navbar />
-            <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-28 md:pb-8">
-                <Breadcrumbs />
-
-                {/* Tab Navigation */}
-                <div className="mb-8">
-                    <DashboardTabs 
-                        tabs={tabs} 
-                        activeTab={activeTab} 
-                        onTabChange={(tabId) => handleTabChange(tabId as TabType)} 
-                    />
-                </div>
-
+            <main className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-12 pt-28 pb-32 md:pb-12 relative z-10">
                 {/* Tab Content */}
-                <div key={activeTab} className="tab-content-fade min-h-[60vh] mt-8">
+                <div key={activeTab} className="tab-content-fade min-h-[70vh] mt-10">
                     {activeTab === 'home' && <HomeTab user={user} classes={classes} error={error} />}
                     {activeTab === 'classes' && <ClassesTab user={user} classes={classes} loading={loading} onRefresh={handleRefresh} onTabChange={handleTabChange} />}
                     {activeTab === 'schedule' && <ScheduleTab user={user} classes={classes} />}
@@ -291,6 +277,7 @@ function DashboardContent() {
                     {activeTab === 'analytics' && <AnalyticsTab user={user} classes={classes} />}
                 </div>
             </main>
+
         </div>
     );
 }
@@ -298,18 +285,8 @@ function DashboardContent() {
 export default function ProfessorDashboard() {
     return (
         <Suspense fallback={
-            <div className="min-h-screen bg-identity-navy flex flex-col items-center justify-center gap-8 relative overflow-hidden">
-                <div className="absolute inset-0 opacity-20">
-                    <IdentityNode className="absolute top-10 left-10 text-identity-sky animate-pulse" size={200} />
-                    <IdentityNode className="absolute bottom-10 right-10 text-identity-sky animate-pulse" size={240} />
-                </div>
-                <div className="relative z-10 flex flex-col items-center">
-                    <div className="w-24 h-24 mb-6 relative">
-                        <div className="absolute inset-0 border-4 border-identity-sky/20 rounded-full"></div>
-                        <div className="absolute inset-0 border-4 border-identity-sky border-t-transparent rounded-full animate-spin"></div>
-                    </div>
-                    <div className="text-identity-sky text-[10px] font-black uppercase tracking-[0.2em] animate-pulse font-outfit">Loading Workspace...</div>
-                </div>
+            <div className="min-h-screen flex flex-col items-center justify-center bg-[#F8FAFC]">
+                <div className="w-16 h-16 border-4 border-[#041C3C]/10 border-t-[#041C3C] rounded-2xl rotate-45 animate-spin" />
             </div>
         }>
             <DashboardContent />

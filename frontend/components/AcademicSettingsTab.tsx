@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useToast } from '@/components/Toast';
 import { API_URL, getToken } from '@/utils/auth';
-import { GraduationCap, Calendar, BookOpen, Users, RefreshCw, Edit2, Check, X, History, Clock, AlertTriangle, Search } from 'lucide-react';
+import { GraduationCap, Calendar, BookOpen, Users, RefreshCw, Edit2, Check, History, Clock, AlertTriangle, Search } from 'lucide-react';
 
 interface AcademicSettings {
     id: number;
@@ -185,146 +185,140 @@ export default function AcademicSettingsTab() {
 
     if (loading) {
         return (
-            <div className="flex items-center justify-center h-64">
-                <RefreshCw className="w-8 h-8 text-identity-sky animate-spin" />
+            <div className="flex flex-col items-center justify-center h-64 gap-6">
+                <RefreshCw className="w-12 h-12 text-identity-sky animate-spin" />
+                <p className="text-[10px] font-black text-identity-sky uppercase tracking-[0.4em] animate-pulse italic">Initalizing_Academic_Registry...</p>
             </div>
         );
     }
 
     return (
-        <div className="space-y-12 animate-fade-in font-outfit">
+        <div className="space-y-12 animate-fade-in font-outfit select-none pb-20">
             {/* Header Section - Current Academic Settings */}
-            <div className="identity-glass rounded-[2rem] md:rounded-[3rem] p-6 sm:p-8 md:p-10 shadow-xl relative overflow-hidden bg-white/40 border border-identity-sky/5">
-                <div className="absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-identity-sky/5 to-transparent pointer-events-none opacity-30" />
+            <div className="identity-glass rounded-[3.5rem] p-10 md:p-12 shadow-3xl relative overflow-hidden border-2 border-white/40">
+                <div className="absolute inset-x-0 top-0 h-64 bg-gradient-to-b from-identity-sky/10 to-transparent pointer-events-none opacity-50" />
                 
-                <h2 className="text-3xl font-black text-identity-navy mb-12 flex items-center gap-6 uppercase tracking-tighter relative z-10 italic">
-                    <div className="bg-identity-sky/10 p-3 rounded-2xl border border-identity-sky/20">
-                        <GraduationCap className="w-10 h-10 text-identity-sky" />
+                {/* Corner Accents */}
+                <div className="absolute top-8 left-8 w-8 h-8 border-t-2 border-l-2 border-identity-sky/30 pointer-events-none" />
+                <div className="absolute top-8 right-8 w-8 h-8 border-t-2 border-r-2 border-identity-sky/30 pointer-events-none" />
+                
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-10 mb-16 relative z-10">
+                    <div className="flex items-center gap-8">
+                        <div className="bg-identity-sky/20 p-5 rounded-[2rem] border-2 border-identity-sky/30 shadow-inner">
+                            <GraduationCap className="w-10 h-10 text-identity-sky" />
+                        </div>
+                        <div>
+                            <h2 className="text-4xl font-black text-identity-navy uppercase tracking-tighter italic leading-none">
+                                Academic Period
+                            </h2>
+                            <p className="text-[10px] text-identity-sky font-black uppercase tracking-[0.4em] mt-3 italic opacity-70">Regulatory_Session_Configuration</p>
+                        </div>
                     </div>
-                    Academic Period Control
-                </h2>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-12 relative z-10">
-                    {/* School Year */}
-                    <div className="space-y-6">
-                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] ml-4 flex items-center gap-3">
-                            <div className="w-2 h-2 bg-identity-sky rounded-full shadow-[0_0_8px_rgba(92,180,228,0.4)]" />
-                            School Year
+                    {!isEditing && (
+                        <button
+                            onClick={() => setIsEditing(true)}
+                            className="bg-identity-navy text-white px-10 py-5 rounded-2xl font-black uppercase tracking-[0.2em] text-[10px] flex items-center gap-4 shadow-2xl shadow-identity-navy/20 hover:bg-identity-sky hover:scale-105 transition-all active:scale-95 italic border border-white/20"
+                        >
+                            <Edit2 size={16} />
+                            Modify_Period
+                        </button>
+                    )}
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12 relative z-10">
+                    {/* School Year Node */}
+                    <div className="space-y-6 group">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em] ml-6 flex items-center gap-4 italic">
+                            <div className="w-3 h-3 bg-identity-sky rounded-full shadow-[0_0_12px_rgba(92,180,228,0.6)]" />
+                            Academic_Year_Tag
                         </label>
                         {isEditing ? (
-                            <div className="relative group">
+                            <div className="relative">
                                 <select
                                     value={editedYear}
                                     onChange={(e) => setEditedYear(e.target.value)}
-                                    className="w-full px-8 py-5 bg-white/60 border-2 border-slate-100 rounded-2xl text-identity-navy font-black uppercase tracking-[0.15em] focus:outline-none focus:border-identity-sky transition-all shadow-sm appearance-none cursor-pointer italic"
+                                    className="w-full px-10 py-6 bg-white/40 backdrop-blur-xl border-2 border-white/60 rounded-[2rem] text-identity-navy font-black uppercase tracking-[0.15em] focus:outline-none focus:border-identity-sky transition-all shadow-xl appearance-none cursor-pointer italic"
                                 >
                                     {schoolYears.map(year => (
                                         <option key={year} value={year} className="bg-white">{year}</option>
                                     ))}
                                 </select>
-                                <div className="absolute right-8 top-1/2 -translate-y-1/2 pointer-events-none text-slate-300 group-hover:text-identity-sky transition-colors">
-                                    <Calendar size={20} />
-                                </div>
+                                <Calendar className="absolute right-10 top-1/2 -translate-y-1/2 pointer-events-none text-identity-sky opacity-40" size={20} />
                             </div>
                         ) : (
-                            <div className="w-full px-10 py-8 bg-white/60 border border-slate-100 rounded-[2rem] flex items-center justify-between shadow-sm group transition-all hover:border-identity-sky/30 hover:shadow-xl hover:shadow-identity-sky/5">
-                                <div>
-                                    <span className="text-4xl font-black text-identity-navy tracking-tighter block leading-none italic">{settings?.schoolYear}</span>
-                                    <span className="text-[9px] text-slate-400 font-black uppercase tracking-[0.4em] mt-4 block italic opacity-60">ACADEMIC_CYCLE_PRIMARY</span>
-                                </div>
-                                <button
-                                    onClick={() => setIsEditing(true)}
-                                    className="p-5 min-h-[52px] min-w-[52px] flex items-center justify-center bg-white border border-slate-100 text-slate-300 hover:text-identity-sky hover:border-identity-sky/50 rounded-2xl transition-all shadow-sm active:scale-90"
-                                    title="Edit Period"
-                                >
-                                    <Edit2 className="w-6 h-6" />
-                                </button>
+                            <div className="w-full px-10 py-10 bg-white/20 backdrop-blur-xl border-2 border-white/40 rounded-[2.5rem] flex flex-col shadow-inner group-hover:border-identity-sky/40 transition-all">
+                                <span className="text-5xl font-black text-identity-navy tracking-tighter leading-none italic">{settings?.schoolYear}</span>
+                                <span className="text-[9px] text-identity-sky/60 font-black uppercase tracking-[0.5em] mt-6 italic">Registry_Index</span>
                             </div>
                         )}
-                        <p className="text-[10px] text-slate-300 font-black uppercase tracking-[0.2em] ml-4 flex items-center gap-3 italic">
-                            <RefreshCw size={12} className="text-identity-sky/40" />
-                            {settings?.updatedByUser ? `RATIFIED BY ${settings.updatedByUser.name.toUpperCase()}` : 'SYSTEM_DEFAULT_PROTOCOL'}
-                        </p>
                     </div>
 
-                    {/* Semester */}
-                    <div className="space-y-6">
-                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] ml-4 flex items-center gap-3">
-                            <div className="w-2 h-2 bg-identity-sky rounded-full shadow-[0_0_8px_rgba(92,180,228,0.4)]" />
-                            Active Segment
+                    {/* Semester Node */}
+                    <div className="space-y-6 group">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em] ml-6 flex items-center gap-4 italic">
+                            <div className="w-3 h-3 bg-identity-sky rounded-full shadow-[0_0_12px_rgba(92,180,228,0.6)]" />
+                            Temporal_Term
                         </label>
                         {isEditing ? (
-                            <div className="relative group">
+                            <div className="relative">
                                 <select
                                     value={editedSemester}
                                     onChange={(e) => setEditedSemester(e.target.value)}
-                                    className="w-full px-8 py-5 bg-white/60 border-2 border-slate-100 rounded-2xl text-identity-navy font-black uppercase tracking-[0.15em] focus:outline-none focus:border-identity-sky transition-all shadow-sm appearance-none cursor-pointer italic"
+                                    className="w-full px-10 py-6 bg-white/40 backdrop-blur-xl border-2 border-white/60 rounded-[2rem] text-identity-navy font-black uppercase tracking-[0.15em] focus:outline-none focus:border-identity-sky transition-all shadow-xl appearance-none cursor-pointer italic"
                                 >
                                     {semesters.map(sem => (
                                         <option key={sem} value={sem} className="bg-white">{sem}</option>
                                     ))}
                                 </select>
-                                <div className="absolute right-8 top-1/2 -translate-y-1/2 pointer-events-none text-slate-300 group-hover:text-identity-sky transition-colors">
-                                    <BookOpen size={20} />
-                                </div>
+                                <BookOpen className="absolute right-10 top-1/2 -translate-y-1/2 pointer-events-none text-identity-sky opacity-40" size={20} />
                             </div>
                         ) : (
-                            <div className="w-full px-10 py-8 bg-white/60 border border-slate-100 rounded-[2rem] flex items-center shadow-sm group transition-all hover:border-identity-sky/30 hover:shadow-xl hover:shadow-identity-sky/5">
-                                <div>
-                                    <span className="text-4xl font-black text-identity-navy tracking-tighter block leading-none italic">{settings?.semester}</span>
-                                    <span className="text-[9px] text-slate-400 font-black uppercase tracking-[0.4em] mt-4 block italic opacity-60">SESSION_TERM_ALPHA</span>
-                                </div>
+                            <div className="w-full px-10 py-10 bg-white/20 backdrop-blur-xl border-2 border-white/40 rounded-[2.5rem] flex flex-col shadow-inner group-hover:border-identity-sky/40 transition-all">
+                                <span className="text-4xl font-black text-identity-navy tracking-tighter leading-none italic uppercase">{settings?.semester}</span>
+                                <span className="text-[9px] text-identity-sky/60 font-black uppercase tracking-[0.5em] mt-6 italic">Phase_Identifier</span>
                             </div>
                         )}
-                        <p className="text-[10px] text-slate-300 font-black uppercase tracking-[0.2em] ml-4 flex items-center gap-3 italic">
-                            <Clock size={12} className="text-identity-sky/40" />
-                            {settings?.updatedAt && `LOGGED ${new Date(settings.updatedAt).toLocaleDateString()}`}
-                        </p>
                     </div>
 
-                    {/* Effective Date */}
-                    <div className="space-y-6 md:col-span-2">
-                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] ml-4 flex items-center gap-3">
-                            <div className="w-2 h-2 bg-identity-sky rounded-full shadow-[0_0_8px_rgba(92,180,228,0.4)]" />
-                            Protocol Effective Timestamp
+                    {/* Effective Date Node */}
+                    <div className="space-y-6 md:col-span-2 lg:col-span-1">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em] ml-6 flex items-center gap-4 italic">
+                            <div className="w-3 h-3 bg-identity-sky rounded-full shadow-[0_0_12px_rgba(92,180,228,0.6)]" />
+                            Deployment_Trigger
                         </label>
                         {isEditing ? (
-                            <div className="flex flex-col gap-6">
+                            <div className="space-y-6">
                                 <input
                                     type="datetime-local"
                                     value={editedEffectiveDate}
                                     onChange={(e) => setEditedEffectiveDate(e.target.value)}
-                                    className="w-full px-10 py-6 bg-white/60 border-2 border-slate-100 rounded-3xl text-identity-navy font-black uppercase tracking-[0.15em] focus:outline-none focus:border-identity-sky transition-all shadow-sm italic"
+                                    className="w-full px-10 py-6 bg-white/40 backdrop-blur-xl border-2 border-white/60 rounded-[2rem] text-identity-navy font-black uppercase tracking-[0.15em] focus:outline-none focus:border-identity-sky transition-all shadow-xl italic"
                                     style={{ colorScheme: 'light' }}
                                 />
-                                <div className="bg-rose-500/5 p-6 rounded-2xl border border-rose-500/10 flex items-center gap-6 shadow-sm">
-                                    <AlertTriangle className="text-rose-500 w-6 h-6 shrink-0" />
-                                    <p className="text-[10px] text-rose-500/80 uppercase tracking-[0.15em] font-black leading-relaxed italic">
-                                        Manual override will trigger automatic period transitions at the specified temporal marker across all system nodes.
+                                <div className="bg-rose-500/10 p-6 rounded-2xl border-2 border-rose-500/20 flex items-center gap-6 shadow-lg shadow-rose-900/5">
+                                    <AlertTriangle className="text-rose-500 w-8 h-8 shrink-0" />
+                                    <p className="text-[9px] text-rose-500/80 uppercase tracking-[0.2em] font-black leading-relaxed italic">
+                                        Warning: This modification will redirect all authentication protocols to the target period.
                                     </p>
                                 </div>
                             </div>
                         ) : (
-                            <div className="w-full px-10 py-8 bg-white/60 border border-slate-100 rounded-[2rem] flex items-center gap-10 shadow-sm hover:border-identity-sky/30 transition-all hover:shadow-xl hover:shadow-identity-sky/5">
-                                <div className="bg-identity-sky/10 p-5 rounded-2xl border border-identity-sky/20 shadow-inner">
-                                    <Calendar className="w-10 h-10 text-identity-sky" />
+                            <div className="w-full h-full px-10 py-8 bg-white/20 backdrop-blur-xl border-2 border-white/40 rounded-[2.5rem] flex items-center gap-8 shadow-inner group-hover:border-identity-sky/40 transition-all">
+                                <div className="bg-identity-sky/10 p-5 rounded-2xl border border-identity-sky/20">
+                                    <Clock className="w-8 h-8 text-identity-sky" />
                                 </div>
-                                <div className="flex-1">
-                                    <span className="text-2xl text-identity-navy font-black uppercase tracking-tighter block leading-none mb-3 italic">
+                                <div>
+                                    <span className="text-xl text-identity-navy font-black uppercase tracking-tighter block leading-none mb-3 italic">
                                         {settings?.effectiveDate 
                                             ? new Date(settings.effectiveDate).toLocaleString('en-PH', { 
                                                 dateStyle: 'medium', 
                                                 timeStyle: 'short' 
-                                            })
-                                            : 'SYSTEM_IMMEDIATE_EXECUTION'}
+                                            }).toUpperCase()
+                                            : 'IMMEDIATE_SYNC'}
                                     </span>
-                                    <span className="text-[9px] text-slate-400 font-black uppercase tracking-[0.4em] block italic opacity-60">SCHEDULED_TRANSITION_MARKER</span>
+                                    <span className="text-[9px] text-identity-sky/60 font-black uppercase tracking-[0.5em] block italic">Activation_Window</span>
                                 </div>
-                                {settings?.effectiveDate && new Date(settings.effectiveDate) > new Date() && (
-                                    <div className="px-8 py-3 bg-identity-sky text-white text-[10px] font-black rounded-full uppercase tracking-[0.3em] border border-identity-sky/20 shadow-xl shadow-identity-sky/20 animate-pulse">
-                                        QUEUED
-                                    </div>
-                                )}
                             </div>
                         )}
                     </div>
@@ -332,183 +326,185 @@ export default function AcademicSettingsTab() {
 
                 {/* Edit Actions */}
                 {isEditing && (
-                    <div className="flex gap-6 mt-16 pt-12 border-t border-slate-100/50 relative z-10">
+                    <div className="flex gap-6 mt-16 pt-12 border-t-2 border-white/20 relative z-10 animate-in slide-in-from-bottom-5 duration-500">
                         <button
                             onClick={handleSaveSettings}
-                            className="flex-1 bg-identity-sky hover:bg-identity-navy text-white px-10 py-5 rounded-2xl font-black uppercase tracking-[0.2em] text-[10px] flex items-center justify-center gap-4 shadow-xl shadow-identity-sky/10 transition-all active:scale-95 italic"
+                            className="flex-1 bg-identity-sky text-white px-12 py-6 rounded-2xl font-black uppercase tracking-[0.3em] text-[11px] flex items-center justify-center gap-6 shadow-2xl shadow-identity-sky/20 hover:bg-identity-navy transition-all active:scale-95 italic min-h-[72px]"
                         >
                             <Check className="w-6 h-6" />
-                            Commit Protocol
+                            Authorize_Settings_Update
                         </button>
                         <button
                             onClick={handleCancelEdit}
-                            className="px-10 py-5 bg-white text-slate-400 hover:text-identity-navy font-black uppercase tracking-[0.2em] text-[10px] transition-all rounded-2xl border border-slate-100 hover:bg-slate-50 shadow-sm italic"
+                            className="px-12 py-6 bg-white/10 text-slate-400 hover:text-identity-navy font-black uppercase tracking-[0.3em] text-[11px] transition-all rounded-2xl border-2 border-white/40 hover:bg-white/20 shadow-xl active:scale-95 italic min-h-[72px]"
                         >
-                            Abort Changes
+                            Abort_Operation
                         </button>
                     </div>
                 )}
-                
-                <div className="absolute bottom-0 inset-x-0 h-1 bg-gradient-to-r from-transparent via-identity-sky/20 to-transparent opacity-50" />
             </div>
 
             {/* Classes Section */}
-            <div className="identity-glass rounded-[2rem] md:rounded-[3rem] p-6 sm:p-8 md:p-10 shadow-xl relative overflow-hidden bg-white/40 border border-identity-sky/5">
-                <div className="absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-identity-sky/5 to-transparent pointer-events-none opacity-30" />
-                <div className="flex items-center justify-between mb-10 relative z-10">
-                    <h3 className="text-2xl font-black text-identity-navy flex items-center gap-6 uppercase tracking-tighter italic">
-                        <div className="bg-identity-sky/10 p-3 rounded-2xl border border-identity-sky/20">
-                            <BookOpen className="w-8 h-8 text-identity-sky" />
+            <div className="identity-glass rounded-[3.5rem] p-10 md:p-12 shadow-3xl relative overflow-hidden border-2 border-white/40">
+                <div className="absolute inset-x-0 top-0 h-64 bg-gradient-to-b from-identity-sky/5 to-transparent pointer-events-none opacity-30" />
+                
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-10 mb-16 relative z-10">
+                    <div className="flex items-center gap-8">
+                        <div className="bg-identity-navy/5 p-5 rounded-[2rem] border-2 border-identity-navy/10">
+                            <BookOpen className="w-10 h-10 text-identity-navy" />
                         </div>
-                        Subject Registry
-                        <span className="bg-identity-navy text-white px-6 py-1.5 rounded-full text-[10px] font-black ml-6 shadow-xl italic tracking-[0.1em]">
-                            {filteredClasses.length} NODES
-                        </span>
-                    </h3>
-                    <button
-                        onClick={fetchClasses}
-                        className="p-4 min-h-[48px] min-w-[48px] flex items-center justify-center bg-white text-slate-300 hover:text-identity-sky hover:border-identity-sky/50 rounded-2xl transition-all border border-slate-100 shadow-sm active:scale-90"
-                        title="Verify Master List"
-                    >
-                        <RefreshCw className={`w-6 h-6 ${loadingClasses ? 'animate-spin' : ''}`} />
-                    </button>
+                        <div>
+                            <h3 className="text-3xl font-black text-identity-navy uppercase tracking-tighter italic leading-none">
+                                Registry Logs
+                            </h3>
+                            <div className="flex items-center gap-4 mt-3">
+                                <span className="bg-identity-navy text-white px-5 py-1.5 rounded-full text-[9px] font-black italic tracking-[0.2em] shadow-lg">
+                                    {filteredClasses.length}_RECORDS_IDENTIFIED
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="flex flex-col md:flex-row gap-6">
+                        <div className="relative group min-w-[300px]">
+                            <Search className="absolute left-8 top-1/2 -translate-y-1/2 text-identity-sky opacity-40 group-focus-within:opacity-100 transition-opacity" size={18} />
+                            <input
+                                type="text"
+                                placeholder="FILTER_RECORDS..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="w-full pl-20 pr-10 py-5 bg-white/40 border-2 border-white/60 rounded-2xl text-[11px] font-black text-identity-navy placeholder-slate-300 uppercase tracking-[0.3em] focus:outline-none focus:border-identity-sky transition-all italic shadow-xl"
+                            />
+                        </div>
+                        <button
+                            onClick={fetchClasses}
+                            className="bg-white/40 text-identity-navy p-5 rounded-2xl transition-all border-2 border-white/60 shadow-xl hover:bg-identity-sky hover:text-white active:scale-90 group"
+                        >
+                            <RefreshCw className={`w-6 h-6 transition-transform group-hover:rotate-180 ${loadingClasses ? 'animate-spin' : ''}`} />
+                        </button>
+                    </div>
                 </div>
 
-                {/* Search */}
-                <div className="mb-12 relative z-10">
-                    <div className="relative group">
-                        <div className="absolute left-8 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-identity-sky transition-colors">
-                            <Search size={20} />
+                {/* Classes Scrollable List */}
+                <div className="max-h-[800px] overflow-y-auto pr-4 custom-scrollbar relative z-10 scroll-smooth">
+                    {loadingClasses ? (
+                        <div className="flex flex-col items-center justify-center py-40 gap-8">
+                            <div className="w-16 h-16 border-4 border-identity-sky border-t-transparent rounded-full animate-spin shadow-xl" />
+                            <p className="text-[10px] font-black text-identity-sky uppercase tracking-[0.4em] italic animate-pulse">Syncing_Records...</p>
                         </div>
-                        <input
-                            type="text"
-                            placeholder="SCAN REGISTRY FOR NODES..."
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full pl-20 pr-10 py-6 bg-white border border-slate-100 rounded-3xl text-[11px] font-black text-identity-navy placeholder-slate-200 uppercase tracking-[0.3em] focus:outline-none focus:border-identity-sky/50 shadow-sm transition-all italic"
-                        />
-                    </div>
-                </div>
-
-                {/* Classes List */}
-                {loadingClasses ? (
-                    <div className="flex flex-col items-center justify-center py-28 relative z-10">
-                        <div className="animate-spin w-12 h-12 border-[3px] border-identity-sky border-t-transparent rounded-full mb-8 shadow-sm"></div>
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] italic">Querying Class Clusters...</p>
-                    </div>
-                ) : filteredClasses.length === 0 ? (
-                    <div className="text-center py-28 bg-white/40 rounded-[2rem] border border-slate-100 shadow-sm relative z-10">
-                        <BookOpen className="w-20 h-20 text-slate-100 mx-auto mb-8" />
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] italic">Zero subject records detected for the current period.</p>
-                    </div>
-                ) : (
-                    <div className="grid grid-cols-1 lg:grid-cols-1 md:grid-cols-2 gap-8 relative z-10">
-                        {filteredClasses.map((cls) => (
-                            <div
-                                key={cls.id}
-                                className="identity-glass border border-slate-100 rounded-[2rem] p-10 hover:border-identity-sky/30 transition-all shadow-sm group relative overflow-hidden bg-white/60 hover:shadow-xl hover:shadow-identity-sky/5"
-                            >
-                                <div className="absolute inset-0 bg-gradient-to-r from-identity-sky/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                                <div className="flex items-start justify-between relative z-10">
-                                    <div className="flex-1 min-w-0">
-                                        <div className="flex items-center gap-4 mb-5">
-                                            <span className="text-[10px] font-black text-identity-sky bg-identity-sky/10 px-4 py-1.5 rounded-xl border border-identity-sky/20 tracking-[0.15em] uppercase italic">
-                                                {cls.subjectCode}
-                                            </span>
-                                            <span className="text-[9px] text-slate-300 font-black uppercase tracking-[0.2em] italic">
-                                                PRTL: {cls.id}
-                                            </span>
+                    ) : filteredClasses.length === 0 ? (
+                        <div className="text-center py-40 bg-[#041C3C]/5 rounded-[3rem] border-2 border-dashed border-white/40 shadow-inner">
+                            <BookOpen className="w-24 h-24 text-slate-100 mx-auto mb-10 opacity-50" />
+                            <p className="text-[11px] font-black text-slate-400 uppercase tracking-[0.5em] italic">No_Terminal_Logs_Found_In_This_Sector</p>
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-1 gap-8">
+                            {filteredClasses.map((cls) => (
+                                <div
+                                    key={cls.id}
+                                    className="identity-glass border-2 border-white/40 rounded-[2.5rem] p-10 hover:border-identity-sky/40 transition-all shadow-xl group relative overflow-hidden bg-white/10 hover:-translate-y-1"
+                                >
+                                    <div className="absolute inset-0 bg-gradient-to-r from-identity-sky/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-10 relative z-10">
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex items-center gap-6 mb-6">
+                                                <span className="text-[10px] font-black text-identity-sky bg-identity-sky/10 px-5 py-2 rounded-xl border border-identity-sky/20 tracking-[0.2em] uppercase italic">
+                                                    {cls.subjectCode}
+                                                </span>
+                                                <span className="text-[10px] text-slate-300 font-mono font-bold tracking-[0.2em] italic">
+                                                    NODE_ID: {cls.id.toString().padStart(4, '0')}
+                                                </span>
+                                            </div>
+                                            <h4 className="text-3xl font-black text-identity-navy truncate uppercase tracking-tighter group-hover:text-identity-sky transition-colors mb-4 italic leading-tight">
+                                                {cls.subjectName}
+                                            </h4>
+                                            <p className="text-[11px] font-black text-slate-400 uppercase tracking-[0.4em] flex items-center gap-6 italic">
+                                                <Users size={16} className="text-identity-sky/60" />
+                                                SECTOR {cls.section} · <span className="text-identity-navy font-black italic">{cls.professorName}</span>
+                                            </p>
                                         </div>
-                                        <h4 className="text-2xl font-black text-identity-navy truncate uppercase tracking-tighter group-hover:text-identity-sky transition-colors mb-3 italic">
-                                            {cls.subjectName}
-                                        </h4>
-                                        <p className="text-[11px] font-black text-slate-400 uppercase tracking-[0.3em] flex items-center gap-4 italic">
-                                            <Users size={14} className="text-identity-sky/50" />
-                                            {cls.section} · <span className="text-identity-navy font-extrabold">{cls.professorName}</span>
-                                        </p>
-                                        <div className="mt-8 flex items-center gap-6">
-                                            <div className="flex items-center gap-3 text-[9px] font-black text-slate-300 uppercase tracking-[0.15em] border border-slate-100 px-4 py-2 rounded-xl bg-white shadow-sm">
-                                                <Calendar size={12} className="text-identity-sky/40" />
-                                                LOGGED: {new Date(cls.createdAt).toLocaleDateString()}
+                                        <div className="flex items-center gap-10">
+                                            <div className="hidden sm:flex flex-col items-end">
+                                                <span className="text-[9px] text-slate-300 font-black uppercase tracking-[0.4em] mb-2 italic">Creation_Stamp</span>
+                                                <span className="text-xs font-black text-identity-navy uppercase tracking-[0.1em] italic">{new Date(cls.createdAt).toLocaleDateString()}</span>
+                                            </div>
+                                            <div className="flex flex-col items-center gap-3 text-identity-sky bg-[#041C3C]/95 px-10 py-8 rounded-[2rem] border-2 border-white/20 shadow-2xl transition-all group-hover:scale-105 group-hover:shadow-identity-sky/20">
+                                                <span className="text-[9px] font-black uppercase tracking-[0.4em] text-white/40 italic">Entities</span>
+                                                <span className="text-5xl font-black tracking-tighter leading-none italic text-white">{cls.studentCount}</span>
                                             </div>
                                         </div>
                                     </div>
-                                    <div className="flex flex-col items-center gap-3 text-identity-sky bg-white px-8 py-6 rounded-3xl border border-slate-100 shadow-sm group-hover:scale-105 transition-transform">
-                                        <span className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-300">Nodes</span>
-                                        <span className="text-4xl font-black tracking-tighter leading-none italic">{cls.studentCount}</span>
-                                    </div>
                                 </div>
-                            </div>
-                        ))}
-                    </div>
-                )}
+                            ))}
+                        </div>
+                    )}
+                </div>
             </div>
 
             {/* Semester History */}
-            <div className="identity-glass rounded-[2rem] md:rounded-[3rem] p-6 sm:p-8 md:p-10 shadow-xl relative overflow-hidden bg-white/40 border border-identity-sky/5">
-                <div className="absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-identity-sky/5 to-transparent pointer-events-none opacity-30" />
-                <div className="flex items-center justify-between mb-10 relative z-10">
-                    <h3 className="text-2xl font-black text-identity-navy flex items-center gap-6 uppercase tracking-tighter italic">
-                        <div className="bg-identity-sky/10 p-3 rounded-2xl border border-identity-sky/20">
-                            <History className="w-8 h-8 text-identity-sky" />
+            <div className="identity-glass rounded-[3.5rem] p-10 md:p-12 shadow-3xl relative overflow-hidden border-2 border-white/40">
+                <div className="absolute inset-x-0 top-0 h-64 bg-gradient-to-b from-identity-sky/5 to-transparent pointer-events-none opacity-30" />
+                
+                <div className="flex items-center justify-between mb-16 relative z-10">
+                    <div className="flex items-center gap-8">
+                        <div className="bg-identity-sky/10 p-5 rounded-[2rem] border-2 border-identity-sky/20">
+                            <History className="w-10 h-10 text-identity-sky" />
                         </div>
-                        Archival Sequential Timeline
-                    </h3>
-                    <button
-                        onClick={fetchHistory}
-                        className="p-4 min-h-[48px] min-w-[48px] flex items-center justify-center bg-white text-slate-300 hover:text-identity-sky hover:border-identity-sky/50 rounded-2xl transition-all border border-slate-100 shadow-sm active:scale-90"
-                        title="Access Archive"
-                    >
-                        <RefreshCw className={`w-6 h-6 ${loadingHistory ? 'animate-spin' : ''}`} />
-                    </button>
+                        <div>
+                            <h3 className="text-3xl font-black text-identity-navy uppercase tracking-tighter italic leading-none">
+                                Historical Logs
+                            </h3>
+                            <p className="text-[10px] text-identity-sky font-black uppercase tracking-[0.4em] mt-3 italic opacity-60">Archive_State_Telemetry</p>
+                        </div>
+                    </div>
                 </div>
 
                 {loadingHistory ? (
-                    <div className="flex flex-col items-center justify-center py-28 relative z-10">
-                        <div className="animate-spin w-12 h-12 border-[3px] border-identity-sky border-t-transparent rounded-full mb-8 shadow-sm"></div>
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] italic">Accessing Timeline Logs...</p>
+                    <div className="flex flex-col items-center justify-center py-40 gap-8">
+                        <div className="w-16 h-16 border-4 border-identity-sky border-t-transparent rounded-full animate-spin shadow-xl" />
+                        <p className="text-[10px] font-black text-identity-sky uppercase tracking-[0.4em] italic animate-pulse">Pulling_Historical_Data...</p>
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 relative z-10">
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-10 relative z-10">
                         {history.map((sem) => (
                             <div
                                 key={sem.id}
-                                className={`p-10 rounded-[2.5rem] border transition-all shadow-sm group relative overflow-hidden flex flex-col justify-between min-h-[300px] ${sem.isCurrent
-                                    ? 'bg-white border-identity-sky/40 shadow-xl shadow-identity-sky/10 ring-2 ring-identity-sky/5'
-                                    : 'bg-white/60 border-slate-100 hover:border-identity-sky/30 hover:bg-white hover:shadow-lg'
+                                className={`p-12 rounded-[3.5rem] border-2 transition-all shadow-xl group relative overflow-hidden flex flex-col justify-between min-h-[360px] ${sem.isCurrent
+                                    ? 'bg-[#041C3C] border-identity-sky shadow-identity-sky/20 ring-4 ring-identity-sky/5'
+                                    : 'bg-white/10 border-white/40 hover:border-identity-sky/30 hover:bg-white/20'
                                     }`}
                             >
-                                <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-identity-sky/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                                <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-identity-sky/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                                
                                 <div className="relative z-10">
-                                    <div className="flex items-center justify-between mb-6">
-                                        <h4 className="text-2xl font-black text-identity-navy uppercase tracking-tighter group-hover:text-identity-sky transition-colors italic">
+                                    <div className="flex items-center justify-between mb-10">
+                                        <h4 className={`text-4xl font-black uppercase tracking-tighter italic ${sem.isCurrent ? 'text-white' : 'text-identity-navy'}`}>
                                             {sem.schoolYear}
                                         </h4>
                                         {sem.isCurrent && (
-                                            <div className="flex items-center gap-3 px-4 py-1.5 bg-identity-sky text-white text-[9px] font-black rounded-xl border border-identity-sky/20 uppercase tracking-[0.15em] animate-pulse shadow-lg shadow-identity-sky/20">
-                                                ACTIVE_PRTL
+                                            <div className="flex items-center gap-4 px-5 py-2.5 bg-identity-sky text-white text-[10px] font-black rounded-xl border border-white/20 uppercase tracking-[0.2em] animate-pulse shadow-xl shadow-identity-sky/40">
+                                                SYNC_ACTIVE
                                             </div>
                                         )}
                                     </div>
-                                    <p className="text-[11px] font-black text-slate-400 uppercase tracking-[0.3em] mb-8 italic">
+                                    <p className={`text-[12px] font-black uppercase tracking-[0.4em] mb-12 italic ${sem.isCurrent ? 'text-identity-sky' : 'text-slate-400'}`}>
                                         {sem.semester.toUpperCase()}
                                     </p>
-                                    <div className="flex flex-wrap items-center gap-4">
-                                        <div className="flex items-center gap-3 px-4 py-2 bg-white/80 text-[10px] font-black text-identity-sky rounded-2xl border border-slate-100 shadow-sm tracking-[0.15em] italic">
-                                            <BookOpen size={14} />
-                                            {sem.classCount} NODES
+                                    <div className="flex flex-wrap items-center gap-6">
+                                        <div className={`flex items-center gap-4 px-5 py-2.5 rounded-2xl border transition-all text-[11px] font-black tracking-[0.1em] italic ${
+                                            sem.isCurrent 
+                                                ? 'bg-white/10 border-white/10 text-white' 
+                                                : 'bg-white/40 border-white/60 text-identity-navy'
+                                        }`}>
+                                            <BookOpen size={16} />
+                                            {sem.classCount}_CHANNELS
                                         </div>
-                                        {sem.effectiveDate && (
-                                            <div className="flex items-center gap-3 px-4 py-2 bg-white/80 text-[9px] font-black text-slate-400 rounded-2xl border border-slate-100 uppercase tracking-[0.15em] italic">
-                                                <Calendar size={12} className="text-identity-sky/50" />
-                                                {new Date(sem.effectiveDate).toLocaleDateString()}
-                                            </div>
-                                        )}
                                     </div>
                                 </div>
-                                <div className="pt-8 border-t border-slate-100/50 flex flex-col gap-2 relative z-10">
-                                    <span className="text-[9px] font-black text-slate-200 uppercase tracking-[0.5em] italic mb-1">TX_LOG_RATIFIED</span>
-                                    <span className="text-xs font-black text-slate-400 font-mono tracking-[0.15em]">
+
+                                <div className={`pt-10 mt-10 border-t-2 flex flex-col gap-3 relative z-10 ${sem.isCurrent ? 'border-white/10' : 'border-white/20'}`}>
+                                    <span className={`text-[10px] font-black uppercase tracking-[0.5em] italic ${sem.isCurrent ? 'text-white/40' : 'text-slate-200'}`}>Creation_Index</span>
+                                    <span className={`text-sm font-black font-mono tracking-[0.2em] italic ${sem.isCurrent ? 'text-identity-sky' : 'text-slate-400'}`}>
                                         {new Date(sem.createdAt).toLocaleString('en-PH', { month: 'short', day: '2-digit', year: 'numeric' }).toUpperCase()}
                                     </span>
                                 </div>
@@ -516,9 +512,32 @@ export default function AcademicSettingsTab() {
                         ))}
                     </div>
                 )}
-                <div className="absolute bottom-0 inset-x-0 h-1 bg-gradient-to-r from-transparent via-identity-sky/20 to-transparent opacity-50" />
+                
+                <div className="mt-20 pt-10 border-t-2 border-white/20 flex justify-center opacity-40">
+                    <p className="text-[10px] text-slate-300 italic font-black uppercase tracking-[0.6em]">LabFace_End_Of_History_Sentinel</p>
+                </div>
             </div>
+
+            <style jsx global>{`
+                .custom-scrollbar::-webkit-scrollbar {
+                    width: 8px;
+                }
+                .custom-scrollbar::-webkit-scrollbar-track {
+                    background: rgba(4, 28, 60, 0.05);
+                    border-radius: 20px;
+                }
+                .custom-scrollbar::-webkit-scrollbar-thumb {
+                    background: rgba(92, 180, 228, 0.2);
+                    border-radius: 20px;
+                    border: 2px solid transparent;
+                    background-clip: content-box;
+                }
+                .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+                    background: rgba(92, 180, 228, 0.4);
+                    border: 2px solid transparent;
+                    background-clip: content-box;
+                }
+            `}</style>
         </div>
     );
-
 }

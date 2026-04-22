@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useRef, useState, useEffect, useCallback } from 'react';
 import Webcam from 'react-webcam';
@@ -7,7 +7,8 @@ import Link from 'next/link';
 import { 
     Camera, StopCircle, RefreshCw, AlertCircle, 
     User, CheckCircle, XCircle, Clock, Activity, 
-    Trash2, ShieldCheck, ChevronRight, ArrowLeft
+    Trash2, ShieldCheck, ChevronRight, ArrowLeft,
+    Signal, Monitor, Zap, Disc
 } from 'lucide-react';
 import { getToken } from '@/utils/auth';
 
@@ -34,14 +35,15 @@ export default function CameraTestPage() {
     const [stats, setStats] = useState({ fps: 0, latency: 0 });
     const [sourceDims, setSourceDims] = useState({ width: 0, height: 0 });
     
-    // Clear history and seen users when starting test
     useEffect(() => {
-        if (!isTesting) return;
+        if (!isTesting) {
+            setFaces([]);
+            return;
+        }
         seenUsersRef.current.clear();
         setHistory([]);
     }, [isTesting]);
     
-    // Polling loop
     const captureAndTest = useCallback(async () => {
         if (!isTesting || !webcamRef.current) return;
         
@@ -53,12 +55,11 @@ export default function CameraTestPage() {
             
             const token = getToken();
             if (!token) {
-                setError("Authentication session missing. Please re-login.");
+                setError("Session expired. Please re-authenticate.");
                 setIsTesting(false);
                 return;
             }
 
-            // Using relative URL to ensure it hits the local backend correctly
             const response = await axios.post(
                 `/api/ai/camera-test`, 
                 { image: imageSrc }, 
@@ -76,8 +77,6 @@ export default function CameraTestPage() {
                 });
                 setStats({ fps: parseFloat((1000 / latency).toFixed(1)), latency });
                 
-                // Update history with new identified detections only (Filter out Unknowns)
-                // One-Time Detection Implementation
                 const matchedFaces = newFaces.filter((f: any) => f.match);
                 if (matchedFaces.length > 0) {
                     setHistory(prev => {
@@ -94,19 +93,13 @@ export default function CameraTestPage() {
                         return updated.slice(0, 50);
                     });
                 }
-                
                 setError(null);
             } else {
-                setError(response.data.error || "Unknown recognition error");
+                setError(response.data.error || "Recognition error: Signal interrupted.");
             }
         } catch (err: any) {
-            console.error('Camera test error:', err);
-            setError(err.response?.data?.error || err.message || "Failed to reach backend");
-            
-            // Only auto-pause on critical auth errors
-            if (err.response?.status === 401 || err.response?.status === 403) {
-                setIsTesting(false);
-            }
+            setError(err.response?.data?.error || err.message || "Connection failure: System unreachable.");
+            if (err.response?.status === 401 || err.response?.status === 403) setIsTesting(false);
         }
     }, [isTesting]);
 
@@ -117,25 +110,13 @@ export default function CameraTestPage() {
         const loop = async () => {
             if (!isTesting || isCancelled) return;
             await captureAndTest();
-            
-            if (!isCancelled && isTesting) {
-                // Wait 50ms *after* request finishes before pulling next frame
-                // Maximizes tracking FPS without creating infinite queues
-                timeoutId = setTimeout(loop, 50); 
-            }
+            if (!isCancelled && isTesting) timeoutId = setTimeout(loop, 100); 
         };
 
-        if (isTesting) {
-            loop();
-        }
-
-        return () => {
-            isCancelled = true;
-            clearTimeout(timeoutId);
-        };
+        if (isTesting) loop();
+        return () => { isCancelled = true; clearTimeout(timeoutId); };
     }, [isTesting, captureAndTest]);
 
-    // --- SMOOTH TRACKING LOGIC ---
     const [displayFaces, setDisplayFaces] = useState<FaceMatch[]>([]);
     const requestRef = useRef<number>();
 
@@ -147,9 +128,7 @@ export default function CameraTestPage() {
             return prev.map((prevFace, i) => {
                 const target = faces[i];
                 if (!target) return prevFace;
-
                 const lerp = (start: number, end: number) => start + (end - start) * 0.35;
-                
                 return {
                     ...target,
                     bbox: [
@@ -166,12 +145,9 @@ export default function CameraTestPage() {
 
     useEffect(() => {
         requestRef.current = requestAnimationFrame(animate);
-        return () => {
-            if (requestRef.current) cancelAnimationFrame(requestRef.current);
-        };
+        return () => { if (requestRef.current) cancelAnimationFrame(requestRef.current); };
     }, [animate]);
 
-    // Canvas rendering loop - uses displayFaces for liquid motion
     useEffect(() => {
         const video = webcamRef.current?.video;
         const canvas = canvasRef.current;
@@ -179,12 +155,10 @@ export default function CameraTestPage() {
 
         canvas.width = video.videoWidth || 1280;
         canvas.height = video.videoHeight || 720;
-
         const ctx = canvas.getContext('2d');
         if (!ctx) return;
 
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-
         const scaleX = sourceDims.width > 0 ? (canvas.width / sourceDims.width) : 1;
         const scaleY = sourceDims.height > 0 ? (canvas.height / sourceDims.height) : 1;
 
@@ -192,259 +166,232 @@ export default function CameraTestPage() {
             const [x1, y1, x2, y2] = face.bbox;
             const w = x2 - x1;
             const h = y2 - y1;
-            
-            // The webcam screenshot is already mirrored by react-webcam mirrored={true}
-            // so the AI returns coordinates in the mirrored space.
-            // We map them directly to the canvas without a second flip.
-            const boxX = x1;
-            
-            const scaledX = Math.floor(boxX * scaleX);
+            const scaledX = Math.floor(x1 * scaleX);
             const scaledY = Math.floor(y1 * scaleY);
             const scaledW = Math.floor(w * scaleX);
             const scaledH = Math.floor(h * scaleY);
 
-            const colorSky = 'rgb(92, 180, 228)'; // identity-sky
-            const colorRose = 'rgb(244, 63, 94)'; // identity-rose
-            const glowSky = 'rgba(92, 180, 228, 0.4)';
-            const glowRose = 'rgba(244, 63, 94, 0.4)';
-
+            const colorSky = '#5CB4E4';
+            const colorRose = '#EF4444';
             const color = face.match ? colorSky : colorRose;
-            const glow = face.match ? glowSky : glowRose;
 
-            ctx.shadowColor = glow;
-            ctx.shadowBlur = 15;
+            ctx.shadowColor = `${color}66`;
+            ctx.shadowBlur = 20;
             ctx.strokeStyle = color;
             ctx.lineWidth = 4;
             ctx.lineJoin = 'round';
             ctx.strokeRect(scaledX, scaledY, scaledW, scaledH);
             
+            // Corners
+            ctx.lineWidth = 10;
+            const cornerSize = 25;
+            // Top Left
+            ctx.beginPath(); ctx.moveTo(scaledX, scaledY + cornerSize); ctx.lineTo(scaledX, scaledY); ctx.lineTo(scaledX + cornerSize, scaledY); ctx.stroke();
+            // Top Right
+            ctx.beginPath(); ctx.moveTo(scaledX + scaledW - cornerSize, scaledY); ctx.lineTo(scaledX + scaledW, scaledY); ctx.lineTo(scaledX + scaledW, scaledY + cornerSize); ctx.stroke();
+            // Bottom Right
+            ctx.beginPath(); ctx.moveTo(scaledX + scaledW, scaledY + scaledH - cornerSize); ctx.lineTo(scaledX + scaledW, scaledY + scaledH); ctx.lineTo(scaledX + scaledW - cornerSize, scaledY + scaledH); ctx.stroke();
+            // Bottom Left
+            ctx.beginPath(); ctx.moveTo(scaledX + cornerSize, scaledY + scaledH); ctx.lineTo(scaledX, scaledY + scaledH); ctx.lineTo(scaledX, scaledY + scaledH - cornerSize); ctx.stroke();
+            
             ctx.shadowBlur = 0;
-
-            const text = `${face.name} (${Math.round(face.confidence)}%)`;
-            ctx.font = 'black 16px "Outfit", sans-serif';
+            const text = `${face.name} ${Math.round(face.confidence)}%`.toUpperCase();
+            ctx.font = 'bold 16px "Outfit", sans-serif';
             const textWidth = ctx.measureText(text).width;
             
             ctx.fillStyle = color;
-            ctx.fillRect(scaledX - 2, scaledY - 32, textWidth + 16, 32);
-
+            ctx.fillRect(scaledX, scaledY - 35, textWidth + 24, 35);
             ctx.fillStyle = 'white';
-            ctx.fillText(text, scaledX + 6, scaledY - 10);
+            ctx.fillText(text, scaledX + 12, scaledY - 12);
         });
-    }, [displayFaces]);
-
-    const formatTime = (isoString: string) => {
-        const date = new Date(isoString);
-        return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-    };
+    }, [displayFaces, sourceDims]);
 
     return (
-        <div className="min-h-screen bg-slate-950 p-6">
-            <div className="max-w-[1400px] mx-auto space-y-6">
-                {/* Header */}
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-slate-900/50 backdrop-blur-xl rounded-2xl p-6 border border-slate-800 shadow-2xl">
-                        <div className="flex items-center gap-4">
-                            <Link 
-                                href="/professor/dashboard?tab=monitor"
-                                className="p-2 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white transition-colors mr-2"
-                                title="Back to Dashboard"
-                            >
-                                <ArrowLeft size={20} />
-                            </Link>
-                            <div className="p-3 bg-identity-sky/10 rounded-2xl border border-identity-sky/20">
-                                <ShieldCheck className="w-8 h-8 text-identity-sky" />
-                            </div>
-                            <div>
-                                <h1 className="text-2xl font-bold tracking-tight text-white flex items-center gap-2">
-                                    Face Recognition Test
-                                    <span className="px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-400 text-[10px] font-bold uppercase tracking-[0.15em] border border-indigo-500/30">
-                                        Professor Mode
-                                    </span>
-                                </h1>
-                                <p className="text-slate-400 text-sm mt-1">
-                                    Calibrate and test detection accuracy before starting class
-                                </p>
-                            </div>
+        <div className="min-h-screen bg-transparent p-10 font-outfit relative overflow-hidden">
+            <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-blueprint" />
+            
+            <div className="max-w-[1600px] mx-auto space-y-10 relative z-10">
+                {/* Header HUD */}
+                <div className="bg-white/40 backdrop-blur-3xl rounded-[4rem] border border-white/20 p-10 flex flex-col xl:flex-row xl:items-center justify-between gap-10 shadow-4xl relative overflow-hidden group">
+                    <div className="absolute inset-x-0 h-[2px] bg-gradient-to-r from-transparent via-[#5CB4E4]/40 to-transparent top-0 z-20 animate-scan-y opacity-30 pointer-events-none" />
+                    
+                    <div className="flex items-center gap-10">
+                        <Link href="/professor/dashboard?tab=monitor"
+                            className="bg-[#041C3C] text-white p-6 rounded-[2rem] hover:bg-[#5CB4E4] hover:scale-110 active:scale-95 transition-all duration-700 shadow-4xl group/back">
+                            <ArrowLeft size={28} className="group-hover/back:-translate-x-2 transition-transform" />
+                        </Link>
+                        <div>
+                            <h1 className="text-5xl font-black text-[#041C3C] uppercase tracking-tighter italic flex items-center gap-6">
+                                Biometric Verification Hub
+                                <div className="px-6 py-2 rounded-xl bg-[#5CB4E4]/10 text-[#5CB4E4] text-[11px] font-black uppercase tracking-[0.4em] border border-[#5CB4E4]/20 italic">
+                                    Faculty Access
+                                </div>
+                            </h1>
+                            <p className="text-[12px] text-slate-400 font-black uppercase tracking-[0.5em] mt-3 italic opacity-60 flex items-center gap-4">
+                                <Zap size={14} className="text-[#5CB4E4]" /> Real-time biometric recognition engine.
+                            </p>
                         </div>
-                    <div className="flex items-center gap-4">
-                        <div className="hidden lg:flex flex-col items-end mr-4">
-                            <span className="text-[10px] text-slate-500 font-bold uppercase tracking-[0.15em]">System Engine</span>
-                            <span className="text-emerald-400 text-sm font-semibold flex items-center gap-2">
-                                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                                Active
-                            </span>
+                    </div>
+
+                    <div className="flex items-center gap-10">
+                        <div className="text-right hidden xl:block">
+                            <p className="text-[10px] text-[#5CB4E4] font-black uppercase tracking-[0.4em] italic mb-2">System Status</p>
+                            <p className="flex items-center gap-4 text-emerald-500 font-black text-xl italic uppercase tracking-tighter">
+                                <span className={`w-4 h-4 rounded-full bg-emerald-500 shadow-[0_0_20px_rgba(16,185,129,1)] ${isTesting ? 'animate-pulse' : ''}`} />
+                                System Operational
+                            </p>
                         </div>
-                        <button 
-                            onClick={() => setIsTesting(!isTesting)}
-                            className={`flex items-center gap-2 px-6 py-2.5 font-bold rounded-2xl transition-all shadow-lg hover:scale-[1.02] active:scale-[0.98] ${
-                                isTesting ? 'bg-red-500/10 text-red-500 border border-red-500/30 hover:bg-red-500/20' : 'bg-identity-sky text-white hover:bg-identity-sky/90'
-                            }`}
-                        >
-                            {isTesting ? (
-                                <><StopCircle className="w-5 h-5" /> Stop Engine</>
-                            ) : (
-                                <><Camera className="w-5 h-5" /> Start Diagnostics</>
-                            )}
-                        </button>
+                        <div className="relative group/btn">
+                            <div className={`absolute -inset-4 blur-2xl opacity-0 group-hover/btn:opacity-60 transition-all duration-700 rounded-[3rem] ${isTesting ? 'bg-rose-500' : 'bg-[#5CB4E4]'}`} />
+                            <button onClick={() => setIsTesting(!isTesting)}
+                                className={`relative flex items-center gap-6 px-14 py-6 font-black uppercase tracking-[0.4em] text-[13px] rounded-[2.5rem] transition-all duration-700 shadow-4xl active:scale-95 italic border-2 ${
+                                    isTesting ? 'bg-white text-rose-500 border-rose-100 hover:bg-rose-50' : 'bg-[#041C3C] text-white border-white/20 hover:bg-rose-600'
+                                }`}>
+                                {isTesting ? <><StopCircle size={28} className="fill-rose-500/20" /> Stop Verification</> : <><Camera size={28} /> Start Verification</>}
+                            </button>
+                        </div>
                     </div>
                 </div>
 
                 {error && (
-                    <div className="bg-red-500/10 border border-red-500/20 text-red-400 rounded-2xl p-4 flex items-center gap-4 animate-in fade-in slide-in-from-top-2 duration-300">
-                        <AlertCircle className="w-5 h-5 flex-shrink-0" />
-                        <span className="font-semibold text-sm">{error}</span>
+                    <div className="bg-rose-500/10 border-l-[12px] border-rose-500 rounded-[2.5rem] p-10 flex items-center gap-8 shadow-4xl animate-in fade-in slide-in-from-top-8 duration-700">
+                        <AlertCircle className="w-10 h-10 text-rose-500 flex-shrink-0 animate-pulse" />
+                        <span className="font-black uppercase tracking-[0.3em] text-lg text-rose-500 italic drop-shadow-lg">{error}</span>
                     </div>
                 )}
 
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 h-[720px]">
-                    {/* Left Panel: Camera & Stats */}
-                    <div className="lg:col-span-8 flex flex-col gap-6">
-                        {/* Live View */}
-                        <div className="flex-1 bg-slate-900 rounded-2xl border border-slate-800 overflow-hidden relative shadow-2xl flex items-center justify-center">
-                            <Webcam
-                                ref={webcamRef}
-                                audio={false}
-                                mirrored={true}
-                                screenshotFormat="image/jpeg"
-                                screenshotQuality={0.8}
-                                videoConstraints={{ facingMode: "user", width: 640, height: 480 }}
-                                className="w-full h-full object-contain"
-                            />
-                            <canvas 
-                                ref={canvasRef}
-                                className="absolute top-0 left-0 w-full h-full pointer-events-none object-contain"
-                            />
+                <div className="grid grid-cols-1 2xl:grid-cols-12 gap-10">
+                    {/* Viewport */}
+                    <div className="2xl:col-span-8 space-y-10">
+                        <div className="aspect-video bg-[#041C3C] rounded-[4.5rem] border border-white/10 overflow-hidden relative shadow-4xl group/view transition-all duration-1000 animate-in zoom-in-95">
+                            <Webcam ref={webcamRef} audio={false} mirrored={true} screenshotFormat="image/jpeg"
+                                videoConstraints={{ facingMode: "user", width: 1280, height: 720 }}
+                                className={`w-full h-full object-cover transition-all duration-1000 ${isTesting ? 'grayscale-0' : 'grayscale'}`} />
+                            <canvas ref={canvasRef} className="absolute inset-0 w-full h-full pointer-events-none z-20" />
                             
-                            {/* Scanning Overlay Effect */}
+                            {/* HUD Overlays */}
                             {isTesting && (
-                                <div className="absolute inset-0 pointer-events-none border-2 border-brand-500/20 overflow-hidden">
-                                    <div className="w-full h-[2px] bg-brand-500/40 shadow-[0_0_15px_rgba(59,130,246,0.8)] absolute animate-scan-line top-0" />
+                                <div className="absolute inset-0 pointer-events-none z-30 overflow-hidden">
+                                    <div className="absolute inset-0 border-[32px] border-[#041C3C] opacity-40" />
+                                    <div className="absolute inset-x-0 h-[2px] bg-[#5CB4E4] top-0 animate-scan-y shadow-[0_0_25px_rgba(92,180,228,1)]" />
+                                    <div className="absolute left-10 top-10 flex gap-4">
+                                         <div className="w-4 h-4 bg-[#5CB4E4] animate-pulse" />
+                                         <div className="text-[10px] text-[#5CB4E4] font-black uppercase tracking-[0.5em] italic">Biometric Monitoring Feed</div>
+                                    </div>
+                                    {/* Crosshair */}
+                                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48">
+                                        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1px] h-12 bg-[#5CB4E4]" />
+                                        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[1px] h-12 bg-[#5CB4E4]" />
+                                        <div className="absolute left-0 top-1/2 -translate-y-1/2 w-12 h-[1px] bg-[#5CB4E4]" />
+                                        <div className="absolute right-0 top-1/2 -translate-y-1/2 w-12 h-[1px] bg-[#5CB4E4]" />
+                                    </div>
                                 </div>
                             )}
 
                             {!isTesting && (
-                                <div className="absolute inset-0 bg-slate-950/80 flex items-center justify-center backdrop-blur-md">
-                                    <div className="text-center space-y-3">
-                                        <div className="w-16 h-16 bg-slate-800 rounded-full flex items-center justify-center mx-auto text-slate-500">
-                                            <StopCircle size={32} />
-                                        </div>
-                                        <p className="text-slate-200 font-bold text-xl tracking-tight">Camera Testing Paused</p>
-                                        <p className="text-slate-500 text-sm">Click the button above to begin detection</p>
+                                <div className="absolute inset-0 bg-[#041C3C]/80 backdrop-blur-3xl flex flex-col items-center justify-center z-40">
+                                    <Disc size={120} className="text-[#5CB4E4]/10 animate-spin-slow" />
+                                    <div className="space-y-6 text-center absolute">
+                                        <h2 className="text-5xl font-black text-white italic uppercase tracking-tighter">Camera Offline</h2>
+                                        <p className="text-[12px] text-[#5CB4E4] font-black uppercase tracking-[0.6em] italic animate-pulse">Awaiting system command...</p>
                                     </div>
                                 </div>
                             )}
 
-                            {/* HUD In-camera Stats */}
-                            <div className="absolute bottom-4 left-4 flex gap-4">
-                                <div className="bg-black/60 backdrop-blur-md border border-white/10 px-3 py-2 rounded-lg text-[10px] font-mono text-white/80 flex items-center gap-2">
-                                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                                    FPS: {stats.fps}
+                            <div className="absolute bottom-12 left-12 flex gap-8 z-50">
+                                <div className="bg-[#041C3C]/90 backdrop-blur-2xl border border-white/10 px-10 py-5 rounded-[2.5rem] flex items-center gap-6 shadow-4xl group-hover/view:scale-110 transition-transform duration-700">
+                                    <Activity size={24} className="text-[#5CB4E4] animate-pulse" />
+                                    <div>
+                                        <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.2em] italic">Recognition Speed</p>
+                                        <p className="text-xl font-black text-white italic">{stats.fps} FPS</p>
+                                    </div>
                                 </div>
-                                <div className="bg-black/60 backdrop-blur-md border border-white/10 px-3 py-2 rounded-lg text-[10px] font-mono text-white/80 flex items-center gap-2">
-                                    <Clock size={10} />
-                                    LATENCY: {stats.latency}ms
+                                <div className="bg-[#041C3C]/90 backdrop-blur-2xl border border-white/10 px-10 py-5 rounded-[2.5rem] flex items-center gap-6 shadow-4xl group-hover/view:scale-110 transition-transform duration-700 border-rose-500/30">
+                                    <Monitor size={24} className="text-rose-500" />
+                                    <div>
+                                        <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.2em] italic">Signal Delay</p>
+                                        <p className="text-xl font-black text-white italic">{stats.latency} ms</p>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    {/* Right Panel: Detection History */}
-                    <div className="lg:col-span-4 bg-slate-900 rounded-2xl border border-slate-800 flex flex-col overflow-hidden shadow-2xl relative">
-                        {/* History Header */}
-                        <div className="p-4 border-b border-slate-800 bg-slate-900/50 flex items-center justify-between">
-                            <h3 className="font-bold text-white flex items-center gap-2">
-                                <Activity className="w-4 h-4 text-brand-400" />
-                                Real-time Detections
-                            </h3>
-                            <button 
-                                onClick={() => setHistory([])}
-                                className="p-2 hover:bg-slate-800 rounded-lg text-slate-500 hover:text-red-400 transition-colors"
-                                title="Clear History"
-                            >
-                                <Trash2 size={16} />
+                    {/* Console / History */}
+                    <div className="2xl:col-span-4 bg-white/40 backdrop-blur-3xl rounded-[4.5rem] border border-white/20 flex flex-col overflow-hidden shadow-4xl relative animate-in slide-in-from-right-12 duration-1000">
+                        <div className="absolute inset-0 opacity-[0.05] pointer-events-none bg-blueprint" />
+                        
+                        <div className="p-10 border-b border-slate-100 bg-white relative z-10 flex items-center justify-between">
+                            <div className="flex items-center gap-6">
+                                <div className="p-4 bg-[#041C3C] text-[#5CB4E4] rounded-2xl">
+                                    <Signal size={24} />
+                                </div>
+                                <h3 className="text-[13px] font-black text-[#041C3C] uppercase tracking-[0.5em] italic">
+                                    Verification Logs
+                                </h3>
+                            </div>
+                            <button onClick={() => setHistory([])}
+                                className="w-14 h-14 flex items-center justify-center hover:bg-rose-50 rounded-[1.5rem] text-slate-300 hover:text-rose-500 transition-all duration-700 shadow-sm border border-slate-50">
+                                <Trash2 size={24} />
                             </button>
                         </div>
 
-                        {/* Summary Bar */}
-                        <div className="bg-slate-950/50 px-4 py-2 border-b border-slate-800 flex items-center justify-between text-[10px] font-bold uppercase tracking-[0.15em]">
-                            <div className="flex items-center gap-2 text-identity-sky">
-                                <CheckCircle size={10} />
-                                <span>{history.filter(h => h.match).length} Matches</span>
+                        <div className="bg-[#041C3C] px-10 py-6 flex items-center justify-between relative z-10 border-y border-white/10">
+                            <div className="flex items-center gap-4 text-emerald-400 font-black text-[12px] uppercase tracking-[0.4em] italic drop-shadow-[0_0_10px_rgba(52,211,153,0.5)]">
+                                <div className="w-3 h-3 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_15px_rgba(52,211,153,1)]" />
+                                {history.filter(h => h.match).length} Verified Students
                             </div>
-                            <div className="flex items-center gap-2 text-identity-rose">
-                                <XCircle size={10} />
-                                <span>{history.filter(h => !h.match).length} Unknown</span>
+                            <div className="w-[1px] h-6 bg-white/10" />
+                            <div className="flex items-center gap-4 text-rose-500 font-black text-[12px] uppercase tracking-[0.4em] italic">
+                                <XCircle size={18} />
+                                {history.filter(h => !h.match).length} Unidentified Subjects
                             </div>
                         </div>
 
-                        {/* History Feed */}
-                        <div className="flex-1 overflow-y-auto p-3 space-y-2.5 custom-scrollbar bg-slate-900/30">
-                            {!isTesting && history.length === 0 ? (
-                                <div className="flex flex-col items-center justify-center h-full text-center p-8">
-                                    <Camera className="w-12 h-12 text-slate-800 mb-4" />
-                                    <p className="text-slate-500 text-sm font-medium leading-relaxed">
-                                        Logs will appear here once you<br />start camera testing.
-                                    </p>
-                                </div>
-                            ) : history.length === 0 ? (
-                                <div className="flex flex-col items-center justify-center h-full text-center p-8">
-                                    <div className="relative mb-4">
-                                        <div className="absolute inset-0 bg-brand-500/20 blur-xl rounded-full" />
-                                        <Activity className="w-12 h-12 text-brand-500 relative animate-pulse" />
+                        <div className="flex-1 overflow-y-auto p-10 space-y-8 custom-scrollbar bg-white/5 relative z-10">
+                            {history.length === 0 ? (
+                                <div className="h-full flex flex-col items-center justify-center gap-10 text-center animate-pulse">
+                                    <div className="p-16 bg-white/50 rounded-full border border-white shadow-4xl">
+                                        <Camera size={80} className="text-slate-200" />
                                     </div>
-                                    <p className="text-slate-400 text-sm font-semibold italic">Awaiting first face capture...</p>
+                                    <div className="space-y-4">
+                                        <p className="text-xl font-black text-[#041C3C]/30 uppercase tracking-[0.5em] italic">Awaiting student identification...</p>
+                                        <p className="text-[10px] font-black text-slate-300 uppercase tracking-[0.4em] italic">No biometric data captured.</p>
+                                    </div>
                                 </div>
                             ) : (
                                 history.map((log, idx) => (
-                                    <div 
-                                        key={`${log.timestamp}-${idx}`} 
-                                        className={`p-3 rounded-2xl border transition-all animate-in fade-in slide-in-from-right-4 duration-300 ${
-                                            log.match 
-                                                ? 'bg-emerald-500/5 border-emerald-500/20 hover:border-emerald-500/40' 
-                                                : 'bg-slate-800/50 border-slate-700/50 hover:border-slate-600'
-                                        }`}
-                                    >
-                                        <div className="flex items-center gap-4">
-                                            {/* Face Thumbnail */}
+                                    <div key={`${log.timestamp}-${idx}`}
+                                        className={`bg-white/80 p-8 rounded-[3rem] border transition-all duration-700 animate-in slide-in-from-right-12 group/log shadow-2xl hover:-translate-x-4 ${
+                                            log.match ? 'border-white hover:border-[#5CB4E4]/50' : 'border-rose-100'
+                                        }`}>
+                                        <div className="flex items-center gap-10">
                                             <div className="relative flex-shrink-0">
-                                                <div className="w-12 h-12 rounded-lg bg-slate-800 overflow-hidden border border-slate-700">
-                                                    {log.thumbnail ? (
-                                                        <img src={log.thumbnail} alt="Face" className="w-full h-full object-cover" />
-                                                    ) : (
-                                                        <User className="w-full h-full p-3 text-slate-600" />
-                                                    )}
+                                                <div className="w-20 h-20 rounded-[1.8rem] bg-white overflow-hidden border border-slate-100 shadow-4xl ring-4 ring-slate-50 transition-all duration-700 group-hover/log:scale-110">
+                                                    {log.thumbnail ? <img src={log.thumbnail} alt="Detections" className="w-full h-full object-cover" /> : <User className="w-full h-full p-6 text-slate-100" />}
                                                 </div>
                                                 {log.match && log.profile_picture && (
-                                                    <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full border-2 border-slate-900 overflow-hidden ring-1 ring-emerald-500/50">
-                                                        <img src={log.profile_picture} alt="Profile" className="w-full h-full object-cover" />
+                                                    <div className="absolute -bottom-3 -right-3 w-10 h-10 rounded-full border-4 border-white overflow-hidden shadow-4xl z-20">
+                                                        <img src={log.profile_picture} alt="Registry" className="w-full h-full object-cover" />
                                                     </div>
                                                 )}
                                             </div>
-
-                                            {/* Info */}
-                                            <div className="flex-1 min-w-0">
-                                                <div className="flex items-center justify-between mb-1">
-                                                    <span className={`text-xs font-bold truncate ${log.match ? 'text-white' : 'text-slate-400'}`}>
-                                                        {log.name}
-                                                    </span>
-                                                    <span className="text-[9px] font-mono text-slate-500">
-                                                        {formatTime(log.timestamp)}
-                                                    </span>
+                                            <div className="flex-1 min-w-0 space-y-4">
+                                                <div className="flex items-center justify-between">
+                                                    <h4 className={`text-xl font-black italic uppercase tracking-tighter ${log.match ? 'text-[#041C3C]' : 'text-rose-500'}`}>
+                                                        {log.name.toUpperCase()}
+                                                    </h4>
+                                                    <span className="text-[11px] font-black text-slate-300 italic opacity-80">{new Date(log.timestamp).toLocaleTimeString()}</span>
                                                 </div>
                                                 <div className="flex items-center justify-between">
-                                                    <div className={`flex items-center gap-2 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider border ${
-                                                        log.match 
-                                                            ? 'text-emerald-400 border-emerald-500/30' 
-                                                            : 'text-slate-500 border-slate-700'
+                                                    <span className={`px-8 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-[0.4em] italic border-2 shadow-2xl transition-all group-hover/log:scale-105 ${
+                                                        log.match ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20' : 'bg-rose-500/10 text-rose-600 border-rose-500/20'
                                                     }`}>
-                                                        {log.match ? 'Student Match' : 'Unknown Entity'}
-                                                    </div>
-                                                    <span className="text-[10px] font-mono text-slate-500">
-                                                        {log.confidence}%
+                                                        {log.match ? 'Student Identity Verified' : 'Unidentified Subject'}
                                                     </span>
+                                                    <span className="text-[12px] font-black text-slate-400 italic">{log.confidence}% Confidence Level</span>
                                                 </div>
                                             </div>
-                                            
-                                            <ChevronRight className="w-4 h-4 text-slate-700" />
                                         </div>
                                     </div>
                                 ))
@@ -453,31 +400,6 @@ export default function CameraTestPage() {
                     </div>
                 </div>
             </div>
-
-            <style jsx global>{`
-                @keyframes scan-line {
-                    0% { top: 0; opacity: 0; }
-                    10% { opacity: 1; }
-                    90% { opacity: 1; }
-                    100% { top: 100%; opacity: 0; }
-                }
-                .animate-scan-line {
-                    animation: scan-line 2s linear infinite;
-                }
-                .custom-scrollbar::-webkit-scrollbar {
-                    width: 4px;
-                }
-                .custom-scrollbar::-webkit-scrollbar-track {
-                    background: transparent;
-                }
-                .custom-scrollbar::-webkit-scrollbar-thumb {
-                    background: var(--identity-navy);
-                    border-radius: 10px;
-                }
-                .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-                    background: var(--identity-sky);
-                }
-            `}</style>
         </div>
     );
 }

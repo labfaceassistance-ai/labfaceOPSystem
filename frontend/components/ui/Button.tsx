@@ -19,18 +19,18 @@ const Button: React.FC<ButtonProps> = ({
     const baseStyles = 'relative flex items-center justify-center font-black uppercase tracking-[0.15em] transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed overflow-hidden';
     
     const variants = {
-        primary: 'bg-identity-navy text-white hover:bg-identity-navy/90 shadow-lg shadow-identity-navy/10',
-        secondary: 'bg-identity-sky text-white hover:bg-identity-sky/90 shadow-lg shadow-identity-sky/10',
+        primary: 'bg-[#5CB4E4] text-white hover:bg-[#5CB4E4]/90 shadow-lg shadow-[#5CB4E4]/10',
+        secondary: 'bg-[#041C3C] text-white hover:bg-[#041C3C]/90 shadow-lg shadow-[#041C3C]/10',
         danger: 'bg-rose-500 text-white hover:bg-rose-600 shadow-lg shadow-rose-500/10',
-        ghost: 'bg-transparent text-identity-navy hover:bg-identity-navy/5',
-        outline: 'bg-transparent text-identity-navy border-2 border-identity-navy/20 hover:border-identity-navy/50'
+        ghost: 'bg-transparent text-[#041C3C] hover:bg-[#041C3C]/5',
+        outline: 'bg-transparent text-[#041C3C] border-2 border-[#041C3C]/20 hover:border-[#041C3C]/50'
     };
 
     const sizes = {
         sm: 'px-4 py-2 text-[8px] rounded-xl',
-        md: 'px-6 py-3 text-[10px] rounded-xl',
+        md: 'px-6 py-3 text-[10px] rounded-2xl',
         lg: 'px-8 py-4 text-[11px] rounded-2xl',
-        xl: 'px-10 py-5 text-[12px] rounded-3xl'
+        xl: 'px-10 py-5 text-[12px] rounded-2xl'
     };
 
     return (

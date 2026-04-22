@@ -8,20 +8,15 @@
   :root {
     /* Identity Blue Palette - Clean Foundation */
     /* Base Configuration */
-    --bg-base: #F8FAFC;
-    --background: var(--bg-base);
-    --foreground: #041C3C;
-    
-    /* LabFace Identity Palette */
     --identity-navy: #041C3C;
     --identity-sky: #5CB4E4;
-    --identity-rose: #F43F5E;
+    --bg-base: #F8FAFC;
     --sky-glow: rgba(92, 180, 228, 0.4);
-    --rose-glow: rgba(244, 63, 94, 0.4);
-    
-    /* Glassmorphism Defaults */
     --glass-light-bg: rgba(255, 255, 255, 0.70);
     --glass-dark-bg: rgba(4, 28, 60, 0.85);
+    
+    --background: var(--bg-base);
+    --foreground: var(--identity-navy);
     
     /* Legacy variables mapping for compatibility */
     --primary: var(--identity-navy);
@@ -99,11 +94,18 @@ h1,
 h2,
 h3,
 h4,
-.font-black {
+h5,
+h6,
+.font-outfit {
   font-family: 'Outfit', sans-serif;
-  font-weight: 900;
+  font-weight: 900 !important;
   letter-spacing: -0.04em;
   line-height: 0.95;
+}
+
+.force-bold {
+  font-weight: 900 !important;
+  -webkit-text-stroke: 0.5px currentColor;
 }
 
 .text-gradient {
@@ -243,16 +245,19 @@ textarea:focus {
 
 /* Glassmorphism Classes */
 .identity-glass {
-  background: rgba(255, 255, 255, 0.7);
+  background: var(--glass-light-bg);          /* rgba(255,255,255,0.70) */
   backdrop-filter: blur(12px);
-  border: 1px solid rgba(92, 180, 228, 0.2);
-  box-shadow: 0 8px 32px 0 rgba(4, 28, 60, 0.08);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(92, 180, 228, 0.18);
+  box-shadow: 0 8px 32px rgba(4, 28, 60, 0.07);
 }
 
 .identity-glass-dark {
-  background: rgba(4, 28, 60, 0.85);
+  background: var(--glass-dark-bg);           /* rgba(4,28,60,0.85) */
   backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   border: 1px solid rgba(92, 180, 228, 0.3);
+  box-shadow: 0 8px 32px rgba(4, 28, 60, 0.3);
 }
 
 .text-identity-navy {
@@ -280,10 +285,51 @@ textarea:focus {
 
 .bg-mesh { background-image: radial-gradient(at 0% 0%, rgba(92, 180, 228, 0.05) 0px, transparent 50%), radial-gradient(at 100% 0%, rgba(4, 28, 60, 0.05) 0px, transparent 50%); }
 .bg-dots { background-image: radial-gradient(rgba(4, 28, 60, 0.05) 1px, transparent 1px); background-size: 30px 30px; }
+
+/* Blueprint grid — referenced on landing page and IdentityBackground */
 .bg-blueprint {
-  background-image: linear-gradient(var(--identity-sky) 1px, transparent 1px),
+  background-image:
+    linear-gradient(var(--identity-sky) 1px, transparent 1px),
     linear-gradient(90deg, var(--identity-sky) 1px, transparent 1px);
   background-size: 20px 20px;
-  opacity: 0.05;
 }
 
+/* Finer blueprint grid (8px cells) — referenced in dashboard JSX */
+.bg-blueprint-fine {
+  background-image:
+    linear-gradient(var(--identity-sky) 1px, transparent 1px),
+    linear-gradient(90deg, var(--identity-sky) 1px, transparent 1px);
+  background-size: 8px 8px;
+}
+
+/* ─── Scrollbar utilities ───────────────────────────────────────── */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* ─── Page animations ───────────────────────────────────────────── */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in  { animation: fadeIn  300ms ease-out both; }
+.animate-fade-up  { animation: fadeUp  400ms ease-out both; }
+
+/* ─── Blueprint corner brackets (used in FeatureCard left panel) ── */
+.corner-bracket-tl {
+  position: absolute; top: 16px; left: 16px;
+  width: 20px; height: 20px;
+  border-top: 2px solid var(--identity-sky);
+  border-left: 2px solid var(--identity-sky);
+  border-radius: 4px 0 0 0;
+}
+.corner-bracket-br {
+  position: absolute; bottom: 16px; right: 16px;
+  width: 20px; height: 20px;
+  border-bottom: 2px solid var(--identity-sky);
+  border-right: 2px solid var(--identity-sky);
+  border-radius: 0 0 4px 0;
+}

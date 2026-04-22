@@ -18,6 +18,8 @@ services:
       - "8090:80"
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - frontend-static:/app/.next/static:ro
+      - frontend-public:/app/public:ro
     depends_on:
       frontend:
         condition: service_started
@@ -41,10 +43,14 @@ services:
       dockerfile: Dockerfile
       args:
         - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+    volumes:
+      - frontend-static:/app/.next/static
+      - frontend-public:/app/public
     environment:
       - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
       - NODE_ENV=production
       - BUILD_ID=${BUILD_ID}
+      - TZ=Asia/Manila
     depends_on:
       - backend
     restart: unless-stopped
@@ -66,6 +72,7 @@ services:
       - NODE_ENV=production
       - MINIO_USE_SSL=false
       - BUILD_ID=${BUILD_ID}
+      - TZ=Asia/Manila
     volumes:
       - ./backend/uploads:/app/uploads
     extra_hosts:
@@ -101,6 +108,7 @@ services:
       - MINIO_USE_SSL=false
       - BACKEND_URL=http://backend:5000
       - RTSP_URL_1=${RTSP_URL_1}
+      - TZ=Asia/Manila
     # network_mode: "host" # Removed to allow container DNS resolution
     volumes:
       - ./ai-service/models:/app/models
@@ -125,6 +133,7 @@ services:
       - MYSQL_DATABASE=${DB_NAME}
       - MYSQL_USER=${DB_USER}
       - MYSQL_PASSWORD=${DB_PASSWORD}
+      - TZ=Asia/Manila
     volumes:
       - mariadb_data:/var/lib/mysql
       - ./backend/init.sql:/docker-entrypoint-initdb.d/init.sql
@@ -173,3 +182,5 @@ volumes:
     driver: local
   gfpgan_weights_app:
     driver: local
+  frontend-static:
+  frontend-public:

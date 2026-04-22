@@ -127,7 +127,7 @@ const VideoFeed = ({ src, alt, className, onExpand, label }: VideoFeedProps) => 
                             <div className="animate-spin mb-4 text-identity-sky/40">
                                 <RefreshCw size={40} />
                             </div>
-                            <span className="text-[10px] font-black tracking-[0.3em] uppercase">Testing Camera...</span>
+                            <span className="text-[10px] font-black tracking-[0.3em] uppercase">Connecting...</span>
                         </>
                     ) : (
                         <>
@@ -138,7 +138,7 @@ const VideoFeed = ({ src, alt, className, onExpand, label }: VideoFeedProps) => 
                             </div>
                             <span className="text-[10px] font-black tracking-[0.3em] uppercase text-rose-500/60">Feed Offline</span>
                             {autoRetryCount < maxAutoRetries ? (
-                                <span className="text-[8px] font-bold text-slate-500 uppercase tracking-[0.15em] mt-4">Restoring in 5s... ({autoRetryCount}/{maxAutoRetries})</span>
+                                <span className="text-[8px] font-bold text-slate-500 uppercase tracking-[0.15em] mt-4">Reconnecting in 5s... ({autoRetryCount}/{maxAutoRetries})</span>
                             ) : (
                                 <button
                                     onClick={handleManualRefresh}

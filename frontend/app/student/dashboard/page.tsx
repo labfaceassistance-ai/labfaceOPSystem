@@ -3,38 +3,20 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Navbar from '../../../components/Navbar';
 import SessionTimeout from '../../../components/SessionTimeout';
+import IdentityBackground from '../../../components/IdentityBackground';
 
-import { Home, Calendar, BarChart3, Brain, AlertTriangle, BookOpen, ChevronRight } from 'lucide-react';
+import { Home, Calendar, BarChart3, Brain, AlertTriangle, BookOpen, ChevronRight, TrendingUp } from 'lucide-react';
 import HomeTab from './tabs/HomeTab';
 import ScheduleTab from './tabs/ScheduleTab';
 import AttendanceTab from './tabs/AttendanceTab';
 import ClassesTab from './tabs/ClassesTab';
+import AnalyticsTab from './tabs/AnalyticsTab';
 import AttendanceInsights from '../../../components/AttendanceInsights';
+import DashboardTabs from '@/components/ui/DashboardTabs';
 import { logout, getToken, getUser } from '../../../utils/auth';
 import AcademicUpdateBanner from '../../../components/AcademicUpdateBanner';
-import DashboardTabs from '@/components/ui/DashboardTabs';
+import { useNavigation } from '@/context/NavigationContext';
 import Skeleton from '@/components/ui/Skeleton';
-import Breadcrumbs from '@/components/ui/Breadcrumbs';
-
-const IdentityNode = ({ className = "", size = 120 }) => (
-    <div className={`identity-node opacity-40 ${className}`} style={{ width: size, height: size }}>
-       <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
-          <g>
-             <path d="M100,30 Q60,30 50,80 T100,170 T150,80 Q140,30 100,30 Z" fill="none" stroke="currentColor" className="text-identity-sky" strokeWidth="2" />
-             <line x1="100" y1="30" x2="100" y2="170" stroke="currentColor" className="text-identity-navy" strokeWidth="1" />
-             <line x1="60" y1="80" x2="140" y2="80" stroke="currentColor" className="text-identity-navy" strokeWidth="1" />
-             <line x1="55" y1="110" x2="145" y2="110" stroke="currentColor" className="text-identity-navy" strokeWidth="1" />
-             <circle cx="75" cy="80" r="3" fill="currentColor" className="text-identity-sky" />
-             <circle cx="125" cy="80" r="3" fill="currentColor" className="text-identity-sky" />
-             <circle cx="100" cy="110" r="3" fill="currentColor" className="text-identity-sky" />
-             <circle cx="100" cy="30" r="2" fill="currentColor" className="text-identity-navy" />
-             <circle cx="100" cy="170" r="2" fill="currentColor" className="text-identity-navy" />
-             <line x1="75" y1="80" x2="100" y2="110" stroke="currentColor" className="text-identity-sky" strokeWidth="1" strokeDasharray="3 2" />
-             <line x1="125" y1="80" x2="100" y2="110" stroke="currentColor" className="text-identity-sky" strokeWidth="1" strokeDasharray="3 2" />
-          </g>
-       </svg>
-    </div>
- );
 
 interface User {
     id: number;
@@ -45,7 +27,16 @@ interface User {
     yearLevel?: string;
 }
 
-type TabType = 'home' | 'classes' | 'schedule' | 'attendance' | 'ai-insights';
+type TabType = 'home' | 'classes' | 'schedule' | 'attendance' | 'analytics' | 'ai-insights';
+
+const DASHBOARD_TABS = [
+    { id: 'home', label: 'Home', icon: Home },
+    { id: 'classes', label: 'Classes', icon: BookOpen },
+    { id: 'schedule', label: 'Schedule', icon: Calendar },
+    { id: 'attendance', label: 'Attendance', icon: BarChart3 },
+    { id: 'analytics', label: 'Analytics', icon: TrendingUp },
+    { id: 'ai-insights', label: 'Insights', icon: Brain },
+];
 
 export default function StudentDashboard() {
     const router = useRouter();
@@ -54,7 +45,7 @@ export default function StudentDashboard() {
     const [activeWarnings, setActiveWarnings] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [activeTab, setActiveTab] = useState<TabType>('home');
+    const { setTabs, activeTab, setActiveTab } = useNavigation();
 
     const fetchDashboardData = async (userId: number, isBackground = false) => {
         if (!isBackground) {
@@ -91,6 +82,9 @@ export default function StudentDashboard() {
     };
 
     useEffect(() => {
+        setTabs(DASHBOARD_TABS);
+        setActiveTab('home');
+
         const fetchUserData = async () => {
             const token = getToken();
             if (!token) { window.location.href = '/login'; return; }
@@ -132,6 +126,8 @@ export default function StudentDashboard() {
         };
 
         fetchUserData();
+
+        return () => setTabs([]);
     }, []);
 
     useEffect(() => {
@@ -153,59 +149,28 @@ export default function StudentDashboard() {
     const handleLogout = () => { logout('/login'); };
 
     if (!user || loading) return (
-        <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center relative overflow-hidden font-outfit">
-            {/* Background Layers */}
-            <div className="fixed inset-0 z-0">
-                <div className="absolute inset-0 bg-blueprint opacity-[0.05] pointer-events-none"></div>
-                <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-identity-sky/5 rounded-full blur-[120px] animate-pulse"></div>
-                <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-identity-navy/5 rounded-full blur-[120px] animate-pulse delay-1000"></div>
-            </div>
-
-            <div className="relative z-10 flex flex-col items-center gap-8">
+        <div className="min-h-screen flex flex-col items-center justify-center relative overflow-hidden font-outfit bg-bg-base">
+            <IdentityBackground />
+            
+            <div className="relative z-10 flex flex-col items-center gap-8 translate-y-[-2rem]">
                 <div className="w-24 h-24 relative">
-                    <div className="absolute inset-0 border-4 border-identity-sky/20 rounded-full"></div>
-                    <div className="absolute inset-0 border-4 border-identity-sky border-t-transparent rounded-full animate-spin"></div>
-                    <div className="absolute inset-4 bg-identity-sky/10 rounded-full flex items-center justify-center">
-                        <div className="w-2 h-2 bg-identity-sky rounded-full animate-ping"></div>
+                    <div className="absolute inset-0 border-[6px] border-identity-sky/10 rounded-full shadow-[0_0_30px_rgba(92,180,228,0.1)]"></div>
+                    <div className="absolute inset-0 border-[6px] border-identity-sky border-t-transparent rounded-full animate-spin"></div>
+                    <div className="absolute inset-4 bg-identity-sky/[0.03] rounded-full flex items-center justify-center backdrop-blur-sm border border-identity-sky/10">
+                        <div className="w-3 h-3 bg-identity-sky rounded-full animate-pulse shadow-[0_0_15px_rgba(92,180,228,0.8)]"></div>
                     </div>
                 </div>
-                <div className="space-y-2 text-center">
-                    <p className="font-black uppercase tracking-[0.3em] text-xs text-identity-navy">LabFace Core</p>
-                    <p className="font-black uppercase tracking-[0.5em] text-[10px] text-identity-sky animate-pulse">Synchronizing Neural Profile...</p>
+                <div className="space-y-3 text-center">
+                    <p className="font-black uppercase tracking-[0.5em] text-[11px] text-identity-navy/40 italic">LabFace Account Dashboard</p>
+                    <p className="font-black uppercase tracking-[0.3em] text-[13px] text-identity-sky animate-pulse italic">Loading profile...</p>
                 </div>
             </div>
         </div>
     );
 
-    const tabs = [
-        { id: 'home', label: 'Home', icon: Home },
-        { id: 'classes', label: 'Classes', icon: BookOpen },
-        { id: 'schedule', label: 'Schedule', icon: Calendar },
-        { id: 'attendance', label: 'Attendance', icon: BarChart3 },
-        { id: 'ai-insights', label: 'Insights', icon: Brain },
-    ];
-
     return (
-        <div className="min-h-screen bg-slate-50 font-outfit text-slate-900 relative selection:bg-identity-sky/10 selection:text-identity-navy page-transition overflow-x-hidden">
-            {/* 4-Layer System Identity Background */}
-            <div className="fixed inset-0 pointer-events-none z-0">
-                {/* Layer 1: Blueprint Grid */}
-                <div className="absolute inset-0 bg-blueprint opacity-[0.05]"></div>
-                
-                {/* Layer 2: Mesh Glows */}
-                <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-identity-sky/[0.03] rounded-full blur-[120px] animate-pulse"></div>
-                <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-identity-navy/[0.03] rounded-full blur-[120px] animate-pulse delay-700"></div>
-                
-                {/* Layer 3: Identity Nodes */}
-                <div className="absolute inset-0 overflow-hidden opacity-[0.03]">
-                    <IdentityNode className="top-[15%] left-[8%]" size={180} />
-                    <IdentityNode className="bottom-[15%] right-[8%]" size={240} />
-                    <IdentityNode className="top-[40%] right-[15%]" size={120} />
-                </div>
-                
-                {/* Layer 4: Vignette */}
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,rgba(248,250,252,0.4)_100%)]"></div>
-            </div>
+        <div className="min-h-screen font-outfit text-slate-900 relative selection:bg-identity-sky/20 selection:text-identity-navy page-transition overflow-x-hidden bg-bg-base">
+            <IdentityBackground />
 
             <SessionTimeout
                 sessionDuration={30 * 60 * 1000}
@@ -216,79 +181,103 @@ export default function StudentDashboard() {
 
             <Navbar />
 
-            <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-28 pb-12 relative z-10">
-
+            <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-8 relative z-10">
                 {/* Academic Update Banner */}
                 <AcademicUpdateBanner user={user} />
 
-                {/* Navigation Hierarchy */}
-                <Breadcrumbs />
-
                 {/* Warnings Banner */}
                 {activeWarnings.length > 0 && (
-                    <div className="mb-8 space-y-4">
+                    <div className="mb-6 space-y-4">
                         {activeWarnings.map((w, idx) => (
-                            <div key={idx} className={`identity-glass p-6 sm:p-8 md:p-10 rounded-[2rem] md:rounded-[3rem] border-2 flex items-center gap-8 shadow-xl backdrop-blur-md transition-all hover:scale-[1.01] active:scale-100 ${
+                            <div key={idx} className={`identity-glass p-6 rounded-2xl md:rounded-3xl border flex items-center gap-6 shadow-xl backdrop-blur-xl transition-all hover:scale-[1.01] active:scale-100 relative overflow-hidden group ${
                                 w.warning_type === 'dropout_warning' 
-                                    ? 'bg-rose-50/40 border-rose-200 text-rose-900 shadow-rose-500/5' 
-                                    : 'bg-amber-50/40 border-amber-200 text-amber-900 shadow-amber-500/5'
+                                    ? 'bg-rose-500/5 border-rose-500/20 text-rose-900' 
+                                    : 'bg-amber-500/5 border-amber-500/20 text-amber-900'
                             }`}>
-                                <div className={`p-4 rounded-2xl shadow-inner border ${
-                                    w.warning_type === 'dropout_warning' ? 'bg-rose-100 border-rose-200 text-rose-600' : 'bg-amber-100 border-amber-200 text-amber-600'
+                                <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-blueprint-fine" />
+                                <div className="corner-bracket-tl opacity-40 scale-75" />
+                                <div className="corner-bracket-br opacity-40 scale-75" />
+                                
+                                <div className={`p-4 rounded-2xl shadow-xl border transition-colors group-hover:scale-110 duration-500 ${
+                                    w.warning_type === 'dropout_warning' ? 'bg-rose-500 border-rose-400 text-white' : 'bg-amber-500 border-amber-400 text-white'
                                 }`}>
-                                    <AlertTriangle size={28} />
+                                    <AlertTriangle size={24} />
                                 </div>
-                                <div className="flex-1">
-                                    <div className="flex items-center gap-4 mb-2">
-                                        <span className={`text-[10px] font-black uppercase tracking-[0.2em] px-3 py-1 rounded-full border ${
+                                <div className="flex-1 relative z-10">
+                                    <div className="flex flex-col md:flex-row md:items-center gap-3 mb-2">
+                                        <span className={`w-fit text-[9px] font-black uppercase tracking-[0.25em] px-4 py-1.5 rounded-lg border italic shadow-sm ${
                                             w.warning_type === 'dropout_warning' ? 'bg-rose-600/10 text-rose-600 border-rose-200' : 'bg-amber-600/10 text-amber-600 border-amber-200'
                                         }`}>
-                                            {w.subject_code}
+                                            Subject: {w.subject_code}
                                         </span>
-                                        <h3 className="font-black text-xs uppercase tracking-[0.2em] italic">
-                                            {w.warning_type === 'dropout_warning' ? 'Dropout Risk Detected' : 'Attendance Alert'}
+                                        <h3 className="font-black text-xs uppercase tracking-[0.4em] italic text-identity-navy">
+                                            {w.warning_type === 'dropout_warning' ? 'ACADEMIC SUPPORT REQUIRED' : 'ATTENDANCE WARNING'}
                                         </h3>
                                     </div>
-                                    <p className="text-[10px] font-black leading-relaxed opacity-80 uppercase tracking-[0.15em]">
-                                        Equivalent Absences: <span className={w.warning_type === 'dropout_warning' ? 'text-rose-600' : 'text-amber-600'}>{w.equivalent_absences}</span> | 
-                                        {w.warning_type === 'dropout_warning' ? ' Immediate contact required.' : ' Monitoring period active.'}
+                                    <p className="text-[10px] font-black leading-relaxed opacity-60 uppercase tracking-[0.2em] italic">
+                                        Equivalent Absences: <span className={w.warning_type === 'dropout_warning' ? 'text-rose-600' : 'text-amber-600'}>{w.equivalent_absences} / 3.0</span> | 
+                                        {w.warning_type === 'dropout_warning' ? ' Immediate consultation with your instructor is required.' : ' Your attendance for this subject is being monitored.'}
                                     </p>
                                 </div>
-                                <ChevronRight className="opacity-20 translate-x-2 group-hover:translate-x-4 transition-transform" size={24} />
+                                <div className="group-hover:translate-x-2 transition-transform duration-500 p-3 bg-white/40 rounded-xl border border-white/20 shadow-sm opacity-40 group-hover:opacity-100">
+                                    <ChevronRight size={20} />
+                                </div>
                             </div>
                         ))}
                     </div>
                 )}
 
-                {/* Tab Navigation */}
-                <DashboardTabs 
-                    tabs={tabs} 
-                    activeTab={activeTab} 
-                    onTabChange={handleTabChange} 
-                />
-
                 {/* Tab Content */}
-                <div key={activeTab} className="mt-8 animate-fade-up">
+                <div key={activeTab} className="animate-fade-up">
                     {activeTab === 'home' && <HomeTab user={user} dashboardData={dashboardData} error={error} />}
                     {activeTab === 'classes' && <ClassesTab user={user} />}
                     {activeTab === 'schedule' && <ScheduleTab user={user} />}
                     {activeTab === 'attendance' && <AttendanceTab user={user} />}
+                    {activeTab === 'analytics' && <AnalyticsTab user={user} />}
                     {activeTab === 'ai-insights' && (
-                        <div className="identity-glass p-6 sm:p-8 md:p-10 rounded-[2rem] md:rounded-[3rem] border border-identity-sky/10 shadow-xl relative overflow-hidden font-outfit">
-                            <div className="flex items-center gap-6 mb-12">
-                                <div className="p-4 bg-identity-sky/10 text-identity-navy rounded-2xl border border-identity-sky/10">
-                                    <Brain size={32} />
+                        <div className="identity-glass p-8 sm:p-10 md:p-16 rounded-[3rem] md:rounded-[4rem] border border-identity-sky/15 shadow-3xl relative overflow-hidden font-outfit group animate-in zoom-in duration-700">
+                            <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-blueprint-fine" />
+                            <div className="corner-bracket-tl opacity-60 group-hover:scale-110 transition-transform duration-700 -top-4 -left-4" />
+                            <div className="corner-bracket-br opacity-60 group-hover:scale-110 transition-transform duration-700 -bottom-4 -right-4" />
+                            
+                            {/* Decorative Glow */}
+                            <div className="absolute -top-24 -right-24 w-96 h-96 bg-identity-sky/10 rounded-full blur-[100px] pointer-events-none group-hover:bg-identity-sky/20 transition-colors duration-1000" />
+                            
+                            <div className="flex items-center gap-8 mb-16 relative z-10">
+                                <div className="p-6 bg-identity-navy text-white rounded-3xl border-2 border-identity-sky/20 shadow-2xl group-hover:bg-identity-sky transition-colors duration-500">
+                                    <Brain size={48} className="filter drop-shadow-[0_0_10px_rgba(255,255,255,0.4)]" />
                                 </div>
-                                <div>
-                                    <h1 className="text-3xl font-black text-identity-navy tracking-tighter uppercase font-outfit italic">Attendance Insights</h1>
-                                    <p className="text-[10px] font-black text-identity-sky uppercase tracking-[0.4em] mt-2">AI-Powered Analysis Module</p>
+                                <div className="flex-1">
+                                    <p className="text-[11px] font-black text-identity-sky uppercase tracking-[0.5em] mb-4 italic flex items-center gap-2">
+                                        <span className="w-2 h-2 rounded-full bg-identity-sky animate-pulse shadow-[0_0_8px_rgba(92,180,228,0.8)]" />
+                                        ATTENDANCE INSIGHTS SYSTEM
+                                    </p>
+                                    <h1 className="text-4xl md:text-5xl font-black text-identity-navy tracking-tighter uppercase italic leading-none">Attendance Insights</h1>
                                 </div>
                             </div>
-                            <AttendanceInsights studentId={user.id.toString() || ''} />
+                            
+                            <div className="relative z-10 bg-white/40 rounded-[2.5rem] p-8 border border-white/20 backdrop-blur-sm shadow-inner group-hover:bg-white/60 transition-all duration-700">
+                                <AttendanceInsights studentId={user.id.toString() || ''} />
+                            </div>
+                            
+                            <div className="mt-12 pt-8 border-t border-identity-sky/10 relative z-10 flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <div className="flex gap-1.5">
+                                        <div className="w-1.5 h-1.5 rounded-full bg-identity-sky/30 animate-pulse" />
+                                        <div className="w-1.5 h-1.5 rounded-full bg-identity-sky/30 animate-pulse delay-75" />
+                                        <div className="w-1.5 h-1.5 rounded-full bg-identity-sky/30 animate-pulse delay-150" />
+                                    </div>
+                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.25em] italic">Analyzing attendance records...</p>
+                                </div>
+                                <div className="text-[10px] font-black text-identity-sky uppercase tracking-[0.2em] italic bg-identity-sky/5 px-4 py-2 rounded-full border border-identity-sky/10">
+                                    Status: Optimal
+                                </div>
+                            </div>
                         </div>
                     )}
                 </div>
             </main>
+
         </div>
     );
 }

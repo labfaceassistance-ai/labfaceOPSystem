@@ -2,27 +2,32 @@
 # =============================================================================
 # LabFace — Production Deployment Script
 # =============================================================================
-# This single script handles EVERYTHING for a fresh or existing deployment:
-#   1. Docker Engine installation (if not present)
-#   2. AI Service base image build (one-time, cached for future deploys)
-#   3. Docker volume creation (persistent data)
-#   4. Full application deployment
-#
-# USAGE (inside Ubuntu WSL terminal, from the project root):
-#   bash deploy.sh
-#
-# REQUIREMENTS:
-#   - Ubuntu 22.04+ (WSL2 or native Linux)
-#   - A configured .env file in the project root (copy from .env.example)
-#   - Internet access (only needed the very first time)
+# Optimized for:
+#   - Speed: Selective builds, stable BUILD_ID, and parallel execution.
+#   - Storage: Automatic aggressive pruning of old images and build cache.
 # =============================================================================
 
 set -e  # Exit immediately on any error
 
+# Parse arguments
+FAST=false
+while [[ "$#" -gt 0 ]]; do
+    case $1 in
+        -f|--fast) FAST=true ;;
+        *) echo "Unknown parameter passed: $1"; exit 1 ;;
+    esac
+    shift
+done
+
+# Enable BuildKit and disable slow/bulky metadata
+export DOCKER_BUILDKIT=1
+export COMPOSE_DOCKER_CLI_BUILD=1
+export DOCKER_BUILD_CHECKS=0
+
 # ── Color helpers ──────────────────────────────────────────────────────────────
 RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'; CYAN='\033[0;36m'; NC='\033[0m'
 info()    { echo -e "${CYAN}[INFO]${NC}  $1"; }
-success() { echo -e "${GREEN}[OK]${NC}    $1"; }
+success() { echo -e "${GREEN}[OK]    $1"; }
 warn()    { echo -e "${YELLOW}[WARN]${NC}  $1"; }
 error()   { echo -e "${RED}[ERROR]${NC} $1"; exit 1; }
 
@@ -35,32 +40,20 @@ echo ""
 # ── STEP 1: Docker Engine ──────────────────────────────────────────────────────
 info "Step 1: Checking Docker Engine..."
 
-if ! command -v docker &>/dev/null; then
-    warn "Docker not found. Installing Docker Engine (Ubuntu/Debian)..."
-
-    sudo apt-get update -qq
-    sudo apt-get install -y -qq ca-certificates curl gnupg
-
+if [ "$FAST" = "true" ]; then
+    info "Skipping Docker Engine check (FAST mode)."
+elif ! command -v docker &>/dev/null; then
+    warn "Docker not found. Installing Docker Engine..."
+    sudo apt-get update -qq && sudo apt-get install -y -qq ca-certificates curl gnupg
     sudo install -m 0755 -d /etc/apt/keyrings
-    curl -fsSL https://download.docker.com/linux/ubuntu/gpg \
-        | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
     sudo chmod a+r /etc/apt/keyrings/docker.gpg
-
-    echo \
-      "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] \
-      https://download.docker.com/linux/ubuntu \
-      $(. /etc/os-release && echo "$VERSION_CODENAME") stable" \
-      | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
-
-    sudo apt-get update -qq
-    sudo apt-get install -y -qq docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
-
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+    sudo apt-get update -qq && sudo apt-get install -y -qq docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
     sudo usermod -aG docker "$USER"
     success "Docker installed."
-    warn "NOTE: You may need to log out and back in for group permissions to apply."
-    warn "      If the next steps fail with permission errors, run: newgrp docker"
 else
-    success "Docker already installed: $(docker --version)"
+    success "Docker already installed."
 fi
 
 # Ensure Docker daemon is running
@@ -68,189 +61,124 @@ if ! docker info &>/dev/null; then
     info "Starting Docker daemon..."
     sudo service docker start
     sleep 3
-    docker info &>/dev/null || error "Docker daemon failed to start. Try: sudo service docker start"
 fi
 success "Docker daemon is running."
 
-# Detect docker compose command (v2 plugin vs legacy v1)
-if docker compose version &>/dev/null 2>&1; then
-    DC="docker compose"
-elif command -v docker-compose &>/dev/null; then
-    DC="docker-compose"
-else
-    error "docker compose not found. Please re-run this script to reinstall Docker."
-fi
+# Detect docker compose command
+if docker compose version &>/dev/null 2>&1; then DC="docker compose"; else DC="docker-compose"; fi
 
-# ── STEP 2: Environment File ───────────────────────────────────────────────────
-info "Step 2: Checking environment configuration..."
+# ── STEP 2: BUILD_ID & Versioning (Stable Hash) ───────────────────────────────
+info "Step 2: Generating stable BUILD_ID..."
 
-if [ ! -f .env ]; then
-    error ".env file not found!\n\n  Please create a .env file in the project root.\n  Copy .env.example as a starting point:\n    cp .env.example .env\n  Then fill in your values (DB passwords, RTSP URLs, Cloudflare token, etc.)"
-fi
-success ".env found."
-
-# ── STEP 2b: AI Model Weights ─────────────────────────────────────────────────
-info "Step 2b: Checking for AI model weights..."
-
-if [ ! -f "ai-service/models/weights/GFPGANv1.4.pth" ]; then
-    warn "AI model weights missing! This will cause slow startup (5-10 min download)."
-    echo "  You can pre-download them now to ensure instant-on deployment."
-    read -p "  Download models now? (y/N) " -n 1 -r
-    echo ""
-    if [[ $REPLY =~ ^[Yy]$ ]]; then
-        bash ai-service/fetch_models.sh
+if command -v git &>/dev/null && git rev-parse --is-inside-work-tree &>/dev/null; then
+    # Base ID from the latest commit
+    COMMIT_ID=$(git rev-parse --short HEAD)
+    # Check for uncommitted changes to force a unique ID when "dirty"
+    if [ -n "$(git status --porcelain)" ]; then
+        # Create a hash of the actual changes (staged and unstaged)
+        DIRTY_HASH=$( (git diff; git diff --cached) | cksum | awk '{print $1}')
+        NEW_BUILD_ID="${COMMIT_ID}-dirty-${DIRTY_HASH}"
+    else
+        NEW_BUILD_ID=$COMMIT_ID
     fi
 else
-    success "AI model weights found (pre-downloaded)."
+    # Fallback for environments without Git: hash the directory structure
+    NEW_BUILD_ID=$(find frontend backend ai-service -maxdepth 2 -not -path '*/.*' | cksum | awk '{print $1}')
 fi
 
-# ── STEP 2c: Service Worker Versioning ─────────────────────────────────────────
-info "Step 2c: Bumping Service Worker version..."
-
-BUILD_ID=$(date +%Y%m%d-%H%M%S)
+BUILD_ID=$NEW_BUILD_ID
 export BUILD_ID=$BUILD_ID
 SW_FILE="frontend/public/sw.js"
 VERSION_FILE="frontend/utils/version.ts"
+VERSION_TXT="frontend/public/version.txt"
 
-if [ -f "$SW_FILE" ]; then
-    # Use sed to replace the CACHE_NAME version with a timestamp-based version
-    # Matches patterns like labface-v1, labface-v2, etc.
-    sed -i "s/const CACHE_NAME = 'labface-v[0-9]\.[^']*'/const CACHE_NAME = 'labface-v2\.$BUILD_ID'/g" "$SW_FILE"
-    
-    # Also update the frontend version file for cache busting
-    if [ -f "$VERSION_FILE" ]; then
-        echo "export const BUILD_ID = '$BUILD_ID';" > "$VERSION_FILE"
-        success "Service Worker and Frontend bumped to version: v1.$BUILD_ID"
-    else
-        warn "Version file not found at $VERSION_FILE. Skipping frontend bump."
-    fi
-
-    # Write a static version.txt that the browser polls every 60s
-    # This is the zero-cost auto-cache mechanism — no backend needed
-    echo "$BUILD_ID" > "frontend/public/version.txt"
-    success "Wrote version.txt for browser auto-cache polling: $BUILD_ID"
+if [ ! -f "$VERSION_TXT" ] || [ "$(cat $VERSION_TXT)" != "$BUILD_ID" ]; then
+    info "Code changes detected. Updating version files to: $BUILD_ID"
+    [ -f "$SW_FILE" ] && sed -i "s/const CACHE_NAME =.*/const CACHE_NAME = 'labface-v2.$BUILD_ID';/g" "$SW_FILE"
+    [ -f "$VERSION_FILE" ] && echo "export const BUILD_ID = '$BUILD_ID';" > "$VERSION_FILE"
+    echo "$BUILD_ID" > "$VERSION_TXT"
+    success "Version bumped."
 else
-    warn "Service Worker file not found at $SW_FILE. Skipping version bump."
+    info "Code unchanged. Skipping version bump to preserve Docker cache."
 fi
 
-# ── STEP 3: Docker Volumes (Persistent Data) ──────────────────────────────────
-info "Step 3: Ensuring persistent data volumes exist..."
+# ── STEP 3: AI Base Image Check (CRITICAL) ───────────────────────────────────
+info "Step 3: Checking AI Service base image..."
+if ! docker image inspect labface-ai-base:latest &>/dev/null; then
+    warn "AI base image missing! Rebuilding..."
+    docker build -f ai-service/ai-base.Dockerfile -t labface-ai-base:latest ai-service/
+    success "AI base image restored."
+else
+    success "AI base image found."
+fi
 
-for VOLUME in labface_mariadb_data labface_minio_data; do
-    if ! docker volume inspect "$VOLUME" &>/dev/null; then
-        docker volume create "$VOLUME"
-        success "Created volume: $VOLUME"
-    else
-        success "Volume already exists: $VOLUME"
+# ── STEP 4: Analyzing changes for Smart Build ──────────────────────────────────
+info "Step 4: Analyzing changes for Smart Build..."
+
+SERVICES_TO_BUILD=""
+for DIR in frontend backend ai-service nginx; do
+    # Use -prune to COMPLETELY skip entering node_modules and other large folders.
+    # This makes the scan instant instead of minutes.
+    if [ ! -f "$DIR/.last_build" ] || [ -n "$(find "$DIR" \
+        -path "$DIR/node_modules" -prune -o \
+        -path "$DIR/.next" -prune -o \
+        -path "$DIR/.venv" -prune -o \
+        -path "$DIR/.*" -prune -o \
+        -type f -newer "$DIR/.last_build" -print | head -n 1)" ]; then
+        SERVICES_TO_BUILD="$SERVICES_TO_BUILD $DIR"
     fi
 done
 
-# ── STEP 3b: Remove stale containers from old deployments ─────────────────────
-# Old containers (e.g. from a previous project name without "-prod-") hold
-# Aria/InnoDB file locks on the shared MariaDB volume, preventing the new
-# container from ever acquiring them. Stop and remove them first.
-info "Step 3b: Cleaning up stale containers from old deployments..."
-
-STALE=$(docker ps -aq --filter name=labface --filter status=running | xargs -I{} docker inspect {} \
-    --format '{{.Name}} {{index .Config.Labels "com.docker.compose.project"}}' 2>/dev/null \
-    | grep -v "labface-prod" | awk '{print $1}' | tr -d '/')
-
-if [ -n "$STALE" ]; then
-    for CONTAINER in $STALE; do
-        warn "Stopping stale container: $CONTAINER"
-        docker stop "$CONTAINER" &>/dev/null && docker rm "$CONTAINER" &>/dev/null || true
-    done
-    success "Stale containers removed."
+if [ -z "$SERVICES_TO_BUILD" ]; then
+    info "No code changes detected. Skipping builds."
+    BUILD_SKIP=true
 else
-    success "No stale containers found."
+    info "Services to build: $SERVICES_TO_BUILD"
+    BUILD_SKIP=false
 fi
 
-# ── STEP 4: AI Service Base Image (One-Time, Cached) ──────────────────────────
-info "Step 4: Checking AI Service base image..."
+# ── STEP 5: Reclaiming storage ───────────────────────────────────────────────
+info "Step 5: Reclaiming storage..."
+docker image prune -f &>/dev/null || true
+docker builder prune -f --filter "until=24h" &>/dev/null || true
+success "Storage cleaned."
 
-if ! docker image inspect labface-ai-base:latest &>/dev/null; then
-    warn "AI base image not found. Building it now (this runs ONCE and takes 10-20 min)..."
-    echo ""
-    echo "  ┌─────────────────────────────────────────────────────────┐"
-    echo "  │  The AI base image pre-installs all Python dependencies  │"
-    echo "  │  (PyTorch, InsightFace, OpenCV, etc.) so that future     │"
-    echo "  │  deploys are fast. This only runs on a fresh machine.    │"
-    echo "  └─────────────────────────────────────────────────────────┘"
-    echo ""
-
-    # Step 4a: Download Python wheels (offline-safe builds)
-    info "Step 4a: Downloading Python package wheels..."
-
-    mkdir -p ai-service/packages
-
-    if [ -z "$(ls -A ai-service/packages 2>/dev/null)" ]; then
-        info "Downloading packages via temporary Docker container..."
-        docker run --rm \
-            -v "$(pwd)/ai-service:/app" \
-            -w /app \
-            python:3.10-slim bash -c "
-                set -e
-                apt-get update -qq && apt-get install -y -qq --no-install-recommends \
-                    build-essential python3-dev libgl1 libglib2.0-0 libsm6 libxext6 libxrender-dev git
-                pip install --upgrade pip setuptools wheel -q
-                echo 'Downloading base packages...'
-                pip download --dest packages --prefer-binary --retries 10 --timeout 120 -q \
-                    cython 'numpy<2'
-                echo 'Downloading PyTorch (large file, may take several minutes)...'
-                pip download --dest packages --prefer-binary --retries 20 --timeout 1200 -q \
-                    torch==2.1.0 torchvision==0.16.0
-                echo 'Downloading remaining AI dependencies...'
-                grep -v '^torch' requirements.txt > /tmp/requirements_light.txt
-                pip download --dest packages --prefer-binary --retries 20 --timeout 1200 -q \
-                    -r /tmp/requirements_light.txt
-                chmod -R 777 packages
-                echo 'Download complete.'
-            "
-        success "AI packages downloaded to ai-service/packages/"
-    else
-        success "Using cached packages in ai-service/packages/"
-    fi
-
-    # Step 4b: Build the base image
-    info "Step 4b: Building labface-ai-base Docker image..."
-    DOCKER_BUILDKIT=1 docker build \
-        -f ai-service/ai-base.Dockerfile \
-        -t labface-ai-base:latest \
-        ai-service/
-    success "AI base image built: labface-ai-base:latest"
-else
-    success "AI base image already exists. Skipping rebuild."
-    echo "  (To force a rebuild after requirements.txt changes, run:"
-    echo "   docker rmi labface-ai-base:latest && bash deploy.sh)"
-fi
-
-# ── STEP 5: Deploy All Services ────────────────────────────────────────────────
-info "Step 5: Deploying all services..."
-echo ""
+# ── STEP 6: Deploy ─────────────────────────────────────────────────────────────
+info "Step 6: Deploying services..."
 
 PROJECT_NAME="labface-prod"
 
-$DC \
-    -p "$PROJECT_NAME" \
-    -f docker-compose.yml \
-    --env-file .env \
-    up -d --build --remove-orphans
+if [ "$BUILD_SKIP" = "false" ]; then
+    info "Step 6a: Building changed services..."
+    $DC -p "$PROJECT_NAME" -f docker-compose.yml --env-file .env \
+        build --provenance=false --sbom=false $SERVICES_TO_BUILD
+    
+    # CRITICAL: If frontend is rebuilt, we MUST purge the named volumes
+    # so that Docker re-copies the fresh assets from the new image.
+    if [[ $SERVICES_TO_BUILD == *"frontend"* ]]; then
+        info "Frontend changed. Purging stale volumes to prevent 404s..."
+        $DC -p "$PROJECT_NAME" down frontend nginx 2>/dev/null || true
+        docker volume rm "${PROJECT_NAME}_frontend-static" "${PROJECT_NAME}_frontend-public" 2>/dev/null || true
+        success "Stale volumes purged."
+    fi
+    
+    for DIR in $SERVICES_TO_BUILD; do touch "$DIR/.last_build"; done
+fi
 
-# ── STEP 6: Status ─────────────────────────────────────────────────────────────
+info "Step 6b: Starting containers..."
+$DC -p "$PROJECT_NAME" -f docker-compose.yml --env-file .env up -d --remove-orphans
+
+if [ "$BUILD_SKIP" = "false" ]; then
+    info "Step 6c: Purging Nginx cache and reloading..."
+    # Clear Nginx disk cache to ensure stale HTML is not served
+    docker exec labface-prod-nginx-1 rm -rf /var/cache/nginx/* || true
+    docker exec labface-prod-nginx-1 nginx -s reload || true
+fi
+
 echo ""
 echo "=============================================="
 success "LabFace deployed successfully!"
 echo "=============================================="
 echo ""
-echo "  Running containers:"
 docker ps --filter "name=${PROJECT_NAME}" --format "  • {{.Names}} ({{.Status}})"
-echo ""
-echo "  Access the application:"
-echo "    Local:      http://localhost:8090"
-echo "    Production: https://labface.site"
-echo ""
-echo "  Useful commands:"
-echo "    View logs:       $DC -p $PROJECT_NAME logs -f"
-echo "    Stop all:        $DC -p $PROJECT_NAME down"
-echo "    Restart service: $DC -p $PROJECT_NAME restart backend"
 echo ""
