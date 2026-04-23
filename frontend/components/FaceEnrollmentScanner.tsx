@@ -7,6 +7,7 @@ interface FaceEnrollmentScannerProps {
     onComplete: (captures: Record<string, string>) => void;
     initialCaptures?: Record<string, string>;
     requireAll?: boolean;
+    selective?: boolean;
 }
 
 const ANGLES = [
@@ -38,6 +39,7 @@ const RIGHT_EYE = [[362,382],[382,381],[381,380],[380,374],[374,373],[373,390],[
 export default function FaceEnrollmentScanner({
     onComplete,
     initialCaptures = {},
+    selective = false,
 }: FaceEnrollmentScannerProps) {
     const webcamRef    = useRef<Webcam>(null);
     const canvasRef    = useRef<HTMLCanvasElement>(null);
@@ -81,7 +83,7 @@ export default function FaceEnrollmentScanner({
     useEffect(() => { capturesRef.current    = captures; },      [captures]);
     useEffect(() => { isCapturingRef.current = isCapturing; },   [isCapturing]);
 
-    // ── Head pose detection logic (UNTOUCHED) ──────────────────────
+    // ── Head pose detection logic ──
     const detectPose = (landmarks: any[]): string | null => {
         if (!landmarks || landmarks.length < 468) return null;
         const nose     = landmarks[4];
@@ -106,24 +108,20 @@ export default function FaceEnrollmentScanner({
         return 'unknown';
     };
 
-    // ── Voice Guidance Logic ─────────────────────────────────────────
+    // ── Voice Guidance Logic ──
     const lastSpokenRef = useRef<string>('');
     const diagnosticTimerRef = useRef<number>(0);
-    const lastStabilityRef = useRef<number>(0);
 
     const speak = useCallback((text: string, force = false) => {
         if (typeof window === 'undefined' || !window.speechSynthesis) return;
-        
-        // Prevent repeating the same instruction too frequently unless forced
         if (!force && (lastSpokenRef.current === text && window.speechSynthesis.speaking)) return;
         
         window.speechSynthesis.cancel();
         const utterance = new SpeechSynthesisUtterance(text);
-        utterance.rate = 0.95; // Slightly slower for clarity
-        utterance.pitch = 1.05; // Slightly higher for a friendly natural tone
+        utterance.rate = 0.95;
+        utterance.pitch = 1.05;
         
         const voices = window.speechSynthesis.getVoices();
-        // Prefer natural-sounding voices if available
         const preferredVoice = voices.find(v => v.name.includes('Google US English') || v.name.includes('Natural')) || voices[0];
         if (preferredVoice) utterance.voice = preferredVoice;
         
@@ -140,10 +138,8 @@ export default function FaceEnrollmentScanner({
         setCaptures({ ...updated });
         setStabilityScore(0);
         stabilityRef.current = 0;
-        lastStabilityRef.current = 0;
         diagnosticTimerRef.current = 0;
 
-        // Track session completion
         setSessionCompleted(prev => {
             const nextSession = Array.from(new Set([...prev, angleId]));
             const isFinished = targetAnglesRef.current.every(t => nextSession.includes(t));
@@ -153,9 +149,8 @@ export default function FaceEnrollmentScanner({
                 setStatus('SUCCESS');
                 isCapturingRef.current = false;
                 setIsCapturing(false);
-                speak("Verification sequence complete. Selected face data secured.", true);
+                speak(`${ANGLES[step].label} secured. Verification sequence complete.`, true);
             } else {
-                // Find next target angle that hasn't been captured this session
                 const nextTargetIdx = ANGLES.findIndex((a, idx) => 
                     targetAnglesRef.current.includes(a.id) && !nextSession.includes(a.id)
                 );
@@ -165,7 +160,16 @@ export default function FaceEnrollmentScanner({
                     setCurrentStep(nextTargetIdx);
                     statusRef.current = 'DETECTING';
                     setStatus('DETECTING');
-                    speak(ANGLES[nextTargetIdx].instruction, true);
+                    
+                    // Priority Speech: Success message first
+                    speak(`${ANGLES[step].label} captured successfully.`, true);
+                    
+                    // Buffer before next instruction to avoid overlap
+                    setTimeout(() => {
+                        if (isCapturingRef.current && currentStepRef.current === nextTargetIdx) {
+                            speak(ANGLES[nextTargetIdx].instruction, false);
+                        }
+                    }, 2200);
                 }
             }
             return nextSession;
@@ -178,7 +182,6 @@ export default function FaceEnrollmentScanner({
             await onCompleteRef.current(capturesRef.current);
         } catch (err) {
             console.error("Finalization failed:", err);
-            // We keep the state so user can retry
         } finally {
             setIsFinalizing(false);
         }
@@ -231,12 +234,10 @@ export default function FaceEnrollmentScanner({
                     const meshColor = angle?.meshColor ?? '#0ea5e9';
                     const { width, height } = canvas;
 
-                    // ── Diagnostic Logic ─────────────────────────────────────
                     const leftEye = landmarks[33];
                     const rightEye = landmarks[263];
                     const eyeDistance = Math.sqrt(Math.pow(rightEye.x - leftEye.x, 2) + Math.pow(rightEye.y - leftEye.y, 2));
                     
-                    // 1. Distance Check
                     if (eyeDistance < 0.15) {
                         setFeedback('Face too far. Please step closer.');
                         if (Date.now() - diagnosticTimerRef.current > 4000) {
@@ -262,14 +263,6 @@ export default function FaceEnrollmentScanner({
                     drawConn(LIPS,        meshColor + '77', 1.2);
                     drawConn(LEFT_EYE,    '#0ea5e988',       1.0);
                     drawConn(RIGHT_EYE,   '#0ea5e988',       1.0);
-                    ctx.fillStyle = meshColor;
-                    for (const idx of [4, 10, 33, 152, 263, 61, 291]) {
-                        const pt = landmarks[idx];
-                        if (!pt) continue;
-                        ctx.beginPath();
-                        ctx.arc(pt.x * width, pt.y * height, 3, 0, Math.PI * 2);
-                        ctx.fill();
-                    }
                     
                     if (!isCapturingRef.current) return;
                     
@@ -289,7 +282,7 @@ export default function FaceEnrollmentScanner({
                             const img = webcamRef.current?.getScreenshot();
                             if (img) capturePhoto(img);
                         }
-                        diagnosticTimerRef.current = Date.now(); // Reset diagnostic timer while progressing
+                        diagnosticTimerRef.current = Date.now();
                     } else {
                         stabilityRef.current = 0;
                         setStabilityScore(0);
@@ -297,24 +290,18 @@ export default function FaceEnrollmentScanner({
                         setStatus('DETECTING');
                         setFeedback(`Looking for ${angle?.label}...`);
 
-                        // Immediate Correction Logic
                         if (pose !== 'unknown' && pose !== targetAngle && pose !== null) {
                             let correction = "";
                             if (targetAngle === 'left' && pose === 'right') correction = "You are turning right. Please turn left.";
                             if (targetAngle === 'right' && pose === 'left') correction = "You are turning left. Please turn right.";
                             if (targetAngle === 'front' && pose !== 'front') correction = "Please look straight at the camera.";
+                            if (targetAngle === 'up' && pose === 'down') correction = "You are looking down. Please tilt your head up.";
+                            if (targetAngle === 'down' && pose === 'up') correction = "You are looking up. Please tilt your head down.";
                             
-                            if (correction && (Date.now() - diagnosticTimerRef.current > 3000)) {
+                            if (correction && (Date.now() - diagnosticTimerRef.current > 3500)) {
                                 speak(correction, true);
                                 diagnosticTimerRef.current = Date.now();
                             }
-                        }
-
-                        // Diagnostic Stall Warning
-                        if (diagnosticTimerRef.current === 0) diagnosticTimerRef.current = Date.now();
-                        if (Date.now() - diagnosticTimerRef.current > 7000) {
-                            speak("I am having trouble capturing your pose. Please ensure you are not wearing glasses or a hat, and ensure your face is fully visible in a bright area.", true);
-                            diagnosticTimerRef.current = Date.now();
                         }
                     }
                 });
@@ -327,11 +314,6 @@ export default function FaceEnrollmentScanner({
                 }
             } catch (err) {
                 console.error('[FaceEnrollment] MediaPipe init failed:', err);
-                if (!cancelled) {
-                    setStatus('IDLE');
-                    statusRef.current = 'IDLE';
-                    setFeedback('Scanner Logic Ready');
-                }
             }
         };
         init();
@@ -340,13 +322,12 @@ export default function FaceEnrollmentScanner({
             if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
             if (window.speechSynthesis) window.speechSynthesis.cancel();
         };
-    }, [capturePhoto, speak]); // eslint-disable-line react-hooks/exhaustive-deps
+    }, [capturePhoto, speak]);
 
     const runLoop = useCallback(async () => {
         const video = webcamRef.current?.video;
         const mesh  = faceMeshRef.current;
-        const canvas = canvasRef.current;
-        if (!video || !mesh || !canvas) return;
+        if (!video || !mesh) return;
         if (!isCapturingRef.current && statusRef.current !== 'SUCCESS') {
             animFrameRef.current = requestAnimationFrame(runLoop);
             return;
@@ -363,67 +344,43 @@ export default function FaceEnrollmentScanner({
         } else {
             if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
         }
-        return () => {
-            if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
-        };
     }, [isCapturing, runLoop]);
 
     useEffect(() => {
         stabilityRef.current = 0;
         setStabilityScore(0);
-        if (isCapturing && status !== 'SUCCESS') {
-            setStatus('DETECTING');
-            statusRef.current = 'DETECTING';
+        // Only speak if this is a manual jump in IDLE or if we just started
+        if (isCapturing && status === 'IDLE') {
             const instruction = ANGLES[currentStep].instruction;
-            setFeedback(`Looking for ${ANGLES[currentStep].label}...`);
             speak(instruction, true);
         }
-    }, [currentStep, speak]); // eslint-disable-line react-hooks/exhaustive-deps
+    }, [currentStep, speak, isCapturing, status]);
 
     const resetScanner = () => {
         setSessionCompleted([]);
-        currentStepRef.current = ANGLES.findIndex(a => targetAngles.includes(a.id));
+        currentStepRef.current = 0;
         stabilityRef.current = 0;
         isCapturingRef.current = true;
-        statusRef.current    = 'DETECTING';
-        setCurrentStep(currentStepRef.current);
+        setCurrentStep(0);
         setStabilityScore(0);
         setIsCapturing(true);
         setStatus('DETECTING');
-        setFeedback(`Looking for ${ANGLES[currentStepRef.current].label}...`);
-        speak(ANGLES[currentStepRef.current].instruction, true);
+        speak(ANGLES[0].instruction, true);
     };
 
     const handleStart = () => {
-        if (targetAngles.length === 0) {
-            speak("Please select at least one angle to update.", true);
-            return;
-        }
         setSessionCompleted([]);
-        const firstTarget = ANGLES.findIndex(a => targetAngles.includes(a.id));
-        currentStepRef.current = firstTarget;
+        currentStepRef.current = 0;
         isCapturingRef.current = true;
-        statusRef.current      = 'DETECTING';
         setIsCapturing(true);
         setStatus('DETECTING');
-        setCurrentStep(firstTarget);
-        setFeedback(`Looking for ${ANGLES[firstTarget].label}...`);
-        
-        const angleList = targetAngles.map(id => ANGLES.find(a => a.id === id)?.label).join(", ");
-        speak(`Starting update for: ${angleList}. ${ANGLES[firstTarget].instruction}`, true);
-        
-        animFrameRef.current   = requestAnimationFrame(runLoop);
-    };
-
-    const toggleTarget = (id: string) => {
-        setTargetAngles(prev => 
-            prev.includes(id) ? prev.filter(a => a !== id) : [...prev, id]
-        );
+        setCurrentStep(0);
+        speak(ANGLES[0].instruction, true);
     };
 
     return (
         <div className="w-full max-w-2xl mx-auto space-y-6 animate-fade-in">
-            {/* ── Header HUD: Navy/Sky Premium ─────────────────────────────────── */}
+            {/* ── Header HUD ── */}
             <div className="bg-identity-navy px-8 py-6 rounded-3xl border border-white/5 relative overflow-hidden shadow-2xl">
                 <div className="absolute inset-0 bg-gradient-to-br from-identity-sky/10 via-transparent to-transparent pointer-events-none" />
                 <div className="relative z-10 flex items-center justify-between gap-6">
@@ -434,84 +391,56 @@ export default function FaceEnrollmentScanner({
                         </h3>
                         <p className="text-slate-400 text-[9px] font-black uppercase tracking-[0.3em] flex items-center gap-2">
                             <Zap size={9} className="text-identity-sky animate-pulse" />
-                            {targetAngles.length} Targets Selected
+                            5 Targets Required
                         </p>
                     </div>
-                    {/* Step progress dots */}
-                    <div className="flex items-center gap-2.5 shrink-0">
+                    <div className="flex items-center gap-2 md:gap-3 shrink-0">
                         {ANGLES.map((a, i) => (
                             <button
                                 key={i}
                                 type="button"
-                                onClick={() => { 
-                                    if (status === 'IDLE') toggleTarget(a.id);
-                                    if (isCapturing && status !== 'SUCCESS' && targetAngles.includes(a.id)) { 
-                                        currentStepRef.current = i; 
-                                        setCurrentStep(i); 
+                                disabled={!selective || status !== 'IDLE'}
+                                onClick={() => {
+                                    if (selective && status === 'IDLE') {
+                                        currentStepRef.current = i;
+                                        setCurrentStep(i);
                                     }
                                 }}
-                                title={a.label}
-                                className={`h-11 w-11 flex items-center justify-center transition-all duration-500 rounded-xl group relative`}
-                            >
-                                <div className={`h-2 rounded-full transition-all duration-500 border border-white/5 ${
-                                    i === currentStep          ? 'bg-identity-sky w-8 border-identity-sky/50 shadow-[0_0_12px_rgba(14,165,233,0.4)]' :
-                                    sessionCompleted.includes(a.id) ? 'bg-emerald-500 w-2.5' :
-                                    targetAngles.includes(a.id)    ? 'bg-identity-sky/40 w-2.5' :
-                                                                  'bg-white/10 w-2.5'
-                                }`} />
-                                {targetAngles.includes(a.id) && status === 'IDLE' && (
-                                    <span className="absolute -top-1 -right-1 w-2 h-2 bg-identity-sky rounded-full animate-ping" />
-                                )}
-                            </button>
+                                className={`h-1.5 flex-1 min-w-[18px] md:min-w-[24px] transition-all duration-500 rounded-full border border-white/5 relative ${
+                                    i === currentStep          ? 'bg-identity-sky border-identity-sky/50 shadow-[0_0_12px_rgba(14,165,233,0.4)]' :
+                                    sessionCompleted.includes(a.id) ? 'bg-emerald-500' :
+                                                                  'bg-white/10'
+                                } ${selective && status === 'IDLE' ? 'hover:bg-identity-sky/60 cursor-pointer' : 'cursor-default'}`}
+                            />
                         ))}
                     </div>
                 </div>
             </div>
 
-            {/* ── Camera + Canvas Overlay ─────────────────────────────────── */}
-            <div className="relative aspect-video rounded-3xl overflow-hidden bg-slate-900 border border-slate-200 shadow-2xl">
+            {/* ── Camera Container ── */}
+            <div className="relative aspect-[3/4] md:aspect-video rounded-3xl overflow-hidden bg-slate-900 border border-slate-200 shadow-2xl">
                 {!isCapturing && status !== 'SUCCESS' && (
-                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-identity-navy z-20 gap-8 animate-fade-in">
-                        <div className="w-24 h-24 bg-white/5 rounded-[2.5rem] flex items-center justify-center border border-white/10 shadow-inner">
-                            <Camera size={44} className="text-identity-sky/40" />
+                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-identity-navy z-20 gap-4 animate-fade-in">
+                        <div className="w-16 h-16 md:w-20 md:h-20 bg-white/5 rounded-2xl flex items-center justify-center border border-white/10 mb-4">
+                            <Camera size={28} className="text-identity-sky/40" />
                         </div>
                         {status === 'LOADING' ? (
-                            <div className="text-center space-y-2">
-                                <Loader2 className="animate-spin text-identity-sky mx-auto mb-4" size={32} />
-                                <p className="text-white text-[10px] font-black uppercase tracking-[0.4em] animate-pulse">
-                                    Loading Face Scanner
-                                </p>
+                            <div className="text-center">
+                                <Loader2 className="animate-spin text-identity-sky mx-auto mb-4" size={24} />
+                                <p className="text-white text-[10px] font-black uppercase tracking-[0.4em] animate-pulse">Loading Matrix...</p>
                             </div>
                         ) : (
-                            <div className="text-center space-y-8 px-12">
-                                <div className="space-y-4">
-                                    <p className="text-slate-400 text-[9px] font-black uppercase tracking-[0.4em]">
-                                        Custom Sync Target
-                                    </p>
-                                    <div className="flex flex-wrap justify-center gap-3">
-                                        {ANGLES.map(a => (
-                                            <button
-                                                key={a.id}
-                                                onClick={() => toggleTarget(a.id)}
-                                                className={`px-4 py-2 rounded-xl text-[8px] font-black uppercase tracking-[0.2em] border transition-all ${
-                                                    targetAngles.includes(a.id)
-                                                        ? 'bg-identity-sky text-white border-identity-sky shadow-lg shadow-identity-sky/20'
-                                                        : 'bg-white/5 text-slate-500 border-white/10 hover:bg-white/10'
-                                                }`}
-                                            >
-                                                {a.label}
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
+                            <div className="text-center px-12">
                                 <button
                                     type="button"
                                     onClick={handleStart}
-                                    disabled={targetAngles.length === 0}
-                                    className="bg-identity-sky text-white px-12 py-5 rounded-2xl font-black uppercase text-[10px] tracking-[0.25em] shadow-2xl shadow-identity-sky/20 hover:bg-white hover:text-identity-navy disabled:opacity-30 disabled:hover:bg-identity-sky transition-all active:scale-95 border border-identity-sky"
+                                    className="bg-identity-sky text-white px-10 py-4 rounded-xl font-black uppercase text-[10px] tracking-[0.25em] shadow-2xl shadow-identity-sky/20 hover:bg-white hover:text-identity-navy transition-all active:scale-95 border border-identity-sky"
                                 >
-                                    Start Targeted Setup
+                                    {selective ? `Sync ${ANGLES[currentStep].label}` : "Start Biometric Scanner"}
                                 </button>
+                                <p className="text-slate-500 text-[8px] font-black uppercase tracking-[0.3em] mt-6 opacity-60">
+                                    {selective ? `Targeted HUD update active` : "Full Identity Capture Initiated"}
+                                </p>
                             </div>
                         )}
                     </div>
@@ -527,42 +456,31 @@ export default function FaceEnrollmentScanner({
                             className="w-full h-full object-cover"
                         />
                         <canvas ref={canvasRef} className="absolute inset-0 w-full h-full pointer-events-none" />
-                        <div className="absolute inset-0 pointer-events-none z-10 flex items-center justify-center pb-16">
-                            <div className={`w-[180px] h-[280px] rounded-[5rem] relative transition-all duration-700 ${
-                                status === 'STABILIZING'
-                                    ? 'shadow-[0_0_0_3px_rgba(14,165,233,0.9),0_0_60px_rgba(14,165,233,0.3)]'
-                                    : 'shadow-[0_0_0_1px_rgba(255,255,255,0.1)]'
-                            }`}>
-                                <span className="absolute top-0 left-0 w-10 h-10 border-t-[3px] border-l-[3px] border-identity-sky rounded-tl-[40px]" />
-                                <span className="absolute top-0 right-0 w-10 h-10 border-t-[3px] border-r-[3px] border-identity-sky rounded-tr-[40px]" />
-                                <span className="absolute bottom-0 left-0 w-10 h-10 border-b-[3px] border-l-[3px] border-identity-sky rounded-bl-[40px]" />
-                                <span className="absolute bottom-0 right-0 w-10 h-10 border-b-[3px] border-r-[3px] border-identity-sky rounded-br-[40px]" />
-                            </div>
-                        </div>
-
-                        <div className="absolute bottom-6 inset-x-8 z-20">
-                            <div className="identity-glass px-8 py-6 rounded-2xl border border-white/5 shadow-2xl">
-                                <div className="flex items-center justify-between mb-4">
-                                    <div className="flex items-center gap-3">
-                                        <div className={`w-2.5 h-2.5 rounded-full ${
+                        
+                        <div className="absolute bottom-4 inset-x-3 md:inset-x-8 z-20">
+                            <div className="bg-identity-navy/80 backdrop-blur-md px-4 py-3 md:px-8 md:py-4 rounded-xl md:rounded-2xl border border-white/10 shadow-2xl overflow-hidden">
+                                <div className="flex items-center justify-between gap-3">
+                                    <div className="flex items-center gap-2 md:gap-3 flex-1 min-w-0">
+                                        <div className={`w-2 h-2 rounded-full shrink-0 ${
                                             status === 'STABILIZING' ? 'bg-emerald-500 animate-pulse' :
-                                            faceDetected             ? 'bg-identity-sky shadow-[0_0_10px_rgba(14,165,233,1)]' :
+                                            faceDetected             ? 'bg-identity-sky' :
                                                                        'bg-rose-500 animate-pulse'
                                         }`} />
-                                        <p className="text-slate-200 text-[10px] font-black uppercase tracking-[0.2em]">
-                                            {ANGLES[currentStep]?.label}
+                                        <p className="text-white font-black text-[8px] md:text-[10px] uppercase tracking-[0.1em] md:tracking-[0.15em] truncate">
+                                            {feedback}
                                         </p>
                                     </div>
-                                    <p className="text-identity-sky font-black text-[10px] tabular-nums tracking-[0.15em]">
-                                        PHASE {currentStep + 1} / 5
-                                    </p>
-                                </div>
-                                <p className="text-white font-black text-xs uppercase tracking-[0.15em] mb-4">{feedback}</p>
-                                <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden shadow-inner">
-                                    <div
-                                        className="h-full bg-identity-sky rounded-full transition-all duration-300 ease-out shadow-[0_0_15px_rgba(14,165,233,0.5)]"
-                                        style={{ width: `${Math.min(100, (stabilityScore / STABILITY_THRESHOLD) * 100)}%` }}
-                                    />
+                                    <div className="flex items-center gap-2 md:gap-4 shrink-0">
+                                        <p className="text-identity-sky/60 font-black text-[7px] md:text-[10px] uppercase tracking-[0.1em] md:tracking-[0.15em]">
+                                            {ANGLES[currentStep]?.label}
+                                        </p>
+                                        <div className="w-12 md:w-24 h-1 md:h-1.5 bg-white/10 rounded-full overflow-hidden">
+                                            <div
+                                                className="h-full bg-identity-sky rounded-full transition-all duration-300 shadow-[0_0_10px_rgba(14,165,233,0.5)]"
+                                                style={{ width: `${Math.min(100, (stabilityScore / STABILITY_THRESHOLD) * 100)}%` }}
+                                            />
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -570,22 +488,22 @@ export default function FaceEnrollmentScanner({
                 )}
 
                 {status === 'SUCCESS' && (
-                    <div className="absolute inset-0 bg-identity-navy/98 backdrop-blur-3xl z-40 flex flex-col items-center justify-center px-16 text-center animate-fade-in">
-                        <div className="w-24 h-24 bg-identity-sky/10 text-identity-sky rounded-[2.5rem] flex items-center justify-center mb-10 border border-identity-sky/20 shadow-2xl">
-                            {isFinalizing ? <Loader2 size={56} className="animate-spin text-identity-sky" /> : <CheckCircle size={56} />}
+                    <div className="absolute inset-0 bg-identity-navy/98 backdrop-blur-3xl z-40 flex flex-col items-center justify-center px-6 md:px-16 text-center animate-fade-in">
+                        <div className="w-16 h-16 md:w-24 md:h-24 bg-identity-sky/10 text-identity-sky rounded-2xl md:rounded-[2.5rem] flex items-center justify-center mb-6 md:mb-10 border border-identity-sky/20 shadow-2xl">
+                            {isFinalizing ? <Loader2 size={32} className="animate-spin text-identity-sky md:w-14 md:h-14" /> : <CheckCircle size={32} className="md:w-14 md:h-14" />}
                         </div>
-                        <h4 className="text-3xl md:text-4xl font-black text-white uppercase tracking-tight mb-4 font-outfit">
+                        <h4 className="text-xl md:text-4xl font-black text-white uppercase tracking-tight mb-2 md:mb-4 font-outfit">
                             {isFinalizing ? "Synchronizing..." : "Face Saved"}
                         </h4>
-                        <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.2em] mb-12 max-w-sm leading-relaxed">
+                        <p className="text-slate-400 text-[8px] md:text-[10px] font-black uppercase tracking-[0.2em] mb-8 md:mb-12 max-w-sm leading-relaxed">
                             {isFinalizing ? "Uploading biometric data to Neural Matrix core. Do not close this window." : "Photos successfully uploaded and saved."}
                         </p>
-                        <div className="flex gap-5">
+                        <div className="flex flex-col md:flex-row gap-3 md:gap-5 w-full md:w-auto px-10 md:px-0">
                             <button
                                 type="button"
                                 onClick={resetScanner}
                                 disabled={isFinalizing}
-                                className="bg-white/5 text-slate-300 px-10 py-5 rounded-2xl font-black uppercase text-[10px] tracking-[0.15em] hover:bg-white/10 transition-all border border-white/5 disabled:opacity-20"
+                                className="w-full md:w-auto bg-white/5 text-slate-300 px-6 md:px-10 py-3.5 md:py-5 rounded-xl md:rounded-2xl font-black uppercase text-[9px] md:text-[10px] tracking-[0.15em] hover:bg-white/10 transition-all border border-white/5 disabled:opacity-20"
                             >
                                 Retake Photo
                             </button>
@@ -593,63 +511,14 @@ export default function FaceEnrollmentScanner({
                                 type="button"
                                 onClick={handleFinalize}
                                 disabled={isFinalizing}
-                                className="bg-identity-sky text-white px-14 py-5 rounded-2xl font-black uppercase text-[10px] tracking-[0.25em] shadow-2xl shadow-identity-sky/30 hover:bg-white hover:text-identity-navy transition-all active:scale-95 border border-identity-sky flex items-center gap-3 disabled:opacity-50 disabled:hover:bg-identity-sky disabled:hover:text-white"
+                                className="w-full md:w-auto bg-identity-sky text-white px-8 md:px-14 py-3.5 md:py-5 rounded-xl md:rounded-2xl font-black uppercase text-[9px] md:text-[10px] tracking-[0.2em] md:tracking-[0.25em] shadow-2xl shadow-identity-sky/30 hover:bg-white hover:text-identity-navy transition-all active:scale-95 border border-identity-sky flex items-center justify-center gap-3 disabled:opacity-50 disabled:hover:bg-identity-sky disabled:hover:text-white"
                             >
-                                {isFinalizing && <Loader2 size={14} className="animate-spin" />}
-                                {isFinalizing ? "Synchronizing Logic..." : "Finalize Capture"}
+                                {isFinalizing && <Loader2 size={12} className="animate-spin" />}
+                                {isFinalizing ? "Synchronizing..." : "Finalize Capture"}
                             </button>
                         </div>
                     </div>
                 )}
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
-                <div className="bg-white border border-slate-200 p-4 sm:p-6 rounded-2xl sm:rounded-3xl shadow-xl flex items-center gap-3 sm:gap-6 relative overflow-hidden group">
-                    <div className="p-2 sm:p-4 bg-identity-sky/5 text-identity-sky rounded-xl sm:rounded-2xl shrink-0 group-hover:scale-110 transition-transform duration-500">
-                        <AlertCircle size={20} />
-                    </div>
-                    <p className="text-identity-navy text-[9px] sm:text-xs font-black uppercase tracking-[0.15em] leading-relaxed">
-                        "{ANGLES[currentStep]?.instruction}"
-                    </p>
-                </div>
-
-                <div className="bg-identity-navy border border-white/5 p-4 sm:p-6 rounded-2xl sm:rounded-3xl shadow-xl flex items-center justify-between gap-3 sm:gap-6 relative overflow-hidden">
-                    <div className="flex -space-x-3 sm:-space-x-4 relative z-10 transition-all">
-                        {ANGLES.map((angle, i) => (
-                            <button
-                                key={i}
-                                type="button"
-                                onClick={() => { 
-                                    if (status === 'IDLE') toggleTarget(angle.id);
-                                    if (isCapturing && status !== 'SUCCESS' && targetAngles.includes(angle.id)) { 
-                                        currentStepRef.current = i; 
-                                        setCurrentStep(i); 
-                                    }
-                                }}
-                                className={`w-11 h-11 sm:w-14 sm:h-14 rounded-full border transition-all duration-500 overflow-hidden shadow-2xl hover:scale-110 hover:z-50 min-h-[44px] min-w-[44px] flex items-center justify-center ${
-                                    i === currentStep
-                                        ? 'border-identity-sky scale-110 sm:scale-125 ring-2 sm:ring-4 ring-identity-sky/20 z-40'
-                                        : captures[angle.id]
-                                            ? 'border-emerald-500/50 opacity-100'
-                                            : 'border-white/10 opacity-30 shadow-none'
-                                }`}
-                                style={{ zIndex: 10 - i }}
-                                title={angle.label}
-                            >
-                                {captures[angle.id] ? (
-                                    <img src={captures[angle.id]} className="w-full h-full object-cover scale-110" alt={angle.label} />
-                                ) : (
-                                    <div className="w-full h-full bg-slate-800 flex items-center justify-center"><User size={10} className="text-slate-600" /></div>
-                                )}
-                            </button>
-                        ))}
-                    </div>
-                    <div className="text-right shrink-0 relative z-10 pr-1">
-                        <p className="text-xs sm:text-2xl font-black text-white leading-none font-outfit">
-                            {Object.keys(captures).length}<span className="text-identity-sky/40 text-[8px] sm:text-lg">/5</span>
-                        </p>
-                    </div>
-                </div>
             </div>
         </div>
     );

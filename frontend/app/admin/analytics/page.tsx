@@ -4,13 +4,15 @@ import { useRouter } from 'next/navigation';
 import axios from 'axios';
 import {
     TrendingUp, TrendingDown, Users, Calendar, Award,
-    AlertTriangle, Activity, BarChart3, Clock, CheckCircle, ChevronLeft
+    AlertTriangle, Activity, BarChart3, Clock, CheckCircle
 } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import AttendanceChart from '@/components/charts/AttendanceChart';
 import { getToken } from '@/utils/auth';
+import IdentityBackground from '@/components/IdentityBackground';
 import { format, subDays } from 'date-fns';
 import Link from 'next/link';
+import BackButton from '@/components/ui/BackButton';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
 
@@ -137,22 +139,27 @@ export default function AnalyticsPage() {
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center gap-6">
-                <div className="w-16 h-16 border-4 border-identity-sky/20 border-t-identity-sky rounded-full animate-spin"></div>
-                <p className="text-identity-navy/40 text-[10px] font-black uppercase tracking-[0.4em] animate-pulse">Processing Analytics...</p>
+            <div className="min-h-screen bg-transparent flex flex-col items-center justify-center gap-6 relative overflow-hidden">
+                <IdentityBackground />
+                <div className="flex flex-col items-center gap-6 relative z-10">
+                    <div className="w-16 h-16 border-4 border-identity-sky/20 border-t-identity-sky rounded-full animate-spin"></div>
+                    <p className="text-identity-navy/40 text-[10px] font-black uppercase tracking-[0.4em] animate-pulse">Processing Analytics...</p>
+                </div>
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen bg-slate-50 font-sans selection:bg-identity-sky/20">
+        <div className="min-h-screen bg-transparent font-outfit select-none relative overflow-hidden">
+            <IdentityBackground />
             <Navbar />
-            <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-20">
+            <main className="max-w-7xl mx-auto px-6 pt-32 pb-20 relative z-10">
                 <div className="mb-8">
-                    <Link href="/admin/dashboard" className="inline-flex items-center text-slate-400 hover:text-identity-navy font-black uppercase text-[10px] tracking-[0.15em] transition-colors group bg-white/50 px-5 py-3 rounded-2xl border border-slate-200">
-                        <ChevronLeft size={16} className="mr-3 group-hover:-translate-x-1 transition-transform" />
-                        Back to Dashboard
-                    </Link>
+                    <BackButton 
+                        href="/admin/dashboard" 
+                        label="Back to Dashboard" 
+                        className="bg-white/50 px-5 py-3 rounded-2xl border border-slate-200 italic" 
+                    />
                 </div>
 
                 <div className="mb-12 animate-fade-in px-2">

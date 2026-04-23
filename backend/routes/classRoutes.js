@@ -603,6 +603,32 @@ router.post('/:id/preview-roster', upload.single('file'), async (req, res) => {
     }
 });
 
+// Helper: Backfill absences for a student added mid-semester
+const backfillAbsences = async (classId, studentId, enrollmentId) => {
+    try {
+        // Find all sessions for this class that have already ended
+        const [pastSessions] = await pool.query(
+            `SELECT id FROM sessions 
+             WHERE class_id = ? AND (monitoring_ended_at IS NOT NULL OR date < CURDATE())`,
+            [classId]
+        );
+
+        if (pastSessions.length === 0) return;
+
+        // Insert 'Absent' logs for each past session
+        const values = pastSessions.map(s => [s.id, studentId || null, enrollmentId, 'Absent', 'System Backfill']);
+        
+        await pool.query(
+            `INSERT INTO attendance_logs (session_id, student_id, enrollment_id, status, recognition_method) 
+             VALUES ?`,
+            [values]
+        );
+        console.log(`[Backfill] Created ${pastSessions.length} absences for class ${classId}`);
+    } catch (err) {
+        console.error('[Backfill Error]', err);
+    }
+};
+
 // Batch Upload Roster (Commit)
 router.post('/:id/upload-roster', upload.single('file'), async (req, res) => {
     try {
@@ -642,11 +668,15 @@ router.post('/:id/upload-roster', upload.single('file'), async (req, res) => {
 
                 if (existing.length === 0) {
                     // New enrollment
-                    await pool.query(
+                    const [insResult] = await pool.query(
                         'INSERT INTO enrollments (class_id, student_id, student_number, student_name) VALUES (?, ?, ?, ?)',
                         [classId, studentId, studentNumber, name || 'Unknown']
                     );
+                    const newEnrollmentId = insResult.insertId;
                     addedCount++;
+
+                    // Backfill absences for past sessions
+                    await backfillAbsences(classId, studentId, newEnrollmentId);
 
                     // NOTIFICATION: Notify student if they are already registered
                     if (studentId) {
@@ -1073,10 +1103,14 @@ router.post('/:id/students', async (req, res) => {
             return res.status(400).json({ error: 'Student is already enrolled in this class' });
         }
 
-        await pool.query(
+        const [insResult] = await pool.query(
             'INSERT INTO enrollments (class_id, student_id, student_number, student_name) VALUES (?, ?, ?, ?)',
             [classId, studentId, studentNumber, fullName]
         );
+        const newEnrollmentId = insResult.insertId;
+
+        // Backfill absences for past sessions
+        await backfillAbsences(classId, studentId, newEnrollmentId);
 
         // NOTIFICATION: Notify student if they are already registered
         if (studentId) {

@@ -1,8 +1,8 @@
 "use client";
-
 import Link from 'next/link';
 import { Home, ArrowLeft, Search, AlertCircle } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import IdentityBackground from '../components/IdentityBackground';
 
 export default function NotFound() {
     const [mounted, setMounted] = useState(false);
@@ -12,7 +12,8 @@ export default function NotFound() {
     }, []);
 
     return (
-        <div className="flex flex-col items-center justify-center min-h-[70vh] px-4 w-full">
+        <div className="min-h-screen bg-transparent font-outfit select-none relative overflow-hidden flex flex-col items-center justify-center p-6">
+            <IdentityBackground />
             <div className={`relative z-10 max-w-2xl w-full text-center p-12 transition-all duration-700 identity-glass rounded-[3rem] shadow-xl border border-identity-sky/20 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
                 
                 {/* 404 Icon Container */}

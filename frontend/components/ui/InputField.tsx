@@ -62,7 +62,7 @@ const InputField: React.FC<InputFieldProps> = ({
 
     return (
         <div className={`w-full space-y-2 ${className}`}>
-            <label className="flex items-center text-[10px] font-black uppercase tracking-[0.15em] text-[#041C3C]/60 ml-2">
+            <label className="flex items-center text-[10px] font-black uppercase tracking-[0.15em] text-[#041C3C]/60 ml-2 font-outfit">
                 {label}
                 {isRequired && <span className="text-rose-500 ml-1">*</span>}
             </label>
@@ -78,7 +78,7 @@ const InputField: React.FC<InputFieldProps> = ({
                     value={value}
                     onBlur={handleBlur}
                     onChange={onChange}
-                    className={`w-full ${Icon ? 'pl-14' : 'px-5'} py-4 rounded-xl bg-white border border-slate-200 transition-all outline-none text-[#041C3C] font-bold text-sm
+                    className={`w-full ${Icon ? 'pl-14' : 'px-5'} py-4 rounded-xl bg-white border border-slate-200 transition-all outline-none text-[#041C3C] font-black text-sm font-outfit
                         ${touched && error ? 'border-rose-400 focus:ring-rose-400' : touched && isValid ? 'border-emerald-400 focus:ring-emerald-400' : 'border-slate-200 group-hover:border-[#5CB4E4]/30 focus:border-[#5CB4E4] focus:ring-2 focus:ring-[#5CB4E4]/20'}
                     `}
                     {...props}
@@ -95,7 +95,7 @@ const InputField: React.FC<InputFieldProps> = ({
                             {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                         </button>
                     )}
-                    {touched && isValid && !error && <CheckCircle2 size={18} className="text-emerald-500" />}
+                    {(isValid && value) && !error && <CheckCircle2 size={18} className="text-emerald-500" />}
                     {touched && error && <AlertCircle size={18} className="text-rose-500" />}
                 </div>
             </div>

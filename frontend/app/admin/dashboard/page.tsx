@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useToast } from '@/components/Toast';
 import { getToken, getUser, API_URL, getBackendUrl, logout, getProfilePictureUrl } from '@/utils/auth';
 import ConfirmModal from '@/components/ConfirmModal';
-import { User, Shield, Users, Clock, CheckCircle, XCircle, AlertCircle, LogOut, UserCheck, Search, Filter, Camera, History, AlertTriangle, ExternalLink, Briefcase, RefreshCw, Activity, GraduationCap, LayoutDashboard, Eye, Home, Monitor, FileText } from 'lucide-react';
+import { User, Shield, Users, UserPlus, Clock, CheckCircle, XCircle, AlertCircle, LogOut, UserCheck, Search, Filter, Camera, History, AlertTriangle, ExternalLink, Briefcase, RefreshCw, Activity, GraduationCap, LayoutDashboard, Eye, Home, Monitor, FileText } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import SessionTimeout from '@/components/SessionTimeout';
 import BulkActions from '@/components/BulkActions';
@@ -19,6 +19,7 @@ import EmptyState from '@/components/ui/EmptyState';
 import InputField from '@/components/ui/InputField';
 
 import IdentityBackground from '@/components/IdentityBackground';
+import CreateProfessorModal from '@/components/CreateProfessorModal';
 
 
 interface PendingProfessor {
@@ -124,6 +125,7 @@ export default function AdminDashboard() {
     const [userStatusFilter, setUserStatusFilter] = useState('all');
     const [loadingUsers, setLoadingUsers] = useState(false);
     const [userSearch, setUserSearch] = useState('');
+    const [isCreateProfessorOpen, setIsCreateProfessorOpen] = useState(false);
 
     // FIX: isPDF should be a plain function, not a useState
     const isPDF = (url: string | undefined | null): boolean => {
@@ -518,7 +520,7 @@ export default function AdminDashboard() {
     };
 
     return (
-        <div className="min-h-screen bg-white font-outfit text-slate-900 relative selection:bg-identity-sky/20 selection:text-identity-navy page-transition overflow-x-hidden">
+        <div className="min-h-screen bg-transparent font-outfit text-slate-900 relative selection:bg-identity-sky/20 selection:text-identity-navy page-transition overflow-x-hidden">
             <IdentityBackground />
             
             <SessionTimeout
@@ -529,16 +531,16 @@ export default function AdminDashboard() {
             />
             <Navbar />
 
-            <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-20 relative z-10">
+            <main className="max-w-7xl mx-auto px-6 pt-28 pb-12 relative z-10">
                 {/* Page Header */}
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12 animate-in fade-in slide-in-from-top-6 duration-700">
-                    <div className="flex items-center gap-6 group">
-                        <div className="p-4 identity-glass text-identity-navy rounded-xl border-2 border-white/40 shadow-sm relative overflow-hidden bg-white/20">
-                            <LayoutDashboard size={28} className="relative z-10 group-hover:scale-110 transition-transform duration-500 text-identity-sky" />
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 mb-8 sm:mb-12 animate-in fade-in slide-in-from-top-6 duration-700">
+                    <div className="flex items-center gap-4 sm:gap-6 group">
+                        <div className="p-3 sm:p-4 identity-glass text-identity-navy rounded-lg sm:rounded-xl border-2 border-white/40 shadow-sm relative overflow-hidden bg-white/20">
+                            <LayoutDashboard size={24} className="sm:w-7 sm:h-7 relative z-10 group-hover:scale-110 transition-transform duration-500 text-identity-sky" />
                         </div>
                         <div>
-                            <p className="text-[9px] font-black text-identity-sky uppercase tracking-[0.3em] mb-1 italic opacity-60">System Controller</p>
-                            <h1 className="text-3xl font-black text-identity-navy tracking-tighter uppercase italic leading-none">ADMIN DASHBOARD</h1>
+                            <p className="text-[8px] sm:text-[9px] font-black text-identity-sky uppercase tracking-[0.2em] sm:tracking-[0.3em] mb-1 italic opacity-60">System Controller</p>
+                            <h1 className="text-xl sm:text-3xl font-black text-identity-navy tracking-tighter uppercase italic leading-none">ADMIN DASHBOARD</h1>
                         </div>
                     </div>
                 </div>
@@ -556,7 +558,7 @@ export default function AdminDashboard() {
                     {activeTab === 'dashboard' ? (
                         <div className="space-y-12 animate-in fade-in duration-700">
                             {/* Stats Grid */}
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-8">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-8">
                                 {[
                                     { label: "Pending Approvals", value: stats?.pendingProfessors || 0, icon: Clock, color: "identity-sky", onClick: () => { setActiveTab('users'); setUserRoleFilter('professor'); setUserStatusFilter('pending'); } },
                                     { label: "Administrators", value: totalAdmins, icon: Shield, color: "rose-500", onClick: () => { setActiveTab('users'); setUserRoleFilter('admin'); setUserStatusFilter('all'); } },
@@ -567,18 +569,18 @@ export default function AdminDashboard() {
                                     <div
                                         key={idx}
                                         onClick={stat.onClick}
-                                        className="identity-glass p-8 rounded-[2rem] border border-white/40 relative overflow-hidden group hover:scale-[1.03] active:scale-95 transition-all cursor-pointer shadow-xl bg-white/30"
+                                        className="identity-glass p-6 sm:p-8 rounded-2xl sm:rounded-[2rem] border border-white/40 relative overflow-hidden group hover:scale-[1.03] active:scale-95 transition-all cursor-pointer shadow-xl bg-white/30"
                                     >
                                         <div className="absolute top-0 right-0 p-4 opacity-[0.02] group-hover:opacity-10 transition-opacity">
                                             <stat.icon size={80} />
                                         </div>
-                                        <div className="flex flex-col items-center text-center gap-4 relative z-10">
-                                            <div className="bg-identity-sky/10 p-3 rounded-xl border border-identity-sky/20 group-hover:scale-110 transition-transform duration-700">
-                                                <stat.icon size={24} className="text-identity-navy" />
+                                        <div className="flex flex-col items-center text-center gap-3 sm:gap-4 relative z-10">
+                                            <div className="bg-identity-sky/10 p-2.5 sm:p-3 rounded-lg sm:rounded-xl border border-identity-sky/20 group-hover:scale-110 transition-transform duration-700">
+                                                <stat.icon size={20} className="sm:w-6 sm:h-6 text-identity-navy" />
                                             </div>
                                             <div>
-                                                <p className="text-[8px] text-slate-400 font-black uppercase tracking-[0.2em] mb-1 italic">{stat.label}</p>
-                                                <p className="text-4xl font-black text-identity-navy tracking-tighter italic leading-none">{stat.value}</p>
+                                                <p className="text-[7px] sm:text-[8px] text-slate-400 font-black uppercase tracking-[0.2em] mb-1 italic">{stat.label}</p>
+                                                <p className="text-3xl sm:text-4xl font-black text-identity-navy tracking-tighter italic leading-none">{stat.value}</p>
                                             </div>
                                         </div>
                                         <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-identity-sky/30 scale-x-0 group-hover:scale-x-100 transition-transform duration-700" />
@@ -587,16 +589,16 @@ export default function AdminDashboard() {
                             </div>
 
                             {/* Pending Approvals */}
-                            <div className="identity-glass p-10 rounded-[3rem] border-2 border-white/40 shadow-2xl relative overflow-hidden group">
+                            <div className="identity-glass p-6 sm:p-10 rounded-2xl sm:rounded-[3rem] border-2 border-white/40 shadow-2xl relative overflow-hidden group">
                                 <div className="corner-bracket-tl opacity-40" />
                                 <div className="corner-bracket-br opacity-40" />
                                 
-                                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10 relative z-10">
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 mb-8 sm:mb-10 relative z-10">
                                     <div className="flex items-center gap-4">
-                                        <div className="bg-identity-sky/10 p-3 rounded-2xl border border-identity-sky/20 shadow-inner">
-                                            <Clock className="w-6 h-6 text-identity-sky" />
+                                        <div className="bg-identity-sky/10 p-2.5 sm:p-3 rounded-xl sm:rounded-2xl border border-identity-sky/20 shadow-inner">
+                                            <Clock className="w-5 h-5 sm:w-6 sm:h-6 text-identity-sky" />
                                         </div>
-                                        <h2 className="text-2xl font-black text-identity-navy uppercase tracking-tighter italic">PENDING USER VERIFICATIONS</h2>
+                                        <h2 className="text-xl sm:text-2xl font-black text-identity-navy uppercase tracking-tighter italic leading-none">PENDING USER VERIFICATIONS</h2>
                                     </div>
                                     {filteredProfessors.length > 0 && (
                                         <div className="flex items-center gap-3">
@@ -704,11 +706,11 @@ export default function AdminDashboard() {
                                         <p className="text-[8px] text-identity-sky font-black uppercase tracking-[0.2em] mt-2 italic opacity-60">ADMINISTRATIVE ACTION HISTORY</p>
                                     </div>
                                 </div>
-                                <div className="identity-glass border border-slate-100 rounded-[2.5rem] overflow-hidden shadow-xl relative group bg-white/40">
+                                <div className="identity-glass border border-slate-100 rounded-2xl sm:rounded-[2.5rem] overflow-hidden shadow-xl relative group bg-white/40">
                                     {stats?.recentActions && stats.recentActions.length > 0 ? (
                                         <div className="divide-y divide-slate-50 relative z-10">
                                             {stats.recentActions.slice(0, 8).map((action) => (
-                                                <div key={action.id} className="p-8 flex flex-col md:flex-row items-center justify-between hover:bg-slate-50 transition-all group/item gap-8 text-center md:text-left relative">
+                                                <div key={action.id} className="p-5 sm:p-8 flex flex-col md:flex-row items-center justify-between hover:bg-slate-50 transition-all group/item gap-6 sm:gap-8 text-center md:text-left relative">
                                                     <div className="flex flex-col md:flex-row items-center gap-6 flex-1">
                                                         <div className="w-16 h-16 rounded-xl bg-identity-navy text-identity-sky flex items-center justify-center shadow-lg group-hover/item:scale-105 transition-all duration-700 font-black uppercase text-xl relative overflow-hidden border border-white/20">
                                                             <span className="relative z-10 italic">{action.action_type[0]}</span>
@@ -785,6 +787,14 @@ export default function AdminDashboard() {
                                     </select>
                                     
                                     <button
+                                        onClick={() => setIsCreateProfessorOpen(true)}
+                                        className="bg-identity-navy text-white px-6 py-3.5 rounded-xl transition-all hover:bg-identity-sky active:scale-95 shadow-lg flex items-center gap-3 group"
+                                    >
+                                        <UserPlus className="w-4 h-4 transition-transform group-hover:scale-110" />
+                                        <span className="text-[9px] font-black uppercase tracking-wider hidden sm:block">REGISTER FACULTY</span>
+                                    </button>
+
+                                    <button
                                         onClick={() => fetchUsers()}
                                         className="identity-glass border border-slate-100 text-identity-navy p-3.5 rounded-xl transition-all hover:bg-slate-50 active:scale-90 shadow-sm group"
                                     >
@@ -795,7 +805,7 @@ export default function AdminDashboard() {
 
 
                             {/* Registry Table */}
-                            <div className="identity-glass border border-slate-100 rounded-[2.5rem] overflow-hidden shadow-xl relative group bg-white/40">
+                            <div className="identity-glass border border-slate-100 rounded-2xl sm:rounded-[2.5rem] overflow-hidden shadow-xl relative group bg-white/40">
                                 {loadingUsers ? (
                                     <div className="p-12 space-y-6">
                                         {[...Array(5)].map((_, idx) => (
@@ -819,19 +829,19 @@ export default function AdminDashboard() {
                                         <table className="w-full text-left border-collapse">
                                             <thead>
                                                 <tr className="border-b border-slate-50 bg-slate-50/30">
-                                                    <th className="px-10 py-6 text-identity-navy font-black uppercase tracking-[0.2em] text-[9px] italic">USER NAME</th>
-                                                    <th className="px-10 py-6 text-identity-navy font-black uppercase tracking-[0.2em] text-[9px] italic text-center">ID</th>
-                                                    <th className="px-10 py-6 text-identity-navy font-black uppercase tracking-[0.2em] text-[9px] italic text-center">ROLE</th>
-                                                    <th className="px-10 py-6 text-identity-navy font-black uppercase tracking-[0.2em] text-[9px] italic text-center">STATUS</th>
-                                                    <th className="px-10 py-6 text-identity-navy font-black uppercase tracking-[0.2em] text-[9px] italic text-right">REGISTERED</th>
+                                                    <th className="px-5 sm:px-10 py-4 sm:py-6 text-identity-navy font-black uppercase tracking-[0.2em] text-[8px] sm:text-[9px] italic">USER NAME</th>
+                                                    <th className="px-5 sm:px-10 py-4 sm:py-6 text-identity-navy font-black uppercase tracking-[0.2em] text-[8px] sm:text-[9px] italic text-center">ID</th>
+                                                    <th className="px-5 sm:px-10 py-4 sm:py-6 text-identity-navy font-black uppercase tracking-[0.2em] text-[8px] sm:text-[9px] italic text-center">ROLE</th>
+                                                    <th className="px-5 sm:px-10 py-4 sm:py-6 text-identity-navy font-black uppercase tracking-[0.2em] text-[8px] sm:text-[9px] italic text-center">STATUS</th>
+                                                    <th className="px-5 sm:px-10 py-4 sm:py-6 text-identity-navy font-black uppercase tracking-[0.2em] text-[8px] sm:text-[9px] italic text-right">REGISTERED</th>
                                                 </tr>
                                             </thead>
                                             <tbody className="divide-y divide-slate-50">
                                                 {systemUsers.map((u) => (
                                                     <tr key={u.id} className="hover:bg-slate-50/50 transition-all group/row">
-                                                        <td className="px-10 py-6">
-                                                            <div className="flex items-center gap-6">
-                                                                <div className="w-12 h-12 rounded-xl bg-identity-navy text-identity-sky border border-white/20 flex items-center justify-center font-black group-hover/row:scale-105 transition-all shadow-lg uppercase text-sm italic relative overflow-hidden">
+                                                        <td className="px-5 sm:px-10 py-4 sm:py-6">
+                                                            <div className="flex items-center gap-4 sm:gap-6">
+                                                                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-identity-navy text-identity-sky border border-white/20 flex items-center justify-center font-black group-hover/row:scale-105 transition-all shadow-lg uppercase text-xs sm:text-sm italic relative overflow-hidden">
                                                                     <span className="relative z-10">{u.first_name?.[0] || 'U'}{u.last_name?.[0] || 'N'}</span>
                                                                 </div>
                                                                 <div>
@@ -905,7 +915,7 @@ export default function AdminDashboard() {
                             </div>
 
                             {/* Sessions Registry */}
-                            <div className="identity-glass border border-slate-100 rounded-[2.5rem] overflow-hidden shadow-xl relative group bg-white/40">
+                            <div className="identity-glass border border-slate-100 rounded-2xl sm:rounded-[2.5rem] overflow-hidden shadow-xl relative group bg-white/40">
                                 {loadingSessions ? (
                                     <div className="p-12 space-y-6">
                                         <Skeleton className="h-20 w-full rounded-2xl" />
@@ -924,11 +934,11 @@ export default function AdminDashboard() {
                                         <table className="w-full text-left border-collapse">
                                             <thead>
                                                 <tr className="border-b border-slate-50 bg-slate-50/30">
-                                                    <th className="px-10 py-6 text-identity-navy font-black uppercase tracking-[0.2em] text-[9px] italic">SUBJECT</th>
-                                                    <th className="px-10 py-6 text-identity-navy font-black uppercase tracking-[0.2em] text-[9px] italic">PROFESSOR</th>
-                                                    <th className="px-10 py-6 text-identity-navy font-black uppercase tracking-[0.2em] text-[9px] italic text-center">TYPE</th>
-                                                    <th className="px-10 py-6 text-identity-navy font-black uppercase tracking-[0.2em] text-[9px] italic text-center">START</th>
-                                                    <th className="px-10 py-6 text-identity-navy font-black uppercase tracking-[0.2em] text-[9px] italic text-right">PRESENT</th>
+                                                    <th className="px-5 sm:px-10 py-4 sm:py-6 text-identity-navy font-black uppercase tracking-[0.2em] text-[8px] sm:text-[9px] italic">SUBJECT</th>
+                                                    <th className="px-5 sm:px-10 py-4 sm:py-6 text-identity-navy font-black uppercase tracking-[0.2em] text-[8px] sm:text-[9px] italic">PROFESSOR</th>
+                                                    <th className="px-5 sm:px-10 py-4 sm:py-6 text-identity-navy font-black uppercase tracking-[0.2em] text-[8px] sm:text-[9px] italic text-center">TYPE</th>
+                                                    <th className="px-5 sm:px-10 py-4 sm:py-6 text-identity-navy font-black uppercase tracking-[0.2em] text-[8px] sm:text-[9px] italic text-center">START</th>
+                                                    <th className="px-5 sm:px-10 py-4 sm:py-6 text-identity-navy font-black uppercase tracking-[0.2em] text-[8px] sm:text-[9px] italic text-right">PRESENT</th>
                                                 </tr>
                                             </thead>
                                             <tbody className="divide-y divide-slate-50">
@@ -1492,7 +1502,17 @@ export default function AdminDashboard() {
                     cancelText="Cancel"
                     type="danger"
                 />
+
             </main>
+
+            <CreateProfessorModal
+                isOpen={isCreateProfessorOpen}
+                onClose={() => setIsCreateProfessorOpen(false)}
+                onSuccess={() => {
+                    fetchUsers();
+                    fetchData();
+                }}
+            />
         </div>
     );
 }

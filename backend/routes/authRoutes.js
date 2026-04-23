@@ -126,23 +126,13 @@ router.post('/register/student', async (req, res) => {
         const [existingByEmail] = await connection.query('SELECT * FROM users WHERE email = ? AND user_id != ?', [email, studentId]);
         console.log(`[Register Student] existingByEmail: ${existingByEmail.length} users found`);
 
-        let targetUser = null;
-
         if (existingByEmail.length > 0) {
-            // Email exists on another account.
-            const matchedUser = existingByEmail[0];
-            const matchedRoles = matchedUser.role ? matchedUser.role.split(',').map(r => r.trim()) : [];
+            await connection.rollback();
+            return res.status(400).json({ message: 'Email already registered to another account.' });
+        }
 
-            // If existing user is Admin or Professor (and not already Student), allow merging
-            // If they are already a student with a DIFFERENT ID, that's a problem (duplicate student account).
-            if (matchedRoles.includes('student')) {
-                await connection.rollback();
-                return res.status(400).json({ message: 'Email already registered to another Student account.' });
-            }
-
-            // Target for merge is the user found by email
-            targetUser = matchedUser;
-        } else if (existingById.length > 0) {
+        let targetUser = null;
+        if (existingById.length > 0) {
             targetUser = existingById[0];
         }
 
@@ -428,9 +418,10 @@ router.post('/register/student', async (req, res) => {
             }
             await connection.query('DELETE FROM face_photos WHERE user_id = ?', [userId]);
 
-            // --- GENERATE EMBEDDINGS FOR ALL ANGLES ---
-            for (const [angle, base64Data] of Object.entries(facePhotos)) {
-                try {
+            // --- GENERATE EMBEDDINGS FOR ALL ANGLES (Parallelized) ---
+            const photoAngles = Object.entries(facePhotos);
+            try {
+                await Promise.all(photoAngles.map(async ([angle, base64Data]) => {
                     // 1. Save Photo to MinIO/Local
                     const photoPath = await saveBase64Image(base64Data, studentId, `face-${angle}`);
 
@@ -444,13 +435,15 @@ router.post('/register/student', async (req, res) => {
                         const aiServiceUrl = process.env.AI_SERVICE_URL || 'http://ai-service:8000';
                         try {
                             const aiResponse = await axios.post(`${aiServiceUrl}/api/generate-embedding`, form, {
-                                headers: { ...form.getHeaders() }
+                                headers: { ...form.getHeaders() },
+                                timeout: 10000 // 10s timeout to prevent hanging
                             });
                             if (aiResponse.data.embedding) {
                                 embeddingJson = JSON.stringify(aiResponse.data.embedding);
                             }
                         } catch (aiErr) {
                             console.warn(`Embedding generation failed for ${angle}:`, aiErr.message);
+                            // We don't throw here - we want to save the photo even without embedding if AI is slow
                         }
                     }
 
@@ -469,12 +462,11 @@ router.post('/register/student', async (req, res) => {
                             [embeddingJson, userId]
                         );
                     }
-
-                } catch (error) {
-                    console.error(`Error processing face photo ${angle}:`, error);
-                    await connection.rollback();
-                    return res.status(500).json({ message: `Failed to save face photo for angle ${angle}` });
-                }
+                }));
+            } catch (error) {
+                console.error(`Error processing face photos:`, error);
+                await connection.rollback();
+                return res.status(500).json({ message: 'Failed to process face biometric data' });
             }
         }
 
@@ -614,19 +606,12 @@ router.post('/register/professor', authenticateToken, requireRole(['admin']), as
         // Check if email is already used by a DIFFERENT user
         const [existingByEmail] = await pool.query('SELECT * FROM users WHERE email = ? AND user_id != ?', [email, professorId]);
 
-        let targetUser = null;
-
         if (existingByEmail.length > 0) {
-            const matchedUser = existingByEmail[0];
-            const matchedRoles = matchedUser.role ? matchedUser.role.split(',').map(r => r.trim()) : [];
+            return res.status(400).json({ message: 'Email already registered to another account.' });
+        }
 
-            if (matchedRoles.includes('professor')) {
-                return res.status(400).json({ message: 'Email already registered to another Professor account.' });
-            }
-
-            // Allow merge
-            targetUser = matchedUser;
-        } else if (existingById.length > 0) {
+        let targetUser = null;
+        if (existingById.length > 0) {
             targetUser = existingById[0];
         }
 

@@ -27,15 +27,14 @@ interface User {
     yearLevel?: string;
 }
 
-type TabType = 'home' | 'classes' | 'schedule' | 'attendance' | 'analytics' | 'ai-insights';
+type TabType = 'home' | 'classes' | 'schedule' | 'attendance' | 'performance';
 
 const DASHBOARD_TABS = [
     { id: 'home', label: 'Home', icon: Home },
     { id: 'classes', label: 'Classes', icon: BookOpen },
     { id: 'schedule', label: 'Schedule', icon: Calendar },
     { id: 'attendance', label: 'Attendance', icon: BarChart3 },
-    { id: 'analytics', label: 'Analytics', icon: TrendingUp },
-    { id: 'ai-insights', label: 'Insights', icon: Brain },
+    { id: 'performance', label: 'Performance', icon: TrendingUp },
 ];
 
 export default function StudentDashboard() {
@@ -169,19 +168,19 @@ export default function StudentDashboard() {
     );
 
     return (
-        <div className="min-h-screen font-outfit text-slate-900 relative selection:bg-identity-sky/20 selection:text-identity-navy page-transition overflow-x-hidden bg-bg-base">
+        <div className="min-h-screen bg-transparent font-outfit select-none relative overflow-hidden">
             <IdentityBackground />
-
-            <SessionTimeout
-                sessionDuration={30 * 60 * 1000}
-                warningTime={5 * 60 * 1000}
-                onExtend={handleExtendSession}
-                onLogout={handleLogout}
+            
+            <SessionTimeout 
+                sessionDuration={30 * 60 * 1000} 
+                warningTime={5 * 60 * 1000} 
+                onExtend={handleExtendSession} 
+                onLogout={handleLogout} 
             />
 
             <Navbar />
 
-            <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-8 relative z-10">
+            <main className="max-w-7xl mx-auto px-6 pt-28 pb-12 relative z-10">
                 {/* Academic Update Banner */}
                 <AcademicUpdateBanner user={user} />
 
@@ -233,44 +232,64 @@ export default function StudentDashboard() {
                     {activeTab === 'classes' && <ClassesTab user={user} />}
                     {activeTab === 'schedule' && <ScheduleTab user={user} />}
                     {activeTab === 'attendance' && <AttendanceTab user={user} />}
-                    {activeTab === 'analytics' && <AnalyticsTab user={user} />}
-                    {activeTab === 'ai-insights' && (
-                        <div className="identity-glass p-8 sm:p-10 md:p-16 rounded-[3rem] md:rounded-[4rem] border border-identity-sky/15 shadow-3xl relative overflow-hidden font-outfit group animate-in zoom-in duration-700">
-                            <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-blueprint-fine" />
-                            <div className="corner-bracket-tl opacity-60 group-hover:scale-110 transition-transform duration-700 -top-4 -left-4" />
-                            <div className="corner-bracket-br opacity-60 group-hover:scale-110 transition-transform duration-700 -bottom-4 -right-4" />
-                            
-                            {/* Decorative Glow */}
-                            <div className="absolute -top-24 -right-24 w-96 h-96 bg-identity-sky/10 rounded-full blur-[100px] pointer-events-none group-hover:bg-identity-sky/20 transition-colors duration-1000" />
-                            
-                            <div className="flex items-center gap-8 mb-16 relative z-10">
-                                <div className="p-6 bg-identity-navy text-white rounded-3xl border-2 border-identity-sky/20 shadow-2xl group-hover:bg-identity-sky transition-colors duration-500">
-                                    <Brain size={48} className="filter drop-shadow-[0_0_10px_rgba(255,255,255,0.4)]" />
-                                </div>
-                                <div className="flex-1">
-                                    <p className="text-[11px] font-black text-identity-sky uppercase tracking-[0.5em] mb-4 italic flex items-center gap-2">
-                                        <span className="w-2 h-2 rounded-full bg-identity-sky animate-pulse shadow-[0_0_8px_rgba(92,180,228,0.8)]" />
-                                        ATTENDANCE INSIGHTS SYSTEM
-                                    </p>
-                                    <h1 className="text-4xl md:text-5xl font-black text-identity-navy tracking-tighter uppercase italic leading-none">Attendance Insights</h1>
-                                </div>
+                    {activeTab === 'performance' && (
+                        <div className="space-y-12 animate-fade-up">
+                            {/* Section 1: Raw Metrics & Analytics */}
+                            <div className="space-y-6">
+                                <AnalyticsTab user={user} />
                             </div>
-                            
-                            <div className="relative z-10 bg-white/40 rounded-[2.5rem] p-8 border border-white/20 backdrop-blur-sm shadow-inner group-hover:bg-white/60 transition-all duration-700">
-                                <AttendanceInsights studentId={user.id.toString() || ''} />
-                            </div>
-                            
-                            <div className="mt-12 pt-8 border-t border-identity-sky/10 relative z-10 flex items-center justify-between">
-                                <div className="flex items-center gap-3">
-                                    <div className="flex gap-1.5">
-                                        <div className="w-1.5 h-1.5 rounded-full bg-identity-sky/30 animate-pulse" />
-                                        <div className="w-1.5 h-1.5 rounded-full bg-identity-sky/30 animate-pulse delay-75" />
-                                        <div className="w-1.5 h-1.5 rounded-full bg-identity-sky/30 animate-pulse delay-150" />
+
+                            {/* Divider with Icon */}
+                            <div className="relative py-10">
+                                <div className="absolute inset-0 flex items-center" aria-hidden="true">
+                                    <div className="w-full border-t border-identity-sky/10"></div>
+                                </div>
+                                <div className="relative flex justify-center">
+                                    <div className="bg-bg-base px-6 flex items-center gap-4 text-identity-sky/30">
+                                        <Brain size={24} className="animate-pulse" />
+                                        <span className="text-[10px] font-black uppercase tracking-[0.5em] italic">AI Neural Analysis Link</span>
                                     </div>
-                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.25em] italic">Analyzing attendance records...</p>
                                 </div>
-                                <div className="text-[10px] font-black text-identity-sky uppercase tracking-[0.2em] italic bg-identity-sky/5 px-4 py-2 rounded-full border border-identity-sky/10">
-                                    Status: Optimal
+                            </div>
+
+                            {/* Section 2: AI Insights Engine */}
+                            <div className="identity-glass p-8 sm:p-10 md:p-16 rounded-[3rem] md:rounded-[4rem] border border-identity-sky/15 shadow-3xl relative overflow-hidden font-outfit group">
+                                <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-blueprint-fine" />
+                                <div className="corner-bracket-tl opacity-60 group-hover:scale-110 transition-transform duration-700 -top-4 -left-4" />
+                                <div className="corner-bracket-br opacity-60 group-hover:scale-110 transition-transform duration-700 -bottom-4 -right-4" />
+                                
+                                {/* Decorative Glow */}
+                                <div className="absolute -top-24 -right-24 w-96 h-96 bg-identity-sky/10 rounded-full blur-[100px] pointer-events-none group-hover:bg-identity-sky/20 transition-colors duration-1000" />
+                                
+                                <div className="flex items-center gap-8 mb-16 relative z-10">
+                                    <div className="p-6 bg-identity-navy text-white rounded-3xl border-2 border-identity-sky/20 shadow-2xl group-hover:bg-identity-sky transition-colors duration-500">
+                                        <Brain size={48} className="filter drop-shadow-[0_0_10px_rgba(255,255,255,0.4)]" />
+                                    </div>
+                                    <div className="flex-1">
+                                        <p className="text-[11px] font-black text-identity-sky uppercase tracking-[0.5em] mb-4 italic flex items-center gap-2">
+                                            <span className="w-2 h-2 rounded-full bg-identity-sky animate-pulse shadow-[0_0_8px_rgba(92,180,228,0.8)]" />
+                                            ATTENDANCE INSIGHTS SYSTEM
+                                        </p>
+                                        <h1 className="text-4xl md:text-5xl font-black text-identity-navy tracking-tighter uppercase italic leading-none">Performance AI Insights</h1>
+                                    </div>
+                                </div>
+                                
+                                <div className="relative z-10 bg-white/40 rounded-[2.5rem] p-8 border border-white/20 backdrop-blur-sm shadow-inner group-hover:bg-white/60 transition-all duration-700">
+                                    <AttendanceInsights studentId={user.id.toString() || ''} />
+                                </div>
+                                
+                                <div className="mt-12 pt-8 border-t border-identity-sky/10 relative z-10 flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <div className="flex gap-1.5">
+                                            <div className="w-1.5 h-1.5 rounded-full bg-identity-sky/30 animate-pulse" />
+                                            <div className="w-1.5 h-1.5 rounded-full bg-identity-sky/30 animate-pulse delay-75" />
+                                            <div className="w-1.5 h-1.5 rounded-full bg-identity-sky/30 animate-pulse delay-150" />
+                                        </div>
+                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.25em] italic">Analyzing attendance records...</p>
+                                    </div>
+                                    <div className="text-[10px] font-black text-identity-sky uppercase tracking-[0.2em] italic bg-identity-sky/5 px-4 py-2 rounded-full border border-identity-sky/10">
+                                        Status: Optimal
+                                    </div>
                                 </div>
                             </div>
                         </div>

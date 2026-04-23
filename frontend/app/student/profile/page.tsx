@@ -54,6 +54,7 @@ import {
   Calendar,
 } from "lucide-react";
 import axios from "axios";
+import BackButton from "@/components/ui/BackButton";
 import FaceEnrollmentScanner from "../../../components/FaceEnrollmentScanner";
 import { useToast } from "../../../components/Toast";
 import ConfirmModal from "../../../components/ConfirmModal";
@@ -627,7 +628,7 @@ export default function StudentProfile() {
 
   if (!user || !formData) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center relative overflow-hidden font-outfit bg-white">
+      <div className="min-h-screen bg-transparent flex flex-col items-center justify-center relative overflow-hidden font-outfit">
         <IdentityBackground />
         <div className="relative z-10 flex flex-col items-center gap-8 translate-y-[-2rem]">
             <div className="w-24 h-24 relative">
@@ -649,7 +650,7 @@ export default function StudentProfile() {
   const profileImageSrc = getProfilePictureUrl(user.profilePicture);
 
   return (
-    <div className="min-h-screen bg-white font-outfit text-slate-900 relative selection:bg-identity-sky/20 selection:text-identity-navy page-transition overflow-x-hidden">
+    <div className="min-h-screen bg-transparent font-outfit text-slate-900 relative selection:bg-identity-sky/20 selection:text-identity-navy page-transition overflow-x-hidden">
       <IdentityBackground />
       <Navbar />
 
@@ -687,7 +688,7 @@ export default function StudentProfile() {
         </div>
       )}
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-28 pb-20 relative z-10">
+      <main className="max-w-7xl mx-auto px-6 pt-32 pb-20 relative z-10">
         <Breadcrumbs />
 
         {/* Profile Hero Section */}
@@ -708,13 +709,11 @@ export default function StudentProfile() {
               </div>
             </div>
             
-            <Link
+            <BackButton
               href="/student/dashboard"
-              className="group flex items-center gap-5 px-8 py-4 rounded-2.5xl bg-white/40 border-2 border-identity-sky/15 shadow-2xl hover:border-identity-sky hover:bg-white transition-all backdrop-blur-xl italic text-[11px] font-black uppercase tracking-[0.3em] text-identity-navy"
-            >
-              <ArrowLeft size={18} className="group-hover:-translate-x-2 transition-transform duration-500" />
-              Back to Dashboard
-            </Link>
+              label="Back to Dashboard"
+              className="group flex items-center gap-5 px-8 py-4 rounded-2.5xl bg-white/40 border-2 border-identity-sky/15 shadow-2xl hover:border-identity-sky hover:bg-white transition-all backdrop-blur-xl italic"
+            />
         </div>
 
         {/* Global Action Bar */}
@@ -1124,6 +1123,7 @@ export default function StudentProfile() {
                 <div className="absolute inset-0 bg-blueprint opacity-5 pointer-events-none" />
                 <FaceEnrollmentScanner
                   requireAll={true}
+                  selective={true}
                   initialCaptures={facePhotos.reduce((acc, p) => ({
                     ...acc,
                     [p.angle.toLowerCase()]: getProfilePictureUrl(p.photo_url),

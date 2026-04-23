@@ -140,7 +140,6 @@ fi
 # ── STEP 5: Reclaiming storage ───────────────────────────────────────────────
 info "Step 5: Reclaiming storage..."
 docker image prune -f &>/dev/null || true
-docker builder prune -f --filter "until=24h" &>/dev/null || true
 success "Storage cleaned."
 
 # ── STEP 6: Deploy ─────────────────────────────────────────────────────────────

@@ -28,6 +28,7 @@ export default function AttendanceInsightsDashboard({ studentId }: { studentId: 
     const [insights, setInsights] = useState<AttendanceInsights | null>(null);
     const [overallStats, setOverallStats] = useState<any>(null);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<boolean>(false);
     const [goal, setGoal] = useState<number | null>(null);
     const [isGoalModalOpen, setIsGoalModalOpen] = useState(false);
 
@@ -47,6 +48,8 @@ export default function AttendanceInsightsDashboard({ studentId }: { studentId: 
     }, [studentId]);
 
     const fetchInsights = async () => {
+        setLoading(true);
+        setError(false);
         try {
             const token = getToken();
             if (!token || token === 'undefined' || token === 'null') {
@@ -67,12 +70,33 @@ export default function AttendanceInsightsDashboard({ studentId }: { studentId: 
 
         } catch (error: any) {
             console.error('Failed to fetch insights:', error);
+            setError(true);
         } finally {
             setLoading(false);
         }
     };
 
     if (loading) { return <AttendanceInsightsSkeleton />; }
+
+    if (error) {
+        return (
+            <div className="flex flex-col items-center justify-center py-20 bg-white/20 rounded-[2rem] border-2 border-rose-500/10 backdrop-blur-md animate-in fade-in zoom-in duration-500">
+                <div className="w-20 h-20 bg-rose-500/10 rounded-3xl flex items-center justify-center mb-8 border border-rose-500/20">
+                    <AlertTriangle className="text-rose-500" size={40} />
+                </div>
+                <h3 className="text-xl font-black text-identity-navy uppercase tracking-tighter italic mb-3">Sync Connectivity Lost</h3>
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-10 italic max-w-xs text-center leading-relaxed">
+                    The AI analysis engine is temporarily unreachable. Please check your network or try again.
+                </p>
+                <button 
+                    onClick={fetchInsights}
+                    className="px-10 py-4 bg-identity-navy text-white rounded-xl text-[10px] font-black uppercase tracking-[0.3em] hover:bg-identity-sky transition-all shadow-xl shadow-identity-navy/20 active:scale-95 italic"
+                >
+                    Retry Connection
+                </button>
+            </div>
+        );
+    }
 
     const displayInsights = insights || {
         streak: 0,
@@ -137,7 +161,7 @@ export default function AttendanceInsightsDashboard({ studentId }: { studentId: 
 
             {/* Overall Summary Card */}
             {overallStats && (
-                <div className="grid grid-cols-1 md:grid-cols-2 md:grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 bg-slate-50/50 p-8 rounded-[2.5rem] border border-slate-100">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 bg-white/40 backdrop-blur-xl p-6 rounded-[2rem] border border-identity-sky/15 shadow-xl">
                     {[
                         { label: 'Total Present', val: overallStats.presentCount, icon: CheckCircle, color: 'text-emerald-500', bg: 'bg-emerald-50' },
                         { label: 'Total Late', val: overallStats.lateCount, icon: Clock, color: 'text-amber-500', bg: 'bg-amber-50' },
@@ -145,43 +169,43 @@ export default function AttendanceInsightsDashboard({ studentId }: { studentId: 
                         { label: 'Final Attendance Rate', val: `${overallStats.attendanceRate}%`, icon: BarChart3, color: 'text-identity-sky', bg: 'bg-identity-sky/10' }
                     ].map((stat, i) => (
                         <div key={i} className="flex flex-col items-center text-center">
-                            <div className={`w-14 h-14 ${stat.bg} ${stat.color} rounded-2xl flex items-center justify-center mb-4 shadow-sm border border-white`}>
-                                <stat.icon size={28} />
+                            <div className={`w-12 h-12 ${stat.bg} ${stat.color} rounded-xl flex items-center justify-center mb-3 shadow-sm border border-white`}>
+                                <stat.icon size={24} />
                             </div>
-                            <div className="text-2xl font-black text-identity-navy font-outfit leading-none mb-1">{stat.val}</div>
-                            <div className="text-[9px] text-slate-400 font-black uppercase tracking-[0.2em]">{stat.label}</div>
+                            <div className="text-xl font-black text-identity-navy font-outfit leading-none mb-1">{stat.val}</div>
+                            <div className="text-[8px] text-slate-400 font-black uppercase tracking-[0.2em]">{stat.label}</div>
                         </div>
                     ))}
                 </div>
             )}
 
             {/* Streak Card */}
-            <div className="bg-identity-navy rounded-[2rem] md:rounded-[3rem] p-6 sm:p-8 md:p-10 text-white relative overflow-hidden group">
+            <div className="bg-identity-navy rounded-[2rem] md:rounded-[2.5rem] p-6 sm:p-7 text-white relative overflow-hidden group">
                 <div className="absolute top-0 right-0 w-80 h-80 bg-identity-sky/20 rounded-full blur-[100px] -translate-y-1/2 translate-x-1/2 opacity-30"></div>
                 <div className="absolute inset-0 bg-blueprint opacity-[0.05] pointer-events-none"></div>
                 
-                <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-10">
+                <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
                     <div className="text-center md:text-left">
-                        <div className="flex items-center gap-3 text-identity-sky/80 mb-4 text-[10px] font-black uppercase tracking-[0.4em]">
-                            <Zap size={16} className="animate-pulse" /> Live Suggestions Active
+                        <div className="flex items-center gap-3 text-identity-sky/80 mb-3 text-[9px] font-black uppercase tracking-[0.4em]">
+                            <Zap size={14} className="animate-pulse" /> Live Suggestions Active
                         </div>
-                        <h3 className="text-3xl font-black text-white mb-2 tracking-tighter uppercase font-outfit">Identity Persistence</h3>
-                        <p className="text-identity-sky/60 font-black text-[10px] uppercase tracking-[0.3em]">Keep records up to date.</p>
+                        <h3 className="text-2xl font-black text-white mb-2 tracking-tighter uppercase font-outfit">Identity Persistence</h3>
+                        <p className="text-identity-sky/60 font-black text-[9px] uppercase tracking-[0.3em]">Keep records up to date.</p>
                         
-                        <div className="mt-8 flex items-baseline gap-3">
-                            <span className="text-6xl md:text-8xl font-black text-identity-sky font-outfit tracking-tighter drop-shadow-2xl">{displayInsights.streak}</span>
-                            <span className="text-xl text-white/40 font-black uppercase tracking-[0.4em]">Nodes</span>
+                        <div className="mt-6 flex items-baseline gap-3">
+                            <span className="text-5xl md:text-7xl font-black text-identity-sky font-outfit tracking-tighter drop-shadow-2xl">{displayInsights.streak}</span>
+                            <span className="text-lg text-white/40 font-black uppercase tracking-[0.4em]">Nodes</span>
                         </div>
                     </div>
                     
                     <div className="flex flex-col items-center md:items-end text-center md:text-right">
-                        <div className="w-24 h-24 bg-white/5 backdrop-blur-md rounded-[2rem] flex items-center justify-center text-identity-sky border border-white/10 shadow-2xl mb-6">
-                            <Flame size={48} className="drop-shadow-[0_0_15px_rgba(14,165,233,0.5)]" />
+                        <div className="w-20 h-20 bg-white/5 backdrop-blur-md rounded-2xl flex items-center justify-center text-identity-sky border border-white/10 shadow-2xl mb-4">
+                            <Flame size={40} className="drop-shadow-[0_0_15px_rgba(14,165,233,0.5)]" />
                         </div>
                         {displayInsights.streak >= 7 && (
-                            <div className="bg-identity-sky/20 backdrop-blur-sm px-6 py-3 rounded-2xl border border-identity-sky/30 text-identity-sky flex items-center gap-3">
-                                <Award size={20} />
-                                <span className="text-[10px] font-black uppercase tracking-[0.3em]">
+                            <div className="bg-identity-sky/20 backdrop-blur-sm px-5 py-2.5 rounded-xl border border-identity-sky/30 text-identity-sky flex items-center gap-3">
+                                <Award size={18} />
+                                <span className="text-[9px] font-black uppercase tracking-[0.3em]">
                                     {displayInsights.streak >= 30 ? 'Legendary Tier Status' :
                                         displayInsights.streak >= 14 ? 'Elite Synchronicity' :
                                             'Optimal Session Link'}
@@ -199,28 +223,28 @@ export default function AttendanceInsightsDashboard({ studentId }: { studentId: 
                     { label: 'Global Ranking', val: displayInsights.percentile > 0 ? `Top ${100 - displayInsights.percentile}%` : 'Pending', icon: Users, color: 'text-indigo-500', bg: 'bg-indigo-50', sub: displayInsights.percentile > 0 ? `Superior to ${displayInsights.percentile}%` : "Awaiting more sessions" },
                     { label: 'Pass Probability', val: `${displayInsights.predictions.passLikelihood}%`, icon: Target, color: 'text-emerald-500', bg: 'bg-emerald-50', bar: true }
                 ].map((stat, i) => (
-                    <div key={i} className="bg-white border border-slate-100 rounded-[2.5rem] p-8 shadow-xl shadow-slate-200/50">
-                        <div className="flex items-center justify-between mb-6">
+                    <div key={i} className="bg-white/40 backdrop-blur-xl border border-identity-sky/15 rounded-[2rem] p-6 shadow-xl shadow-slate-200/50">
+                        <div className="flex items-center justify-between mb-4">
                             <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em]">{stat.label}</span>
-                            <stat.icon className={stat.color} size={20} />
+                            <stat.icon className={stat.color} size={18} />
                         </div>
-                        <div className="text-3xl md:text-4xl font-black text-identity-navy font-outfit mb-2 tracking-tighter uppercase">
+                        <div className="text-2xl md:text-3xl font-black text-identity-navy font-outfit mb-2 tracking-tighter uppercase">
                             {stat.val}
                         </div>
                         {stat.trend && (
-                            <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.15em] mt-4 pt-4 border-t border-slate-50">
+                            <div className="flex items-center gap-2 text-[9px] font-black uppercase tracking-[0.15em] mt-3 pt-3 border-t border-slate-50">
                                 {getTrendIcon()}
                                 <span className={displayInsights.trend === 'up' ? 'text-emerald-500' : displayInsights.trend === 'down' ? 'text-rose-500' : 'text-slate-400'}>
                                     {getTrendMessage()}
                                 </span>
                             </div>
                         )}
-                        {stat.sub && <p className="text-[10px] font-black text-slate-300 uppercase tracking-[0.15em] mt-4 pt-4 border-t border-slate-50">{stat.sub}</p>}
+                        {stat.sub && <p className="text-[9px] font-black text-slate-300 uppercase tracking-[0.15em] mt-3 pt-3 border-t border-slate-50">{stat.sub}</p>}
                         {stat.bar && (
-                            <div className="mt-6 pt-6 border-t border-slate-50">
-                                <div className="w-full bg-slate-100 rounded-full h-2 mb-2 shadow-inner">
+                            <div className="mt-4 pt-4 border-t border-slate-50">
+                                <div className="w-full bg-slate-100 rounded-full h-1.5 mb-2 shadow-inner">
                                     <div
-                                        className={`h-2 rounded-full transition-all duration-1000 ${displayInsights.predictions.passLikelihood >= 75 ? 'bg-emerald-500' : displayInsights.predictions.passLikelihood >= 50 ? 'bg-amber-500' : 'bg-rose-500'}`}
+                                        className={`h-1.5 rounded-full transition-all duration-1000 ${displayInsights.predictions.passLikelihood >= 75 ? 'bg-emerald-500' : displayInsights.predictions.passLikelihood >= 50 ? 'bg-amber-500' : 'bg-rose-500'}`}
                                         style={{ width: `${displayInsights.predictions.passLikelihood}%` }}
                                     />
                                 </div>
@@ -232,20 +256,20 @@ export default function AttendanceInsightsDashboard({ studentId }: { studentId: 
             </div>
 
             {/* Risk Alert */}
-            <div className={`border-2 rounded-3xl p-8 shadow-xl transition-all duration-500 ${riskInfo.color}`}>
-                <div className="flex items-start gap-6">
-                    <div className="p-4 bg-white/20 rounded-2xl">
+            <div className={`border-2 rounded-2xl p-6 shadow-xl transition-all duration-500 ${riskInfo.color}`}>
+                <div className="flex items-start gap-5">
+                    <div className="p-3 bg-white/20 rounded-xl">
                         {riskInfo.icon}
                     </div>
                     <div>
-                        <h4 className="font-black uppercase tracking-[0.15em] text-sm mb-2">{riskInfo.message}</h4>
+                        <h4 className="font-black uppercase tracking-[0.15em] text-xs mb-2">{riskInfo.message}</h4>
                         {displayInsights.riskLevel !== 'low' && (
-                            <p className="text-[10px] font-black uppercase tracking-[0.2em] opacity-60 leading-relaxed">
+                            <p className="text-[9px] font-black uppercase tracking-[0.2em] opacity-60 leading-relaxed">
                                 Current attendance trajectory indicates a high probability of system failure. Stabilize immediately.
                             </p>
                         )}
                         {displayInsights.riskLevel === 'low' && (
-                            <p className="text-[10px] font-black uppercase tracking-[0.2em] opacity-60 leading-relaxed">
+                            <p className="text-[9px] font-black uppercase tracking-[0.2em] opacity-60 leading-relaxed">
                                 Current performance is within optimal operational range.
                             </p>
                         )}
@@ -255,20 +279,20 @@ export default function AttendanceInsightsDashboard({ studentId }: { studentId: 
 
             {/* Recommendations */}
             {displayInsights.recommendations.length > 0 && (
-                <div className="bg-white border border-slate-100 rounded-[2rem] md:rounded-[3rem] p-6 sm:p-8 md:p-10 shadow-2xl relative overflow-hidden">
-                    <div className="absolute top-0 left-0 w-2 h-full bg-identity-sky"></div>
-                    <h3 className="text-[11px] font-black text-identity-navy uppercase tracking-[0.4em] mb-8 flex items-center gap-4">
-                        <Brain className="text-identity-sky" size={24} />
+                <div className="bg-white/40 backdrop-blur-xl border border-identity-sky/15 rounded-[2rem] p-6 sm:p-7 shadow-2xl relative overflow-hidden">
+                    <div className="absolute top-0 left-0 w-1.5 h-full bg-identity-sky"></div>
+                    <h3 className="text-[10px] font-black text-identity-navy uppercase tracking-[0.4em] mb-6 flex items-center gap-4">
+                        <Brain className="text-identity-sky" size={20} />
                         Strategic Optimization
-                        <span className="h-px bg-slate-100 flex-1"></span>
+                        <span className="h-px bg-identity-sky/10 flex-1"></span>
                     </h3>
-                    <ul className="space-y-6">
+                    <ul className="space-y-4">
                         {displayInsights.recommendations.map((rec, index) => (
-                            <li key={index} className="flex items-start gap-6 group">
-                                <span className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-identity-navy font-black group-hover:bg-identity-sky group-hover:text-white transition-all shadow-sm">
+                            <li key={index} className="flex items-start gap-5 group">
+                                <span className="w-8 h-8 rounded-lg bg-white border border-identity-sky/10 flex items-center justify-center text-identity-navy font-black group-hover:bg-identity-sky group-hover:text-white transition-all shadow-sm shrink-0">
                                     {index + 1}
                                 </span>
-                                <span className="text-[11px] font-black text-slate-500 uppercase tracking-[0.15em] leading-relaxed pt-2 group-hover:text-identity-navy transition-colors">{rec}</span>
+                                <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.15em] leading-relaxed pt-1.5 group-hover:text-identity-navy transition-colors">{rec}</span>
                             </li>
                         ))}
                     </ul>

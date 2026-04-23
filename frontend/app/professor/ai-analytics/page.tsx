@@ -6,6 +6,7 @@ import { TrendingUp, Users, AlertTriangle, Brain, Target, Calendar, CheckCircle 
 import Navbar from '@/components/Navbar';
 import { Line } from 'react-chartjs-2';
 import { getToken, getUser } from '@/utils/auth';
+import IdentityBackground from '@/components/IdentityBackground';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
 
@@ -173,8 +174,9 @@ export default function ProfessorAIPage() {
 
     if (loading) {
         return (
-            <div className="min-h-screen flex items-center justify-center">
-                <div className="flex flex-col items-center gap-10">
+            <div className="min-h-screen bg-transparent flex items-center justify-center relative overflow-hidden">
+                <IdentityBackground />
+                <div className="flex flex-col items-center gap-10 relative z-10">
                     <div className="w-20 h-20 relative">
                         <div className="absolute inset-0 border-4 border-[#5CB4E4]/10 rounded-full blur-2xl animate-pulse" />
                         <div className="absolute inset-0 border-4 border-[#5CB4E4]/20 rounded-full" />
@@ -187,8 +189,11 @@ export default function ProfessorAIPage() {
     }
 
     return (
-        <div className="max-w-7xl mx-auto px-6 lg:px-12 py-16 scrollbar-hide font-outfit select-none">
+        <div className="min-h-screen bg-transparent font-outfit select-none relative overflow-hidden">
+            <IdentityBackground />
             <Navbar />
+            
+            <main className="max-w-7xl mx-auto px-6 lg:px-12 pt-32 pb-20 relative z-10">
             
             {/* Header section with scanning effect */}
             <div className="mb-20 space-y-4 animate-in fade-in slide-in-from-top-10 duration-1000 relative">
@@ -304,6 +309,7 @@ export default function ProfessorAIPage() {
                     </div>
                 )}
             </div>
-        </div>
-    );
+        </main>
+    </div>
+);
 }

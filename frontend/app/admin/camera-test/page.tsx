@@ -222,11 +222,11 @@ export default function CameraTestPage() {
     };
 
     return (
-        <div className="min-h-screen relative overflow-hidden font-outfit select-none">
+        <div className="min-h-screen bg-transparent font-outfit select-none relative overflow-hidden">
             <IdentityBackground />
             
-            <div className="max-w-[1600px] mx-auto p-12 space-y-12 relative z-10">
-                {/* Header Section */}
+            <main className="max-w-7xl mx-auto px-6 pt-32 pb-20 relative z-10">
+                {/* Header HUD */}
                 <div className="identity-glass rounded-[4rem] p-12 shadow-3xl relative overflow-hidden border-2 border-white/40">
                     <div className="absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-identity-sky/10 to-transparent pointer-events-none opacity-50" />
                     
@@ -277,7 +277,7 @@ export default function CameraTestPage() {
                 </div>
 
                 {error && (
-                    <div className="identity-glass border-2 border-rose-500/40 text-rose-500 rounded-[2.5rem] p-10 flex items-center gap-8 animate-in slide-in-from-top-4 duration-500 shadow-2xl relative overflow-hidden">
+                    <div className="identity-glass border-2 border-rose-500/40 text-rose-500 rounded-[2.5rem] p-10 flex items-center gap-8 animate-in slide-in-from-top-4 duration-500 shadow-2xl relative overflow-hidden mt-12">
                         <div className="absolute inset-0 bg-rose-500/[0.03] animate-pulse" />
                         <div className="bg-rose-500/10 p-4 rounded-2xl border-2 border-rose-500/20 relative z-10">
                             <AlertCircle className="w-8 h-8" />
@@ -286,7 +286,7 @@ export default function CameraTestPage() {
                     </div>
                 )}
 
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 min-h-[900px]">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 min-h-[900px] mt-12">
                     {/* Left Panel: Camera & Live HUD */}
                     <div className="lg:col-span-8 flex flex-col gap-12">
                         <div className="flex-1 identity-glass rounded-[4.5rem] border-2 border-white/40 overflow-hidden relative shadow-3xl p-5 group bg-[#041C3C]/5 hover:border-identity-sky/40 transition-all duration-700">
@@ -459,7 +459,7 @@ export default function CameraTestPage() {
                         </div>
                     </div>
                 </div>
-            </div>
+            </main>
 
             <style jsx global>{`
                 @keyframes scan-line {

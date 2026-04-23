@@ -176,7 +176,7 @@ class AnalyticsService {
                 month: m.month,
                 attended: parseInt(m.attended),
                 total: parseInt(m.total),
-                rate: Math.round((m.attended / m.total) * 100)
+                rate: m.total > 0 ? Math.round((m.attended / m.total) * 100) : 0
             }));
 
             // 6. Percentile (Rank against other students in the same classes)
@@ -195,7 +195,7 @@ class AnalyticsService {
                 GROUP BY e2.student_id
             `, [studentPk]);
 
-            const peerRates = classPeers.map(p => (p.attended / p.total) * 100).sort((a,b) => a-b);
+            const peerRates = classPeers.map(p => (p.attended / (p.total || 1)) * 100).sort((a,b) => a-b);
             const myRate = (attended / total) * 100;
             const rank = peerRates.filter(r => r < myRate).length;
             const percentile = peerRates.length > 0 ? Math.round((rank / peerRates.length) * 100) : 100;

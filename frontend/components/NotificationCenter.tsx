@@ -4,12 +4,13 @@
  */
 
 import { useState, useEffect } from 'react';
-import { Bell, CheckCircle, AlertCircle, Info, Clock, X, Trash2, Check, ShieldAlert } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Bell, CheckCircle, AlertCircle, Info, Clock, X, Trash2, Check, ShieldAlert, ArrowRight } from 'lucide-react';
 import axios from 'axios';
 import { getToken, getUser } from '../utils/auth';
 
 interface Notification {
-    id: string;
+    id: number;
     type: 'success' | 'error' | 'info' | 'warning';
     category: 'attendance' | 'class' | 'system' | 'security';
     title: string;
@@ -21,6 +22,7 @@ interface Notification {
 }
 
 export default function NotificationCenter() {
+    const router = useRouter();
     const [isOpen, setIsOpen] = useState(false);
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [filter, setFilter] = useState<'all' | 'unread'>('all');
@@ -52,7 +54,7 @@ export default function NotificationCenter() {
         }
     };
 
-    const markAsRead = async (id: string) => {
+    const markAsRead = async (id: number) => {
         try {
             const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
             await axios.patch(`${API_URL}/api/notifications/${id}/read`,
@@ -92,7 +94,7 @@ export default function NotificationCenter() {
         }
     };
 
-    const deleteNotification = async (id: string) => {
+    const deleteNotification = async (id: number) => {
         try {
             const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
             await axios.delete(`${API_URL}/api/notifications/${id}/delete`, {
@@ -106,17 +108,24 @@ export default function NotificationCenter() {
         }
     };
 
-    const snoozeNotification = async (id: string, hours: number) => {
+    const snoozeNotification = (id: number, hours: number) => {
         const snoozedUntil = new Date(Date.now() + hours * 60 * 60 * 1000).toISOString();
         setNotifications(prev =>
             prev.map(n => n.id === id ? { ...n, snoozedUntil } : n)
         );
     };
 
-    const filteredNotifications = notifications.filter((n: any) => {
+    const filteredNotifications = notifications.filter((n: Notification) => {
+        // Robust filtering to handle unread/all states
         if (filter === 'unread' && n.is_read) return false;
-        if (categoryFilter !== 'all' && n.category !== categoryFilter) return false;
+        
+        // Category filtering: Handle null/missing categories by treating them as 'system' if they don't match 'attendance'/'class'
+        const effectiveCategory = n.category || 'system';
+        if (categoryFilter !== 'all' && effectiveCategory !== categoryFilter) return false;
+        
+        // Snooze logic
         if (n.snoozedUntil && new Date(n.snoozedUntil) > new Date()) return false;
+        
         return true;
     });
 
@@ -143,11 +152,12 @@ export default function NotificationCenter() {
             {/* Bell Icon */}
             <button
                 onClick={() => setIsOpen(!isOpen)}
-                className="relative p-3 min-h-[44px] min-w-[44px] flex items-center justify-center text-identity-navy/40 hover:text-identity-navy transition-all hover:bg-slate-50 rounded-2xl shadow-inner active:scale-95 border border-transparent hover:border-slate-100"
+                className={`relative p-3 rounded-xl transition-all duration-300 ${isOpen ? 'bg-identity-navy text-white shadow-xl' : 'text-slate-400 hover:text-identity-navy hover:bg-slate-100'}`}
+                title="Notifications"
             >
-                <Bell size={24} className={unreadCount > 0 ? 'text-identity-sky' : ''} />
+                <Bell size={20} />
                 {unreadCount > 0 && (
-                    <span className="absolute top-2 right-2 bg-rose-500 text-white text-[8px] font-black rounded-lg w-5 h-5 flex items-center justify-center shadow-lg border-2 border-white uppercase tracking-tighter animate-pulse">
+                    <span className="absolute -top-1 -right-1 w-5 h-5 bg-rose-500 text-white text-[9px] font-black rounded-full flex items-center justify-center border-2 border-white animate-status-pulse shadow-[0_0_10px_rgba(244,63,94,0.5)]">
                         {unreadCount > 9 ? '9+' : unreadCount}
                     </span>
                 )}
@@ -157,7 +167,7 @@ export default function NotificationCenter() {
             {isOpen && (
                 <>
                     <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)}></div>
-                    <div className="absolute right-0 top-16 w-[26rem] bg-white rounded-[2.5rem] shadow-3xl border border-slate-200 z-50 max-h-[35rem] flex flex-col overflow-hidden animate-in slide-in-from-top-4 fade-in duration-300">
+                    <div className="absolute -right-20 md:right-0 top-16 w-[calc(100vw-2rem)] md:w-[26rem] bg-white rounded-[2rem] md:rounded-[2.5rem] shadow-[0_32px_64px_-12px_rgba(4,28,60,0.15)] border border-slate-200/50 overflow-hidden flex flex-col max-h-[calc(100vh-6rem)] md:max-h-[32rem] z-[60] animate-in slide-in-from-top-4 duration-300">
                         {/* Header */}
                         <div className="p-8 bg-slate-50/50 border-b border-slate-100">
                             <div className="flex items-center justify-between mb-6">
@@ -295,6 +305,20 @@ export default function NotificationCenter() {
                                     <p className="text-[8px] font-black text-slate-300 uppercase tracking-[0.3em] mt-3">All settings saved successfully.</p>
                                 </div>
                             )}
+                        </div>
+                        
+                        {/* View All Link */}
+                        <div className="p-6 bg-slate-50/50 border-t border-slate-100 text-center">
+                            <button
+                                onClick={() => {
+                                    setIsOpen(false);
+                                    router.push('/notifications');
+                                }}
+                                className="inline-flex items-center gap-3 text-[10px] font-black text-identity-navy hover:text-identity-sky uppercase tracking-[0.3em] transition-all group italic"
+                            >
+                                View All Activity Logs
+                                <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
+                            </button>
                         </div>
                     </div>
                 </>

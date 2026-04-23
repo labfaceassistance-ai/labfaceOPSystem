@@ -212,7 +212,7 @@ export default function EditClassModal({ isOpen, onClose, classId, className, is
         setConfirmModal({
             isOpen: true,
             title: 'Remove Student',
-            message: `Are you sure you want to remove "${name}" from this class cohort? This action will disconnect all attendance metrics for this specific class context.`,
+            message: `Are you sure you want to remove "${name}" from this class? This will also remove their attendance records for this class.`,
             type: 'danger',
             confirmText: 'Remove Student',
             isAlert: false,
@@ -226,7 +226,7 @@ export default function EditClassModal({ isOpen, onClose, classId, className, is
                     setConfirmModal({
                         isOpen: true,
                         title: 'Error',
-                        message: 'Failed to remove student from class fragment.',
+                        message: 'Failed to remove student from the class.',
                         type: 'danger',
                         confirmText: 'OK',
                         isAlert: true,
@@ -273,7 +273,7 @@ export default function EditClassModal({ isOpen, onClose, classId, className, is
                     {loading ? (
                         <div className="flex flex-col items-center justify-center py-20 gap-4">
                             <div className="animate-spin h-10 w-10 border-4 border-identity-sky/10 border-t-identity-sky rounded-full"></div>
-                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.15em] italic animate-pulse">Synchronizing class data...</span>
+                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.15em] italic animate-pulse">Loading class details...</span>
                         </div>
                     ) : activeTab === 'details' ? (
                         <form onSubmit={handleSubmit} className="space-y-8">
@@ -402,7 +402,7 @@ export default function EditClassModal({ isOpen, onClose, classId, className, is
                                     disabled={submitting}
                                     className="bg-identity-navy hover:bg-identity-navy/90 text-white px-10 py-4 rounded-xl font-black uppercase tracking-[0.15em] flex items-center gap-3 shadow-lg shadow-identity-navy/20 transition-all disabled:opacity-50 active:scale-95"
                                 >
-                                    {submitting ? 'Updating Class...' : <><Save size={18} /> Update Logic</>}
+                                    {submitting ? 'Saving Changes...' : <><Save size={18} /> Save Changes</>}
                                 </button>
                             </div>
                         </form>
@@ -439,16 +439,16 @@ export default function EditClassModal({ isOpen, onClose, classId, className, is
                                             <table className="w-full text-left">
                                                 <thead className="bg-slate-50 text-[10px] font-black uppercase tracking-[0.15em] text-slate-500 sticky top-0 border-b border-identity-sky/5">
                                                     <tr>
-                                                        <th className="px-6 py-4">Status Vector</th>
-                                                        <th className="px-6 py-4">Identity Name</th>
-                                                        <th className="px-6 py-4">Unique ID</th>
+                                                        <th className="px-6 py-4">Status</th>
+                                                        <th className="px-6 py-4">Student Name</th>
+                                                        <th className="px-6 py-4">Student ID</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody className="divide-y divide-identity-sky/5 text-[10px] font-black uppercase tracking-[0.15em]">
                                                     {previewData.changes.to_add.map((s: any, i: number) => (
                                                         <tr key={`add-${i}`} className="bg-emerald-50/30 hover:bg-emerald-50 transition-colors">
                                                             <td className="px-6 py-4">
-                                                                <span className="px-2 py-1 rounded bg-emerald-500 text-white text-[8px]">PROVISION</span>
+                                                                <span className="px-2 py-1 rounded bg-emerald-500 text-white text-[8px]">NEW</span>
                                                             </td>
                                                             <td className="px-6 py-4 text-identity-navy">{s.student_name}</td>
                                                             <td className="px-6 py-4 text-slate-400 font-mono">{s.student_number}</td>
@@ -457,7 +457,7 @@ export default function EditClassModal({ isOpen, onClose, classId, className, is
                                                     {previewData.changes.to_remove.map((s: any, i: number) => (
                                                         <tr key={`rem-${i}`} className="bg-rose-50/30 hover:bg-rose-50 transition-colors">
                                                             <td className="px-6 py-4">
-                                                                <span className="px-2 py-1 rounded bg-rose-500 text-white text-[8px]">TERMINATE</span>
+                                                                <span className="px-2 py-1 rounded bg-rose-500 text-white text-[8px]">REMOVE</span>
                                                             </td>
                                                             <td className="px-6 py-4 text-slate-400 line-through decoration-rose-500/50">{s.student_name}</td>
                                                             <td className="px-6 py-4 text-slate-300 font-mono line-through">{s.student_number}</td>
@@ -465,7 +465,7 @@ export default function EditClassModal({ isOpen, onClose, classId, className, is
                                                     ))}
                                                     {previewData.changes.unchanged?.map((s: any, i: number) => (
                                                         <tr key={`uc-${i}`} className="hover:bg-identity-sky/5 transition-colors">
-                                                            <td className="px-6 py-4 font-black text-slate-300">STABLE</td>
+                                                            <td className="px-6 py-4 font-black text-slate-300">NO CHANGE</td>
                                                             <td className="px-6 py-4 text-slate-500">{s.student_name}</td>
                                                             <td className="px-6 py-4 text-slate-300 font-mono">{s.student_number}</td>
                                                         </tr>
@@ -499,8 +499,8 @@ export default function EditClassModal({ isOpen, onClose, classId, className, is
                                                 <div className="w-20 h-20 bg-identity-sky/10 rounded-3xl flex items-center justify-center mb-6 border border-identity-sky/20 group-hover:scale-110 transition-transform shadow-lg">
                                                     <FileSpreadsheet size={36} className="text-identity-sky" />
                                                 </div>
-                                                <h3 className="text-xl font-black text-identity-navy uppercase tracking-[0.15em] mb-2 italic">Batch Roster Synchronization</h3>
-                                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.15em] mb-8 max-w-sm">Upload a standardized CSV or Excel dataset to synchronize student records with the central registry.</p>
+                                                <h3 className="text-xl font-black text-identity-navy uppercase tracking-[0.15em] mb-2 italic">Import Student List</h3>
+                                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.15em] mb-8 max-w-sm">Upload a CSV or Excel file to automatically add students to this class.</p>
                                                 
                                                 <div className="flex flex-col items-center gap-4 w-full">
                                                     <input
@@ -531,8 +531,8 @@ export default function EditClassModal({ isOpen, onClose, classId, className, is
 
                                         {/* Manual Add */}
                                         <div className="bg-white/40 p-8 rounded-3xl border border-identity-sky/10 shadow-inner">
-                                            <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.15em] mb-8 flex items-center gap-3 ml-1">
-                                                <UserPlus size={20} className="text-identity-sky" /> Manual Identity Assignment
+                                            <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.15em] mb-8 flex items-center gap-3 ml-1">
+                                                <UserPlus size={20} className="text-identity-sky" /> Add Student Manually
                                             </h3>
                                             <form onSubmit={handleAddStudent} className="flex flex-col gap-6">
                                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -570,7 +570,7 @@ export default function EditClassModal({ isOpen, onClose, classId, className, is
                                                     disabled={submitting}
                                                     className="self-end bg-identity-navy hover:bg-identity-navy/90 text-white px-10 py-4 rounded-xl text-[10px] font-black uppercase tracking-[0.15em] transition-all shadow-lg active:scale-95 disabled:opacity-50"
                                                 >
-                                                    {submitting ? 'Registering...' : 'Link Identity'}
+                                                    {submitting ? 'Adding Student...' : 'Add Student'}
                                                 </button>
                                             </form>
                                         </div>
@@ -578,8 +578,8 @@ export default function EditClassModal({ isOpen, onClose, classId, className, is
                                         {/* List */}
                                         <div className="space-y-6">
                                             <div className="flex items-center justify-between ml-1">
-                                                <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.15em] flex items-center gap-3">
-                                                    <Users size={18} className="text-identity-sky" /> Provisioned Students ({students.length})
+                                                <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.15em] flex items-center gap-3">
+                                                    <Users size={18} className="text-identity-sky" /> Enrolled Students ({students.length})
                                                 </h3>
                                                 <button onClick={fetchClassData} className="p-2 min-h-[44px] min-w-[44px] flex items-center justify-center text-identity-sky hover:text-identity-navy bg-identity-sky/5 rounded-xl transition-all hover:rotate-180">
                                                     <Settings size={18} />
@@ -589,9 +589,9 @@ export default function EditClassModal({ isOpen, onClose, classId, className, is
                                                 <table className="w-full text-left">
                                                     <thead className="bg-slate-50 text-slate-400 text-[10px] font-black uppercase tracking-[0.15em] sticky top-0 border-b border-identity-sky/5">
                                                         <tr>
-                                                            <th className="px-8 py-5">Full Digital Identity</th>
-                                                            <th className="px-8 py-5">Unique Reference</th>
-                                                            <th className="px-8 py-5 text-right">Administrative Action</th>
+                                                            <th className="px-8 py-5">Student Name</th>
+                                                            <th className="px-8 py-5">Student ID</th>
+                                                            <th className="px-8 py-5 text-right">Actions</th>
                                                         </tr>
                                                     </thead>
                                                     <tbody className="divide-y divide-identity-sky/5 text-[10px] font-bold uppercase tracking-[0.15em]">
@@ -612,7 +612,7 @@ export default function EditClassModal({ isOpen, onClose, classId, className, is
                                                         {students.length === 0 && (
                                                             <tr>
                                                                 <td colSpan={3} className="px-8 py-20 text-center text-slate-300 font-black uppercase tracking-[0.15em] italic">
-                                                                    No provisioned identities found
+                                                                    No students enrolled yet
                                                                 </td>
                                                             </tr>
                                                         )}

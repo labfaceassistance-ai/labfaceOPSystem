@@ -43,7 +43,7 @@ const DashboardTabs: React.FC<DashboardTabsProps> = ({ tabs, activeTab, onTabCha
                                     ${isActive ? 'text-identity-sky' : 'text-identity-navy/50'}
                                 `}
                             >
-                                <div className={`p-2 rounded-2xl transition-all ${isActive ? 'bg-identity-sky/10 scale-110' : ''}`}>
+                                <div className={`p-2 rounded-2xl transition-all ${isActive ? 'bg-identity-sky/10' : ''}`}>
                                     <Icon size={22} strokeWidth={isActive ? 2.5 : 2} />
                                 </div>
                                 <span className="text-[8px] font-black uppercase">{tab.label}</span>
@@ -72,7 +72,7 @@ const DashboardTabs: React.FC<DashboardTabsProps> = ({ tabs, activeTab, onTabCha
                                 }
                             `}
                         >
-                            <Icon size={18} className={`transition-all duration-500 ${isActive ? 'text-identity-sky scale-110' : 'opacity-40 group-hover:opacity-80 group-hover:scale-110'}`} />
+                            <Icon size={18} className={`transition-all duration-500 ${isActive ? 'text-identity-sky' : 'opacity-40 group-hover:opacity-80'}`} />
                             {tab.label}
                             {isActive && (
                                 <>

@@ -1,11 +1,14 @@
 'use client';
 import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Shield, Lock, Mail, Eye, EyeOff, Loader2, ChevronLeft, ArrowRight } from 'lucide-react';
+import { Shield, Lock, Mail, Eye, EyeOff, Loader2, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import { useToast } from '@/components/Toast';
 import { getToken, fetchCurrentUser, API_URL } from '@/utils/auth';
 import Button from '@/components/ui/Button';
+import InputField from '@/components/ui/InputField';
+import BackButton from '@/components/ui/BackButton';
+import IdentityBackground from '@/components/IdentityBackground';
 
 function AdminLoginForm() {
     const { showToast } = useToast();
@@ -13,7 +16,6 @@ function AdminLoginForm() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
-    const [showPassword, setShowPassword] = useState(false);
     const searchParams = useSearchParams();
     const isLoggingOut = searchParams?.get('logout') === 'success';
     const [isCheckingAuth, setIsCheckingAuth] = useState(!isLoggingOut);
@@ -78,86 +80,64 @@ function AdminLoginForm() {
     return (
         <div className="w-full max-w-xl bg-white/40 backdrop-blur-xl rounded-[3.5rem] shadow-3xl overflow-hidden animate-in fade-in zoom-in-95 duration-1000 relative z-10 border border-slate-100/50">
             {/* Header Area */}
-            <div className="bg-gradient-to-b from-[#041C3C]/5 to-transparent p-16 text-center border-b border-slate-100/50 relative">
-                <Link href="/" className="absolute top-12 left-12 text-slate-400 hover:text-[#041C3C] text-[10px] font-black uppercase tracking-[0.4em] flex items-center justify-center min-h-[44px] min-w-[44px] gap-4 transition-all group font-outfit">
-                    <ChevronLeft size={16} className="group-hover:-translate-x-1 transition-transform text-[#5CB4E4]" /> 
-                    Back
-                </Link>
+            <div className="bg-gradient-to-b from-[#5CB4E4]/5 to-transparent pt-8 sm:pt-16 px-8 sm:px-16 pb-4 sm:pb-6 text-center border-b border-slate-100/50 relative">
+                <BackButton href="/" className="absolute top-6 sm:top-12 left-6 sm:left-12" />
 
-                <div className="w-28 h-28 bg-[#041C3C] border border-[#041C3C] rounded-[2.5rem] flex items-center justify-center shadow-2xl mx-auto mb-10 mt-8 group-hover:scale-110 transition-all duration-700 relative overflow-hidden">
-                    <div className="absolute inset-0 bg-[#5CB4E4]/20 blur-xl animate-pulse" />
-                    <Shield className="w-14 h-14 text-white relative z-10" />
+                <div className="w-20 sm:w-28 h-20 sm:h-28 bg-white/80 backdrop-blur-md border border-slate-100 rounded-[2rem] sm:rounded-[2.5rem] flex items-center justify-center shadow-2xl mx-auto mb-6 sm:mb-10 mt-4 sm:mt-8 group-hover:scale-110 transition-all duration-700 relative overflow-hidden">
+                    <div className="absolute inset-0 bg-[#5CB4E4]/5 blur-xl animate-pulse" />
+                    <img src="/logo.png" alt="LabFace" className="w-12 h-12 sm:w-16 sm:h-16 object-contain relative z-10" />
                 </div>
                 
-                <h1 className="text-5xl md:text-6xl font-black text-[#041C3C] tracking-tighter mb-4 uppercase font-outfit italic">
-                    Administrator Login
+                <h1 className="text-2xl sm:text-3xl md:text-4xl font-black text-[#041C3C] tracking-tighter mb-4 uppercase font-outfit italic leading-tight">
+                    Administrator
                 </h1>
                 
-                <div className="inline-flex items-center gap-4 py-3 px-6 bg-[#041C3C] text-white text-[10px] font-black uppercase tracking-[0.4em] rounded-2xl shadow-xl shadow-identity-navy/10 font-outfit">
-                    <span className="w-2.5 h-2.5 rounded-full bg-[#5CB4E4] animate-ping" />
-                    Secure Access
+                <div className="inline-flex items-center gap-3 sm:gap-4 py-2 sm:py-3 px-4 sm:px-6 bg-[#041C3C] text-white text-[10px] font-black uppercase tracking-[0.2em] sm:tracking-[0.4em] rounded-2xl shadow-xl shadow-identity-navy/10 font-outfit">
+                    <span className="w-2 sm:w-2.5 h-2 sm:h-2.5 rounded-full bg-[#5CB4E4] animate-ping" />
+                    Secure Access Portal
                 </div>
             </div>
 
-            <div className="p-16 space-y-12">
-                <form onSubmit={handleLogin} className="space-y-10 animate-in fade-in slide-in-from-bottom-10 duration-1000">
-                    <div className="space-y-8">
-                        <div className="space-y-4">
-                            <label className="text-[#041C3C] text-[10px] font-black uppercase tracking-[0.3em] ml-2 flex items-center gap-4 font-outfit italic opacity-60">
-                                <div className="w-1.5 h-1.5 rounded-full bg-[#5CB4E4]" />
-                                Administrator Email
-                            </label>
-                            <div className="relative group">
-                                <Mail className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-[#5CB4E4] transition-colors duration-500" />
-                                <input
-                                    type="email"
-                                    value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
-                                    className="w-full bg-white/40 backdrop-blur-sm border border-slate-200/50 text-[#041C3C] pl-16 pr-6 p-6 rounded-3xl focus:outline-none focus:border-[#5CB4E4] transition-all duration-500 shadow-sm font-black uppercase tracking-[0.2em] text-[11px] placeholder:text-slate-300 font-outfit"
-                                    placeholder="Enter your email..."
-                                    required
-                                    autoComplete="email"
-                                />
-                            </div>
-                        </div>
+            <div className="pt-6 sm:pt-10 px-6 sm:px-16 pb-10 sm:pb-16 space-y-8 sm:space-y-10">
+                <form onSubmit={handleLogin} className="space-y-8 sm:space-y-10 animate-in fade-in slide-in-from-bottom-10 duration-1000">
+                    <div className="space-y-6 sm:space-y-8">
+                        <InputField
+                            label="Administrator Email"
+                            type="email"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            icon={Mail}
+                            isRequired
+                            isValid={email.includes('@') && email.length > 5}
+                            placeholder="admin@institution.edu"
+                            className="bg-white/40 backdrop-blur-sm border-slate-200/50 rounded-3xl"
+                        />
 
-                        <div className="space-y-4">
-                            <label className="text-[#041C3C] text-[10px] font-black uppercase tracking-[0.3em] ml-2 flex items-center gap-4 font-outfit italic opacity-60">
-                                <div className="w-1.5 h-1.5 rounded-full bg-[#5CB4E4]" />
-                                Account Password
-                            </label>
-                            <div className="relative group">
-                                <Lock className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-[#5CB4E4] transition-colors duration-500" />
-                                <input
-                                    type={showPassword ? "text" : "password"}
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                    className="w-full bg-white/40 backdrop-blur-sm border border-slate-200/50 text-[#041C3C] pl-16 pr-16 p-6 rounded-3xl focus:outline-none focus:border-[#5CB4E4] transition-all duration-500 shadow-sm font-black uppercase tracking-[0.2em] text-[11px] placeholder:text-slate-300 font-outfit"
-                                    placeholder="••••••••••••"
-                                    required
-                                    autoComplete="current-password"
-                                />
-                                <button
-                                    type="button"
-                                    className="absolute right-6 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[#5CB4E4] transition-colors p-2"
-                                    onClick={() => setShowPassword(!showPassword)}
-                                >
-                                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                                </button>
-                            </div>
-                        </div>
+                        <InputField
+                            label="Account Password"
+                            type="password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            icon={Lock}
+                            isRequired
+                            isValid={password.length >= 8}
+                            placeholder="••••••••••••"
+                            className="bg-white/40 backdrop-blur-sm border-slate-200/50 rounded-3xl"
+                        />
                     </div>
 
-                    <Button
-                        type="submit"
-                        isLoading={loading}
-                        variant="primary"
-                        size="xl"
-                        className="w-full h-20 rounded-[2.5rem] bg-[#041C3C] hover:bg-[#041C3C]/90 text-white shadow-2xl shadow-identity-navy/20 active:scale-95 transition-all duration-500 text-[12px] tracking-[0.5em] group"
-                    >
-                        Sign In
-                        <ArrowRight size={20} className="ml-5 group-hover:translate-x-2 transition-transform duration-500 text-[#5CB4E4]" />
-                    </Button>
+                    <div className="flex justify-center pt-2">
+                        <Button
+                            type="submit"
+                            isLoading={loading}
+                            variant="primary"
+                            size="xl"
+                            className="w-full sm:w-80 h-16 sm:h-20 rounded-[2rem] sm:rounded-[2.5rem] bg-[#041C3C] hover:bg-[#5CB4E4] text-white shadow-2xl shadow-identity-navy/20 active:scale-95 transition-all duration-500 text-[12px] tracking-[0.5em] group flex items-center justify-center relative overflow-hidden"
+                        >
+                            <span className="relative z-10 font-black uppercase tracking-widest italic">Sign In</span>
+                            <ArrowRight size={20} className="absolute right-8 sm:right-12 group-hover:translate-x-2 transition-transform duration-500 text-[#5CB4E4]" />
+                        </Button>
+                    </div>
                 </form>
 
                 <div className="text-center pt-8 border-t border-slate-100/50">
@@ -179,7 +159,8 @@ export default function AdminLogin() {
                 <p className="text-[#041C3C] text-[10px] font-black uppercase tracking-[0.15em] animate-pulse">Loading...</p>
             </div>
         }>
-            <div className="flex flex-col items-center justify-center min-h-[85vh] px-6 py-20 w-full relative">
+            <div className="flex flex-col items-center justify-center min-h-screen px-6 py-20 w-full relative overflow-hidden">
+                <IdentityBackground />
                 <AdminLoginForm />
             </div>
         </Suspense>

@@ -13,7 +13,9 @@ import ClassesTab from './tabs/ClassesTab';
 import AnalyticsTab from './tabs/AnalyticsTab';
 import MonitorTab from './tabs/MonitorTab';
 import ScheduleTab from './tabs/ScheduleTab';
-import DashboardTabs from '@/components/ui/DashboardTabs';
+import IdentityBackground from '@/components/IdentityBackground';
+
+type TabType = 'home' | 'classes' | 'schedule' | 'monitor' | 'analytics';
 
 interface Class {
     id: number;
@@ -23,20 +25,12 @@ interface Class {
     schedule_json: string;
     student_count: number;
     is_archived: number;
+    active_session_type?: string;
+    active_session_id?: number;
+    school_year?: string;
+    semester?: string;
+    created_at?: string;
 }
-
-const IdentityNode = ({ className = "", size = 120 }) => (
-    <div className={`identity-node opacity-40 ${className}`} style={{ width: size, height: size }}>
-        <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full text-[#5CB4E4]">
-            <path d="M50 5L95 27.5V72.5L50 95L5 72.5V27.5L50 5Z" stroke="currentColor" strokeWidth="1" />
-            <path d="M50 25L71.6506 37.5V62.5L50 75L28.3494 62.5V37.5L50 25Z" stroke="currentColor" strokeWidth="1" strokeDasharray="2 2" />
-            <circle cx="50" cy="50" r="3" fill="#041C3C" />
-            <path d="M50 5V25M95 27.5L71.6506 37.5M95 72.5L71.6506 62.5M50 95V75M5 72.5L28.3494 62.5M5 27.5L28.3494 37.5" stroke="currentColor" strokeWidth="1" opacity="0.5" />
-        </svg>
-    </div>
-);
-
-type TabType = 'home' | 'classes' | 'schedule' | 'monitor' | 'analytics';
 
 const DASHBOARD_TABS = [
     { id: 'home' as TabType, label: 'Home', icon: Home },
@@ -245,20 +239,8 @@ function DashboardContent() {
     );
 
     return (
-        <div className="min-h-screen text-identity-navy relative overflow-hidden font-outfit">
-            {/* Background Decorations */}
-
-            <div className="fixed inset-0 z-0 opacity-[0.05] pointer-events-none bg-blueprint" />
-            <div className="fixed inset-0 z-0 opacity-[0.03] pointer-events-none bg-blueprint-fine" />
-            
-            {/* Background Layers */}
-
-            <div className="fixed top-[-20%] right-[-10%] w-[1000px] h-[1000px] bg-[#5CB4E4]/10 rounded-full blur-[200px] pointer-events-none z-0 animate-pulse" />
-            <div className="fixed bottom-[-20%] left-[-10%] w-[1000px] h-[1000px] bg-[#041C3C]/10 rounded-full blur-[200px] pointer-events-none z-0 animate-pulse" />
-            <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1200px] h-[1200px] bg-[#5CB4E4]/[0.05] rounded-full blur-[250px] animate-bloom pointer-events-none z-0" />
-            
-            <IdentityNode className="fixed top-20 right-20 animate-float" size={180} />
-            <IdentityNode className="fixed bottom-20 left-20 animate-float-delayed" size={240} />
+        <div className="min-h-screen bg-transparent font-outfit select-none relative overflow-hidden">
+            <IdentityBackground />
             
             <SessionTimeout
                 sessionDuration={30 * 60 * 1000}
@@ -267,9 +249,9 @@ function DashboardContent() {
                 onLogout={handleLogout}
             />
             <Navbar />
-            <main className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-12 pt-28 pb-32 md:pb-12 relative z-10">
+            <main className="max-w-7xl mx-auto px-6 pt-28 pb-12 relative z-10">
                 {/* Tab Content */}
-                <div key={activeTab} className="tab-content-fade min-h-[70vh] mt-10">
+                <div key={activeTab} className="tab-content-fade min-h-[70vh] mt-8">
                     {activeTab === 'home' && <HomeTab user={user} classes={classes} error={error} />}
                     {activeTab === 'classes' && <ClassesTab user={user} classes={classes} loading={loading} onRefresh={handleRefresh} onTabChange={handleTabChange} />}
                     {activeTab === 'schedule' && <ScheduleTab user={user} classes={classes} />}

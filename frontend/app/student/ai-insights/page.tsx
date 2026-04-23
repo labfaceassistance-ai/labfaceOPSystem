@@ -31,16 +31,16 @@ export default function AIInsightsPage() {
     );
 
     return (
-        <div className="min-h-screen bg-slate-50 font-sans text-slate-900 selection:bg-identity-sky/10 selection:text-identity-navy relative page-transition">
+        <div className="min-h-screen bg-transparent font-outfit select-none text-slate-900 selection:bg-identity-sky/10 selection:text-identity-navy relative page-transition overflow-hidden">
             <IdentityBackground />
             <Navbar />
-            <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-28 pb-12 relative z-10">
+            <main className="max-w-7xl mx-auto px-6 pt-32 pb-20 relative z-10">
                 <div className="flex items-center gap-6 mb-12 animate-fade-up">
                     <div className="p-4 bg-identity-sky/10 text-identity-sky rounded-2xl border border-identity-sky/10 shadow-inner group">
                         <Sparkles size={32} className="group-hover:scale-110 transition-transform duration-500" />
                     </div>
                     <div>
-                        <h1 className="text-3xl font-black text-identity-navy tracking-tighter uppercase font-outfit italic">Academic Performance Insights</h1>
+                        <h1 className="text-4xl md:text-5xl font-black text-identity-navy tracking-tighter uppercase italic">Academic Performance Insights</h1>
                         <p className="text-[10px] font-black text-identity-sky uppercase tracking-[0.4em] mt-1">Personalized attendance analysis and academic forecasting.</p>
                     </div>
                 </div>

@@ -77,6 +77,61 @@ class AttendanceWarningService {
         }
     }
 
+    // Perform audit for the entire class (useful after session stops)
+    async checkAndNotifyClass(classId) {
+        try {
+            // 1. Get all students in this class with their counts
+            // Note: We count a session as an absence if there's no log (al.id IS NULL)
+            const [students] = await pool.query(`
+                SELECT 
+                    e.student_id,
+                    u.first_name, u.last_name,
+                    c.subject_code, c.subject_name, c.professor_id,
+                    SUM(CASE WHEN al.status = 'Late' THEN 1 ELSE 0 END) as late_count,
+                    SUM(CASE WHEN al.status = 'Absent' OR (al.id IS NULL AND s.id IS NOT NULL) THEN 1 ELSE 0 END) as absent_count
+                FROM enrollments e
+                JOIN users u ON e.student_id = u.id
+                JOIN classes c ON e.class_id = c.id
+                JOIN sessions s ON e.class_id = s.class_id
+                    AND (s.monitoring_ended_at IS NOT NULL OR s.date < CURDATE())
+                LEFT JOIN attendance_logs al ON s.id = al.session_id AND al.student_id = u.id
+                    AND al.status NOT LIKE 'Log%' AND al.status != 'Unknown'
+                WHERE e.class_id = ?
+                GROUP BY e.student_id
+            `, [classId]);
+
+            for (const s of students) {
+                const late_count = parseInt(s.late_count || 0);
+                const absent_count = parseInt(s.absent_count || 0);
+                const counts = { late_count, absent_count, excused_count: 0 }; 
+
+                const warningType = this.determineWarningLevel(late_count, absent_count);
+                if (!warningType) continue;
+
+                const existing = await this.getActiveWarning(s.student_id, classId, warningType);
+                const equivalent = this.calculateEquivalentAbsences(late_count, absent_count);
+
+                if (existing) {
+                    if (warningType === 'dropout_warning' || warningType === 'absence_warning') continue;
+                    if ((warningType === 'late_threshold' || warningType === 'incoming_absence_warning') && existing.late_count === late_count) continue;
+                }
+
+                const context = {
+                    first_name: s.first_name,
+                    last_name: s.last_name,
+                    subject_code: s.subject_code,
+                    subject_name: s.subject_name,
+                    professor_id: s.professor_id
+                };
+
+                await this.createWarning(s.student_id, classId, warningType, counts, equivalent);
+                await this.sendNotifications(s.student_id, context, warningType, counts, equivalent);
+            }
+        } catch (error) {
+            console.error('[WarningService] Class Audit Error:', error);
+        }
+    }
+
     async getAttendanceCounts(studentId, classId) {
         const [rows] = await pool.query(`
             SELECT 

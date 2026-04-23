@@ -16,7 +16,7 @@ const Button: React.FC<ButtonProps> = ({
     disabled,
     ...props
 }) => {
-    const baseStyles = 'relative flex items-center justify-center font-black uppercase tracking-[0.15em] transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed overflow-hidden';
+    const baseStyles = 'relative flex items-center justify-center font-black uppercase tracking-[0.15em] transition-all duration-300 hover:-translate-y-[2px] active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed overflow-hidden';
     
     const variants = {
         primary: 'bg-[#5CB4E4] text-white hover:bg-[#5CB4E4]/90 shadow-lg shadow-[#5CB4E4]/10',

@@ -91,14 +91,12 @@ async function validateFacePhotos(facePhotos) {
         return { valid: false, error: 'No face photos provided' };
     }
 
-    const invalidAngles = [];
-
-    for (const [angle, base64Data] of Object.entries(facePhotos)) {
-        const result = await validateFaceInImage(base64Data);
-        if (!result.valid) {
-            invalidAngles.push(angle);
-        }
-    }
+    const angles = Object.entries(facePhotos);
+    const results = await Promise.all(angles.map(([angle, base64Data]) => validateFaceInImage(base64Data)));
+    
+    const invalidAngles = angles
+        .filter((_, index) => !results[index].valid)
+        .map(([angle]) => angle);
 
     if (invalidAngles.length > 0) {
         return {

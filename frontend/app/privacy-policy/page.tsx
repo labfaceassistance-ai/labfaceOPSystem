@@ -1,18 +1,19 @@
 "use client";
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Shield, Lock, Users, Server, Database, AlertCircle } from 'lucide-react';
+import { Shield, Lock, Users, Server, Database, AlertCircle } from 'lucide-react';
 import IdentityBackground from '@/components/IdentityBackground';
 import Navbar from '@/components/Navbar';
+import BackButton from '@/components/ui/BackButton';
 
 export default function PrivacyPolicy() {
     const router = useRouter();
 
     return (
-        <div className="w-full relative selection:bg-identity-sky/20 min-h-screen">
+        <div className="min-h-screen bg-transparent font-outfit select-none relative overflow-hidden">
             <IdentityBackground />
             <Navbar />
 
-            <div className="flex-grow container mx-auto px-6 pt-24 pb-28 relative z-10 w-full max-w-5xl">
+            <main className="max-w-7xl mx-auto px-6 pt-32 pb-20 relative z-10 w-full">
 
 
                 <div className="identity-glass rounded-[4rem] shadow-4xl overflow-hidden border-2 border-white/40 animate-fade-in relative z-20 bg-white/10 backdrop-blur-2xl">
@@ -22,14 +23,11 @@ export default function PrivacyPolicy() {
                         <div className="absolute inset-0 bg-blueprint-fine opacity-[0.05] pointer-events-none"></div>
                         <div className="absolute inset-x-0 bottom-0 h-2 bg-gradient-to-r from-transparent via-identity-sky/40 to-transparent"></div>
                         
-                        {/* Integrated Back Arrow */}
-                        <button 
-                            onClick={() => router.back()} 
-                            className="absolute top-10 left-12 text-identity-sky hover:text-white transition-all z-30 group/back p-3 bg-white/5 hover:bg-identity-sky/20 rounded-full border border-white/10 hover:border-identity-sky/40 shadow-xl"
-                            title="Back to Home"
-                        >
-                            <ArrowLeft size={18} className="group-hover/back:-translate-x-1 transition-transform" />
-                        </button>
+                        {/* Standardized Back Button */}
+                        <BackButton 
+                            className="absolute top-10 left-12"
+                            label="BACK"
+                        />
                         
                         <div className="w-12 h-12 bg-white/5 border-2 border-white/10 rounded-xl flex items-center justify-center shadow-2xl mx-auto mb-4 relative z-10 text-identity-sky group-hover:scale-110 transition-transform duration-700">
                             <Shield size={24} className="drop-shadow-glow-blue" />
@@ -55,7 +53,7 @@ export default function PrivacyPolicy() {
                             <div className="inline-flex items-center gap-6 py-2 px-6 rounded-xl bg-identity-navy/5 border-l-4 border-identity-sky w-full">
                                 <h2 className="text-2xl md:text-3xl font-black uppercase tracking-tighter text-identity-navy">INTRODUCTION</h2>
                             </div>
-                            <p className="font-black text-sm md:text-base tracking-[0.05em] text-slate-600 leading-[1.8] opacity-80">
+                            <p className="font-medium text-sm md:text-base tracking-[0.05em] text-slate-600 leading-[1.8] opacity-80">
                                 LABFACE IS COMMITTED TO PROTECTING YOUR PRIVACY AND COMPLYING WITH THE PHILIPPINE DATA PRIVACY ACT OF 2012 (REPUBLIC ACT NO. 10173).
                                 THIS POLICY EXPLAINS HOW WE COLLECT, STORE, AND PROTECT YOUR PERSONAL AND BIOMETRIC INFORMATION.
                             </p>
@@ -177,7 +175,7 @@ export default function PrivacyPolicy() {
 
                     </div>
                 </div>
-            </div>
+            </main>
 
         </div>
     );

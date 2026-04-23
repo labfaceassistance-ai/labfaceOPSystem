@@ -54,14 +54,14 @@ export default function Navbar() {
             <div className="max-w-7xl mx-auto h-full px-6 flex items-center justify-between">
                 {/* Logo Section */}
                 <div className="flex items-center space-x-12">
-                    <Link href="/" className="flex items-center space-x-3 group transition-transform hover:scale-105 active:scale-95">
-                        <div className="relative w-10 h-10 overflow-hidden rounded-full border border-slate-200 bg-white p-2 group-hover:border-identity-sky transition-colors">
+                    <div className="flex items-center space-x-3">
+                        <div className="relative w-10 h-10 overflow-hidden rounded-full border border-slate-200 bg-white p-2">
                             <img src="/logo.png" alt="Logo" className="w-full h-full object-contain" />
                         </div>
-                        <span className="text-xl font-black text-identity-navy tracking-tight group-hover:text-identity-sky transition-colors">
-                            Lab<span className="text-identity-sky group-hover:text-identity-navy">Face</span>
+                        <span className="text-xl font-black text-identity-navy tracking-tight">
+                            Lab<span className="text-identity-sky">Face</span>
                         </span>
-                    </Link>
+                    </div>
                 </div>
 
                 {/* Dashboard Tabs in Middle */}
@@ -82,7 +82,7 @@ export default function Navbar() {
                                     >
                                         {tab.label}
                                         {isActive && (
-                                            <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 bg-identity-sky rounded-full animate-in zoom-in duration-300" />
+                                            <div className="absolute -bottom-1 left-0 w-full h-0.5 bg-identity-sky animate-in slide-in-from-left-2 duration-300 shadow-[0_0_8px_rgba(92,180,228,0.5)]" />
                                         )}
                                     </button>
                                 );
@@ -97,22 +97,21 @@ export default function Navbar() {
                         <div className="flex items-center gap-2">
                             <div className="hidden md:flex items-center gap-1">
                                 {!user.role.includes('admin') && (
-                                    <Link
-                                        href="/notifications"
-                                        className="p-2.5 rounded-xl text-slate-400 hover:text-identity-navy hover:bg-slate-50 transition-all relative group"
-                                    >
-                                        <Bell size={18} className="group-hover:rotate-12 transition-transform" />
-                                        <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-rose-500 rounded-full border-2 border-white shadow-sm" />
-                                    </Link>
+                                    <NotificationCenter />
                                 )}
 
                                 <div className="w-[1px] h-6 bg-slate-100 mx-1" />
 
                                 <Link
-                                    href={user.role === 'admin' ? '/admin/dashboard' : `/${user.role}/dashboard`}
+                                    href={
+                                        user.role?.toLowerCase().includes('admin') ? '/admin/profile' :
+                                        user.role?.toLowerCase().includes('professor') ? '/professor/profile' :
+                                        user.role?.toLowerCase().includes('student') ? '/student/profile' :
+                                        '/profile'
+                                    }
                                     className="flex items-center gap-3 pl-2 pr-4 py-1.5 rounded-xl hover:bg-slate-50 transition-all group"
                                 >
-                                    <div className="w-8 h-8 rounded-lg bg-identity-navy text-white flex items-center justify-center text-[10px] font-black group-hover:scale-105 transition-transform shadow-sm">
+                                    <div className="w-8 h-8 rounded-lg bg-identity-navy text-white flex items-center justify-center text-[10px] font-black group-hover:-translate-y-0.5 transition-transform shadow-sm">
                                         {user.firstName?.[0]}{user.lastName?.[0]}
                                     </div>
                                     <span className="hidden lg:block text-[10px] font-black text-identity-navy uppercase tracking-widest italic group-hover:text-identity-sky transition-colors">
@@ -129,20 +128,26 @@ export default function Navbar() {
                                 </button>
                             </div>
 
-                            {/* Mobile Toggle */}
-                            <button
-                                onClick={() => setIsOpen(!isOpen)}
-                                className="md:hidden p-2 text-slate-400 hover:text-identity-navy transition-all"
-                            >
-                                {isOpen ? <X size={24} /> : <Menu size={24} />}
-                            </button>
+                            {/* Mobile Actions */}
+                            <div className="flex md:hidden items-center gap-1">
+                                {user && !isAuthPage && !user.role.includes('admin') && (
+                                    <NotificationCenter />
+                                )}
+                                
+                                <button
+                                    onClick={() => setIsOpen(!isOpen)}
+                                    className="p-2 text-slate-400 hover:text-identity-navy transition-all"
+                                >
+                                    {isOpen ? <X size={24} /> : <Menu size={24} />}
+                                </button>
+                            </div>
                         </div>
                     ) : !isAuthPage && !isHomePage && !isPrivacyPage ? (
                         <div className="flex items-center gap-6">
                             <Link href="/login" className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 hover:text-identity-navy transition-all italic">Login</Link>
                             <Link 
                                 href="/register/student" 
-                                className="bg-identity-navy text-white px-8 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] italic hover:bg-identity-sky hover:scale-105 active:scale-95 transition-all shadow-lg"
+                                className="bg-identity-navy text-white px-8 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] italic hover:bg-identity-sky transition-all shadow-lg hover:-translate-y-0.5 active:translate-y-0"
                             >
                                 Get Started
                             </Link>

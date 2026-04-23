@@ -2,8 +2,10 @@
 import { useState, useEffect, useRef } from 'react';
 import Navbar from '../../../components/Navbar';
 import Link from 'next/link';
-import { User, Mail, MapPin, Save, Camera, Lock, Shield, Image as ImageIcon, CheckCircle, AlertCircle, X, Eye, EyeOff, ArrowLeft, FileText, AlertTriangle, CheckCircle2, XCircle, Download, Trash2, MessageSquare, ExternalLink } from 'lucide-react';
+import { User, Mail, MapPin, Save, Camera, Lock, Shield, Image as ImageIcon, CheckCircle, AlertCircle, X, Eye, EyeOff, FileText, AlertTriangle, CheckCircle2, XCircle, Download, Trash2, MessageSquare, ExternalLink } from 'lucide-react';
 import axios from 'axios';
+import BackButton from '@/components/ui/BackButton';
+import IdentityBackground from '@/components/IdentityBackground';
 import ConfirmModal from '../../../components/ConfirmModal';
 import { useToast } from '../../../components/Toast';
 import { API_URL, getBackendUrl, createAuthAxios, logout, getToken, getProfilePictureUrl } from '../../../utils/auth';
@@ -267,14 +269,15 @@ export default function ProfessorProfile() {
 
     if (!user || !formData) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-transparent">
-                <div className="flex flex-col items-center gap-10">
+            <div className="min-h-screen flex items-center justify-center bg-transparent relative overflow-hidden font-outfit">
+                <IdentityBackground />
+                <div className="flex flex-col items-center gap-10 relative z-10">
                     <div className="w-20 h-20 relative">
-                        <div className="absolute inset-0 border-4 border-[#5CB4E4]/10 rounded-full blur-2xl animate-pulse" />
-                        <div className="absolute inset-0 border-4 border-[#5CB4E4]/20 rounded-full" />
-                        <div className="absolute inset-0 border-4 border-[#041C3C] border-t-transparent rounded-full animate-spin" />
+                        <div className="absolute inset-0 border-4 border-identity-sky/10 rounded-full blur-2xl animate-pulse" />
+                        <div className="absolute inset-0 border-4 border-identity-sky/20 rounded-full" />
+                        <div className="absolute inset-0 border-4 border-identity-navy border-t-transparent rounded-full animate-spin" />
                     </div>
-                    <p className="text-[12px] font-black text-[#5CB4E4] uppercase tracking-[0.5em] animate-pulse italic font-outfit">Accessing your profile...</p>
+                    <p className="text-[12px] font-black text-identity-sky uppercase tracking-[0.5em] animate-pulse italic">Accessing your profile...</p>
                 </div>
             </div>
         );
@@ -283,21 +286,21 @@ export default function ProfessorProfile() {
     const profileImageSrc = getProfilePictureUrl(user.profilePicture);
 
     return (
-        <div className="max-w-5xl mx-auto px-6 py-16 font-outfit select-none">
+        <div className="min-h-screen bg-transparent font-outfit select-none relative overflow-hidden">
+            <IdentityBackground />
             <Navbar />
 
-            <main className="pt-24 pb-20">
+            <main className="max-w-7xl mx-auto px-6 pt-32 pb-20 relative z-10">
                 <div className="mb-12 animate-in fade-in slide-in-from-left-10 duration-1000">
-                    <Link href="/professor/dashboard" className="group flex items-center gap-4 text-slate-400 hover:text-[#041C3C] transition-all duration-500">
-                        <div className="w-12 h-12 rounded-2xl bg-white border border-slate-100 flex items-center justify-center shadow-lg group-hover:scale-110 group-hover:bg-[#041C3C] group-hover:text-white transition-all">
-                            <ArrowLeft size={20} />
-                        </div>
-                        <span className="text-[11px] font-black uppercase tracking-[0.4em] italic">Back to Dashboard</span>
-                    </Link>
+                    <BackButton 
+                        href="/professor/dashboard"
+                        label="Back to Dashboard"
+                        className="group flex items-center gap-4 text-slate-400 hover:text-[#041C3C] transition-all duration-500"
+                    />
                 </div>
 
-                <div className="bg-white/40 backdrop-blur-xl rounded-[3.5rem] border border-slate-100 shadow-3xl overflow-hidden animate-in fade-in zoom-in duration-1000 relative">
-                    <div className="absolute inset-0 opacity-[0.05] pointer-events-none bg-blueprint" />
+                <div className="identity-glass bg-white/40 backdrop-blur-xl rounded-[3.5rem] border border-white/20 shadow-4xl overflow-hidden animate-in fade-in zoom-in-95 duration-1000 relative">
+                    <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-blueprint" />
                     
                     <div className="bg-[#041C3C] h-48 relative overflow-hidden">
                         <div className="absolute inset-0 bg-mesh opacity-30" />
@@ -334,7 +337,7 @@ export default function ProfessorProfile() {
                     </div>
 
                     <div className="pt-24 px-12 pb-16 relative z-10">
-                        <div className="flex flex-col md:flex-row justify-between items-start gap-8 mb-12 border-b border-slate-100 pb-12">
+                        <div className="flex flex-col md:flex-row justify-between items-start gap-8 mb-12 border-b border-slate-100/50 pb-12">
                             <div className="space-y-4">
                                 <h1 className="text-5xl font-black text-[#041C3C] uppercase tracking-tighter italic">
                                     {user.firstName.toUpperCase()} {user.lastName.toUpperCase()}

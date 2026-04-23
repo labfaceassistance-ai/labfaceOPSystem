@@ -408,7 +408,7 @@ export default function CreateClassModal({ isOpen, onClose, onSuccess, professor
                         )}
 
                         <p className="text-[9px] text-slate-300 mt-4 font-bold uppercase tracking-[0.2em] leading-relaxed italic border-t border-identity-sky/5 pt-4">
-                            System accepts .XLSX, .XLS, or .CSV formats. Ensure columns include "Student Number" and "Name" for synchronization.
+                            System accepts .XLSX, .XLS, or .CSV formats. Make sure your file includes columns for "Student Number" and "Name".
                         </p>
                     </div>
 
@@ -460,7 +460,7 @@ export default function CreateClassModal({ isOpen, onClose, onSuccess, professor
 
                     <div className="pt-10 flex justify-end gap-4 border-t border-identity-sky/5">
                         <button type="button" onClick={onClose} className="px-8 py-4 text-slate-400 hover:text-identity-navy hover:bg-white/60 rounded-2xl font-black uppercase tracking-[0.3em] text-[10px] transition-all">
-                            Abort
+                            Cancel
                         </button>
                         <button type="submit" disabled={loading} className="px-12 py-4 bg-identity-navy text-white rounded-2xl font-black uppercase tracking-[0.3em] text-[10px] hover:bg-identity-sky transition-all shadow-xl shadow-identity-navy/20 disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center gap-3">
                             {loading ? (
@@ -513,7 +513,7 @@ export default function CreateClassModal({ isOpen, onClose, onSuccess, professor
                                             <tr>
                                                 <td colSpan={100} className="p-16 text-center text-slate-300 italic">
                                                     <Eye size={48} className="mx-auto mb-4 opacity-10" />
-                                                    No operational data detected.
+                                                    No students found in the file.
                                                 </td>
                                             </tr>
                                         )}
@@ -526,7 +526,7 @@ export default function CreateClassModal({ isOpen, onClose, onSuccess, professor
                                     onClick={() => setShowPreview(false)}
                                     className="px-10 py-4 bg-identity-navy text-white rounded-2xl font-black uppercase tracking-[0.3em] text-[10px] transition-all shadow-xl shadow-identity-navy/10 hover:bg-identity-sky"
                                 >
-                                    Close View
+                                    Close
                                 </button>
                             </div>
                         </div>

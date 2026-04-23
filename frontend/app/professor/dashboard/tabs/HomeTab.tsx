@@ -124,255 +124,162 @@ export default function HomeTab({ user, classes, error }: HomeTabProps) {
     ];
 
     return (
-        <div className="space-y-12 font-outfit animate-in fade-in duration-1000">
-            {/* Welcome Header */}
-            <div className="identity-glass p-10 md:p-14 rounded-[3rem] shadow-2xl border border-white/40 relative overflow-hidden group transition-all duration-1000 bg-white/40 backdrop-blur-xl">
-                <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-blueprint" />
+        <div className="space-y-4 sm:space-y-6 font-outfit animate-in fade-in duration-1000">
+            {/* HUD COMMAND BAR - Consolidated Header */}
+            <div className="bg-white/40 backdrop-blur-xl rounded-xl border border-white/20 p-4 sm:p-6 shadow-xl relative overflow-hidden group transition-all duration-700">
+                <div className="absolute inset-0 opacity-[0.02] pointer-events-none bg-blueprint" />
                 
-                <div className="flex flex-col lg:flex-row items-center justify-between gap-10 relative z-10">
-                    <div className="text-center lg:text-left space-y-4 group-hover:translate-x-2 transition-transform duration-700">
-                        <div className="inline-flex items-center gap-3 py-2 px-4 bg-identity-navy text-white text-[9px] font-black uppercase tracking-[0.3em] rounded-xl shadow-xl font-outfit italic">
-                            <span className="w-2 h-2 rounded-full bg-identity-sky animate-status-pulse" />
-                            Verified Faculty
-                        </div>
-                        <h1 className="text-xl md:text-3xl font-black text-identity-navy uppercase tracking-widest italic leading-none opacity-50 font-outfit">
-                            WELCOME BACK,
-                        </h1>
-                        <h2 className="text-3xl md:text-5xl font-black text-identity-navy uppercase tracking-tight italic leading-none font-outfit">
-                            Professor <span className="text-identity-sky group-hover:text-identity-navy transition-colors duration-700 underline underline-offset-8 decoration-identity-sky/30">{user.lastName}</span>
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-6 relative z-10">
+                    <div className="space-y-1 text-center sm:text-left">
+                        <div className="text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] sm:tracking-[0.4em] italic leading-none">PROFESSOR_COMMAND_CENTER</div>
+                        <h2 className="text-xl sm:text-2xl font-black text-identity-navy uppercase tracking-tight italic leading-none">
+                            WELCOME, <span className="text-identity-sky">{user.lastName}</span>
                         </h2>
                     </div>
 
-                    <div className="flex items-center gap-8 bg-white/60 p-8 rounded-[2.5rem] border border-white/50 shadow-xl backdrop-blur-3xl relative z-10 group/date hover:border-identity-sky/30 transition-all duration-700">
-                        <div className="text-right font-outfit space-y-1">
-                            <div className="text-[11px] font-black text-identity-navy uppercase tracking-[0.3em] mb-2">
-                                {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }).toUpperCase()}
-                            </div>
-                            <div className="flex items-center justify-end gap-4">
-                                {(() => {
-                                    const dateStr = new Date().toISOString().split('T')[0];
-                                    const holidayName = isHoliday(dateStr);
-                                    if (holidayName) return (
-                                        <div className="flex items-center gap-2 px-4 py-2 bg-purple-500/10 rounded-xl border border-purple-500/20 text-purple-500 shadow-sm">
-                                            <PartyPopper size={16} />
-                                            <span className="text-[9px] font-black uppercase tracking-[0.2em]">{holidayName.toUpperCase()}</span>
-                                        </div>
-                                    );
-                                    return (
-                                        <div className="flex items-center gap-2 px-4 py-2 bg-emerald-500/10 rounded-xl border border-emerald-500/20 text-emerald-500 shadow-sm">
-                                            <Activity size={16} className="animate-pulse" />
-                                            <span className="text-[9px] font-black uppercase tracking-[0.2em]">ACTIVE</span>
-                                        </div>
-                                    );
-                                })()}
+                    <div className="flex items-center gap-4 sm:gap-6">
+                        <div className="text-right">
+                            <div className="text-[9px] font-black text-slate-300 uppercase tracking-[0.3em] mb-1 italic">SYSTEM_TIME_STAMP</div>
+                            <div className="text-[11px] font-black text-identity-navy uppercase tracking-widest italic">
+                                {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' }).toUpperCase()}
                             </div>
                         </div>
-                        <div className="bg-identity-navy text-identity-sky p-5 rounded-[1.8rem] shadow-xl group-hover/date:rotate-6 transition-all duration-700 border border-identity-sky/20">
-                            <Calendar size={32} />
+                        <div className="w-px h-10 bg-slate-200/50" />
+                        <div className="bg-identity-navy text-identity-sky p-2.5 rounded-lg border border-identity-sky/20">
+                            <Calendar size={20} />
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
-                {/* Left Column: Stats */}
-                <div className="space-y-10">
-                    <div className="grid grid-cols-1 gap-6">
-                        {stats.map((stat, i) => (
-                            <div key={i} className="bg-white/40 backdrop-blur-xl p-8 rounded-[2rem] shadow-xl border border-white/20 relative overflow-hidden group hover:scale-[1.01] transition-all duration-700">
-                                <div className="absolute inset-0 opacity-[0.01] pointer-events-none bg-blueprint" />
-                                <div className="absolute top-0 right-0 p-6 opacity-[0.05] group-hover:rotate-6 group-hover:scale-110 transition-all duration-1000">
-                                    <stat.icon size={64} />
+            {/* QUICK MONITOR - KPI Matrix */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                {stats.map((stat, i) => (
+                    <div key={i} className="bg-white/40 backdrop-blur-xl p-4 sm:p-5 rounded-xl shadow-lg border border-white/20 relative overflow-hidden group">
+                        <div className="flex items-center justify-between relative z-10">
+                            <div className="space-y-1">
+                                <div className="text-[7px] sm:text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] italic flex items-center gap-2">
+                                    <div className={`w-1 h-1 rounded-full ${stat.color.replace('text-', 'bg-')}`} />
+                                    {stat.label}
                                 </div>
-                                <div className="relative z-10 space-y-3">
-                                    <div className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] italic flex items-center gap-2.5">
-                                        <div className={`w-1 h-1 rounded-full ${stat.color.replace('text-', 'bg-')} animate-pulse`} />
-                                        {stat.label}
-                                    </div>
-                                    <div className={`text-4xl font-black ${stat.color} tracking-tighter leading-none italic`}>
-                                        {stat.value}
-                                    </div>
-                                    <div className="flex items-center justify-between border-t border-slate-100 pt-3">
-                                        <span className="text-[8px] font-black text-slate-300 uppercase tracking-[0.1em]">{stat.suffix}</span>
-                                        <span className={`text-[7px] font-black px-2 py-0.5 rounded-md border ${stat.trendUp ? 'bg-emerald-50 text-emerald-500 border-emerald-100' : 'bg-slate-50 text-slate-400 border-slate-100'}`}>
-                                            {stat.trend}
-                                        </span>
-                                    </div>
+                                <div className={`text-xl sm:text-2xl font-black ${stat.color} tracking-tighter leading-none italic`}>
+                                    {stat.value}
                                 </div>
                             </div>
-                        ))}
+                            <stat.icon size={20} className="sm:w-6 sm:h-6 text-slate-200 opacity-50 group-hover:scale-110 transition-transform" />
+                        </div>
+                    </div>
+                ))}
+            </div>
+
+            {/* OPERATIONS VIEW - Schedule Matrix */}
+            <div className="bg-white/40 backdrop-blur-xl rounded-xl border border-white/20 overflow-hidden shadow-xl relative min-h-[400px]">
+                <div className="absolute inset-0 opacity-[0.02] pointer-events-none bg-blueprint" />
+                
+                <div className="p-3 sm:p-4 border-b border-white/40 flex items-center justify-between bg-white/20 relative z-10">
+                    <div className="flex items-center gap-3 sm:gap-4">
+                        <div className="bg-identity-navy text-identity-sky p-1.5 sm:p-2 rounded-lg">
+                            <Clock size={14} className="sm:w-4 sm:h-4" />
+                        </div>
+                        <h3 className="text-[10px] sm:text-[11px] font-black text-identity-navy uppercase tracking-[0.3em] sm:tracking-[0.4em] italic">DAILY_OPERATIONS_MATRIX</h3>
+                    </div>
+                    <div className="flex items-center gap-2 sm:gap-3">
+                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                        <span className="text-[8px] sm:text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] sm:tracking-[0.3em] italic">LIVE_STATUS_ACTIVE</span>
                     </div>
                 </div>
 
-                {/* Right/Middle Column: Next Class & Schedule */}
-                <div className="lg:col-span-2 space-y-8">
-                    {/* Hero: Next Class */}
-                    <div className="bg-identity-navy p-6 md:p-8 rounded-2xl shadow-xl text-white relative overflow-hidden border border-identity-sky/20 group/hero transition-all duration-1000">
-                        <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-blueprint" />
-                        
-                        <div className="relative z-10 space-y-8">
-                            <div className="flex items-center gap-3 text-identity-sky text-[9px] font-black uppercase tracking-[0.3em] italic">
-                                <div className="w-2 h-2 rounded-full bg-identity-sky animate-pulse shadow-[0_0_10px_rgba(92,180,228,0.8)]" />
-                                {nextClass && nextClass.status === 'Now' ? 'IN PROGRESS' : 'UPCOMING SESSION'}
-                            </div>
-
-                            {nextClass ? (
-                                <>
-                                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-8">
-                                        <div className="space-y-3">
-                                            <h3 className="text-3xl md:text-4xl font-black uppercase tracking-tighter italic leading-none">
-                                                {nextClass.subject_code}
-                                            </h3>
-                                            <p className="text-white/60 text-sm font-black uppercase tracking-tight italic max-w-xl leading-relaxed">
-                                                {nextClass.subject_name}
-                                            </p>
-                                        </div>
-                                        <div className="bg-white/5 backdrop-blur-xl px-4 py-2 rounded-xl border border-white/10 shadow-lg self-start md:self-center text-center">
-                                            <p className="text-[7px] font-black uppercase tracking-[0.2em] text-identity-sky mb-0.5 italic">SECTION</p>
-                                            <p className="text-lg font-black text-white italic tracking-tighter uppercase">{nextClass.section}</p>
-                                        </div>
+                <div className="relative z-10">
+                    {nextClass ? (
+                        <div className="bg-identity-navy/5 p-4 border-b border-identity-sky/10 flex flex-wrap items-center justify-between gap-6 group">
+                            <div className="flex items-center gap-6">
+                                <div className="w-2 h-10 bg-identity-sky rounded-full shadow-[0_0_15px_rgba(92,180,228,0.5)]" />
+                                <div className="space-y-1">
+                                    <div className="flex items-center gap-3">
+                                        <span className="bg-identity-sky text-identity-navy text-[8px] font-black px-2 py-0.5 rounded italic">UPCOMING_NOW</span>
+                                        <span className="text-sm font-black text-identity-navy uppercase italic">{nextClass.subject_code}</span>
                                     </div>
-
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        <div className="bg-white/5 backdrop-blur-xl p-6 rounded-2xl border border-white/5 group/meta transition-all hover:bg-white/10 shadow-inner">
-                                            <div className="flex items-center gap-3 mb-3 text-white/40">
-                                                <Clock size={16} className="text-identity-sky" />
-                                                <span className="text-[8px] font-black uppercase tracking-[0.3em] italic">SCHEDULE</span>
-                                            </div>
-                                            <p className="text-xl font-black text-white italic tracking-tighter uppercase leading-none">
-                                                {formatTime(nextClass.startTime)} — {formatTime(nextClass.endTime)}
-                                            </p>
-                                        </div>
-                                        <div className="bg-white/5 backdrop-blur-xl p-6 rounded-2xl border border-white/5 group/meta transition-all hover:bg-white/10 shadow-inner">
-                                            <div className="flex items-center gap-3 mb-3 text-white/40">
-                                                <MapPin size={16} className="text-identity-sky" />
-                                                <span className="text-[8px] font-black uppercase tracking-[0.3em] italic">LOCATION</span>
-                                            </div>
-                                            <p className="text-xl font-black text-white italic tracking-tighter uppercase leading-none">
-                                                {nextClass.room || 'LABORATORY 01'}
-                                            </p>
-                                        </div>
-                                    </div>
-
-                                    <div className="flex flex-col lg:flex-row items-center justify-between gap-8 pt-8 border-t border-white/10">
-                                        <div className="flex items-center gap-5">
-                                            <div className="flex -space-x-3">
-                                                {[1, 2, 3].map(i => (
-                                                    <div key={i} className="w-10 h-10 rounded-lg border-2 border-identity-navy bg-white/10 flex items-center justify-center text-[9px] font-black text-white shadow-xl backdrop-blur-md">
-                                                        {i}
-                                                    </div>
-                                                ))}
-                                                <div className="w-10 h-10 rounded-lg border-2 border-identity-navy bg-identity-sky flex items-center justify-center text-[9px] font-black text-identity-navy shadow-xl">
-                                                    +{Math.max(0, (nextClass.student_count || 0) - 3)}
-                                                </div>
-                                            </div>
-                                            <div className="space-y-0.5">
-                                                <p className="text-[10px] font-black uppercase tracking-[0.1em] text-identity-sky italic">{nextClass.student_count || 0} ENROLLED</p>
-                                                <p className="text-[7px] font-black text-white/20 uppercase tracking-[0.2em] italic">STREAMS READY</p>
-                                            </div>
-                                        </div>
-                                        <button
-                                            onClick={() => router.push(`/professor/classes/${nextClass.id}`)}
-                                            className="w-full lg:w-auto bg-identity-sky hover:bg-white text-identity-navy px-8 py-4 rounded-xl font-black uppercase tracking-[0.3em] text-[10px] italic transition-all duration-500 group/btn shadow-xl active:scale-95 flex items-center justify-center gap-3"
-                                        >
-                                            LAUNCH CLASS <ArrowRight size={18} className="group-hover/btn:translate-x-2 transition-transform" />
-                                        </button>
-                                    </div>
-                                </>
-                            ) : (
-                                <div className="py-24 text-center space-y-12 bg-white/5 rounded-[4rem] border border-white/10 shadow-inner">
-                                    <div className="w-32 h-32 bg-white/5 rounded-[3rem] flex items-center justify-center mx-auto shadow-2xl border border-white/10 text-[#5CB4E4]/30">
-                                        <RefreshCw size={64} className="animate-spin duration-[6000ms]" />
-                                    </div>
-                                    <div className="space-y-4">
-                                        <h2 className="text-5xl font-black text-white uppercase italic tracking-tighter">DAY COMPLETE</h2>
-                                        <p className="text-[11px] font-black text-white/40 uppercase tracking-[0.5em] italic">ALL CLASSES FOR TODAY ARE FINISHED</p>
-                                    </div>
-                                    <div className="inline-flex items-center gap-4 px-8 py-3 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl text-emerald-500 text-[10px] font-black uppercase tracking-[0.3em]">
-                                        <ShieldCheck size={18} /> SYSTEM ACTIVE AND STABLE
-                                    </div>
+                                    <div className="text-[10px] font-black text-slate-400 uppercase tracking-tight italic truncate max-w-xs">{nextClass.subject_name}</div>
                                 </div>
-                            )}
-                        </div>
-                    </div>
-
-                    {/* Schedule List */}
-                    <div className="bg-white/40 backdrop-blur-xl p-8 md:p-10 rounded-3xl shadow-2xl border border-white/20 relative overflow-hidden group/list transition-all duration-1000">
-                        <div className="absolute inset-0 opacity-[0.02] pointer-events-none bg-blueprint" />
-                        
-                        <div className="flex flex-col md:flex-row items-center justify-between gap-8 mb-10">
-                            <div className="flex items-center gap-4">
-                                <div className="bg-identity-navy text-identity-sky p-3 rounded-xl shadow-lg group-hover/list:rotate-[-8deg] transition-all duration-700 border border-identity-sky/20">
-                                    <Calendar size={20} />
-                                </div>
-                                <h3 className="text-xl md:text-2xl font-black text-identity-navy uppercase tracking-tighter italic leading-none">DAILY SCHEDULE</h3>
                             </div>
-                            <div className="text-right hidden sm:block">
-                                <p className="text-[8px] font-black text-slate-300 uppercase tracking-[0.3em] italic mb-0.5">ACTIVE SESSIONS</p>
-                                <p className="text-base font-black text-identity-navy uppercase italic tracking-tighter">{todayClasses.length} SESSIONS TODAY</p>
+                            
+                            <div className="flex items-center gap-10">
+                                <div className="text-right">
+                                    <div className="text-[8px] font-black text-slate-300 uppercase tracking-widest italic mb-0.5">TIME_SLOT</div>
+                                    <div className="text-[12px] font-black text-identity-navy italic">{formatTime(nextClass.startTime)} — {formatTime(nextClass.endTime)}</div>
+                                </div>
+                                <button
+                                    onClick={() => router.push(`/professor/classes/${nextClass.id}`)}
+                                    className="bg-identity-sky hover:bg-identity-navy hover:text-white text-identity-navy px-6 py-2.5 rounded-lg font-black uppercase tracking-[0.2em] text-[9px] italic transition-all shadow-lg active:scale-95 flex items-center gap-2"
+                                >
+                                    LAUNCH <ArrowRight size={14} />
+                                </button>
                             </div>
                         </div>
+                    ) : todayClasses.length > 0 ? (
+                        <div className="p-4 bg-emerald-500/5 border-b border-emerald-500/10 flex items-center justify-center gap-4">
+                            <span className="text-[9px] font-black text-emerald-600 uppercase tracking-[0.5em] italic">[ OP_STATUS: STANDBY // ALL_SESSIONS_COMPLETE ]</span>
+                        </div>
+                    ) : null}
 
-                        <div className="space-y-6 relative z-10">
-                            {error ? (
-                                <div className="p-14 text-center bg-rose-500/5 rounded-[2.5rem] border border-rose-500/20">
-                                    <AlertCircle size={48} className="text-rose-500 mx-auto mb-6 opacity-50" />
-                                    <h4 className="text-xl font-black text-rose-500 uppercase italic mb-2">CONNECTION ERROR</h4>
-                                    <p className="text-slate-400 text-[9px] font-black uppercase tracking-[0.2em] italic">{error.toUpperCase()}</p>
-                                </div>
-                            ) : todayClasses.length > 0 ? (
-                                todayClasses.map((cls) => {
+                    <div className="overflow-x-auto custom-scrollbar">
+                        <table className="w-full text-left border-collapse">
+                            <thead>
+                                <tr className="border-b border-slate-100">
+                                    {['SUBJECT', 'SECTION', 'SCHEDULE', 'LOCATION', 'CAPACITY', 'ACTION'].map(h => (
+                                        <th key={h} className="px-6 py-3 text-[8px] font-black text-slate-300 uppercase tracking-[0.3em] italic">{h}</th>
+                                    ))}
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-50">
+                                {todayClasses.length > 0 ? todayClasses.map((cls) => {
                                     const schedule = JSON.parse(cls.schedule_json);
                                     const todaySlot = schedule.find((s: any) => s.day === today);
+                                    const isNext = nextClass?.id === cls.id;
                                     return (
-                                        <div
-                                            key={cls.id}
-                                            onClick={() => router.push(`/professor/classes/${cls.id}`)}
-                                            className="bg-white/60 hover:bg-white rounded-2xl p-6 border border-slate-100 hover:border-identity-sky/30 transition-all duration-500 cursor-pointer group/row shadow-sm hover:shadow-xl flex flex-col lg:flex-row lg:items-center justify-between gap-4"
-                                        >
-                                            <div className="flex items-center gap-6">
-                                                <div className="w-16 h-16 bg-identity-navy text-identity-sky rounded-xl flex items-center justify-center font-black text-[9px] border border-identity-sky/20 group-hover/row:scale-105 transition-all shadow-lg">
-                                                    {cls.subject_code}
-                                                </div>
-                                                <div className="space-y-1.5">
-                                                    <h4 className="text-lg font-black text-identity-navy uppercase italic leading-none group-hover/row:text-identity-sky transition-colors">
-                                                        {cls.subject_name}
-                                                    </h4>
-                                                    <div className="flex items-center gap-3">
-                                                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2">
-                                                            <Users size={12} className="text-identity-sky/40" /> SECTION {cls.section}
-                                                        </span>
-                                                        <div className="w-1 h-1 rounded-full bg-slate-200" />
-                                                        <span className="text-[9px] font-black text-identity-sky uppercase tracking-[0.2em]">ID: #{cls.id}</span>
+                                        <tr key={cls.id} className={`group hover:bg-slate-50/50 transition-colors ${isNext ? 'bg-identity-sky/5' : ''}`}>
+                                            <td className="px-6 py-3">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-8 h-8 bg-identity-navy text-identity-sky rounded-lg flex items-center justify-center font-black text-[7px] border border-identity-sky/10">
+                                                        {cls.subject_code.slice(0, 4)}
                                                     </div>
+                                                    <div className="text-[11px] font-black text-identity-navy uppercase italic">{cls.subject_name}</div>
                                                 </div>
-                                            </div>
-                                            {todaySlot && (
-                                                <div className="flex flex-col lg:items-end gap-2 lg:border-l border-slate-100 lg:pl-8">
-                                                    <div className="flex items-center gap-3 text-lg font-black text-identity-navy uppercase italic">
-                                                        <div className="p-2 bg-identity-sky/10 rounded-lg text-identity-sky border border-identity-sky/20 group-hover/row:bg-identity-navy group-hover/row:text-white transition-all">
-                                                            <Clock size={14} />
-                                                        </div>
-                                                        {todaySlot.startTime} — {todaySlot.endTime}
-                                                    </div>
-                                                    <div className="text-[8px] font-black text-slate-300 uppercase tracking-[0.2em] italic">
-                                                        {cls.student_count || 0} ENROLLED
-                                                    </div>
-                                                </div>
-                                            )}
-                                        </div>
+                                            </td>
+                                            <td className="px-6 py-3">
+                                                <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">#{cls.section}</span>
+                                            </td>
+                                            <td className="px-6 py-3">
+                                                <div className="text-[10px] font-black text-identity-navy italic">{todaySlot?.startTime} - {todaySlot?.endTime}</div>
+                                            </td>
+                                            <td className="px-6 py-3">
+                                                <div className="text-[10px] font-black text-slate-400 italic">{cls.room || 'LAB_01'}</div>
+                                            </td>
+                                            <td className="px-6 py-3">
+                                                <div className="text-[10px] font-black text-slate-400 italic">{cls.student_count || 0} ENROLLED</div>
+                                            </td>
+                                            <td className="px-6 py-3">
+                                                <button
+                                                    onClick={() => router.push(`/professor/classes/${cls.id}`)}
+                                                    className="p-2 text-slate-300 hover:text-identity-sky transition-colors"
+                                                >
+                                                    <ChevronRight size={18} />
+                                                </button>
+                                            </td>
+                                        </tr>
                                     );
-                                })
-                            ) : (
-                                <div className="p-20 text-center rounded-[3rem] border-2 border-dashed border-identity-sky/10 bg-white/10 group/empty">
-                                    <div className="w-24 h-24 bg-white rounded-[1.8rem] flex items-center justify-center mx-auto mb-8 shadow-xl border border-slate-50 group-hover/empty:scale-110 transition-all duration-700">
-                                        <BookOpen size={42} className="text-identity-navy/10" />
-                                    </div>
-                                    <h4 className="text-2xl font-black text-identity-navy uppercase italic mb-4">NO CLASSES</h4>
-                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] italic">NOTHING SCHEDULED FOR TODAY.</p>
-                                </div>
-                            )}
-                        </div>
+                                }) : (
+                                    <tr>
+                                        <td colSpan={6} className="py-32 text-center">
+                                            <div className="flex flex-col items-center gap-4 opacity-20">
+                                                <BookOpen size={48} />
+                                                <div className="text-[10px] font-black uppercase tracking-[0.5em] italic">NO_OPERATIONS_SCHEDULED</div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>

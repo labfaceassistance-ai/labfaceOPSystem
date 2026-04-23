@@ -54,7 +54,7 @@ function StatusBadge({ status }: { status: string }) {
         Good: 'bg-emerald-500/20 text-emerald-500 border-emerald-500/30 shadow-[0_0_20px_rgba(16,185,129,0.3)]',
     };
     return (
-        <span className={`inline-flex px-6 py-2 text-[10px] font-black uppercase tracking-[0.3em] rounded-xl border italic ${map[status] || map.Good}`}>
+        <span className={`inline-flex px-3 py-1 text-[10px] font-black uppercase tracking-[0.2em] rounded-lg border italic ${map[status] || map.Good}`}>
             {status === 'Dropout' ? 'DROPPED' : status === 'Critical' ? 'CRITICAL' : status === 'High Risk' ? 'AT RISK' : 'GOOD'}
         </span>
     );
@@ -68,7 +68,7 @@ function InterventionBadge({ status }: { status: string }) {
         None: 'bg-white/5 text-slate-400 border-white/10',
     };
     return (
-        <span className={`inline-flex px-6 py-2 text-[10px] font-black uppercase tracking-[0.3em] rounded-xl border italic ${map[status] || map.None}`}>
+        <span className={`inline-flex px-3 py-1 text-[10px] font-black uppercase tracking-[0.2em] rounded-lg border italic ${map[status] || map.None}`}>
             {(status || 'NONE').toUpperCase().replace(' ', '_')}
         </span>
     );
@@ -116,19 +116,19 @@ function heatColor(val: number): string {
 // ─── Spinner ───────────────────────────────────────────────────────────────
 function Spinner() {
     return (
-        <div className="flex flex-col items-center justify-center p-[240px] gap-12 font-outfit">
-            <div className="w-32 h-32 relative">
-                <div className="absolute inset-0 border-4 border-[#5CB4E4]/10 rounded-[3rem] rotate-45" />
-                <div className="absolute inset-0 border-4 border-[#041C3C] border-t-transparent rounded-[3rem] rotate-45 animate-spin shadow-[0_0_50px_rgba(92,180,228,0.5)]" />
+        <div className="flex flex-col items-center justify-center p-20 gap-8 font-outfit">
+            <div className="w-20 h-20 relative">
+                <div className="absolute inset-0 border-2 border-[#5CB4E4]/10 rounded-2xl rotate-45" />
+                <div className="absolute inset-0 border-2 border-[#041C3C] border-t-transparent rounded-2xl rotate-45 animate-spin shadow-[0_0_30px_rgba(92,180,228,0.5)]" />
                 <div className="absolute inset-0 flex items-center justify-center -rotate-45">
-                    <Brain className="text-[#041C3C]/20 w-12 h-12" />
+                    <Brain className="text-[#041C3C]/20 w-8 h-8" />
                 </div>
             </div>
-            <div className="text-center space-y-4">
-                <p className="text-[16px] font-black text-[#041C3C] uppercase tracking-[0.6em] animate-pulse italic leading-none">
+            <div className="text-center space-y-2">
+                <p className="text-[12px] font-black text-[#041C3C] uppercase tracking-[0.4em] animate-pulse italic leading-none">
                     Loading Analytics...
                 </p>
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em] italic opacity-60">
+                <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em] italic opacity-60">
                     Connecting to data source
                 </p>
             </div>
@@ -515,41 +515,40 @@ Generate:
     }, [selectedStudent]);
 
     const KpiCard = ({ label, value, unit = '', color, icon }: { label: string; value: number; unit?: string; color: string; icon: React.ReactNode }) => (
-        <div className="bg-white/40 backdrop-blur-xl rounded-[4rem] border border-white/20 p-12 relative overflow-hidden group shadow-3xl transition-all duration-700 hover:-translate-y-4 font-outfit">
-            <div className="absolute top-0 right-0 w-64 h-64 rounded-full blur-[120px] opacity-[0.1] -translate-y-1/2 translate-x-1/2 group-hover:scale-150 transition-transform duration-1000"
+        <div className="bg-white rounded-xl sm:rounded-2xl border border-slate-200 p-4 sm:p-5 relative overflow-hidden group shadow-xl transition-all duration-700 hover:-translate-y-1 font-outfit">
+            <div className="absolute top-0 right-0 w-32 h-32 rounded-full blur-[60px] opacity-[0.1] -translate-y-1/2 translate-x-1/2 group-hover:scale-150 transition-transform duration-1000"
                 style={{ backgroundColor: color }} />
             <div className="absolute inset-0 opacity-[0.05] pointer-events-none bg-blueprint" />
             
-            <div className="relative z-10 space-y-8">
+            <div className="relative z-10 space-y-4">
                 <div className="flex items-center justify-between">
-                    <div className="p-6 rounded-[1.8rem] bg-[#041C3C] text-[#5CB4E4] shadow-2xl border border-[#5CB4E4]/20 group-hover:bg-[#5CB4E4] group-hover:text-white transition-all duration-700">
+                    <div className="p-3 rounded-xl bg-[#041C3C] text-[#5CB4E4] shadow-xl border border-[#5CB4E4]/20 group-hover:bg-[#5CB4E4] group-hover:text-white transition-all duration-700">
                         {icon}
                     </div>
-                    <div className="w-3 h-3 rounded-full bg-[#5CB4E4] animate-pulse shadow-[0_0_15px_rgba(92,180,228,0.8)]" />
                 </div>
-                <div className="space-y-2">
-                    <div className="flex items-baseline gap-4">
-                        <span className="text-6xl font-black italic tracking-tighter text-[#041C3C] leading-none">{value}</span>
-                        <span className="text-2xl font-black text-[#5CB4E4] italic tracking-tight">{unit}</span>
+                <div className="space-y-1">
+                    <div className="flex items-baseline gap-2">
+                        <span className="text-4xl font-black italic tracking-tighter text-[#041C3C] leading-none">{value}</span>
+                        <span className="text-xl font-black text-[#5CB4E4] italic tracking-tight">{unit}</span>
                     </div>
-                    <p className="text-[11px] font-black text-slate-400 uppercase tracking-[0.5em] italic">{label.toUpperCase().replace(' ', '_')}</p>
+                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.4em] italic">{label}</p>
                 </div>
             </div>
         </div>
     );
 
     const ChartCard = ({ title, height = 320, children }: { title: string; height?: number; children: React.ReactNode }) => (
-        <div className="bg-white/40 backdrop-blur-xl rounded-[4.5rem] border border-white/20 p-12 relative overflow-hidden shadow-3xl font-outfit group transition-all duration-700">
+        <div className="bg-white rounded-xl sm:rounded-2xl border border-slate-200 p-4 sm:p-5 relative overflow-hidden shadow-xl font-outfit group transition-all duration-700">
             <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-blueprint" />
             <div className="absolute inset-x-0 h-[2px] bg-gradient-to-r from-transparent via-[#5CB4E4]/30 to-transparent top-0 z-20 animate-scan-y opacity-30 pointer-events-none" />
 
-            <div className="flex items-center justify-between mb-12 relative z-10">
+            <div className="flex items-center justify-between mb-6 relative z-10">
                 <div className="flex items-center gap-6">
-                    <div className="p-3 bg-[#041C3C] text-[#5CB4E4] rounded-2xl shadow-xl transition-all duration-500 group-hover:scale-110">
-                         <Signal size={20} />
+                    <div className="p-2.5 bg-[#041C3C] text-[#5CB4E4] rounded-xl shadow-lg transition-all duration-500 group-hover:scale-110">
+                         <Signal size={16} />
                     </div>
-                    <h3 className="text-[13px] font-black text-[#041C3C] uppercase tracking-[0.5em] italic">
-                        {title.toUpperCase().replace(' ', '_')}
+                    <h3 className="text-[10px] font-black text-[#041C3C] uppercase tracking-[0.3em] italic">
+                        {title}
                     </h3>
                 </div>
                 <div className="flex gap-3">
@@ -567,31 +566,31 @@ Generate:
         const active = activeSection === id;
         return (
             <button onClick={() => setActiveSection(id)}
-                className="flex items-center gap-4 px-8 py-4 text-[12px] font-black uppercase tracking-[0.3em] transition-all duration-500 border italic shadow-2xl active:scale-95 group/pill"
+                className="flex items-center gap-3 px-6 py-2 text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-500 border italic shadow-md active:scale-95 group/pill"
                 style={{
-                    borderRadius: '2.5rem',
+                    borderRadius: '1rem',
                     borderColor: active ? color : 'rgba(4,28,60,0.1)',
                     backgroundColor: active ? `${color}15` : 'rgba(255,255,255,0.6)',
                     color: active ? color : '#041C3C',
                 }}>
                 <div className={`w-4 h-4 rounded-full flex-shrink-0 transition-transform ${active ? 'animate-pulse scale-110' : 'group-hover/pill:scale-125'}`} 
                     style={{ backgroundColor: color, boxShadow: active ? `0 0 15px ${color}` : 'none' }} />
-                {label.toUpperCase().replace(' ', '_')}
+                {label}
             </button>
         );
     };
 
     const PillToggle = ({ value, options, onChange }: { value: string; options: { id: string; label: string }[]; onChange: (v: string) => void }) => (
-        <div className="flex gap-4 bg-white/60 p-3 rounded-[3rem] border border-white shadow-inner font-outfit backdrop-blur-xl">
+        <div className="flex gap-2 bg-slate-50 p-1.5 rounded-2xl border border-slate-200 font-outfit">
             {options.map(o => {
                 const a = value === o.id;
                 return (
                     <button key={o.id} onClick={() => onChange(o.id)}
-                        className={`px-12 py-4 text-[11px] font-black uppercase tracking-[0.4em] transition-all duration-700 rounded-[2.2rem] italic active:scale-95 ${
-                            a ? 'bg-[#041C3C] text-white shadow-4xl scale-105' : 'text-slate-400 hover:text-[#041C3C] hover:bg-white/80'
+                        className={`px-6 py-2 text-[9px] font-black uppercase tracking-[0.2em] transition-all duration-500 rounded-xl italic active:scale-95 ${
+                            a ? 'bg-[#041C3C] text-white shadow-xl scale-105' : 'text-slate-400 hover:text-[#041C3C] hover:bg-white/80'
                         }`}
                     >
-                        {o.label.toUpperCase().replace(' ', '_')}
+                        {o.label}
                     </button>
                 );
             })}
@@ -608,9 +607,9 @@ Generate:
     if (loading) return <Spinner />;
 
     const dashboardContent = (
-        <div className="space-y-12 animate-in fade-in duration-1000">
+        <div className="space-y-4 animate-in fade-in duration-1000">
             {/* KPI Row */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <KpiCard label="Average Attendance" value={allData?.kpis.avgAttendance ?? 0} unit="%" color="#5CB4E4" icon={<Activity size={24} />} />
                 <KpiCard label="Absences Today" value={allData?.kpis.absentToday ?? 0} color="#EF4444" icon={<Users size={24} />} />
                 <KpiCard label="At Risk Students" value={allData?.kpis.atRisk ?? 0} color="#F59E0B" icon={<AlertTriangle size={24} />} />
@@ -618,7 +617,7 @@ Generate:
             </div>
 
             {/* Row 2: Line + Doughnut */}
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-12">
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
                 <ChartCard title="Attendance Trends">
                     {(filteredData?.sessionData?.sections?.length ?? 0) > 0 ? <canvas ref={lineRef} /> : <NoData />}
                 </ChartCard>
@@ -634,7 +633,7 @@ Generate:
             </ChartCard>
 
             {/* Row 4: Ranking + Stacked */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 <ChartCard title="Absence Ranking" height={300}>
                     {(filteredData?.bySection?.length ?? 0) > 0 ? <canvas ref={rankRef} /> : <NoData />}
                 </ChartCard>
@@ -644,13 +643,13 @@ Generate:
             </div>
 
             {/* Row 5: Heatmap + Day bar */}
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-12">
-                <div className="bg-white/40 backdrop-blur-xl rounded-[4.5rem] border border-white/20 p-12 shadow-3xl relative overflow-hidden font-outfit">
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+                <div className="bg-white/40 backdrop-blur-xl rounded-xl sm:rounded-2xl border border-white/20 p-5 sm:p-6 shadow-xl relative overflow-hidden font-outfit">
                     <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-blueprint" />
                     <div className="absolute inset-x-0 h-[2px] bg-gradient-to-r from-transparent via-[#5CB4E4]/30 to-transparent top-0 z-20 animate-scan-y opacity-30 pointer-events-none" />
                     
-                    <h3 className="text-[13px] font-black text-[#041C3C] uppercase tracking-[0.5em] mb-14 italic flex items-center gap-6 relative z-10">
-                        <Monitor size={20} className="text-[#5CB4E4]" /> ABSENCE HEATMAP
+                    <h3 className="text-[10px] font-black text-[#041C3C] uppercase tracking-[0.3em] mb-6 italic flex items-center gap-4 relative z-10">
+                        <Monitor size={18} className="text-[#5CB4E4]" /> ABSENCE HEATMAP
                     </h3>
                     
                     {(allData?.heatmap?.slots?.length ?? 0) > 0 ? (
@@ -662,31 +661,31 @@ Generate:
                                 ))}
                             </div>
                             {allData!.heatmap.slots.map((slot, si) => (
-                                <div key={slot} className="grid gap-6 mb-6" style={{ gridTemplateColumns: '100px repeat(5, 1fr)' }}>
-                                    <div className="text-[11px] font-black text-[#041C3C] uppercase tracking-[0.2em] flex items-center italic">{slot}</div>
+                                <div key={slot} className="grid gap-2 mb-2" style={{ gridTemplateColumns: '100px repeat(5, 1fr)' }}>
+                                    <div className="text-[10px] font-black text-[#041C3C] uppercase tracking-[0.1em] flex items-center italic">{slot}</div>
                                     {allData!.heatmap.days.map((d, di) => {
                                         const val = allData!.heatmap.data[si]?.[di] ?? 0;
                                         return (
-                                            <div key={d} className="h-16 rounded-2.5xl flex items-center justify-center text-[18px] font-black text-[#041C3C] transition-all duration-500 hover:scale-110 hover:z-20 cursor-crosshair border border-white/30 group/heat shadow-2xl relative"
+                                            <div key={d} className="h-10 rounded-xl flex items-center justify-center text-[14px] font-black text-[#041C3C] transition-all duration-500 hover:scale-110 hover:z-20 cursor-crosshair border border-white/30 group/heat shadow-lg relative"
                                                 style={{ backgroundColor: heatColor(val), opacity: val === 0 ? 0.1 : 1 }}>
                                                 {val > 0 ? val : ''}
-                                                <div className="absolute inset-0 bg-white opacity-0 group-hover/heat:opacity-20 rounded-2.5xl transition-opacity" />
+                                                <div className="absolute inset-0 bg-white opacity-0 group-hover/heat:opacity-20 rounded-xl transition-opacity" />
                                             </div>
                                         );
                                     })}
                                 </div>
                             ))}
-                            <div className="flex items-center gap-8 mt-16 flex-wrap border-t border-slate-100 pt-10">
-                                <span className="text-[11px] font-black text-slate-400 uppercase tracking-[0.4em] italic">HEAT LEVEL:</span>
+                            <div className="flex items-center gap-4 mt-6 flex-wrap border-t border-slate-100 pt-4">
+                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] italic">HEAT LEVEL:</span>
                                 {[
                                     { l: 'NONE', c: 'rgba(4,28,60,0.03)' },
                                     { l: 'LOW', c: 'rgba(92,180,228,0.55)' },
                                     { l: 'MOD', c: 'rgba(245,158,11,0.65)' },
                                     { l: 'HIGH', c: 'rgba(239,68,68,0.85)' },
                                 ].map(item => (
-                                    <div key={item.l} className="flex items-center gap-4">
-                                        <div className="w-8 h-8 rounded-xl border border-white/20 shadow-xl" style={{ backgroundColor: item.c }} />
-                                        <span className="text-[10px] font-black text-slate-400 tracking-[0.3em] uppercase italic">{item.l}</span>
+                                    <div key={item.l} className="flex items-center gap-2">
+                                        <div className="w-6 h-6 rounded-lg border border-white/20 shadow-lg" style={{ backgroundColor: item.c }} />
+                                        <span className="text-[9px] font-black text-slate-400 tracking-[0.2em] uppercase italic">{item.l}</span>
                                     </div>
                                 ))}
                             </div>
@@ -700,24 +699,24 @@ Generate:
             </div>
 
             {/* Row 6: Consecutive detectors + Peer groups */}
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-12">
-                <div className="bg-white/40 backdrop-blur-xl rounded-[4.5rem] border border-white/20 p-12 shadow-3xl relative overflow-hidden font-outfit">
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+                <div className="bg-white/40 backdrop-blur-xl rounded-xl sm:rounded-2xl border border-white/20 p-5 sm:p-6 shadow-xl relative overflow-hidden font-outfit">
                     <div className="absolute inset-x-0 h-[2px] bg-gradient-to-r from-transparent via-rose-500/30 to-transparent bottom-0 z-20 animate-scan-y opacity-30 pointer-events-none" />
-                    <h3 className="text-[13px] font-black text-[#041C3C] uppercase tracking-[0.5em] mb-12 italic flex items-center gap-6">
-                        <History size={20} className="text-rose-500 animate-pulse" /> CONSECUTIVE ABSENCES
+                    <h3 className="text-[10px] font-black text-[#041C3C] uppercase tracking-[0.3em] mb-6 italic flex items-center gap-4">
+                        <History size={18} className="text-rose-500 animate-pulse" /> CONSECUTIVE ABSENCES
                     </h3>
                     {(allData?.consecutiveAbsences?.length ?? 0) > 0 ? (
-                        <div className="space-y-6 max-h-[400px] overflow-y-auto pr-4 custom-scrollbar">
+                        <div className="space-y-4 max-h-[300px] overflow-y-auto pr-4 custom-scrollbar">
                             {allData!.consecutiveAbsences.map(s => (
-                                <div key={s.studentId} className="flex items-center justify-between bg-white/60 border border-slate-100 rounded-[2.5rem] p-8 shadow-2xl transition-all hover:-translate-x-3 duration-500">
-                                    <div className="space-y-4">
+                                <div key={s.studentId} className="flex items-center justify-between bg-white/60 border border-slate-100 rounded-xl p-4 shadow-lg transition-all hover:-translate-x-1 duration-500">
+                                    <div className="space-y-2">
                                         <div>
-                                            <div className="text-xl font-black text-[#041C3C] uppercase tracking-tighter italic">{s.name}</div>
-                                            <div className="text-[10px] text-[#5CB4E4] font-black uppercase tracking-[0.3em] mt-1 italic">{s.section.toUpperCase()}</div>
+                                            <div className="text-md font-black text-[#041C3C] uppercase tracking-tighter italic">{s.name}</div>
+                                            <div className="text-[9px] text-[#5CB4E4] font-black uppercase tracking-[0.2em] mt-1 italic">{s.section.toUpperCase()}</div>
                                         </div>
                                         <StreakDots streak={s.streak} />
                                     </div>
-                                    <div className="bg-rose-500/10 text-rose-600 px-8 py-4 rounded-2.5xl border border-rose-200 text-[11px] font-black uppercase tracking-[0.4em] italic shadow-lg">
+                                    <div className="bg-rose-500/10 text-rose-600 px-4 py-2 rounded-xl border border-rose-200 text-[10px] font-black uppercase tracking-[0.2em] italic shadow-md">
                                         {s.consecutiveAbs}× ABSENCES
                                     </div>
                                 </div>
@@ -726,26 +725,26 @@ Generate:
                     ) : <NoData msg="NO RECENT ABSENCES" />}
                 </div>
 
-                <div className="bg-white/40 backdrop-blur-xl rounded-[4.5rem] border border-white/20 p-12 shadow-3xl relative overflow-hidden font-outfit">
+                <div className="bg-white/40 backdrop-blur-xl rounded-xl sm:rounded-2xl border border-white/20 p-5 sm:p-6 shadow-xl relative overflow-hidden font-outfit">
                     <div className="absolute inset-x-0 h-[2px] bg-gradient-to-r from-transparent via-[#5CB4E4]/30 to-transparent top-0 z-20 animate-scan-y opacity-30 pointer-events-none" />
-                    <h3 className="text-[13px] font-black text-[#041C3C] uppercase tracking-[0.5em] mb-12 italic flex items-center gap-6">
-                        <Users size={20} className="text-[#5CB4E4]" /> PEER GROUP ABSENCES
+                    <h3 className="text-[10px] font-black text-[#041C3C] uppercase tracking-[0.3em] mb-6 italic flex items-center gap-4">
+                        <Users size={18} className="text-[#5CB4E4]" /> PEER GROUP ABSENCES
                     </h3>
                     {(allData?.peerGroups?.length ?? 0) > 0 ? (
-                        <div className="space-y-6 max-h-[400px] overflow-y-auto pr-4 custom-scrollbar">
+                        <div className="space-y-4 max-h-[300px] overflow-y-auto pr-4 custom-scrollbar">
                             {allData!.peerGroups.map((group, i) => (
-                                <div key={i} className="bg-white/60 border border-slate-100 rounded-[2.5rem] p-8 shadow-2xl transition-all hover:-translate-x-3 duration-500">
-                                    <div className="flex flex-col gap-6">
-                                        <div className="flex flex-wrap gap-3">
+                                <div key={i} className="bg-white/60 border border-slate-100 rounded-xl p-4 shadow-lg transition-all hover:-translate-x-1 duration-500">
+                                    <div className="flex flex-col gap-4">
+                                        <div className="flex flex-wrap gap-2">
                                             {group.students.map(name => (
-                                                <span key={name} className="text-[11px] font-black text-white bg-[#041C3C] px-6 py-2.5 rounded-xl italic tracking-tight uppercase border border-[#5CB4E4]/20 shadow-lg">
+                                                <span key={name} className="text-[10px] font-black text-white bg-[#041C3C] px-4 py-1.5 rounded-lg italic tracking-tight uppercase border border-[#5CB4E4]/20 shadow-md">
                                                     {name.replace(' ', '_')}
                                                 </span>
                                             ))}
                                         </div>
-                                        <div className="flex items-center justify-between border-t border-slate-100 pt-6">
-                                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] italic">SIMULTANEOUS ABSENCE EVENTS</span>
-                                            <span className="text-2xl font-black text-[#5CB4E4] italic">{group.count}×</span>
+                                        <div className="flex items-center justify-between border-t border-slate-100 pt-4">
+                                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] italic">SIMULTANEOUS EVENTS</span>
+                                            <span className="text-xl font-black text-[#5CB4E4] italic">{group.count}×</span>
                                         </div>
                                     </div>
                                 </div>
@@ -765,46 +764,46 @@ Generate:
     );
 
     const studentProfile = selectedStudent && (
-        <div className="mt-16 grid grid-cols-1 xl:grid-cols-2 gap-12 animate-in zoom-in-95 duration-1000">
+        <div className="mt-8 grid grid-cols-1 xl:grid-cols-2 gap-6 animate-in zoom-in-95 duration-1000">
             {/* Surveillance Dossier - Left Card */}
-            <div className="bg-white/40 backdrop-blur-xl rounded-[4.5rem] border border-white/20 p-12 space-y-12 relative overflow-hidden shadow-4xl font-outfit group">
+            <div className="bg-white/40 backdrop-blur-xl rounded-2xl border border-white/20 p-6 space-y-6 relative overflow-hidden shadow-2xl font-outfit group">
                 <div className="absolute inset-x-0 h-[2px] bg-gradient-to-r from-transparent via-[#5CB4E4]/40 to-transparent top-0 z-20 animate-scan-y opacity-30 pointer-events-none" />
                 <div className="absolute inset-0 opacity-[0.05] pointer-events-none bg-blueprint" />
                 
                 <div className="flex items-start gap-12 relative z-10">
                     <div className="relative">
-                        <div className="w-32 h-32 rounded-[2.8rem] flex items-center justify-center text-white font-black text-4xl shadow-4xl relative z-10 border-4 border-white/50 group-hover:rotate-6 transition-transform duration-700"
+                        <div className="w-20 h-20 rounded-2xl flex items-center justify-center text-white font-black text-2xl shadow-xl relative z-10 border-2 border-white/50 group-hover:rotate-6 transition-transform duration-700"
                             style={{ background: `linear-gradient(135deg, ${sectionColor(selectedStudent.section)}, #041C3C)` }}>
                             {selectedStudent.name.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()}
                         </div>
                         <div className="absolute -inset-8 bg-[#5CB4E4]/20 blur-3xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
                     </div>
-                    <div className="flex-1 min-w-0 pt-4">
-                        <h2 className="font-black text-[#041C3C] text-5xl truncate tracking-tighter italic leading-none">{selectedStudent.name.toUpperCase()}</h2>
-                        <div className="text-[12px] text-slate-400 uppercase tracking-[0.5em] mt-6 italic flex items-center gap-4">
-                            <div className="w-4 h-4 rounded-full bg-[#5CB4E4] animate-pulse shadow-[0_0_15px_rgba(92,180,228,1)]" />
+                    <div className="flex-1 min-w-0 pt-2">
+                        <h2 className="font-black text-[#041C3C] text-3xl truncate tracking-tighter italic leading-none">{selectedStudent.name.toUpperCase()}</h2>
+                        <div className="text-[10px] text-slate-400 uppercase tracking-[0.3em] mt-4 italic flex items-center gap-3">
+                            <div className="w-3 h-3 rounded-full bg-[#5CB4E4] animate-pulse shadow-[0_0_15px_rgba(92,180,228,1)]" />
                             SECTION: {selectedStudent.section.toUpperCase()}
                         </div>
-                        <div className="mt-8"><StatusBadge status={selectedStudent.status} /></div>
+                        <div className="mt-4"><StatusBadge status={selectedStudent.status} /></div>
                     </div>
                 </div>
 
-                <div className="grid grid-cols-3 gap-8 relative z-10">
+                <div className="grid grid-cols-3 gap-4 relative z-10">
                     {[
                         { label: 'ABSENCES', value: `${selectedStudent.absences}/3`, color: '#EF4444' },
                         { label: 'TOTAL ABSENCES', value: `${selectedStudent.effAbs}/3`, color: '#F59E0B' },
                         { label: 'ATTENDANCE %', value: `${selectedStudent.attendanceRate}%`, color: selectedStudent.attendanceRate >= 75 ? '#10B981' : '#EF4444' },
                     ].map(stat => (
-                        <div key={stat.label} className="bg-white/80 backdrop-blur-xl rounded-[2.8rem] p-8 text-center border border-white shadow-3xl transition-all hover:scale-105 duration-500">
-                            <div className="text-3xl font-black italic tracking-tighter mb-4" style={{ color: stat.color }}>{stat.value}</div>
-                            <div className="text-[10px] text-slate-300 uppercase tracking-[0.4em] italic font-black">{stat.label}</div>
+                        <div key={stat.label} className="bg-white/80 backdrop-blur-xl rounded-2xl p-4 text-center border border-white shadow-xl transition-all hover:scale-105 duration-500">
+                            <div className="text-xl font-black italic tracking-tighter mb-2" style={{ color: stat.color }}>{stat.value}</div>
+                            <div className="text-[9px] text-slate-300 uppercase tracking-[0.3em] italic font-black">{stat.label}</div>
                         </div>
                     ))}
                 </div>
 
-                <div className="space-y-6 relative z-10">
-                    <div className="text-[11px] text-[#041C3C] uppercase tracking-[0.5em] mb-4 italic font-black">RECENT ATTENDANCE</div>
-                    <div className="bg-white/60 backdrop-blur-xl shadow-inner p-10 rounded-[3rem] border border-white">
+                <div className="space-y-4 relative z-10">
+                    <div className="text-[10px] text-[#041C3C] uppercase tracking-[0.3em] mb-2 italic font-black">RECENT ATTENDANCE</div>
+                    <div className="bg-white/60 backdrop-blur-xl shadow-inner p-6 rounded-2xl border border-white">
                         <StreakDots streak={selectedStudent.streak} />
                     </div>
                 </div>
@@ -812,9 +811,9 @@ Generate:
                 {selectedStudent.missedTopics.length > 0 && (
                     <div className="space-y-6 relative z-10">
                         <div className="text-[11px] text-[#041C3C] uppercase tracking-[0.5em] mb-4 italic font-black">MISSED LESSONS</div>
-                        <div className="flex flex-wrap gap-4">
+                        <div className="flex flex-wrap gap-2">
                             {selectedStudent.missedTopics.map((t, i) => (
-                                <span key={i} className="text-[11px] px-8 py-4 bg-[#041C3C] text-white rounded-2.5xl font-black italic tracking-widest shadow-2xl hover:bg-[#5CB4E4] hover:text-[#041C3C] transition-all cursor-default border border-[#5CB4E4]/30 uppercase">
+                                <span key={i} className="text-[10px] px-6 py-2 bg-[#041C3C] text-white rounded-xl font-black italic tracking-widest shadow-xl hover:bg-[#5CB4E4] hover:text-[#041C3C] transition-all cursor-default border border-[#5CB4E4]/30 uppercase">
                                     {t.replace(' ', '_')}
                                 </span>
                             ))}
@@ -824,49 +823,49 @@ Generate:
             </div>
 
             {/* Right card - Intervention Panel */}
-            <div className="bg-white/40 backdrop-blur-xl rounded-[4.5rem] border border-white/20 p-12 space-y-12 flex flex-col relative overflow-hidden shadow-4xl font-outfit">
+            <div className="bg-white/40 backdrop-blur-xl rounded-2xl border border-white/20 p-6 space-y-6 flex flex-col relative overflow-hidden shadow-2xl font-outfit">
                 <div className="absolute inset-x-0 h-[2px] bg-gradient-to-r from-transparent via-[#5CB4E4]/40 to-transparent bottom-0 z-20 animate-scan-y opacity-30 pointer-events-none" />
                 <div className="absolute inset-0 opacity-[0.05] pointer-events-none bg-blueprint" />
                 
-                <h3 className="text-[13px] font-black text-[#041C3C] uppercase tracking-[0.5em] mb-6 italic flex items-center gap-6 relative z-10">
-                    <Brain size={24} className="text-[#5CB4E4]" /> AI RECOMMENDATION
+                <h3 className="text-[11px] font-black text-[#041C3C] uppercase tracking-[0.3em] mb-4 italic flex items-center gap-4 relative z-10">
+                    <Brain size={20} className="text-[#5CB4E4]" /> AI RECOMMENDATION
                 </h3>
 
                 <div className="flex-1 space-y-10 relative z-10">
                     {interventionLog.length > 0 ? (
-                        <div className="grid grid-cols-2 gap-8">
+                        <div className="grid grid-cols-2 gap-4">
                             {[
                                 { label: 'LAST CONTACT', value: interventionLog[0].date_contacted ? new Date(interventionLog[0].date_contacted).toLocaleDateString() : 'NONE' },
                                 { label: 'METHOD', value: interventionLog[0].method?.toUpperCase() || 'N/A' },
                                 { label: 'STUDENT RESPONSE', value: interventionLog[0].response?.toUpperCase() || 'N/A' },
                                 { label: 'OUTCOME', value: interventionLog[0].outcome?.toUpperCase() || 'N/A' },
                             ].map(item => (
-                                <div key={item.label} className="bg-white/80 p-8 rounded-[2.8rem] border border-white shadow-2xl group/sub transition-all hover:bg-slate-50">
-                                    <div className="text-[10px] text-slate-300 uppercase tracking-[0.4em] mb-4 italic font-black">{item.label}</div>
-                                    <div className="text-md font-black text-[#041C3C] italic tracking-tight">{item.value}</div>
+                                <div key={item.label} className="bg-white/80 p-4 rounded-xl border border-white shadow-xl group/sub transition-all hover:bg-slate-50">
+                                    <div className="text-[9px] text-slate-300 uppercase tracking-[0.3em] mb-2 italic font-black">{item.label}</div>
+                                    <div className="text-[12px] font-black text-[#041C3C] italic tracking-tight">{item.value}</div>
                                 </div>
                             ))}
                         </div>
                     ) : (
-                        <div className="bg-white/40 backdrop-blur-xl rounded-[3rem] p-16 border-4 border-dashed border-white/40 text-center flex flex-col items-center gap-8">
-                            <Activity size={48} className="text-slate-300 animate-pulse" />
-                            <p className="text-slate-400 text-[12px] font-black uppercase tracking-[0.5em] italic leading-relaxed max-w-xs">NO PREVIOUS ACTIONS RECORDED FOR THIS STUDENT</p>
+                        <div className="bg-white/40 backdrop-blur-xl rounded-2xl p-10 border-2 border-dashed border-white/40 text-center flex flex-col items-center gap-4">
+                            <Activity size={32} className="text-slate-300 animate-pulse" />
+                            <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.3em] italic leading-relaxed max-w-xs">NO PREVIOUS ACTIONS RECORDED FOR THIS STUDENT</p>
                         </div>
                     )}
 
-                    <div className="rounded-[3rem] p-12 border-l-[16px] relative shadow-4xl"
+                    <div className="rounded-xl p-6 border-l-[12px] relative shadow-xl"
                         style={{
                             backgroundColor: `${selectedStudent.riskScore >= 80 ? '#EF4444' : selectedStudent.riskScore >= 50 ? '#F59E0B' : '#10B981'}10`,
                             borderLeftColor: selectedStudent.riskScore >= 80 ? '#EF4444' : selectedStudent.riskScore >= 50 ? '#F59E0B' : '#10B981',
                         }}>
-                        <div className="flex items-center gap-6 mb-6">
-                            <ShieldCheck size={28} style={{ color: selectedStudent.riskScore >= 80 ? '#EF4444' : selectedStudent.riskScore >= 50 ? '#F59E0B' : '#10B981' }} />
-                            <div className="text-[13px] font-black uppercase tracking-[0.6em] italic"
+                        <div className="flex items-center gap-4 mb-4">
+                            <ShieldCheck size={20} style={{ color: selectedStudent.riskScore >= 80 ? '#EF4444' : selectedStudent.riskScore >= 50 ? '#F59E0B' : '#10B981' }} />
+                            <div className="text-[11px] font-black uppercase tracking-[0.4em] italic"
                                 style={{ color: selectedStudent.riskScore >= 80 ? '#EF4444' : selectedStudent.riskScore >= 50 ? '#F59E0B' : '#10B981' }}>
                                 AI SUMMARY
                             </div>
                         </div>
-                        <p className="text-xl text-[#041C3C] leading-snug font-black italic font-outfit uppercase tracking-tighter">
+                        <p className="text-lg text-[#041C3C] leading-tight font-black italic font-outfit uppercase tracking-tighter">
                             {selectedStudent.status === 'Dropout' && `Action Required: Student has reached the absence limit (${selectedStudent.effAbs} total absences).`}
                             {selectedStudent.status === 'Critical' && `Warning: Student is one absence away from being dropped.`}
                             {selectedStudent.status === 'High Risk' && `Risk Warning: Attendance rate is ${selectedStudent.attendanceRate}%, which is below the threshold.`}
@@ -875,16 +874,16 @@ Generate:
                     </div>
                 </div>
 
-                <div className="relative group/btn z-10 pt-8">
-                    <div className="absolute -inset-4 bg-gradient-to-r from-[#5CB4E4] to-[#041C3C] blur-[40px] opacity-0 group-hover/btn:opacity-60 transition-all duration-1000 rounded-[4rem]" />
+                <div className="relative group/btn z-10 pt-4">
+                    <div className="absolute -inset-2 bg-gradient-to-r from-[#5CB4E4] to-[#041C3C] blur-[20px] opacity-0 group-hover/btn:opacity-60 transition-all duration-1000 rounded-2xl" />
                     <button onClick={handleGenerateIntervention}
-                        className={`relative w-full py-8 px-12 rounded-[3.2rem] font-black text-[14px] uppercase tracking-[0.5em] transition-all duration-700 border-2 flex items-center justify-center gap-8 active:scale-95 italic shadow-4xl ${aiCopied
+                        className={`relative w-full py-4 px-8 rounded-xl font-black text-[12px] uppercase tracking-[0.3em] transition-all duration-700 border flex items-center justify-center gap-4 active:scale-95 italic shadow-xl ${aiCopied
                             ? 'bg-emerald-500 text-white border-white scale-105'
                             : 'bg-[#041C3C] text-white border-[#5CB4E4]/30 hover:bg-[#5CB4E4] hover:text-[#041C3C]'
                             }`}>
-                        {aiCopied ? <><CheckCircle size={32} /> TEXT COPIED</> : <><Brain size={32} /> GET AI ADVICE</>}
+                        {aiCopied ? <><CheckCircle size={20} /> TEXT COPIED</> : <><Brain size={20} /> GET AI ADVICE</>}
                     </button>
-                    <p className="text-[10px] text-slate-400 text-center uppercase tracking-[0.6em] italic font-black mt-10 animate-pulse">
+                    <p className="text-[9px] text-slate-400 text-center uppercase tracking-[0.4em] italic font-black mt-4 animate-pulse">
                         AI ENGINE: CONNECTED
                     </p>
                 </div>
@@ -893,22 +892,22 @@ Generate:
     );
 
     const studentsContent = (
-        <div className="space-y-12 animate-in fade-in duration-1000">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div className="space-y-4 animate-in fade-in duration-1000">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <KpiCard label="Dropout Alerts" value={studentKPIs.dropout} color="#EF4444" icon={<TrendingDown size={24} />} />
                 <KpiCard label="Critical Breach" value={studentKPIs.critical} color="#F59E0B" icon={<AlertTriangle size={24} />} />
                 <KpiCard label="High Stability Risk" value={studentKPIs.highRisk} color="#F59E0B" icon={<Signal size={24} />} />
                 <KpiCard label="Recently Absent" value={studentKPIs.pending} color="#8B5CF6" icon={<Activity size={24} />} />
             </div>
 
-            <div className="bg-white/40 backdrop-blur-xl rounded-[4.5rem] border border-white/20 overflow-hidden shadow-4xl font-outfit relative">
+            <div className="bg-white/40 backdrop-blur-xl rounded-2xl border border-white/20 overflow-hidden shadow-xl font-outfit relative">
                 <div className="absolute inset-0 opacity-[0.05] pointer-events-none bg-blueprint" />
-                <div className="p-12 border-b border-slate-100 flex items-center justify-between bg-white relative z-10 transition-colors hover:bg-slate-50">
-                    <div className="flex items-center gap-8">
-                        <div className="p-4 bg-[#041C3C] text-[#5CB4E4] rounded-2xl shadow-xl">
-                            <Users size={28} />
+                <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-white relative z-10 transition-colors hover:bg-slate-50">
+                    <div className="flex items-center gap-6">
+                        <div className="p-2.5 bg-[#041C3C] text-[#5CB4E4] rounded-xl shadow-lg">
+                            <Users size={20} />
                         </div>
-                        <h3 className="text-[14px] font-black text-[#041C3C] uppercase tracking-[0.6em] italic">
+                        <h3 className="text-[11px] font-black text-[#041C3C] uppercase tracking-[0.4em] italic">
                             STUDENT ATTENDANCE ASSESSMENT
                         </h3>
                     </div>
@@ -922,7 +921,7 @@ Generate:
                         <thead>
                             <tr className="bg-[#041C3C] border-b border-[#5CB4E4]/30">
                                 {['STUDENT NAME', 'SECTION', 'ABSENCES', 'LATES', 'TOTAL', 'RECENT', 'RISK', 'STATUS', 'ACTION'].map(h => (
-                                    <th key={h} className="px-10 py-8 text-[11px] font-black text-[#5CB4E4] uppercase tracking-[0.4em] text-left italic">{h}</th>
+                                    <th key={h} className="px-6 py-4 text-[10px] font-black text-[#5CB4E4] uppercase tracking-[0.3em] text-left italic">{h}</th>
                                 ))}
                             </tr>
                         </thead>
@@ -947,31 +946,31 @@ Generate:
                                 return (
                                     <tr key={`${student.id}-${student.classId}`}
                                         onClick={() => { setSelectedStudent(student); setInterventionLog([]); }}
-                                        className={`cursor-pointer transition-all duration-700 group/row relative ${isSelected ? 'bg-[#5CB4E4]/15' : 'bg-white/40 hover:bg-white/80'}`}>
-                                        <td className="px-10 py-8 text-lg font-black text-[#041C3C] whitespace-nowrap italic group-hover/row:translate-x-4 transition-transform flex items-center gap-6">
-                                            {isSelected ? <div className="w-3.5 h-3.5 rounded-full bg-[#5CB4E4] animate-pulse shadow-[0_0_20px_rgba(92,180,228,1)]" /> : <div className="w-2.5 h-2.5 rounded-full bg-slate-200" />}
+                                        className={`cursor-pointer transition-all duration-700 group/row relative border-b border-slate-50/50 ${isSelected ? 'bg-[#5CB4E4]/10' : 'bg-white/10 hover:bg-white/30'}`}>
+                                        <td className="px-4 py-2 text-[11px] font-black text-[#041C3C] whitespace-nowrap italic group-hover/row:translate-x-1 transition-transform flex items-center gap-3">
+                                            <div className={`w-1 h-8 rounded-full transition-all duration-700 ${isSelected ? 'bg-[#5CB4E4] shadow-[0_0_15px_rgba(92,180,228,1)]' : 'bg-slate-200 group-hover/row:bg-slate-300'}`} />
                                             {student.name.toUpperCase()}
                                         </td>
-                                        <td className="px-10 py-8">
-                                            <span className="text-[11px] font-black px-6 py-2.5 rounded-xl border-2 italic shadow-2xl transition-all group-hover/row:scale-110"
+                                        <td className="px-4 py-2">
+                                            <span className="text-[8px] font-black px-2 py-0.5 rounded-md border italic shadow-sm transition-all group-hover/row:scale-105"
                                                 style={{
                                                     backgroundColor: `${sectionColor(student.section)}10`,
-                                                    borderColor: `${sectionColor(student.section)}40`,
+                                                    borderColor: `${sectionColor(student.section)}30`,
                                                     color: sectionColor(student.section),
                                                 }}>
                                                 {student.section.toUpperCase()}
                                             </span>
                                         </td>
-                                        <td className="px-10 py-8 text-xl font-black text-rose-500 italic text-center opacity-60 group-hover/row:opacity-100">{student.absences.toString().padStart(2, '0')}</td>
-                                        <td className="px-10 py-8 text-xl font-black text-[#F59E0B] italic text-center opacity-60 group-hover/row:opacity-100">{student.lates.toString().padStart(2, '0')}</td>
-                                        <td className="px-10 py-8 text-xl font-black italic text-center"
+                                        <td className="px-4 py-2 text-[11px] font-black text-rose-500 italic text-center opacity-60 group-hover/row:opacity-100">{student.absences.toString().padStart(2, '0')}</td>
+                                        <td className="px-4 py-2 text-[11px] font-black text-[#F59E0B] italic text-center opacity-60 group-hover/row:opacity-100">{student.lates.toString().padStart(2, '0')}</td>
+                                        <td className="px-4 py-2 text-[11px] font-black italic text-center"
                                             style={{ color: student.effAbs >= 3 ? '#EF4444' : student.effAbs >= 2 ? '#F59E0B' : '#041C3C' }}>
                                             {student.effAbs.toString().padStart(2, '0')}
                                         </td>
-                                        <td className="px-10 py-8"><StreakDots streak={student.streak.slice(0, 8)} /></td>
-                                        <td className="px-10 py-8"><RiskMiniBar score={student.riskScore} /></td>
-                                        <td className="px-10 py-8"><StatusBadge status={student.status} /></td>
-                                        <td className="px-10 py-8"><InterventionBadge status={student.interventionStatus} /></td>
+                                        <td className="px-4 py-2 scale-75 origin-left"><StreakDots streak={student.streak.slice(0, 8)} /></td>
+                                        <td className="px-4 py-2"><RiskMiniBar score={student.riskScore} /></td>
+                                        <td className="px-4 py-2 scale-90 origin-left"><StatusBadge status={student.status} /></td>
+                                        <td className="px-4 py-2 scale-90 origin-left"><InterventionBadge status={student.interventionStatus} /></td>
                                     </tr>
                                 );
                             })}
@@ -980,38 +979,53 @@ Generate:
                 </div>
             </div>
 
-            {/* Quick Selection Hub */}
+            {/* Quick Selection Hub - OPTIMIZED */}
             {atRiskStudents.length > 0 && (
-                <div className="flex flex-wrap gap-4 items-center bg-white/40 p-6 rounded-[2.5rem] border border-white/20 shadow-2xl backdrop-blur-xl">
-                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em] italic mr-4">QUICK SELECT:</span>
-                    {atRiskStudents.map(s => {
-                        const active = selectedStudent?.id === s.id && selectedStudent?.classId === s.classId;
-                        return (
-                            <button key={`${s.id}-${s.classId}`}
-                                onClick={() => { setSelectedStudent(s); setInterventionLog([]); }}
-                                className="px-6 py-2.5 text-[10px] font-black uppercase tracking-[0.2em] rounded-xl transition-all duration-700 border-2 italic active:scale-90 hover:shadow-2xl"
-                                style={{
-                                    borderColor: active ? sectionColor(s.section) : 'rgba(92,180,228,0.2)',
-                                    backgroundColor: active ? `${sectionColor(s.section)}20` : 'rgba(255,255,255,0.4)',
-                                    color: active ? sectionColor(s.section) : '#041C3C',
-                                }}>
-                                {s.name.split(' ')[0].toUpperCase()}
-                            </button>
-                        );
-                    })}
+                <div className="flex flex-col gap-3 bg-white/40 p-6 rounded-[2.5rem] border border-white/20 shadow-2xl backdrop-blur-xl relative overflow-hidden">
+                    <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-blueprint" />
+                    <div className="flex items-center justify-between mb-2">
+                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em] italic">CRITICAL_DOSSIER: QUICK_ACCESS</span>
+                        <span className="text-[9px] font-black text-[#5CB4E4] uppercase tracking-[0.2em] italic opacity-50">TOP 12 PRIORITY TARGETS</span>
+                    </div>
+                    <div className="flex flex-wrap gap-2 items-center relative z-10">
+                        {atRiskStudents.slice(0, 12).map(s => {
+                            const active = selectedStudent?.id === s.id && selectedStudent?.classId === s.classId;
+                            return (
+                                <button key={`${s.id}-${s.classId}`}
+                                    onClick={() => { setSelectedStudent(s); setInterventionLog([]); }}
+                                    className="px-4 py-1.5 text-[9px] font-black uppercase tracking-[0.1em] rounded-lg transition-all duration-500 border italic active:scale-90 hover:shadow-lg flex items-center gap-2 group"
+                                    style={{
+                                        borderColor: active ? sectionColor(s.section) : 'rgba(92,180,228,0.1)',
+                                        backgroundColor: active ? `${sectionColor(s.section)}15` : 'rgba(255,255,255,0.4)',
+                                        color: active ? sectionColor(s.section) : '#041C3C',
+                                    }}>
+                                    <div className="w-2 h-2 rounded-full" style={{ 
+                                        backgroundColor: s.status === 'Dropout' ? '#EF4444' : s.status === 'Critical' ? '#F59E0B' : '#5CB4E4',
+                                        boxShadow: `0 0 10px ${s.status === 'Dropout' ? '#EF4444' : s.status === 'Critical' ? '#F59E0B' : '#5CB4E4'}`
+                                    }} />
+                                    {s.name.split(' ')[0].toUpperCase()}
+                                </button>
+                            );
+                        })}
+                        {atRiskStudents.length > 12 && (
+                            <span className="text-[9px] font-black text-slate-300 uppercase tracking-[0.2em] italic ml-2">
+                                +{atRiskStudents.length - 12} MORE IN LIST BELOW
+                            </span>
+                        )}
+                    </div>
                 </div>
             )}
 
             {selectedStudent ? studentProfile : (
-                <div className="bg-white/40 backdrop-blur-xl rounded-[4.5rem] border-4 border-dashed border-white/40 p-[120px] text-center shadow-3xl relative overflow-hidden group">
+                <div className="bg-white/40 backdrop-blur-xl rounded-2xl border-2 border-dashed border-white/40 p-16 text-center shadow-xl relative overflow-hidden group">
                     <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-blueprint" />
-                    <div className="relative z-10 flex flex-col items-center gap-10">
-                        <div className="w-32 h-32 bg-[#041C3C]/5 rounded-full flex items-center justify-center border border-[#041C3C]/10 group-hover:scale-110 group-hover:rotate-12 transition-all duration-1000 shadow-inner">
-                            <Activity size={48} className="text-[#041C3C]/20" />
+                    <div className="relative z-10 flex flex-col items-center gap-6">
+                        <div className="w-20 h-20 bg-[#041C3C]/5 rounded-full flex items-center justify-center border border-[#041C3C]/10 group-hover:scale-110 group-hover:rotate-12 transition-all duration-1000 shadow-inner">
+                            <Activity size={32} className="text-[#041C3C]/20" />
                         </div>
-                        <div className="space-y-4">
-                            <h3 className="text-2xl font-black text-[#041C3C] uppercase tracking-[0.6em] italic">SELECT A STUDENT</h3>
-                            <p className="text-[11px] text-slate-400 font-black uppercase tracking-[0.4em] italic max-w-md">Select a student from the list above to view their detailed attendance report.</p>
+                        <div className="space-y-2">
+                            <h3 className="text-xl font-black text-[#041C3C] uppercase tracking-[0.4em] italic">SELECT A STUDENT</h3>
+                            <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.2em] italic max-w-md">Select a student from the list above to view their detailed attendance report.</p>
                         </div>
                     </div>
                 </div>
@@ -1020,55 +1034,41 @@ Generate:
     );
 
     return (
-        <div className="space-y-12 font-outfit relative">
-            {/* Environmental Header Grid */}
-            <div className="absolute inset-x-0 h-[2px] bg-gradient-to-r from-transparent via-[#5CB4E4]/40 to-transparent top-0 pointer-events-none z-20" />
-
-            {/* Filter Hub Redesigned */}
-            <div className="bg-white/40 backdrop-blur-xl rounded-[4.5rem] border border-white/20 p-12 space-y-10 shadow-4xl relative overflow-hidden font-outfit">
-                <div className="absolute inset-x-0 h-[2px] bg-gradient-to-r from-transparent via-[#5CB4E4]/30 to-transparent bottom-0 z-20 animate-scan-y opacity-30 pointer-events-none" />
-                <div className="absolute inset-0 opacity-[0.05] pointer-events-none bg-blueprint" />
+        <div className="space-y-4 font-outfit relative">
+            {/* Filter Hub - INDUSTRIAL HUD */}
+            <div className="bg-white/40 backdrop-blur-xl rounded-xl border border-white/20 p-2 shadow-xl relative overflow-hidden font-outfit">
+                <div className="absolute inset-0 opacity-[0.02] pointer-events-none bg-blueprint" />
                 
-                {/* Row 1 — Section pills */}
-                <div className="flex flex-col lg:flex-row lg:items-center gap-10 relative z-10">
-                    <div className="flex items-center gap-6 flex-shrink-0">
-                        <div className="p-4 bg-[#041C3C] text-[#5CB4E4] rounded-2xl shadow-xl">
-                            <Users size={24} />
+                <div className="flex flex-wrap items-center gap-x-6 gap-y-2 relative z-10">
+                    {/* Section Filter Cluster */}
+                    <div className="flex flex-col gap-1">
+                        <span className="text-[7px] font-black text-slate-400 uppercase tracking-[0.3em] italic leading-none ml-2">INSTRUMENT_01: SECTION_FILTER</span>
+                        <div className="flex flex-wrap gap-1">
+                            <SectionPill id="all" label="ALL" color="#041C3C" />
+                            {sections.map(s => <SectionPill key={s.id} id={s.id} label={s.label} color={s.color} />)}
                         </div>
-                        <span className="text-[12px] font-black text-[#041C3C] uppercase tracking-[0.6em] italic">FILTER BY SECTION:</span>
                     </div>
-                    <div className="flex flex-wrap gap-5">
-                        <SectionPill id="all" label="ALL SECTIONS" color="#041C3C" />
-                        {sections.map(s => <SectionPill key={s.id} id={s.id} label={s.label} color={s.color} />)}
-                    </div>
-                </div>
 
-                {/* Row 2 — Filters */}
-                <div className="flex flex-col xl:flex-row xl:items-center gap-10 relative z-10 pt-10 border-t border-slate-100/50">
-                    <div className="flex items-center gap-10 flex-wrap">
-                        <div className="flex items-center gap-6">
-                            <div className="p-4 bg-[#5CB4E4] text-white rounded-2xl shadow-xl">
-                                <History size={24} />
-                            </div>
-                            <span className="text-[12px] font-black text-[#041C3C] uppercase tracking-[0.6em] italic">TIME PERIOD:</span>
-                        </div>
+                    <div className="w-[1px] h-10 bg-slate-200/50 self-end mb-1" />
+
+                    {/* Time Period Cluster */}
+                    <div className="flex flex-col gap-1">
+                        <span className="text-[7px] font-black text-slate-400 uppercase tracking-[0.3em] italic leading-none ml-2">INSTRUMENT_02: TIME_WINDOW</span>
                         <PillToggle
                             value={activePeriod}
-                            options={[{ id: 'semester', label: 'FULL SEMESTER' }, { id: 'week', label: 'CURRENT WEEK' }]}
+                            options={[{ id: 'semester', label: 'SEMESTER' }, { id: 'week', label: 'WEEK' }]}
                             onChange={v => setActivePeriod(v as any)}
                         />
                     </div>
-                    <div className="hidden xl:block w-px h-12 bg-slate-200 mx-6" />
-                    <div className="flex items-center gap-10 flex-wrap">
-                        <div className="flex items-center gap-6">
-                            <div className="p-4 bg-[#041C3C] text-[#5CB4E4] rounded-2xl shadow-xl">
-                                <Zap size={24} />
-                            </div>
-                            <span className="text-[12px] font-black text-[#041C3C] uppercase tracking-[0.6em] italic">DAY FILTER:</span>
-                        </div>
+
+                    <div className="w-[1px] h-10 bg-slate-200/50 self-end mb-1" />
+
+                    {/* Day Filter Cluster */}
+                    <div className="flex flex-col gap-1">
+                        <span className="text-[7px] font-black text-slate-400 uppercase tracking-[0.3em] italic leading-none ml-2">INSTRUMENT_03: FREQUENCY_MASK</span>
                         <PillToggle
                             value={activeDay}
-                            options={[{ id: 'all', label: 'ALL DAYS' }, { id: 'mwf', label: 'MWF CLASSES' }, { id: 'tth', label: 'TTH CLASSES' }]}
+                            options={[{ id: 'all', label: 'ALL' }, { id: 'mwf', label: 'MWF' }, { id: 'tth', label: 'TTH' }]}
                             onChange={v => setActiveDay(v as any)}
                         />
                     </div>
@@ -1076,28 +1076,28 @@ Generate:
             </div>
 
             {/* Sub-tab navigation */}
-            <div className="flex items-center gap-8 bg-white/60 p-4 rounded-[3.5rem] border border-white backdrop-blur-2xl shadow-3xl self-start font-outfit">
+            <div className="flex items-center gap-4 bg-white/60 p-2 rounded-2xl border border-white backdrop-blur-2xl shadow-xl self-start font-outfit">
                 <button onClick={() => setActiveSubTab('dashboard')}
-                    className={`relative px-16 py-6 text-[13px] font-black uppercase tracking-[0.4em] rounded-[2.5rem] transition-all duration-1000 italic active:scale-95 ${activeSubTab === 'dashboard'
-                        ? 'bg-[#041C3C] text-white shadow-4xl scale-110'
+                    className={`relative px-8 py-3 text-[11px] font-black uppercase tracking-[0.2em] rounded-xl transition-all duration-1000 italic active:scale-95 ${activeSubTab === 'dashboard'
+                        ? 'bg-[#041C3C] text-white shadow-xl scale-105'
                         : 'bg-transparent text-slate-400 hover:text-[#041C3C] hover:bg-white'
                         }`}>
                     STATISTICS DASHBOARD
-                    {activeSubTab === 'dashboard' && <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 w-3 h-3 bg-[#5CB4E4] rounded-full shadow-[0_0_15px_rgba(92,180,228,1)] animate-pulse" />}
+                    {activeSubTab === 'dashboard' && <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-2 h-2 bg-[#5CB4E4] rounded-full shadow-[0_0_15px_rgba(92,180,228,1)] animate-pulse" />}
                 </button>
                 
                 <button onClick={() => setActiveSubTab('students')}
-                    className={`relative px-16 py-6 text-[13px] font-black uppercase tracking-[0.4em] rounded-[2.5rem] transition-all duration-1000 italic active:scale-95 ${activeSubTab === 'students'
-                        ? 'bg-[#041C3C] text-white shadow-4xl scale-110'
+                    className={`relative px-8 py-3 text-[11px] font-black uppercase tracking-[0.2em] rounded-xl transition-all duration-1000 italic active:scale-95 ${activeSubTab === 'students'
+                        ? 'bg-[#041C3C] text-white shadow-xl scale-105'
                         : 'bg-transparent text-slate-400 hover:text-[#041C3C] hover:bg-white'
                         }`}>
                     RISK DASHBOARD
                     {(allData?.students.filter(s => s.status !== 'Good').length ?? 0) > 0 && (
-                        <span className="ml-6 inline-flex items-center justify-center px-5 py-2 text-[11px] font-black bg-rose-500 text-white rounded-xl shadow-2xl animate-pulse">
+                        <span className="ml-4 inline-flex items-center justify-center px-3 py-1.5 text-[10px] font-black bg-rose-500 text-white rounded-lg shadow-xl animate-pulse">
                             {allData!.students.filter(s => s.status !== 'Good').length} ALERT
                         </span>
                     )}
-                    {activeSubTab === 'students' && <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 w-3 h-3 bg-rose-500 rounded-full shadow-[0_0_15px_rgba(244,63,94,1)] animate-pulse" />}
+                    {activeSubTab === 'students' && <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-2 h-2 bg-rose-500 rounded-full shadow-[0_0_15px_rgba(244,63,94,1)] animate-pulse" />}
                 </button>
             </div>
 

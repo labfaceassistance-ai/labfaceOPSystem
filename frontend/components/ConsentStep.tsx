@@ -132,7 +132,7 @@ export default function ConsentStep({
         <div className="w-full animate-fade-in">
             <div className="bg-white rounded-[2.5rem] shadow-2xl overflow-hidden border border-slate-200 relative">
                 {/* Header */}
-                <div className="bg-identity-navy p-10 relative overflow-hidden">
+                <div className="bg-identity-navy p-6 md:p-10 relative overflow-hidden">
                     <div className="absolute inset-0 bg-gradient-to-br from-identity-sky/20 via-transparent to-transparent" />
                     <div className="flex items-center gap-6 relative z-10">
                         <div className="bg-identity-sky p-4 rounded-[1.5rem] shadow-2xl text-white">
@@ -147,17 +147,17 @@ export default function ConsentStep({
 
                 {/* Scrollable Content */}
                 <div
-                    className="p-10 overflow-y-auto max-h-[55vh] custom-scrollbar space-y-12 bg-[#F8FAFC]"
+                    className="p-6 md:p-10 overflow-y-auto max-h-[60vh] md:max-h-[55vh] custom-scrollbar space-y-8 md:space-y-12 bg-[#F8FAFC]"
                     onScroll={handleScroll}
                 >
                     {/* Important Notice */}
-                    <div className="bg-white border border-slate-200 rounded-[2rem] p-8 shadow-sm relative overflow-hidden group">
+                    <div className="bg-white border border-slate-200 rounded-2xl md:rounded-[2rem] p-6 md:p-8 shadow-sm relative overflow-hidden group">
                         <div className="absolute top-0 left-0 w-1.5 h-full bg-identity-sky opacity-20" />
                         <div className="flex gap-6">
                             <AlertCircle className="text-identity-sky flex-shrink-0 mt-1" size={24} />
                             <div>
                                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-3">Data Privacy Policy</p>
-                                <p className="text-identity-navy text-xs font-black uppercase tracking-[0.15em] leading-relaxed">
+                                <p className="text-identity-navy text-[11px] md:text-xs font-black uppercase tracking-[0.15em] leading-relaxed">
                                     {content.description}
                                 </p>
                             </div>
@@ -170,9 +170,9 @@ export default function ConsentStep({
                             <span className="w-8 h-px bg-identity-sky/30"></span>
                             Privacy Details
                         </h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
                             {content.details.map((detail, idx) => (
-                                <div key={idx} className="flex gap-5 p-6 bg-white rounded-2xl border border-slate-100 hover:border-identity-sky/30 transition-all group shadow-sm">
+                                <div key={idx} className="flex gap-4 md:gap-5 p-5 md:p-6 bg-white rounded-xl md:rounded-2xl border border-slate-100 hover:border-identity-sky/30 transition-all group shadow-sm">
                                     <div className="shrink-0 scale-100 group-hover:scale-110 transition-transform duration-500">
                                         {detail.icon}
                                     </div>
@@ -186,7 +186,7 @@ export default function ConsentStep({
                     </div>
 
                     {/* Risks */}
-                    <div className="bg-rose-50 border border-rose-100 rounded-2xl p-8">
+                    <div className="bg-rose-50 border border-rose-100 rounded-xl md:rounded-2xl p-6 md:p-8">
                         <h3 className="text-[10px] font-black text-rose-600 mb-5 flex items-center gap-3 uppercase tracking-[0.15em]">
                             <AlertCircle size={14} />
                             Strategic Risks
@@ -202,7 +202,7 @@ export default function ConsentStep({
                     </div>
 
                     {/* Your Rights */}
-                    <div className="bg-white border border-slate-200 rounded-2xl p-8 shadow-sm">
+                    <div className="bg-white border border-slate-200 rounded-xl md:rounded-2xl p-6 md:p-8 shadow-sm">
                         <h3 className="text-[10px] font-black mb-6 text-identity-navy uppercase tracking-[0.15em]">Digital Sovereignty Rights</h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-8 text-[9px] font-black uppercase tracking-[0.15em] text-slate-400">
                             {[
@@ -233,7 +233,7 @@ export default function ConsentStep({
                 </div>
 
                 {/* Footer */}
-                <div className="bg-white p-10 border-t border-slate-100 relative z-10 shadow-[0_-10px_30px_rgba(0,0,0,0.02)]">
+                <div className="bg-white p-6 md:p-10 border-t border-slate-100 relative z-10 shadow-[0_-10px_30px_rgba(0,0,0,0.02)]">
                     <div className="flex items-start gap-5 mb-10">
                         <div className="relative flex items-center shrink-0">
                             <input

@@ -2,8 +2,9 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Navbar from '../../../../components/Navbar';
-import { Calendar, Clock, User as UserIcon, AlertCircle, XCircle, CheckCircle, ChevronLeft, Filter, Camera } from 'lucide-react';
+import { Calendar, Clock, User as UserIcon, AlertCircle, XCircle, CheckCircle, Filter, Camera } from 'lucide-react';
 import Link from 'next/link';
+import BackButton from '@/components/ui/BackButton';
 import { getToken, getUser, getBackendUrl } from '../../../../utils/auth';
 import { useMemo } from 'react';
 
@@ -136,7 +137,7 @@ export default function ClassDetailsPage() {
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-6 relative overflow-hidden">
+            <div className="min-h-screen bg-transparent flex flex-col items-center justify-center p-6 relative overflow-hidden">
                 <IdentityBackground />
                 <div className="relative z-10 text-center">
                     <div className="w-16 h-16 border-4 border-identity-sky/20 border-t-identity-sky rounded-full animate-spin mx-auto mb-6 shadow-2xl shadow-identity-sky/10"></div>
@@ -148,7 +149,7 @@ export default function ClassDetailsPage() {
 
     if (error || !data) {
         return (
-            <div className="min-h-screen bg-slate-50 font-sans p-8 relative overflow-hidden">
+            <div className="min-h-screen bg-transparent font-sans p-8 relative overflow-hidden">
                 <IdentityBackground />
                 <Navbar />
                 <div className="max-w-7xl mx-auto mt-28 relative z-10">
@@ -166,16 +167,18 @@ export default function ClassDetailsPage() {
     }
 
     return (
-        <div className="min-h-screen bg-slate-50 font-sans text-slate-900 selection:bg-identity-sky/10 selection:text-identity-navy relative page-transition">
+        <div className="min-h-screen bg-transparent font-outfit select-none text-slate-900 selection:bg-identity-sky/10 selection:text-identity-navy relative page-transition overflow-hidden">
             <IdentityBackground />
             <Navbar />
 
-            <main className="max-w-7xl mx-auto px-4 pb-4 pt-20 md:px-8 md:pb-8 md:pt-28 relative z-10">
+            <main className="max-w-7xl mx-auto px-6 pt-32 pb-20 relative z-10">
                 {/* Header */}
                 <div className="mb-12 relative z-30 animate-fade-up">
-                    <Link href="/student/dashboard" className="inline-flex items-center gap-3 text-slate-400 hover:text-identity-navy mb-8 transition-all bg-white/40 backdrop-blur-md rounded-2xl px-5 py-3 -ml-2 border border-identity-sky/10 shadow-sm font-black uppercase text-[9px] tracking-[0.15em] group">
-                        <ChevronLeft size={16} className="group-hover:-translate-x-1 transition-transform" /> Back to Dashboard
-                    </Link>
+                    <BackButton 
+                        href="/student/dashboard" 
+                        label="Back to Dashboard" 
+                        className="mb-8 bg-white/40 backdrop-blur-md rounded-2xl px-5 py-3 -ml-2 border border-identity-sky/10 shadow-sm italic" 
+                    />
                     
                     <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
                         <div className="space-y-4">
@@ -236,7 +239,7 @@ export default function ClassDetailsPage() {
                 </div>
 
                 {/* History List */}
-                <div className="identity-glass rounded-[2rem] md:rounded-[3rem] border border-identity-sky/5 shadow-2xl relative overflow-hidden animate-fade-up bg-white/40 mb-12" style={{ animationDelay: '200ms' }}>
+                <div className="identity-glass rounded-[2.5rem] md:rounded-[3.5rem] border border-white/20 shadow-4xl relative overflow-hidden animate-fade-up bg-white/40 mb-16" style={{ animationDelay: '200ms' }}>
                     <div className="p-8 md:p-10 border-b border-identity-sky/5 flex flex-col md:flex-row md:items-center justify-between gap-6">
                         <div className="flex items-center gap-5">
                             <div className="bg-identity-sky/10 p-3 rounded-2xl border border-identity-sky/10">

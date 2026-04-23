@@ -401,6 +401,12 @@ router.post('/sessions/:sessionId/stop', async (req, res) => {
         // Note: Absence finalization is now handled by the arrival-time thresholds during the session.
         // We no longer track "leavers" specifically since hardware is entrance-only.
 
+        // Trigger class-wide risk audit (background)
+        const [sessionInfo] = await pool.query('SELECT class_id FROM sessions WHERE id = ?', [sessionId]);
+        if (sessionInfo.length > 0) {
+            warningService.checkAndNotifyClass(sessionInfo[0].class_id).catch(e => console.error('[SessionStop Audit Error]', e));
+        }
+
         res.json({
             success: true,
             message: 'Monitoring stopped',

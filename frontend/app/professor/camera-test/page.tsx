@@ -11,6 +11,8 @@ import {
     Signal, Monitor, Zap, Disc
 } from 'lucide-react';
 import { getToken } from '@/utils/auth';
+import BackButton from '@/components/ui/BackButton';
+import IdentityBackground from '@/components/IdentityBackground';
 
 interface FaceMatch {
     bbox: number[];
@@ -207,19 +209,19 @@ export default function CameraTestPage() {
     }, [displayFaces, sourceDims]);
 
     return (
-        <div className="min-h-screen bg-transparent p-10 font-outfit relative overflow-hidden">
-            <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-blueprint" />
+        <div className="min-h-screen bg-transparent font-outfit select-none relative overflow-hidden">
+            <IdentityBackground />
             
-            <div className="max-w-[1600px] mx-auto space-y-10 relative z-10">
+            <main className="max-w-7xl mx-auto px-6 pt-32 pb-20 relative z-10">
                 {/* Header HUD */}
                 <div className="bg-white/40 backdrop-blur-3xl rounded-[4rem] border border-white/20 p-10 flex flex-col xl:flex-row xl:items-center justify-between gap-10 shadow-4xl relative overflow-hidden group">
                     <div className="absolute inset-x-0 h-[2px] bg-gradient-to-r from-transparent via-[#5CB4E4]/40 to-transparent top-0 z-20 animate-scan-y opacity-30 pointer-events-none" />
                     
                     <div className="flex items-center gap-10">
-                        <Link href="/professor/dashboard?tab=monitor"
-                            className="bg-[#041C3C] text-white p-6 rounded-[2rem] hover:bg-[#5CB4E4] hover:scale-110 active:scale-95 transition-all duration-700 shadow-4xl group/back">
-                            <ArrowLeft size={28} className="group-hover/back:-translate-x-2 transition-transform" />
-                        </Link>
+                        <BackButton 
+                            href="/professor/dashboard?tab=monitor"
+                            className="bg-[#041C3C] text-white p-6 rounded-[2rem] hover:bg-[#5CB4E4] hover:scale-110 active:scale-95 transition-all duration-700 shadow-4xl group/back"
+                        />
                         <div>
                             <h1 className="text-5xl font-black text-[#041C3C] uppercase tracking-tighter italic flex items-center gap-6">
                                 Biometric Verification Hub
@@ -399,7 +401,7 @@ export default function CameraTestPage() {
                         </div>
                     </div>
                 </div>
-            </div>
+            </main>
         </div>
     );
 }

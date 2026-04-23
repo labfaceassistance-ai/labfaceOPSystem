@@ -454,7 +454,7 @@ router.get('/professor/:userId/absence-by-day', authenticateToken, requireRole([
 });
 
 // ============================================================
-// NEW: Full students at-risk list
+// NEW: Full students at-risk list (OPTIMIZED)
 // ============================================================
 router.get('/professor/:userId/students-at-risk', authenticateToken, requireRole(['professor', 'admin']), async (req, res) => {
     try {
@@ -465,6 +465,7 @@ router.get('/professor/:userId/students-at-risk', authenticateToken, requireRole
         if (classes.length === 0) return res.json([]);
         const classIds = classes.map(c => c.id);
 
+        // Fetch basic stats and intervention status in one query
         const [students] = await pool.query(`
             SELECT
                 u.id,
@@ -473,22 +474,25 @@ router.get('/professor/:userId/students-at-risk', authenticateToken, requireRole
                 c.section,
                 c.id as class_id,
                 c.subject_code,
-                SUM(CASE WHEN al.status = 'Absent' THEN 1 ELSE 0 END) as abs_count,
+                SUM(CASE WHEN al.status = 'Absent' OR al.id IS NULL THEN 1 ELSE 0 END) as abs_count,
                 SUM(CASE WHEN al.status = 'Late' THEN 1 ELSE 0 END) as late_count,
                 SUM(CASE WHEN al.status IN ('Present','Late','Excused') THEN 1 ELSE 0 END) as attended,
-                COUNT(DISTINCT s.id) as total_sessions
+                COUNT(DISTINCT s.id) as total_sessions,
+                (SELECT outcome FROM interventions i WHERE i.professor_id = ? AND i.student_id = u.id ORDER BY i.created_at DESC LIMIT 1) as latest_intervention,
+                GROUP_CONCAT(COALESCE(al.status, 'Absent') ORDER BY s.date DESC, s.start_time DESC) as streak_raw,
+                GROUP_CONCAT(DISTINCT CASE WHEN al.status = 'Absent' OR al.id IS NULL THEN COALESCE(s.session_name, DATE_FORMAT(s.date, '%b %d')) END ORDER BY s.date DESC) as missed_topics_raw
             FROM enrollments e
             JOIN users u ON e.student_id = u.id
             JOIN classes c ON e.class_id = c.id
-            LEFT JOIN sessions s ON e.class_id = s.class_id
+            JOIN sessions s ON e.class_id = s.class_id
                 AND (s.monitoring_ended_at IS NOT NULL OR s.date < CURDATE())
             LEFT JOIN attendance_logs al ON s.id = al.session_id AND al.student_id = u.id
                 AND al.status NOT LIKE 'Log%' AND al.status != 'Unknown'
-            WHERE e.class_id IN (${inClause(classIds)}) AND e.student_id IS NOT NULL
+            WHERE e.class_id IN (${inClause(classIds)})
             GROUP BY u.id, c.id
-        `, classIds);
+        `, [professorPk, ...classIds]);
 
-        const result = await Promise.all(students.map(async (s) => {
+        const result = students.map(s => {
             const absCount = Number(s.abs_count) || 0;
             const lateCount = Number(s.late_count) || 0;
             const attended = Number(s.attended) || 0;
@@ -497,63 +501,22 @@ router.get('/professor/:userId/students-at-risk', authenticateToken, requireRole
             const effAbs = absCount + Math.floor(lateCount / 3);
             const rate = totalSessions > 0 ? Math.round((attended / totalSessions) * 100) : 100;
 
-            let riskScore = 0;
-            if (effAbs >= 3) riskScore = 95;
-            else if (effAbs >= 2) riskScore = 78;
-            else if (rate < 75) riskScore = 62;
-            else if (rate < 85) riskScore = 38;
-            else riskScore = 12;
-
             let status = 'Good';
-            if (effAbs >= 3) status = 'Dropout';
-            else if (effAbs === 2) status = 'Critical';
-            else if (rate < 75) status = 'High Risk';
+            let riskScore = 12;
 
-            // Last 8 session statuses for streak dots
-            const [sessionLogs] = await pool.query(`
-                SELECT al.status FROM sessions s
-                JOIN attendance_logs al ON s.id = al.session_id
-                WHERE s.class_id = ? AND al.student_id = ?
-                AND al.status NOT LIKE 'Log%' AND al.status != 'Unknown'
-                ORDER BY s.date DESC, s.start_time DESC
-                LIMIT 8
-            `, [s.class_id, s.id]);
+            if (effAbs >= 3) { status = 'Dropout'; riskScore = 95; }
+            else if (effAbs === 2) { status = 'Critical'; riskScore = 78; }
+            else if (rate < 75) { status = 'High Risk'; riskScore = 62; }
+            else if (rate < 85) { riskScore = 38; }
 
-            const streak = sessionLogs.map(sl => sl.status);
+            const streak = s.streak_raw ? s.streak_raw.split(',').slice(0, 8) : [];
             let consecutiveAbs = 0;
             for (const st of streak) {
                 if (st === 'Absent') consecutiveAbs++;
                 else break;
             }
 
-            // Missed topics (session names or dates)
-            const [missedSessions] = await pool.query(`
-                SELECT s.session_name, s.date FROM sessions s
-                JOIN attendance_logs al ON s.id = al.session_id
-                WHERE s.class_id = ? AND al.student_id = ? AND al.status = 'Absent'
-                ORDER BY s.date DESC LIMIT 5
-            `, [s.class_id, s.id]);
-
-            const missedTopics = missedSessions.map(ms =>
-                ms.session_name ||
-                new Date(ms.date).toLocaleDateString('en-PH', { month: 'short', day: 'numeric' })
-            );
-
-            const pattern = consecutiveAbs >= 2 ? 'Consecutive' : 'Scattered';
-
-            // Latest intervention status
-            const [interventions] = await pool.query(`
-                SELECT outcome FROM interventions
-                WHERE professor_id = ? AND student_id = ?
-                ORDER BY created_at DESC LIMIT 1
-            `, [professorPk, s.id]);
-
-            let interventionStatus = 'None';
-            if (interventions.length > 0) {
-                interventionStatus = interventions[0].outcome || 'Pending';
-            } else if (status !== 'Good') {
-                interventionStatus = 'Pending';
-            }
+            const missedTopics = s.missed_topics_raw ? s.missed_topics_raw.split(',').slice(0, 5) : [];
 
             return {
                 id: s.id,
@@ -569,11 +532,11 @@ router.get('/professor/:userId/students-at-risk', authenticateToken, requireRole
                 consecutiveAbs,
                 riskScore,
                 status,
-                interventionStatus,
+                interventionStatus: s.latest_intervention || (status !== 'Good' ? 'Pending' : 'None'),
                 missedTopics,
-                pattern
+                pattern: consecutiveAbs >= 2 ? 'Consecutive' : 'Scattered'
             };
-        }));
+        });
 
         res.json(result.sort((a, b) => b.riskScore - a.riskScore));
     } catch (err) {
@@ -642,7 +605,7 @@ router.get('/professor/:userId/semester-comparison', authenticateToken, requireR
 });
 
 // ============================================================
-// NEW: Consecutive absence list
+// NEW: Consecutive absence list (OPTIMIZED)
 // ============================================================
 router.get('/professor/:userId/consecutive-absences', authenticateToken, requireRole(['professor', 'admin']), async (req, res) => {
     try {
@@ -653,36 +616,42 @@ router.get('/professor/:userId/consecutive-absences', authenticateToken, require
         if (classes.length === 0) return res.json([]);
         const classIds = classes.map(c => c.id);
 
-        const [enrollments] = await pool.query(`
-            SELECT DISTINCT e.student_id, CONCAT(u.first_name, ' ', u.last_name) as name, c.section
+        const [rows] = await pool.query(`
+            SELECT 
+                e.student_id, 
+                CONCAT(u.first_name, ' ', u.last_name) as name, 
+                c.section,
+                GROUP_CONCAT(COALESCE(al.status, 'Absent') ORDER BY s.date DESC, s.start_time DESC) as streak_raw
             FROM enrollments e
             JOIN users u ON e.student_id = u.id
             JOIN classes c ON e.class_id = c.id
-            WHERE e.class_id IN (${inClause(classIds)}) AND e.student_id IS NOT NULL
+            JOIN sessions s ON e.class_id = s.class_id
+                AND (s.monitoring_ended_at IS NOT NULL OR s.date < CURDATE())
+            LEFT JOIN attendance_logs al ON s.id = al.session_id AND al.student_id = e.student_id
+                AND al.status NOT LIKE 'Log%' AND al.status != 'Unknown'
+            WHERE e.class_id IN (${inClause(classIds)})
+            GROUP BY e.student_id, c.id
         `, classIds);
 
-        const results = [];
-        for (const enroll of enrollments) {
-            const [logs] = await pool.query(`
-                SELECT al.status FROM sessions s
-                JOIN attendance_logs al ON s.id = al.session_id
-                WHERE s.class_id IN (${inClause(classIds)}) AND al.student_id = ?
-                AND al.status NOT LIKE 'Log%' AND al.status != 'Unknown'
-                ORDER BY s.date DESC, s.start_time DESC LIMIT 8
-            `, [...classIds, enroll.student_id]);
-
-            if (logs.length === 0) continue;
-            const streak = logs.map(l => l.status);
+        const results = rows.map(row => {
+            const streak = row.streak_raw ? row.streak_raw.split(',').slice(0, 8) : [];
             let consecutiveAbs = 0;
             for (const st of streak) {
                 if (st === 'Absent') consecutiveAbs++;
                 else break;
             }
-            if (consecutiveAbs >= 2) {
-                results.push({ studentId: enroll.student_id, name: enroll.name, section: enroll.section, streak, consecutiveAbs });
-            }
-        }
-        res.json(results.sort((a, b) => b.consecutiveAbs - a.consecutiveAbs).slice(0, 10));
+            return {
+                studentId: row.student_id,
+                name: row.name,
+                section: row.section,
+                streak,
+                consecutiveAbs
+            };
+        }).filter(r => r.consecutiveAbs >= 2)
+          .sort((a, b) => b.consecutiveAbs - a.consecutiveAbs)
+          .slice(0, 10);
+
+        res.json(results);
     } catch (err) {
         console.error('[Consecutive Absences] Error:', err);
         res.status(500).json({ error: err.message });

@@ -5,7 +5,15 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@100;400;700;900&display=swap');
 
 @layer base {
-  :root {
+  /* Hide default browser password reveal and clear buttons */
+input::-ms-reveal,
+input::-ms-clear,
+input::-webkit-contacts-auto-fill-button,
+input::-webkit-credentials-auto-fill-button {
+    display: none !important;
+}
+
+:root {
     /* Identity Blue Palette - Clean Foundation */
     /* Base Configuration */
     --identity-navy: #041C3C;
@@ -113,6 +121,21 @@ h6,
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+}
+
+/* Blueprint Typography Scale */
+.blueprint-title {
+  font-family: 'Outfit', sans-serif;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: -0.04em;
+  font-style: italic;
+}
+
+@media (max-width: 640px) {
+  .blueprint-title {
+    letter-spacing: -0.02em;
+  }
 }
 
 .text-sky-gradient {
@@ -258,6 +281,14 @@ textarea:focus {
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid rgba(92, 180, 228, 0.3);
   box-shadow: 0 8px 32px rgba(4, 28, 60, 0.3);
+}
+
+.blueprint-card {
+  @apply identity-glass rounded-[2rem] sm:rounded-[3rem] p-5 sm:p-10 border border-identity-sky/15 shadow-2xl relative overflow-hidden transition-all duration-500;
+}
+
+.blueprint-card-header {
+  @apply flex flex-col sm:flex-row sm:items-center justify-between gap-4 sm:gap-6 mb-6 sm:mb-10 relative z-10;
 }
 
 .text-identity-navy {

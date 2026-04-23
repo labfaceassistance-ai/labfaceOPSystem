@@ -3,11 +3,13 @@ import { useState, useEffect, Suspense, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import axios from 'axios';
-import { GraduationCap, School, ArrowRight, ChevronLeft } from 'lucide-react';
+import { GraduationCap, School, ArrowRight } from 'lucide-react';
 import { useToast } from '../../components/Toast';
 import { API_URL, getToken, fetchCurrentUser } from '../../utils/auth';
 import Button from '../../components/ui/Button';
 import InputField from '../../components/ui/InputField';
+import BackButton from '../../components/ui/BackButton';
+import IdentityBackground from '../../components/IdentityBackground';
 
 export default function LoginPage() {
     return (
@@ -16,7 +18,8 @@ export default function LoginPage() {
                 <div className="w-12 h-12 border-4 border-identity-sky/30 border-t-identity-sky rounded-full animate-spin"></div>
             </div>
         }>
-            <div className="flex flex-col items-center justify-center min-h-[85vh] px-6 py-20 w-full relative page-transition">
+            <div className="flex flex-col items-center justify-center min-h-screen px-4 sm:px-6 py-10 sm:py-20 w-full relative page-transition overflow-hidden">
+                <IdentityBackground />
                 <LoginContent />
             </div>
         </Suspense>
@@ -59,7 +62,6 @@ function LoginContent() {
     const [formData, setFormData] = useState({ userId: '', password: '' });
     const [userIdError, setUserIdError] = useState('');
     const [loading, setLoading] = useState(false);
-    const [rememberMe, setRememberMe] = useState(false);
     const userIdRef = useRef(formData.userId);
 
     useEffect(() => {
@@ -163,9 +165,8 @@ function LoginContent() {
         try {
             const res = await axios.post(`${API_URL}/api/auth/login`, { ...formData, intendedRole: activeTab }, { withCredentials: true });
             const { token, user } = res.data;
-            const storage = rememberMe ? localStorage : sessionStorage;
-            storage.setItem('token', token);
-            storage.setItem('user', JSON.stringify(user));
+            sessionStorage.setItem('token', token);
+            sessionStorage.setItem('user', JSON.stringify(user));
 
             showToast('Login Successful', 'Redirecting...', 'success');
             router.push(user.role === 'admin' ? '/admin/dashboard' : user.role === 'professor' ? '/professor/dashboard' : '/student/dashboard');
@@ -189,47 +190,44 @@ function LoginContent() {
     return (
         <div className="w-full max-w-xl bg-white/40 backdrop-blur-xl rounded-[3.5rem] shadow-3xl overflow-hidden animate-in fade-in zoom-in-95 duration-1000 relative z-10 border border-slate-100/50">
             {/* Header Area */}
-            <div className="bg-gradient-to-b from-[#5CB4E4]/5 to-transparent p-16 text-center border-b border-slate-100/50 relative">
-                <Link href="/" className="absolute top-12 left-12 text-slate-400 hover:text-[#041C3C] text-[10px] font-black uppercase tracking-[0.4em] flex items-center justify-center min-h-[44px] min-w-[44px] gap-4 transition-all group font-outfit">
-                    <ChevronLeft size={16} className="group-hover:-translate-x-1 transition-transform text-[#5CB4E4]" />
-                    BACK
-                </Link>
+            <div className="bg-gradient-to-b from-[#5CB4E4]/5 to-transparent pt-8 sm:pt-16 px-8 sm:px-16 pb-4 sm:pb-6 text-center border-b border-slate-100/50 relative">
+                <BackButton href="/" className="absolute top-6 sm:top-12 left-6 sm:left-12" />
 
-                <div className="w-28 h-28 bg-white/80 backdrop-blur-md border border-slate-100 rounded-[2.5rem] flex items-center justify-center shadow-2xl mx-auto mb-10 mt-8 group-hover:scale-110 transition-all duration-700">
-                    <img src="/logo.png" alt="LabFace" className="w-16 h-16 object-contain" />
+                <div className="w-20 sm:w-28 h-20 sm:h-28 bg-white/80 backdrop-blur-md border border-slate-100 rounded-[2rem] sm:rounded-[2.5rem] flex items-center justify-center shadow-2xl mx-auto mb-6 sm:mb-10 mt-4 sm:mt-8 group-hover:scale-110 transition-all duration-700">
+                    <img src="/logo.png" alt="LabFace" className="w-12 h-12 sm:w-16 sm:h-16 object-contain" />
                 </div>
 
-                <h1 className="text-5xl md:text-6xl font-black text-[#041C3C] tracking-tighter mb-4 uppercase font-outfit italic">
+                <h1 className="text-4xl sm:text-5xl md:text-6xl font-black text-[#041C3C] tracking-tighter mb-4 uppercase font-outfit italic">
                     Login
                 </h1>
 
-                <div className="inline-flex items-center gap-4 py-3 px-6 bg-[#041C3C] text-white text-[10px] font-black uppercase tracking-[0.4em] rounded-2xl shadow-xl shadow-identity-navy/10 font-outfit">
-                    <span className="w-2.5 h-2.5 rounded-full bg-[#5CB4E4] animate-ping" />
+                <div className="inline-flex items-center gap-3 sm:gap-4 py-2 sm:py-3 px-4 sm:px-6 bg-[#041C3C] text-white text-[10px] font-black uppercase tracking-[0.2em] sm:tracking-[0.4em] rounded-2xl shadow-xl shadow-identity-navy/10 font-outfit">
+                    <span className="w-2 sm:w-2.5 h-2 sm:h-2.5 rounded-full bg-[#5CB4E4] animate-ping" />
                     Sign in to your account
                 </div>
             </div>
 
-            <div className="p-16 space-y-12">
+            <div className="pt-6 sm:pt-10 px-6 sm:px-16 pb-10 sm:pb-16 space-y-8 sm:space-y-10">
                 {/* Role Switcher */}
-                <div className="flex bg-slate-100/50 backdrop-blur-md p-2.5 rounded-[2.5rem] border border-slate-200/50 w-full shadow-inner">
+                <div className="flex bg-slate-100/50 backdrop-blur-md p-1.5 sm:p-2.5 rounded-[2rem] sm:rounded-[2.5rem] border border-slate-200/50 w-full shadow-inner">
                     {['student', 'professor'].map((role) => (
                         <button
                             key={role}
                             type="button"
-                            className={`flex-1 py-5 rounded-[2rem] text-[10px] font-black uppercase tracking-[0.4em] transition-all duration-700 flex items-center justify-center min-h-[48px] gap-4 ${activeTab === role
+                            className={`flex-1 py-3 sm:py-5 rounded-[1.5rem] sm:rounded-[2rem] text-[10px] font-black uppercase tracking-[0.2em] sm:tracking-[0.4em] transition-all duration-700 flex items-center justify-center min-h-[44px] sm:min-h-[48px] gap-2 sm:gap-4 ${activeTab === role
                                     ? 'bg-white text-[#041C3C] shadow-2xl scale-[1.02] border border-slate-100'
                                     : 'text-slate-400 hover:text-[#041C3C]/60'
                                 }`}
                             onClick={() => setActiveTab(role as any)}
                         >
-                            {role === 'student' ? <GraduationCap size={20} className={activeTab === role ? 'text-[#5CB4E4]' : ''} /> : <School size={20} className={activeTab === role ? 'text-[#5CB4E4]' : ''} />}
+                            {role === 'student' ? <GraduationCap size={18} className={activeTab === role ? 'text-[#5CB4E4]' : ''} /> : <School size={18} className={activeTab === role ? 'text-[#5CB4E4]' : ''} />}
                             {role === 'student' ? 'Student' : 'Professor'}
                         </button>
                     ))}
                 </div>
 
-                <form onSubmit={handleSubmit} className="space-y-10 animate-in fade-in slide-in-from-bottom-10 duration-1000">
-                    <div className="space-y-8">
+                <form onSubmit={handleSubmit} className="space-y-8 sm:space-y-10 animate-in fade-in slide-in-from-bottom-10 duration-1000">
+                    <div className="space-y-6 sm:space-y-8">
                         <InputField
                             label={activeTab === 'student' ? "Student ID" : "Employee ID"}
                             name="userId"
@@ -255,22 +253,8 @@ function LoginContent() {
                         />
                     </div>
 
-                    <div className="flex items-center justify-between pt-4">
-                        <label className="flex items-center gap-5 cursor-pointer group min-h-[44px]">
-                            <div className="relative flex items-center justify-center w-6 h-6">
-                                <input
-                                    type="checkbox"
-                                    checked={rememberMe}
-                                    onChange={(e) => setRememberMe(e.target.checked)}
-                                    className="peer hidden"
-                                />
-                                <div className="w-full h-full border-2 border-slate-200/80 bg-white/60 backdrop-blur-sm rounded-xl group-hover:border-[#5CB4E4]/50 peer-checked:bg-[#041C3C] peer-checked:border-[#041C3C] transition-all duration-500 shadow-sm"></div>
-                                <svg className="absolute text-[#5CB4E4] opacity-0 peer-checked:opacity-100 transition-all duration-500 w-4 h-4 scale-50 peer-checked:scale-100" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                            </div>
-                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] group-hover:text-[#041C3C] transition-colors duration-500">Remember Me</span>
-                        </label>
-
-                        <Link href="/forgot-password" virtual-link="true" className="text-[10px] font-black text-[#5CB4E4] hover:text-[#041C3C] uppercase tracking-[0.3em] transition-all duration-500 border-b border-transparent hover:border-[#5CB4E4]/30 pb-1">
+                    <div className="flex justify-end mt-2">
+                        <Link href="/forgot-password" virtual-link="true" className="text-[10px] font-black text-[#5CB4E4] hover:text-[#041C3C] uppercase tracking-[0.3em] transition-all duration-500 border-b border-transparent hover:border-[#5CB4E4]/30 pb-1 italic">
                             Forgot Password?
                         </Link>
                     </div>
@@ -280,22 +264,24 @@ function LoginContent() {
                         isLoading={loading}
                         variant="primary"
                         size="xl"
-                        className="w-full h-20 rounded-[2.5rem] bg-[#041C3C] hover:bg-[#041C3C]/90 text-white shadow-2xl shadow-identity-navy/20 active:scale-95 transition-all duration-500 text-[12px] tracking-[0.5em] group"
+                        className="w-full h-16 sm:h-20 rounded-[2rem] sm:rounded-[2.5rem] bg-[#041C3C] hover:bg-[#041C3C]/90 text-white shadow-2xl shadow-identity-navy/20 active:scale-95 transition-all duration-500 text-[12px] tracking-[0.5em] group flex items-center justify-center relative overflow-hidden"
                     >
-                        Login
-                        <ArrowRight size={20} className="ml-5 group-hover:translate-x-2 transition-transform duration-500 text-[#5CB4E4]" />
+                        <span className="relative z-10">Login</span>
+                        <ArrowRight size={20} className="absolute right-8 sm:right-12 group-hover:translate-x-2 transition-transform duration-500 text-[#5CB4E4]" />
                     </Button>
                 </form>
 
-                <div className="text-center">
-                    <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.3em] mb-10 opacity-60">Don't have an account?</p>
-                    <Link
-                        href="/register/student"
-                        className="inline-flex items-center gap-6 px-12 py-6 bg-white/60 backdrop-blur-md text-[#041C3C] font-black uppercase tracking-[0.4em] text-[11px] rounded-[2rem] border border-slate-100 hover:shadow-2xl hover:scale-[1.02] active:scale-95 transition-all duration-700 group shadow-lg"
-                    >
-                        Create Account <span className="text-[#5CB4E4] group-hover:translate-x-1 transition-transform">→</span>
-                    </Link>
-                </div>
+                {activeTab === 'student' && (
+                    <div className="text-center pt-2">
+                        <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.3em] mb-2 opacity-60">Don't have an account?</p>
+                        <Link
+                            href="/register/student"
+                            className="inline-flex items-center text-[#5CB4E4] hover:text-[#041C3C] font-black uppercase tracking-[0.4em] text-[10px] transition-all duration-500 group underline underline-offset-4 decoration-2 decoration-[#5CB4E4]/30 hover:decoration-[#041C3C]/50"
+                        >
+                            Create Account
+                        </Link>
+                    </div>
+                )}
             </div>
         </div>
     );

@@ -332,7 +332,7 @@ export default function SessionModal({ isOpen, onClose, classId, className, onSu
                 }
 
                 if (anyBatchScheduled) {
-                    alert('Future batches scheduled successfully.');
+                    alert('Upcoming batches scheduled successfully.');
                     onSuccess();
                 }
 
@@ -448,7 +448,7 @@ export default function SessionModal({ isOpen, onClose, classId, className, onSu
             if (customDate > todayStr) return 'Schedule & Notify';
         }
 
-        return type === 'batch' ? 'Start/Schedule Batches' : 'Start Session';
+        return type === 'batch' ? 'Start/Schedule Class' : 'Start Session';
     };
 
     if (!isOpen || !classId) return null;
@@ -554,7 +554,7 @@ export default function SessionModal({ isOpen, onClose, classId, className, onSu
                     <div className="space-y-6 mb-8 animate-in fade-in duration-300">
                         <div className="bg-brand-gold/10 border border-brand-gold/20 p-5 rounded-2xl shadow-inner">
                             <p className="text-[10px] font-black text-brand-gold uppercase tracking-[0.15em] leading-relaxed">
-                                <strong>Make-up Class:</strong> Schedule a session for a different date/time. All enrolled students are naturally notified.
+                                <strong>Make-up Class:</strong> Schedule a session for a different date/time. All students will be notified.
                             </p>
                         </div>
 
@@ -699,7 +699,7 @@ export default function SessionModal({ isOpen, onClose, classId, className, onSu
 
                                             <div className="bg-white/60 border border-identity-sky/10 rounded-xl max-h-48 overflow-y-auto shadow-inner">
                                                 {loadingStudents ? (
-                                                    <div className="p-12 text-center text-[10px] font-black text-slate-300 uppercase tracking-[0.15em] animate-pulse">Loading roster...</div>
+                                                    <div className="p-12 text-center text-[10px] font-black text-slate-300 uppercase tracking-[0.15em] animate-pulse">Loading student list...</div>
                                                 ) : filteredStudents.length === 0 ? (
                                                     <div className="p-12 text-center text-[10px] font-black text-slate-300 uppercase tracking-[0.15em]">No students found</div>
                                                 ) : (
@@ -795,7 +795,7 @@ export default function SessionModal({ isOpen, onClose, classId, className, onSu
                                 </div>
                                 <div className="flex-1">
                                     <p className={`text-[10px] font-black uppercase tracking-[0.15em] leading-relaxed ${!isRegularAllowed() ? 'text-red-400' : 'text-white'}`}>
-                                        <strong>Batch Session:</strong> Schedule groups for specific times within the current session.
+                                        <strong>Batch Session:</strong> Schedule groups for specific times.
                                     </p>
                                     {!isRegularAllowed() && !fetchingStatus && (
                                         <div className="mt-4 p-3 bg-red-500/10 border border-red-500/10 rounded-xl text-[10px] font-black uppercase tracking-[0.15em] text-red-400 flex items-center gap-2 shadow-inner">
@@ -859,7 +859,7 @@ export default function SessionModal({ isOpen, onClose, classId, className, onSu
 
                                     <div className="bg-white/60 border border-identity-sky/10 rounded-xl max-h-48 overflow-y-auto shadow-inner">
                                         {loadingStudents ? (
-                                            <div className="p-12 text-center text-[10px] font-black text-slate-300 uppercase tracking-[0.15em] animate-pulse">Loading roster...</div>
+                                            <div className="p-12 text-center text-[10px] font-black text-slate-300 uppercase tracking-[0.15em] animate-pulse">Loading student list...</div>
                                         ) : filteredStudents.length === 0 ? (
                                             <div className="p-12 text-center text-[10px] font-black text-slate-300 uppercase tracking-[0.15em]">No students found</div>
                                         ) : (

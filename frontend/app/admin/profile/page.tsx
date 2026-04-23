@@ -2,10 +2,11 @@
 import { useState, useEffect, useRef } from 'react';
 import Navbar from '../../../components/Navbar';
 import Link from 'next/link';
-import { User, Mail, Shield, Camera, Lock, FileText, AlertTriangle, CheckCircle2, XCircle, Download, ExternalLink, MessageSquare, Save, LogOut, Eye, EyeOff, ChevronLeft, AlertCircle } from 'lucide-react';
+import { User, Mail, Shield, Camera, Lock, FileText, AlertTriangle, CheckCircle2, XCircle, Download, ExternalLink, MessageSquare, Save, LogOut, Eye, EyeOff, AlertCircle } from 'lucide-react';
 import axios from 'axios';
+import BackButton from '@/components/ui/BackButton';
 import { logout, API_URL, createAuthAxios, getToken, getProfilePictureUrl, getUser } from '@/utils/auth';
-
+import IdentityBackground from '@/components/IdentityBackground';
 import { useToast } from '../../../components/Toast';
 
 interface UserData {
@@ -206,24 +207,29 @@ export default function AdminProfile() {
     };
 
     if (!user || !formData) return (
-        <div className="min-h-screen bg-transparent flex flex-col items-center justify-center gap-6">
-            <div className="w-16 h-16 border-4 border-identity-sky/20 border-t-identity-sky rounded-full animate-spin"></div>
-            <p className="text-identity-navy/40 text-[10px] font-black uppercase tracking-[0.4em] animate-pulse">Loading your profile...</p>
+        <div className="min-h-screen bg-transparent flex flex-col items-center justify-center gap-6 relative overflow-hidden">
+            <IdentityBackground />
+            <div className="flex flex-col items-center gap-6 relative z-10">
+                <div className="w-16 h-16 border-4 border-identity-sky/20 border-t-identity-sky rounded-full animate-spin"></div>
+                <p className="text-identity-navy/40 text-[10px] font-black uppercase tracking-[0.4em] animate-pulse">Loading your profile...</p>
+            </div>
         </div>
     );
 
     const profileImageSrc = getProfilePictureUrl(user.profilePicture);
 
     return (
-        <div className="min-h-screen bg-transparent font-sans selection:bg-identity-sky/20">
+        <div className="min-h-screen bg-transparent font-outfit select-none relative overflow-hidden">
+            <IdentityBackground />
             <Navbar />
             
-            <main className="max-w-5xl mx-auto px-6 lg:px-12 pt-36 pb-24">
+            <main className="max-w-7xl mx-auto px-6 lg:px-12 pt-32 pb-20 relative z-10">
                 <div className="mb-10">
-                    <Link href="/admin/dashboard" className="inline-flex items-center text-slate-400 hover:text-[#041C3C] font-black uppercase text-[10px] tracking-[0.2em] transition-all group bg-white/40 backdrop-blur-md px-6 py-4 rounded-2xl border border-slate-100 shadow-sm font-outfit">
-                        <ChevronLeft size={18} className="mr-4 group-hover:-translate-x-2 transition-transform text-[#5CB4E4]" />
-                        Back to Dashboard
-                    </Link>
+                    <BackButton 
+                        href="/admin/dashboard" 
+                        label="Back to Dashboard" 
+                        className="bg-white/40 backdrop-blur-md px-6 py-4 rounded-2xl border border-slate-100 shadow-sm italic" 
+                    />
                 </div>
                 
                 <div className="bg-white/40 backdrop-blur-xl rounded-[3rem] shadow-2xl border border-[#5CB4E4]/10 overflow-hidden relative group animate-in fade-in duration-700">

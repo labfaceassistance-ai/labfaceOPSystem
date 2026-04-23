@@ -25,7 +25,6 @@ export default function IdentityFooter() {
                       <li><Link href="/" className="hover:text-[#5CB4E4] transition-colors">Home</Link></li>
                       <li><Link href="/login" className="hover:text-[#5CB4E4] transition-colors">Login</Link></li>
                       <li><Link href="/register/student" className="hover:text-[#5CB4E4] transition-colors">Register</Link></li>
-                      <li><Link href="/privacy-policy" className="hover:text-[#5CB4E4] transition-colors">Privacy</Link></li>
                    </ul>
                 </div>
 
