@@ -300,112 +300,77 @@ export default function AnalyticsTab({ user }: AnalyticsTabProps) {
     })();
 
     return (
-        <div className="space-y-14 animate-fade-up pb-20 font-outfit">
-
-            {/* ── Page Header ─────────────────────────────────────────────── */}
-            <div className="identity-glass p-12 sm:p-14 rounded-[3.5rem] border-2 border-identity-sky/15 shadow-3xl relative overflow-hidden flex flex-col lg:flex-row lg:items-center justify-between gap-10 bg-white/40 backdrop-blur-2xl">
-                <div className="absolute inset-0 opacity-[0.05] pointer-events-none bg-blueprint-fine" />
-                <div className="corner-bracket-tl scale-110" />
-                <div className="corner-bracket-br scale-110" />
-
-                <div className="flex items-center gap-8 relative z-10">
-                    <div className="p-7 bg-identity-navy text-white rounded-3xl border-2 border-identity-sky/25 shadow-3xl shadow-identity-navy/20">
-                        <Activity size={42} className="filter drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]" />
-                    </div>
-                    <div>
-                        <h1 className="text-5xl font-black text-identity-navy uppercase tracking-tighter italic leading-none mb-4">
-                            Attendance Analytics
-                        </h1>
-                        <p className="text-[11px] font-black text-identity-sky uppercase tracking-[0.5em] italic flex items-center gap-3">
-                            <span className="w-2.5 h-2.5 rounded-full bg-identity-sky animate-status-pulse shadow-[0_0_10px_rgba(92,180,228,0.8)]" />
-                            {subjects.length} Enrolled Subjects · Real-time synchronization active.
-                        </p>
+        <div className="space-y-6 animate-fade-up pb-20 font-outfit">
+            {/* Tab Title HUD */}
+            <div className="flex items-center gap-4 mb-2">
+                <div className="h-[1px] flex-1 bg-gradient-to-r from-transparent via-identity-sky/20 to-transparent" />
+                <div className="flex flex-col items-center px-8">
+                    <h1 className="text-[10px] font-black text-identity-sky uppercase tracking-[0.6em] italic opacity-70 mb-1">
+                        STUDENT DASHBOARD
+                    </h1>
+                    <div className="flex items-center gap-2">
+                        <div className="w-1.5 h-1.5 rounded-full bg-identity-sky animate-pulse shadow-[0_0_8px_rgba(0,186,255,0.8)]" />
+                        <span className="text-[12px] font-black text-identity-navy uppercase tracking-[0.2em] italic">PERFORMANCE ANALYTICS</span>
                     </div>
                 </div>
-
-                {/* Overall status badge */}
-                <div className={`px-10 py-6 rounded-[2.5rem] border-2 ${overallStatus.tw} relative z-10 text-center min-w-[220px] backdrop-blur-md shadow-xl`}>
-                    <div className="text-[10px] font-black uppercase tracking-[0.4em] mb-2 italic opacity-70">Overall Status</div>
-                    <div className="text-2xl font-black uppercase tracking-tight italic">{overallStatus.label}</div>
-                    <div className="text-[10px] opacity-60 mt-2 font-black uppercase tracking-[0.2em] italic">{overallStatus.sub}</div>
-                </div>
+                <div className="h-[1px] flex-1 bg-gradient-to-r from-transparent via-identity-sky/20 to-transparent" />
             </div>
 
+
             {/* ── Subject Report Table ─────────────────────────────────────── */}
-            <div className="space-y-8">
-                <p className="text-[12px] font-black text-identity-sky uppercase tracking-[0.5em] italic flex items-center gap-4 px-4">
-                    <BookOpen size={18} />
-                    Attendance Overview
+            <div className="space-y-4">
+                <p className="text-[10px] font-black text-identity-sky uppercase tracking-[0.4em] italic flex items-center gap-3 px-2">
+                    <BookOpen size={14} />
+                    ATTENDANCE OVERVIEW
                 </p>
 
-                <div className="identity-glass rounded-[4rem] border-2 border-identity-sky/15 shadow-3xl overflow-hidden bg-white/40 backdrop-blur-xl">
-                    {/* Header row */}
-                    <div className="hidden md:grid grid-cols-[1fr_70px_70px_80px_100px_160px_130px] bg-identity-navy text-white px-10 py-6 border-b-2 border-identity-sky/20">
-                        {['Subject', 'Absences', 'Lates', 'Total Absences', 'Attendance %', 'Dropout Risk', 'Status'].map((h, i) => (
-                            <div key={h} className={`text-[10px] font-black uppercase tracking-[0.3em] italic ${i > 0 ? 'text-center' : ''}`}>{h}</div>
+                <div className="identity-glass rounded-xl sm:rounded-2xl border border-identity-sky/15 shadow-xl overflow-hidden bg-white/40 backdrop-blur-xl">
+                    <div className="hidden md:grid grid-cols-[1fr_80px_80px_100px_100px_160px_130px] bg-identity-navy text-white px-6 py-2.5">
+                        {['SUBJECT', 'ABS', 'LATE', 'TOTAL', 'RATE %', 'RISK LEVEL', 'STATUS'].map((h, i) => (
+                            <div key={h} className={`text-[8px] sm:text-[9px] font-black uppercase tracking-[0.2em] italic ${i > 0 ? 'text-center' : ''}`}>{h}</div>
                         ))}
                     </div>
 
-                    <div className="divide-y-2 divide-identity-sky/10">
+                    <div className="divide-y divide-identity-sky/10">
                         {subjects.map((s, idx) => {
-                            const st   = getStatus(s.effectiveAbsences, s.late);
-                            const pct  = Math.min(100, Math.round((s.effectiveAbsences / 3) * 100));
+                            const st = getStatus(s.effectiveAbsences, s.late);
+                            const pct = Math.min(100, Math.round((s.effectiveAbsences / 3) * 100));
                             const absLeft = Math.max(0, 3 - s.effectiveAbsences);
                             const latesLeft = 3 - (s.late % 3) === 3 ? 3 : 3 - (s.late % 3);
 
                             return (
                                 <div
                                     key={s.id}
-                                    className={`grid grid-cols-1 md:grid-cols-[1fr_70px_70px_80px_100px_160px_130px] items-center px-10 py-8 hover:bg-white/60 transition-all group/row relative overflow-hidden`}
-                                    style={{ borderLeft: `5px solid ${st.borderCol}` }}
+                                    className="grid grid-cols-1 md:grid-cols-[1fr_80px_80px_100px_100px_160px_130px] items-center px-5 sm:px-6 py-3.5 sm:py-4 hover:bg-white/60 transition-all group/row relative"
+                                    style={{ borderLeft: `4px solid ${st.borderCol}` }}
                                 >
-                                    <div className="absolute inset-0 opacity-[0.01] pointer-events-none bg-blueprint-fine" />
-                                    
-                                    {/* Subject name */}
-                                    <div className="mb-6 md:mb-0">
-                                        <div className="font-black text-lg italic uppercase tracking-tight" style={{ color: s.color }}>{s.subjectName}</div>
-                                        <div className="text-[11px] text-slate-500 font-black uppercase tracking-[0.3em] mt-2 italic flex items-center gap-3">
-                                            {s.subjectCode} <div className="w-1.5 h-1.5 rounded-full bg-slate-300" /> {s.schedule}
-                                        </div>
+                                    <div className="mb-4 md:mb-0">
+                                        <div className="font-black text-[15px] italic uppercase tracking-tight" style={{ color: s.color }}>{s.subjectName}</div>
+                                        <div className="text-[9px] text-slate-400 font-black uppercase tracking-[0.2em] mt-1 italic">{s.subjectCode} · {s.schedule}</div>
                                     </div>
 
-                                    {/* Metrics with unified labels on mobile */}
-                                    {[
-                                        { label: 'ABS', val: s.absent, max: 3, warn: s.absent >= 2, critical: s.absent >= 3 },
-                                        { label: 'LATE', val: s.late, warn: s.late >= 2, critical: s.late >= 3 },
-                                        { label: 'EFF', val: s.effectiveAbsences, max: 3, warn: s.effectiveAbsences >= 2, critical: s.effectiveAbsences >= 3 },
-                                        { label: 'RATE', val: `${s.attendanceRate}%`, warn: s.attendanceRate < 85, critical: s.attendanceRate < 75 }
-                                    ].map((m, i) => (
-                                        <div key={m.label} className="flex md:block items-center justify-between mb-2 md:mb-0">
-                                            <span className="md:hidden text-[10px] font-black text-slate-400 uppercase tracking-widest italic">{m.label}: </span>
-                                            <div className={`md:text-center text-xl font-black italic ${m.critical ? 'text-rose-600' : m.warn ? 'text-amber-500' : 'text-identity-navy/60'}`}>
-                                                {m.val}{m.max && <span className="text-[11px] text-slate-400 font-black not-italic ml-1">/{m.max}</span>}
+                                    {[s.absent, s.late, s.effectiveAbsences, `${s.attendanceRate}%`].map((val, i) => (
+                                        <div key={i} className="flex md:block items-center justify-between mb-1 md:mb-0">
+                                            <span className="md:hidden text-[8px] font-black text-slate-400 uppercase tracking-widest italic">{['ABS', 'LATE', 'TOTAL', 'RATE'][i]}:</span>
+                                            <div className="md:text-center text-sm font-black italic text-identity-navy/70">
+                                                {val}{i === 2 && <span className="text-[9px] text-slate-300 not-italic ml-1">/3</span>}
                                             </div>
                                         </div>
                                     ))}
 
-                                    {/* Dropout meter */}
-                                    <div className="md:pr-10 mb-6 md:mb-0">
-                                        <div className="h-3 w-full bg-slate-200/50 rounded-full overflow-hidden mb-3 border border-slate-300/30 p-[2px]">
-                                            <div
-                                                className="h-full rounded-full transition-all duration-1000 shadow-lg relative overflow-hidden"
-                                                style={{ width: `${pct}%`, background: st.borderCol }}
-                                            >
-                                                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shimmer" />
-                                            </div>
+                                    <div className="md:pr-6 mb-4 md:mb-0">
+                                        <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden mb-2 p-[1px]">
+                                            <div className="h-full rounded-full transition-all duration-1000" style={{ width: `${pct}%`, background: st.borderCol }} />
                                         </div>
-                                        <div className="text-[10px] font-black uppercase tracking-[0.2em] italic flex gap-3 items-center">
-                                            {absLeft === 0 ? <span className="text-rose-600">INELIGIBLE</span> : 
-                                             absLeft === 1 ? <span className="text-amber-600">1 Absence Remaining</span> : 
-                                             <span className="text-emerald-600">{absLeft} Absences Remaining</span>}
-                                            <div className="w-1.5 h-1.5 rounded-full bg-slate-300" />
-                                            <span className="text-slate-400">{latesLeft} Lates until Absence</span>
+                                        <div className="text-[8px] font-black uppercase tracking-[0.15em] italic flex gap-2">
+                                            {absLeft === 0 ? <span className="text-rose-600">INELIGIBLE</span> : <span>{absLeft} LEFT</span>}
+                                            <span className="text-slate-300">|</span>
+                                            <span className="text-slate-400">{latesLeft} TO ABS</span>
                                         </div>
                                     </div>
 
-                                    {/* Status badge */}
                                     <div className="md:text-right">
-                                        <span className={`inline-flex px-6 py-2 rounded-2xl border-2 text-[11px] font-black uppercase tracking-[0.4em] italic shadow-lg ${st.tw}`}>
+                                        <span className={`inline-flex px-4 py-1.5 rounded-lg border text-[9px] font-black uppercase tracking-[0.2em] italic ${st.tw}`}>
                                             {st.label}
                                         </span>
                                     </div>
@@ -413,77 +378,53 @@ export default function AnalyticsTab({ user }: AnalyticsTabProps) {
                             );
                         })}
                     </div>
-
-                    {/* Footer System Rules */}
-                    <div className="px-10 py-8 bg-identity-navy text-white/50 border-t-2 border-identity-sky/20">
-                        <div className="flex items-start gap-6 text-[10px] font-black uppercase tracking-[0.35em] italic leading-relaxed">
-                            <Info size={16} className="text-identity-sky/80 flex-shrink-0 animate-pulse" />
-                            Rules: 3 Lates = 1 Absence · 3 Absences = Ineligible · Minimum Requirement: 75% Attendance Rate
-                        </div>
-                    </div>
                 </div>
             </div>
 
-            {/* ── At-Risk HUD Drill-Down ───────────────────────────────── */}
+            {/* ── At-Risk Drill-Down ───────────────────────────────── */}
             {atRisk.length > 0 && (
-                <div className="space-y-8 animate-pulse-subtle">
-                    <p className="text-[12px] font-black text-rose-500 uppercase tracking-[0.6em] italic flex items-center gap-4 px-4">
-                        <AlertTriangle size={20} className="animate-pulse" />
-                        Subjects at Risk
+                <div className="space-y-4">
+                    <p className="text-[10px] font-black text-rose-500 uppercase tracking-[0.5em] italic flex items-center gap-3 px-2">
+                        <AlertTriangle size={16} />
+                        SUBJECTS AT RISK
                     </p>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {atRisk.map(s => {
-                            const st      = getStatus(s.effectiveAbsences, s.late);
+                            const st = getStatus(s.effectiveAbsences, s.late);
                             const absLeft = Math.max(0, 3 - s.effectiveAbsences);
-                            const latesLeft = (3 - (s.late % 3)) === 0 ? 3 : 3 - (s.late % 3);
-
                             return (
-                                <div
-                                    key={s.id}
-                                    className="identity-glass p-10 rounded-[3.5rem] border-2 border-rose-500/20 shadow-3xl relative overflow-hidden group bg-rose-500/[0.02] backdrop-blur-2xl"
-                                    style={{ borderLeft: `4px solid ${st.borderCol}` }}
-                                >
-                                    <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-blueprint-fine" />
-
-                                    <div className="flex items-center gap-6 mb-10 relative z-10">
-                                        <div className="w-16 h-16 rounded-2.5xl flex items-center justify-center bg-rose-500/15 border-2 border-rose-500/20 shadow-2xl">
-                                            <AlertTriangle size={28} className="text-rose-500" />
+                                <div key={s.id} className="identity-glass p-5 sm:p-6 rounded-xl sm:rounded-2xl border border-rose-500/20 shadow-lg relative overflow-hidden bg-rose-500/[0.02] backdrop-blur-xl">
+                                    <div className="flex items-center gap-4 mb-6">
+                                        <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-rose-500/10 border border-rose-500/20">
+                                            <AlertTriangle size={18} className="text-rose-500" />
                                         </div>
                                         <div className="flex-1">
-                                            <div className="font-black text-xl italic uppercase tracking-tight" style={{ color: s.color }}>{s.subjectName}</div>
-                                            <div className="text-[11px] text-rose-900/40 font-black uppercase tracking-[0.3em] mt-2 italic">{s.subjectCode} · ACADEMIC ALERT</div>
+                                            <div className="font-black text-sm italic uppercase tracking-tight" style={{ color: s.color }}>{s.subjectName}</div>
+                                            <div className="text-[8px] text-rose-900/40 font-black uppercase tracking-[0.2em] mt-1 italic">ACADEMIC ALERT</div>
                                         </div>
                                         <div className="text-right">
-                                            <div className="text-3xl font-black italic text-rose-600 drop-shadow-sm">{s.attendanceRate}%</div>
-                                            <div className="text-[10px] text-rose-900/30 font-black uppercase tracking-[0.2em] italic">ATTENDANCE RATE</div>
+                                            <div className="text-xl font-black italic text-rose-600">{s.attendanceRate}%</div>
                                         </div>
                                     </div>
 
-                                    <div className="grid grid-cols-3 gap-6 mb-10 relative z-10">
+                                    <div className="grid grid-cols-3 gap-3 mb-6">
                                         {[
-                                            { label: 'Absences', val: `${s.absent}/3`, critical: s.absent >= 2 },
-                                            { label: 'Total Lates', val: s.late, critical: s.late >= 2 },
-                                            { label: 'Remaining', val: `${absLeft} Abs`, critical: absLeft <= 1 },
+                                            { label: 'ABS', val: `${s.absent}/3` },
+                                            { label: 'LATES', val: s.late },
+                                            { label: 'LEFT', val: absLeft },
                                         ].map(item => (
-                                            <div key={item.label} className="bg-white/60 border-2 border-rose-500/10 rounded-[2rem] p-6 shadow-sm hover:shadow-xl transition-all">
-                                                <div className="text-[9px] text-slate-400 font-black uppercase tracking-[0.3em] italic mb-3">{item.label}</div>
-                                                <div className={`text-2xl font-black italic ${item.critical ? 'text-rose-600' : 'text-identity-navy/60'}`}>{item.val}</div>
+                                            <div key={item.label} className="bg-white/60 border border-rose-500/10 rounded-xl p-3 text-center">
+                                                <div className="text-[8px] text-slate-400 font-black uppercase tracking-[0.2em] italic mb-1">{item.label}</div>
+                                                <div className="text-sm font-black italic text-identity-navy/70">{item.val}</div>
                                             </div>
                                         ))}
                                     </div>
-
-                                    <div className="space-y-4 relative z-10">
-                                        {absLeft === 1 && (
-                                            <div className="bg-rose-500 text-white rounded-2.5xl px-8 py-5 text-[12px] font-black uppercase tracking-[0.2em] italic flex items-center gap-4 shadow-2xl animate-pulse">
-                                                <Zap size={18} className="animate-bounce" />
-                                                CRITICAL: 1 ABSENCE REMAINING BEFORE INELIGIBILITY
-                                            </div>
-                                        )}
-                                        <div className="bg-amber-500/10 border-2 border-amber-500/20 rounded-2.5xl px-8 py-4 text-[11px] font-black text-amber-700 uppercase tracking-[0.2em] italic flex items-center gap-4">
-                                            <div className="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse shadow-[0_0_10px_rgba(245,158,11,0.6)]" />
-                                            {latesLeft} lates until next absence
+                                    
+                                    {absLeft === 1 && (
+                                        <div className="bg-rose-500 text-white rounded-xl px-4 py-3 text-[9px] font-black uppercase tracking-[0.15em] italic flex items-center gap-3 animate-pulse">
+                                            <Zap size={12} /> CRITICAL: 1 ABSENCE REMAINING
                                         </div>
-                                    </div>
+                                    )}
                                 </div>
                             );
                         })}
@@ -492,98 +433,19 @@ export default function AnalyticsTab({ user }: AnalyticsTabProps) {
             )}
 
             {/* ── Visual Data Engine ─────────────────────────────────────── */}
-            <div className="space-y-8">
-                <p className="text-[12px] font-black text-identity-sky uppercase tracking-[0.5em] italic flex items-center gap-4 px-4">
-                    <TrendingUp size={20} />
-                    Attendance Trends
-                </p>
-
-                <div className="identity-glass p-12 sm:p-14 rounded-[4rem] border-2 border-identity-sky/15 shadow-3xl relative overflow-hidden bg-white/40 backdrop-blur-xl group">
-                    <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-blueprint" />
-                    <div className="relative z-10">
-                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
-                            <div>
-                                <h3 className="font-black text-xl text-identity-navy italic uppercase tracking-tight mb-2">Session History</h3>
-                                <p className="text-[11px] text-slate-400 font-black uppercase tracking-[0.15em] italic">The red line marks the 75% minimum requirement</p>
-                            </div>
-                            <div className="flex flex-wrap gap-6 p-4 bg-white/60 rounded-2.5xl border border-identity-sky/10 shadow-inner">
-                                {subjects.map(s => (
-                                    <div key={s.id} className="flex items-center gap-2.5 text-[10px] font-black uppercase tracking-[0.2em] italic" style={{ color: s.color }}>
-                                        <span className="w-4 h-1.5 rounded-full" style={{ background: s.color }} />
-                                        {s.subjectCode}
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-
-                        <div className="relative w-full h-[300px] bg-slate-900/5 rounded-[2.5rem] p-8 border-2 border-identity-sky/5 shadow-inner">
-                            <canvas ref={trendCanvasRef} />
-                        </div>
+            <div className="flex flex-wrap gap-6 mt-12 pt-10 border-t-2 border-identity-sky/10">
+                {[
+                    { c: 'P', label: 'PRESENT', col: '#4ade80' },
+                    { c: 'L', label: 'LATE',  col: '#fbbf24' },
+                    { c: 'A', label: 'ABSENT',   col: '#f87171' },
+                    { c: 'E', label: 'EXCUSED', col: '#5CB4E4' },
+                ].map(item => (
+                    <div key={item.c} className="flex items-center gap-3 text-[10px] text-slate-400 font-black uppercase tracking-[0.3em] italic">
+                        <span className="w-3.5 h-3.5 rounded-[4px] shadow-sm border border-slate-200" style={{ background: item.col }} />
+                        {item.label}
                     </div>
-                </div>
-
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
-                    {/* Compare bar chart */}
-                    <div className="identity-glass p-10 sm:p-12 rounded-[4rem] border-2 border-identity-sky/15 shadow-3xl relative overflow-hidden bg-white/40 backdrop-blur-xl">
-                        <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-blueprint-fine" />
-                        <div className="relative z-10">
-                            <h3 className="font-black text-xl text-identity-navy italic uppercase tracking-tight mb-2">Personal Performance vs Class Average</h3>
-                            <p className="text-[11px] text-slate-400 font-black uppercase tracking-[0.2em] italic mb-10">Your attendance compared to the rest of the class</p>
-                            
-                            <div className="relative w-full h-[250px]">
-                                <canvas ref={compareCanvasRef} />
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Attendance Pattern */}
-                    <div className="identity-glass p-10 sm:p-12 rounded-[4rem] border-2 border-identity-sky/15 shadow-3xl relative overflow-hidden bg-white/40 backdrop-blur-xl">
-                        <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-blueprint-fine" />
-                        <div className="relative z-10">
-                            <h3 className="font-black text-xl text-identity-navy italic uppercase tracking-tight mb-2">Attendance Pattern</h3>
-                            <p className="text-[11px] text-slate-400 font-black uppercase tracking-[0.2em] italic mb-12">Your attendance pattern for recent sessions</p>
-
-                            <div className="space-y-8">
-                                {subjects.map(s => (
-                                    <div key={s.id} className="flex items-center gap-6 group/streak">
-                                        <div className="min-w-[100px] text-[12px] font-black italic tracking-tighter uppercase transition-all group-hover/streak:scale-105" style={{ color: s.color }}>
-                                            {s.subjectCode || s.subjectName}
-                                        </div>
-                                        <div className="flex flex-wrap gap-2 flex-1">
-                                            {s.streak.split('').map((c, i) => (
-                                                <div
-                                                    key={i}
-                                                    title={`S${i + 1}: ${c}`}
-                                                    className="w-3.5 h-3.5 rounded-[4px] flex-shrink-0 transition-all hover:scale-150 hover:shadow-lg cursor-crosshair border border-white"
-                                                    style={{ background: STREAK_COLOUR[c] || '#cbd5e1' }}
-                                                />
-                                            ))}
-                                        </div>
-                                        <div className={`text-xl font-black italic ml-auto flex-shrink-0 ${s.attendanceRate < 75 ? 'text-rose-600' : s.attendanceRate < 85 ? 'text-amber-500' : 'text-emerald-500'}`}>
-                                            {s.attendanceRate}%
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-
-                            <div className="flex flex-wrap gap-6 mt-12 pt-10 border-t-2 border-identity-sky/10">
-                                {[
-                                    { c: 'P', label: 'PRESENT', col: '#4ade80' },
-                                    { c: 'L', label: 'LATE',  col: '#fbbf24' },
-                                    { c: 'A', label: 'ABSENT',   col: '#f87171' },
-                                    { c: 'E', label: 'EXCUSED', col: '#5CB4E4' },
-                                ].map(item => (
-                                    <div key={item.c} className="flex items-center gap-3 text-[10px] text-slate-400 font-black uppercase tracking-[0.3em] italic">
-                                        <span className="w-3.5 h-3.5 rounded-[4px] shadow-sm border border-slate-200" style={{ background: item.col }} />
-                                        {item.label}
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                ))}
             </div>
-
         </div>
     );
 }

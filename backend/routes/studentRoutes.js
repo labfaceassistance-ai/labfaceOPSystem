@@ -571,26 +571,43 @@ router.get('/dashboard/:id', async (req, res) => {
         // This avoids mismatches where overall stats might include archived classes or orphaned logs.
 
         // 4a. Get Per-Class Breakdown (First)
+        // Fetches all valid enrollment IDs to ensure resilient log matching
+        const [eRows] = await pool.query(`
+            SELECT id FROM enrollments 
+            WHERE student_id = ? 
+            OR REPLACE(REPLACE(REPLACE(REPLACE(TRIM(student_number), '-',''),' ',''), CHAR(13),''), CHAR(10),'')
+               = REPLACE(REPLACE(REPLACE(REPLACE(TRIM(?), '-',''),' ',''), CHAR(13),''), CHAR(10),'')
+        `, [studentId, studentStringId]);
+        const enrollmentIds = eRows.length > 0 ? eRows.map(r => r.id) : [-1];
+
         const [classStats] = await pool.query(`
             SELECT 
                 c.id, 
                 c.subject_name, 
                 c.subject_code,
                 COUNT(DISTINCT s.id) as total_sessions,
-                SUM(CASE WHEN al.status IS NULL THEN 1 ELSE 0 END) as absent_count,
-                SUM(CASE WHEN al.status = 'Present' THEN 1 ELSE 0 END) as present_count,
-                SUM(CASE WHEN al.status = 'Late' THEN 1 ELSE 0 END) as late_count,
-                SUM(CASE WHEN al.status = 'Excused' THEN 1 ELSE 0 END) as excused_count
+                SUM(CASE WHEN best_log.status = 'Present' THEN 1 ELSE 0 END) as present_count,
+                SUM(CASE WHEN best_log.status = 'Late' THEN 1 ELSE 0 END) as late_count,
+                SUM(CASE WHEN best_log.status = 'Excused' THEN 1 ELSE 0 END) as excused_count
             FROM classes c
             JOIN enrollments e ON c.id = e.class_id
             LEFT JOIN sessions s ON c.id = s.class_id 
                 AND s.date <= DATE(NOW())
                 AND s.monitoring_started_at IS NOT NULL
-            LEFT JOIN attendance_logs al ON s.id = al.session_id AND al.student_id = ?
+            LEFT JOIN (
+                SELECT session_id, status
+                FROM attendance_logs
+                WHERE (student_id = ? OR enrollment_id IN (?))
+                AND id IN (
+                    SELECT MAX(id) FROM attendance_logs 
+                    WHERE (student_id = ? OR enrollment_id IN (?))
+                    GROUP BY session_id
+                )
+            ) best_log ON s.id = best_log.session_id
             WHERE (e.student_id = ? OR REPLACE(REPLACE(REPLACE(REPLACE(TRIM(?), '-', ''), ' ', ''), CHAR(13), ''), CHAR(10), '') = REPLACE(REPLACE(REPLACE(REPLACE(TRIM(e.student_number), '-', ''), ' ', ''), CHAR(13), ''), CHAR(10), ''))
             AND (c.is_archived = 0 OR c.is_archived IS NULL)
             GROUP BY c.id
-        `, [studentId, studentId, studentStringId]);
+        `, [studentId, enrollmentIds, studentId, enrollmentIds, studentId, studentStringId]);
 
         // Transform class stats
         const classesSummary = classStats.map(cls => {
@@ -716,22 +733,38 @@ router.get('/attendance-summary/:id', async (req, res) => {
         const studentStringId = u_info[0]?.user_id;
 
         // Get Per-Class Breakdown (Same logic as dashboard to ensure consistency)
+        const [eRows] = await pool.query(`
+            SELECT id FROM enrollments 
+            WHERE student_id = ? 
+            OR REPLACE(REPLACE(REPLACE(REPLACE(TRIM(student_number), '-',''),' ',''), CHAR(13),''), CHAR(10),'')
+               = REPLACE(REPLACE(REPLACE(REPLACE(TRIM(?), '-',''),' ',''), CHAR(13),''), CHAR(10),'')
+        `, [studentId, studentStringId]);
+        const enrollmentIds = eRows.length > 0 ? eRows.map(r => r.id) : [-1];
+
         const [classStats] = await pool.query(`
             SELECT 
                 COUNT(DISTINCT s.id) as total_sessions,
-                SUM(CASE WHEN al.status IS NULL THEN 1 ELSE 0 END) as absent_count,
-                SUM(CASE WHEN al.status = 'Present' THEN 1 ELSE 0 END) as present_count,
-                SUM(CASE WHEN al.status = 'Late' THEN 1 ELSE 0 END) as late_count,
-                SUM(CASE WHEN al.status = 'Excused' THEN 1 ELSE 0 END) as excused_count
+                SUM(CASE WHEN best_log.status = 'Present' THEN 1 ELSE 0 END) as present_count,
+                SUM(CASE WHEN best_log.status = 'Late' THEN 1 ELSE 0 END) as late_count,
+                SUM(CASE WHEN best_log.status = 'Excused' THEN 1 ELSE 0 END) as excused_count
             FROM classes c
             JOIN enrollments e ON c.id = e.class_id
             LEFT JOIN sessions s ON c.id = s.class_id 
                 AND s.date <= DATE(NOW())
                 AND s.monitoring_started_at IS NOT NULL
-            LEFT JOIN attendance_logs al ON s.id = al.session_id AND al.student_id = ?
+            LEFT JOIN (
+                SELECT session_id, status
+                FROM attendance_logs
+                WHERE (student_id = ? OR enrollment_id IN (?))
+                AND id IN (
+                    SELECT MAX(id) FROM attendance_logs 
+                    WHERE (student_id = ? OR enrollment_id IN (?))
+                    GROUP BY session_id
+                )
+            ) best_log ON s.id = best_log.session_id
             WHERE (e.student_id = ? OR REPLACE(REPLACE(REPLACE(REPLACE(TRIM(?), '-', ''), ' ', ''), CHAR(13), ''), CHAR(10), '') = REPLACE(REPLACE(REPLACE(REPLACE(TRIM(e.student_number), '-', ''), ' ', ''), CHAR(13), ''), CHAR(10), ''))
             AND (c.is_archived = 0 OR c.is_archived IS NULL)
-        `, [studentId, studentId, studentStringId]);
+        `, [studentId, enrollmentIds, studentId, enrollmentIds, studentId, studentStringId]);
 
         const stats = classStats[0] || {};
 
@@ -745,7 +778,7 @@ router.get('/attendance-summary/:id', async (req, res) => {
         const attended = present + late + excused;
 
         const rate = total > 0
-            ? ((attended / total) * 100).toFixed(1)
+            ? Math.round(((attended / total) * 100))
             : 0;
 
         res.json({
@@ -755,7 +788,7 @@ router.get('/attendance-summary/:id', async (req, res) => {
             absentCount: absent,
             totalSessions: total,
             attendedSessions: attended,
-            attendanceRate: parseFloat(rate)
+            attendanceRate: rate
         });
 
     } catch (err) {
@@ -789,23 +822,31 @@ router.get('/classes/:classId/details', async (req, res) => {
             ? `Prof. ${classInfo.last_name}`
             : 'Prof. Unknown';
 
+        // 2b. Fetch valid enrollment IDs for this student
+        const [eRows] = await pool.query(`
+            SELECT id FROM enrollments 
+            WHERE student_id = ? 
+            OR REPLACE(REPLACE(REPLACE(REPLACE(TRIM(student_number), '-',''),' ',''), CHAR(13),''), CHAR(10),'')
+               = (SELECT REPLACE(REPLACE(REPLACE(REPLACE(TRIM(user_id), '-',''),' ',''), CHAR(13),''), CHAR(10),'') FROM users WHERE id = ?)
+        `, [studentId, studentId]);
+        const enrollmentIds = eRows.length > 0 ? eRows.map(r => r.id) : [-1];
+
         // 2. Get Statistics for this class
         const [statsRows] = await pool.query(`
              SELECT 
                 COUNT(DISTINCT s.id) as total_sessions,
-                SUM(CASE WHEN al.status IS NULL THEN 1 ELSE 0 END) as absent_count,
-                SUM(CASE WHEN al.status = 'Present' THEN 1 ELSE 0 END) as present_count,
-                SUM(CASE WHEN al.status = 'Late' THEN 1 ELSE 0 END) as late_count,
-                SUM(CASE WHEN al.status = 'Excused' THEN 1 ELSE 0 END) as excused_count
+                SUM(CASE WHEN best_log.status = 'Present' THEN 1 ELSE 0 END) as present_count,
+                SUM(CASE WHEN best_log.status = 'Late' THEN 1 ELSE 0 END) as late_count,
+                SUM(CASE WHEN best_log.status = 'Excused' THEN 1 ELSE 0 END) as excused_count
             FROM sessions s
-            JOIN enrollments e ON s.class_id = e.class_id
-            CROSS JOIN (SELECT id, user_id FROM users WHERE id = ?) u_student
-            LEFT JOIN attendance_logs al ON s.id = al.session_id AND al.student_id = u_student.id
+            LEFT JOIN (
+                SELECT session_id, status FROM attendance_logs 
+                WHERE (student_id = ? OR enrollment_id IN (?))
+            ) best_log ON s.id = best_log.session_id
             WHERE s.class_id = ?
-            AND (e.student_id = u_student.id OR REPLACE(REPLACE(REPLACE(REPLACE(TRIM(u_student.user_id), '-', ''), ' ', ''), CHAR(13), ''), CHAR(10), '') = REPLACE(REPLACE(REPLACE(REPLACE(TRIM(e.student_number), '-', ''), ' ', ''), CHAR(13), ''), CHAR(10), ''))
             AND s.date <= DATE(NOW())
             AND s.monitoring_started_at IS NOT NULL
-        `, [studentId, classId]);
+        `, [studentId, enrollmentIds, classId]);
 
         const stats = statsRows[0];
         const totalSessions = parseInt(stats.total_sessions) || 0;
@@ -827,20 +868,45 @@ router.get('/classes/:classId/details', async (req, res) => {
                 s.start_time,
                 s.end_time,
                 s.type,
-                al.status,
-                al.time_in,
-                al.snapshot_url,
-                al.recognition_method
+                (
+                    SELECT status FROM attendance_logs 
+                    WHERE session_id = s.id 
+                    AND (student_id = ? OR enrollment_id IN (?))
+                    ORDER BY 
+                        CASE 
+                            WHEN status = 'Present' THEN 1 
+                            WHEN status = 'Late' THEN 2 
+                            WHEN status = 'Excused' THEN 3 
+                            WHEN status = 'Absent' THEN 4 
+                            ELSE 5 
+                        END ASC,
+                        id DESC
+                    LIMIT 1
+                ) AS status,
+                (
+                    SELECT time_in FROM attendance_logs 
+                    WHERE session_id = s.id 
+                    AND (student_id = ? OR enrollment_id IN (?))
+                    ORDER BY id DESC LIMIT 1
+                ) AS time_in,
+                (
+                    SELECT snapshot_url FROM attendance_logs 
+                    WHERE session_id = s.id 
+                    AND (student_id = ? OR enrollment_id IN (?))
+                    ORDER BY id DESC LIMIT 1
+                ) AS snapshot_url,
+                (
+                    SELECT recognition_method FROM attendance_logs 
+                    WHERE session_id = s.id 
+                    AND (student_id = ? OR enrollment_id IN (?))
+                    ORDER BY id DESC LIMIT 1
+                ) AS recognition_method
             FROM sessions s
-            JOIN enrollments e ON s.class_id = e.class_id
-            CROSS JOIN (SELECT id, user_id FROM users WHERE id = ?) u_student
-            LEFT JOIN attendance_logs al ON s.id = al.session_id AND al.student_id = u_student.id
             WHERE s.class_id = ?
-            AND (e.student_id = u_student.id OR REPLACE(REPLACE(REPLACE(REPLACE(TRIM(u_student.user_id), '-', ''), ' ', ''), CHAR(13), ''), CHAR(10), '') = REPLACE(REPLACE(REPLACE(REPLACE(TRIM(e.student_number), '-', ''), ' ', ''), CHAR(13), ''), CHAR(10), ''))
             AND s.date <= DATE(NOW())
             AND s.monitoring_started_at IS NOT NULL
             ORDER BY s.date DESC, s.start_time DESC
-        `, [studentId, classId]);
+        `, [studentId, enrollmentIds, studentId, enrollmentIds, studentId, enrollmentIds, studentId, enrollmentIds, classId]);
 
         // DEBUG: Log raw data to investigate time inconsistency
         console.log('=== DEBUG: Class Details Query Results ===');
@@ -911,10 +977,10 @@ router.get('/recent-activity/:id', async (req, res) => {
                 s.end_time,
                 c.subject_name as className,
                 c.subject_code,
-                (SELECT status FROM attendance_logs WHERE session_id = s.id AND student_id = e.student_id ORDER BY id DESC LIMIT 1) as log_status,
-                (SELECT recognition_method FROM attendance_logs WHERE session_id = s.id AND student_id = e.student_id ORDER BY id DESC LIMIT 1) as log_method,
-                (SELECT time_in FROM attendance_logs WHERE session_id = s.id AND student_id = e.student_id ORDER BY id DESC LIMIT 1) as log_time_in,
-                (SELECT time_out FROM attendance_logs WHERE session_id = s.id AND student_id = e.student_id ORDER BY id DESC LIMIT 1) as log_time_out
+                (SELECT status FROM attendance_logs WHERE session_id = s.id AND (student_id = e.student_id OR enrollment_id = e.id) ORDER BY id DESC LIMIT 1) as log_status,
+                (SELECT recognition_method FROM attendance_logs WHERE session_id = s.id AND (student_id = e.student_id OR enrollment_id = e.id) ORDER BY id DESC LIMIT 1) as log_method,
+                (SELECT time_in FROM attendance_logs WHERE session_id = s.id AND (student_id = e.student_id OR enrollment_id = e.id) ORDER BY id DESC LIMIT 1) as log_time_in,
+                (SELECT time_out FROM attendance_logs WHERE session_id = s.id AND (student_id = e.student_id OR enrollment_id = e.id) ORDER BY id DESC LIMIT 1) as log_time_out
             FROM sessions s
             JOIN enrollments e ON s.class_id = e.class_id
             JOIN classes c ON s.class_id = c.id
@@ -999,23 +1065,44 @@ router.get('/analytics/:id', async (req, res) => {
 
         const classIds = classes.map(c => c.id);
 
+        // 2b. Fetch all valid enrollment IDs for this student (handles multi-link cases)
+        const [eRows] = await pool.query(`
+            SELECT id FROM enrollments 
+            WHERE student_id = ? 
+            OR REPLACE(REPLACE(REPLACE(REPLACE(TRIM(student_number), '-',''),' ',''), CHAR(13),''), CHAR(10),'')
+               = REPLACE(REPLACE(REPLACE(REPLACE(TRIM(?), '-',''),' ',''), CHAR(13),''), CHAR(10),'')
+        `, [studentId, studentStringId]);
+        const enrollmentIds = eRows.length > 0 ? eRows.map(r => r.id) : [-1];
+
         // 3. Fetch all completed sessions for these classes (chronological)
+        //    Uses a subquery to select the "best" status if multiple logs exist (e.g. Present > Late)
         const [sessions] = await pool.query(`
             SELECT
                 s.id AS session_id,
                 s.class_id,
                 s.date,
                 s.start_time,
-                al.status AS attendance_status,
-                al.student_id AS log_student_id
+                (
+                    SELECT status FROM attendance_logs 
+                    WHERE session_id = s.id 
+                    AND (student_id = ? OR enrollment_id IN (?))
+                    ORDER BY 
+                        CASE 
+                            WHEN status = 'Present' THEN 1 
+                            WHEN status = 'Late' THEN 2 
+                            WHEN status = 'Excused' THEN 3 
+                            WHEN status = 'Absent' THEN 4 
+                            ELSE 5 
+                        END ASC,
+                        id DESC
+                    LIMIT 1
+                ) AS attendance_status
             FROM sessions s
-            LEFT JOIN attendance_logs al
-                ON s.id = al.session_id AND al.student_id = ?
             WHERE s.class_id IN (?)
                 AND s.date <= DATE(NOW())
                 AND s.monitoring_started_at IS NOT NULL
             ORDER BY s.class_id, s.date ASC, s.start_time ASC
-        `, [studentId, classIds]);
+        `, [studentId, enrollmentIds, classIds]);
 
         // 4. Compute class-average rate per class (all enrolled students)
         //    One query — aggregate across all students per class.

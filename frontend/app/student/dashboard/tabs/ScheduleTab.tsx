@@ -102,8 +102,23 @@ export default function ScheduleTab({ user }: ScheduleTabProps) {
 
     return (
         <div className="space-y-8 animate-fade-in pb-20 font-outfit">
+            {/* Tab Title HUD */}
+            <div className="flex items-center gap-4 mb-2">
+                <div className="h-[1px] flex-1 bg-gradient-to-r from-transparent via-identity-sky/20 to-transparent" />
+                <div className="flex flex-col items-center px-8">
+                    <h1 className="text-[10px] font-black text-identity-sky uppercase tracking-[0.6em] italic opacity-70 mb-1">
+                        STUDENT DASHBOARD
+                    </h1>
+                    <div className="flex items-center gap-2">
+                        <div className="w-1.5 h-1.5 rounded-full bg-identity-sky animate-pulse shadow-[0_0_8px_rgba(0,186,255,0.8)]" />
+                        <span className="text-[12px] font-black text-identity-navy uppercase tracking-[0.2em] italic">WEEKLY CLASS SCHEDULE</span>
+                    </div>
+                </div>
+                <div className="h-[1px] flex-1 bg-gradient-to-r from-transparent via-identity-sky/20 to-transparent" />
+            </div>
+
             {/* Compact Header Area */}
-            <div className="identity-glass p-6 rounded-[2rem] shadow-2xl border border-identity-sky/15 backdrop-blur-xl relative overflow-hidden group">
+            <div className="identity-glass p-5 rounded-[1.5rem] md:rounded-[2rem] shadow-2xl border border-identity-sky/15 backdrop-blur-xl relative overflow-hidden group">
                 <div className="absolute inset-0 opacity-[0.02] pointer-events-none bg-blueprint-fine" />
                 
                 <div className="flex flex-col sm:flex-row items-center gap-6 relative z-10">
@@ -117,9 +132,8 @@ export default function ScheduleTab({ user }: ScheduleTabProps) {
                             SYNCHRONIZED • STATUS VERIFIED
                         </p>
                     </div>
-                    <div className="ml-auto hidden lg:flex items-center gap-4 bg-white/40 px-6 py-3 rounded-2xl border border-identity-sky/10 shadow-sm">
-                        <Zap size={14} className="text-identity-sky animate-pulse" />
-                        <span className="text-[9px] font-black text-identity-navy uppercase tracking-[0.2em] italic">REAL-TIME ACTIVE</span>
+                    <div className="ml-auto hidden lg:flex items-center justify-center p-3 bg-white/40 rounded-xl border border-identity-sky/10">
+                        <Zap size={14} className="text-identity-sky/40" />
                     </div>
                 </div>
             </div>
@@ -136,7 +150,7 @@ export default function ScheduleTab({ user }: ScheduleTabProps) {
 
             {/* Weekly Schedule Grid */}
             <div className="table-responsive-wrapper pb-10">
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-4 min-w-[1200px] xl:min-w-0">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-3 min-w-[1200px] xl:min-w-0">
                     {days.map(day => {
                     const dayClasses = scheduleByDay[day] || [];
                     const hasClasses = dayClasses.length > 0;
@@ -144,22 +158,22 @@ export default function ScheduleTab({ user }: ScheduleTabProps) {
                     return (
                         <div
                             key={day}
-                            className="identity-glass rounded-[2rem] overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-700 border border-identity-sky/15 h-full min-h-[400px] flex flex-col group/day"
+                            className="identity-glass rounded-[1.5rem] md:rounded-[2rem] overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-700 border border-identity-sky/15 h-full min-h-[350px] flex flex-col group/day"
                         >
                             <div className="absolute inset-0 opacity-[0.02] pointer-events-none bg-blueprint" />
-                            <div className="px-4 py-3 flex items-center justify-between border-b border-identity-sky/10 bg-identity-sky/[0.03] group-hover/day:bg-identity-sky/[0.05] transition-colors relative">
-                                <h3 className="text-sm font-black text-identity-navy uppercase tracking-tighter italic leading-none">{day}</h3>
+                            <div className="px-3 py-2 flex items-center justify-between border-b border-identity-sky/10 bg-identity-sky/[0.03] group-hover/day:bg-identity-sky/[0.05] transition-colors relative">
+                                <h3 className="text-xs font-black text-identity-navy uppercase tracking-tighter italic leading-none">{day}</h3>
                                 <div className="text-[7px] font-black uppercase tracking-[0.1em] px-2 py-1 rounded-md bg-identity-navy text-white shadow-lg border border-identity-sky/20 italic">
                                     {dayClasses.length}
                                 </div>
                             </div>
 
-                            <div className="p-3 space-y-3 flex-1 flex flex-col">
+                            <div className="p-2 space-y-2 flex-1 flex flex-col">
                                 {hasClasses ? dayClasses.map((item, index) => (
                                     <div
                                         key={index}
                                         onClick={() => setSelectedClass(item.class)}
-                                        className="bg-white/80 hover:bg-white rounded-[1.2rem] p-4 border-2 border-slate-100 hover:border-identity-sky/50 transition-all duration-500 cursor-pointer group shadow-lg hover:-translate-y-1 relative active:scale-[0.98] overflow-hidden group/item flex flex-col"
+                                        className="bg-white/80 hover:bg-white rounded-[1rem] p-3 border-2 border-slate-100 hover:border-identity-sky/50 transition-all duration-500 cursor-pointer group shadow-lg hover:-translate-y-1 relative active:translate-y-0 overflow-hidden group/item flex flex-col"
                                     >
                                         <div className="absolute top-0 left-0 w-1.5 h-full bg-identity-sky/20 group-hover/item:bg-identity-sky transition-colors" />
                                         
@@ -214,28 +228,28 @@ export default function ScheduleTab({ user }: ScheduleTabProps) {
                         <div className="corner-bracket-tl opacity-40 scale-75 -top-4 -left-4" />
                         
                         {/* Header */}
-                        <div className="bg-identity-sky/[0.03] p-10 sm:p-14 border-b border-identity-sky/10 flex justify-between items-start relative overflow-hidden">
+                        <div className="bg-identity-sky/[0.03] p-8 sm:p-10 border-b border-identity-sky/10 flex justify-between items-start relative overflow-hidden">
                             <div className="absolute top-0 right-0 w-48 h-48 bg-identity-sky/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
-                            <div className="relative z-10 flex flex-col md:flex-row md:items-center gap-8">
-                                <div className="p-6 bg-identity-navy text-white rounded-2.5xl border-2 border-identity-sky/20 shadow-2xl">
-                                    <BookOpen size={40} className="filter drop-shadow-md" />
+                            <div className="relative z-10 flex flex-col md:flex-row md:items-center gap-6">
+                                <div className="p-4 bg-identity-navy text-white rounded-2xl border-2 border-identity-sky/20 shadow-2xl">
+                                    <BookOpen size={32} className="filter drop-shadow-md" />
                                 </div>
                                 <div>
-                                    <h1 className="text-[11px] font-black text-identity-sky uppercase tracking-[0.4em] mb-3 italic opacity-60">Subject Details:</h1>
-                                    <h3 className="text-4xl font-black text-identity-navy uppercase tracking-tighter italic leading-none mb-4">{selectedClass.subject_code}</h3>
-                                    <p className="text-slate-500 text-[12px] font-black uppercase tracking-[0.2em] italic max-w-md">{selectedClass.subject_name}</p>
+                                    <h1 className="text-[10px] font-black text-identity-sky uppercase tracking-[0.4em] mb-2 italic opacity-60">Subject Details:</h1>
+                                    <h3 className="text-3xl font-black text-identity-navy uppercase tracking-tighter italic leading-none mb-3">{selectedClass.subject_code}</h3>
+                                    <p className="text-slate-500 text-[11px] font-black uppercase tracking-[0.2em] italic max-w-md">{selectedClass.subject_name}</p>
                                 </div>
                             </div>
                             <button
                                 onClick={() => setSelectedClass(null)}
-                                className="p-4 bg-white/80 hover:bg-rose-500 hover:text-white rounded-2.5xl text-slate-400 transition-all shadow-2xl border-2 border-slate-100 active:scale-90 relative z-20 group"
+                                className="p-3 bg-white/80 hover:bg-rose-500 hover:text-white rounded-2xl text-slate-400 transition-all shadow-2xl border-2 border-slate-100 active:bg-rose-600 relative z-20 group"
                             >
-                                <X size={24} className="group-hover:rotate-90 transition-transform duration-500" />
+                                <X size={20} className="transition-transform duration-500" />
                             </button>
                         </div>
 
                         {/* Content */}
-                        <div className="p-10 sm:p-14 space-y-12 relative z-10">
+                        <div className="p-8 sm:p-10 space-y-10 relative z-10">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                 <div className="bg-identity-sky/[0.03] p-10 rounded-[2.5rem] border-2 border-identity-sky/10 shadow-inner group/stat relative overflow-hidden">
                                     <div className="absolute inset-0 opacity-[0.02] pointer-events-none bg-blueprint-fine" />
@@ -290,7 +304,7 @@ export default function ScheduleTab({ user }: ScheduleTabProps) {
                         <div className="p-10 sm:p-12 bg-identity-sky/[0.03] border-t-2 border-identity-sky/10 text-center relative z-10">
                             <button
                                 onClick={() => setSelectedClass(null)}
-                                className="w-full py-6 bg-identity-navy text-white hover:bg-identity-sky rounded-2.5xl text-[12px] font-black uppercase tracking-[0.3em] transition-all shadow-3xl shadow-identity-navy/20 active:scale-[0.98] border border-identity-sky/20 italic group"
+                                className="w-full py-6 bg-identity-navy text-white hover:bg-identity-sky rounded-2.5xl text-[12px] font-black uppercase tracking-[0.3em] transition-all shadow-3xl shadow-identity-navy/20 active:translate-y-0 border border-identity-sky/20 italic group"
                             >
                                 CONFIRM & CLOSE <ChevronRight className="inline ml-2 group-hover:translate-x-2 transition-transform" />
                             </button>

@@ -67,7 +67,7 @@ export default function ClassesTab({ user }: ClassesTabProps) {
             <div
                 onClick={() => router.push(`/student/classes/${cls.id}`)}
                 className={`
-                    identity-glass group relative overflow-hidden rounded-[2.5rem] md:rounded-[3.5rem] p-10 sm:p-12 transition-all cursor-pointer shadow-2xl hover:shadow-3xl active:scale-[0.98] border-2 group/card
+                    identity-glass group relative overflow-hidden rounded-2xl p-6 transition-all cursor-pointer shadow-xl hover:shadow-2xl active:scale-[0.98] border-2 group/card
                     ${isArchived
                         ? 'bg-slate-50 opacity-60 saturate-50 hover:opacity-100 hover:saturate-100 border-slate-200'
                         : 'border-identity-sky/15 hover:border-identity-sky/40 bg-white/40'
@@ -77,42 +77,42 @@ export default function ClassesTab({ user }: ClassesTabProps) {
                 <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-blueprint-fine" />
                 <div className="corner-bracket-tl opacity-40 scale-75 -top-2 -left-2" />
                 
-                <div className="flex justify-between items-start mb-12 relative z-10">
+                <div className="flex justify-between items-start mb-6 relative z-10">
                     <div className={`
-                        w-16 h-16 rounded-2.5xl flex items-center justify-center font-black text-2xl shadow-3xl transition-all duration-700 border-2 italic font-outfit
+                        w-12 h-12 rounded-xl flex items-center justify-center font-black text-xl shadow-xl transition-all duration-700 border-2 italic font-outfit
                         ${isArchived
                             ? 'bg-slate-200 border-slate-300 text-slate-500'
-                            : 'bg-identity-navy text-white border-identity-sky/20 group-hover/card:bg-identity-sky group-hover/card:rotate-6 group-hover/card:scale-110'
+                            : 'bg-identity-navy text-white border-identity-sky/20 group-hover/card:bg-identity-sky group-hover/card:rotate-6'
                         }
                     `}>
                         {cls.subject_code.substring(0, 2).toUpperCase()}
                     </div>
                     <div className="text-right font-outfit">
-                        <h3 className={`font-black uppercase tracking-[0.15em] text-xl italic leading-none mb-2 ${isArchived ? 'text-slate-400' : 'text-identity-navy shadow-sky-400/10'}`}>
+                        <h3 className={`font-black uppercase tracking-[0.15em] text-lg italic leading-none mb-1.5 ${isArchived ? 'text-slate-400' : 'text-identity-navy shadow-sky-400/10'}`}>
                             {cls.subject_code}
                         </h3>
-                        <div className={`text-[11px] font-black uppercase tracking-[0.3em] italic px-3 py-1.5 rounded-xl border-2 w-fit ml-auto ${isArchived ? 'bg-slate-100 text-slate-300 border-slate-200' : 'bg-identity-sky/5 text-identity-sky border-identity-sky/10'}`}>
-                            Section {cls.section}
+                        <div className={`text-[9px] font-black uppercase tracking-[0.3em] italic px-2.5 py-1 rounded-lg border-2 w-fit ml-auto ${isArchived ? 'bg-slate-100 text-slate-300 border-slate-200' : 'bg-identity-sky/5 text-identity-sky border-identity-sky/10'}`}>
+                            {cls.section}
                         </div>
                     </div>
                 </div>
 
-                <h4 className={`text-lg font-black uppercase tracking-tight mb-14 line-clamp-2 leading-tight italic font-outfit relative z-10 transition-colors group-hover/card:text-identity-navy ${isArchived ? 'text-slate-400' : 'text-slate-600'}`}>
+                <h4 className={`text-base font-black uppercase tracking-tight mb-6 line-clamp-2 leading-tight italic font-outfit relative z-10 transition-colors group-hover/card:text-identity-navy h-12 ${isArchived ? 'text-slate-400' : 'text-slate-600'}`}>
                     {cls.subject_name}
                 </h4>
 
-                <div className="flex items-center justify-between mt-auto pt-10 border-t-2 border-identity-sky/5 font-outfit relative z-10">
-                    <div className="flex items-center gap-5">
-                        <div className="p-3 bg-slate-50 rounded-2xl border-2 border-slate-100 group-hover/card:bg-white transition-colors">
-                            <User size={18} className="text-identity-sky/60" />
+                <div className="flex items-center justify-between mt-auto pt-6 border-t-2 border-identity-sky/5 font-outfit relative z-10">
+                    <div className="flex items-center gap-4">
+                        <div className="p-2.5 bg-slate-50 rounded-xl border-2 border-slate-100 group-hover/card:bg-white transition-colors">
+                            <User size={14} className="text-identity-sky/60" />
                         </div>
                         <div className="flex flex-col">
-                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em] mb-1 italic">Instructor:</span>
-                            <span className="text-[11px] font-black text-identity-navy uppercase tracking-[0.15em] italic truncate max-w-[140px]">{cls.professor_id || 'Professor Pending'}</span>
+                            <span className="text-[8px] font-black text-slate-400 uppercase tracking-[0.3em] mb-0.5 italic">Instructor:</span>
+                            <span className="text-[10px] font-black text-identity-navy uppercase tracking-[0.15em] italic truncate max-w-[120px]">{cls.professor_id || 'Pending'}</span>
                         </div>
                     </div>
-                    <div className={`p-4 rounded-2.5xl transition-all shadow-xl ${isArchived ? 'bg-slate-100 text-slate-300' : 'bg-identity-navy text-white group-hover/card:bg-identity-sky group-hover/card:px-8'} border border-identity-sky/20`}>
-                        <ChevronRight size={22} className="transition-transform group-hover/card:translate-x-1" />
+                    <div className={`p-3 rounded-xl transition-all shadow-lg ${isArchived ? 'bg-slate-100 text-slate-300' : 'bg-identity-navy text-white group-hover/card:bg-identity-sky group-hover/card:scale-105'} border border-identity-sky/20`}>
+                        <ChevronRight size={18} className="transition-transform group-hover/card:translate-x-1" />
                     </div>
                 </div>
             </div>
@@ -120,27 +120,42 @@ export default function ClassesTab({ user }: ClassesTabProps) {
     };
 
     return (
-        <div className="space-y-12 animate-fade-in pb-20 font-outfit">
+        <div className="space-y-8 animate-fade-in pb-20 font-outfit">
+            {/* Tab Title HUD */}
+            <div className="flex items-center gap-4 mb-2">
+                <div className="h-[1px] flex-1 bg-gradient-to-r from-transparent via-identity-sky/20 to-transparent" />
+                <div className="flex flex-col items-center px-8">
+                    <h1 className="text-[10px] font-black text-identity-sky uppercase tracking-[0.6em] italic opacity-70 mb-1">
+                        STUDENT DASHBOARD
+                    </h1>
+                    <div className="flex items-center gap-2">
+                        <div className="w-1.5 h-1.5 rounded-full bg-identity-sky animate-pulse shadow-[0_0_8px_rgba(0,186,255,0.8)]" />
+                        <span className="text-[12px] font-black text-identity-navy uppercase tracking-[0.2em] italic">ACADEMIC ENROLLMENT</span>
+                    </div>
+                </div>
+                <div className="h-[1px] flex-1 bg-gradient-to-r from-transparent via-identity-sky/20 to-transparent" />
+            </div>
+
             {/* Active Classes Section */}
             <div>
-                <div className="flex flex-col md:flex-row md:items-center gap-6 mb-16 px-4">
-                    <div className="flex items-center gap-6">
-                        <div className="p-5 bg-identity-navy text-white rounded-2.5xl border-2 border-identity-sky/20 shadow-2xl relative group">
-                            <BookOpen size={36} className="filter drop-shadow-lg group-hover:scale-110 transition-transform" />
-                            <div className="absolute -top-1 -right-1 w-4 h-4 bg-emerald-500 rounded-full border-2 border-white animate-pulse shadow-[0_0_10px_rgba(16,185,129,0.5)]" />
+                <div className="flex flex-col md:flex-row md:items-center gap-6 mb-8 px-4">
+                    <div className="flex items-center gap-5">
+                        <div className="p-4 bg-identity-navy text-white rounded-2xl border border-identity-sky/20 shadow-xl relative group">
+                            <BookOpen size={28} className="filter drop-shadow-lg group-hover:scale-110 transition-transform" />
+                            <div className="absolute -top-1 -right-1 w-3 h-3 bg-emerald-500 rounded-full border-2 border-white animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
                         </div>
                         <div>
-                            <h2 className="text-4xl font-black text-identity-navy uppercase tracking-tighter italic leading-none mb-3">Enrolled Blocks</h2>
-                            <p className="text-[11px] font-black text-identity-sky uppercase tracking-[0.4em] italic flex items-center gap-3">
-                                <span className="w-2 h-2 rounded-full bg-identity-sky/40" />
-                                ACTIVE MODULE TRACKING: {activeClasses.length} UNITS
+                            <h2 className="text-3xl font-black text-identity-navy uppercase tracking-tighter italic leading-none mb-2">Enrolled Blocks</h2>
+                            <p className="text-[9px] font-black text-identity-sky uppercase tracking-[0.4em] italic flex items-center gap-3">
+                                <span className="w-1.5 h-1.5 rounded-full bg-identity-sky/40" />
+                                MODULE TRACKING: {activeClasses.length} UNITS
                             </p>
                         </div>
                     </div>
                 </div>
 
                 {activeClasses.length > 0 ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                         {activeClasses.map(cls => (
                             <ClassCard key={cls.id} cls={cls} />
                         ))}
@@ -159,21 +174,21 @@ export default function ClassesTab({ user }: ClassesTabProps) {
 
             {/* Archived Classes Section */}
             {archivedClasses.length > 0 && (
-                <div className="pt-20">
-                    <div className="flex items-center gap-6 mb-12 opacity-60">
-                        <div className="p-3 bg-slate-200 text-slate-500 rounded-2xl border border-slate-300">
-                            <Archive size={28} />
+                <div className="pt-12 border-t border-identity-sky/10">
+                    <div className="flex items-center gap-5 mb-6 opacity-60">
+                        <div className="p-2.5 bg-slate-200 text-slate-500 rounded-xl border border-slate-300">
+                            <Archive size={20} />
                         </div>
                         <div>
-                            <h2 className="text-2xl font-black text-slate-600 uppercase tracking-tighter italic">Past Classes</h2>
-                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em] mt-2">Archived Classes</p>
+                            <h2 className="text-xl font-black text-slate-600 uppercase tracking-tighter italic">Past Classes</h2>
+                            <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.4em] mt-1">Archived History</p>
                         </div>
-                        <div className="ml-auto bg-slate-100 text-slate-400 text-[10px] font-black px-6 py-3 rounded-full border border-slate-200 shadow-inner">
-                            {archivedClasses.length} Archived
+                        <div className="ml-auto bg-slate-100 text-slate-400 text-[8px] font-black px-4 py-2 rounded-full border border-slate-200">
+                            {archivedClasses.length} UNITS
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                         {archivedClasses.map(cls => (
                             <ClassCard key={cls.id} cls={cls} isArchived={true} />
                         ))}
