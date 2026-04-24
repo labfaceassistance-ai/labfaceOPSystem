@@ -61,7 +61,7 @@ export default function ConsentGuard({ userId, onConsentAccepted }: ConsentGuard
 
             if (response.ok) {
                 setShowConsentModal(false);
-                showToast('Protocol Synchronized', 'Data Privacy Policy accepted successfully', 'success', 6000);
+                showToast('Consent Accepted', 'Data Privacy Policy accepted successfully', 'success', 6000);
                 if (onConsentAccepted) onConsentAccepted();
             } else {
                 const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));

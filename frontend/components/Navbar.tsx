@@ -81,6 +81,11 @@ export default function Navbar() {
                                         }`}
                                     >
                                         {tab.label}
+                                        {tab.badge && (
+                                            <span className="absolute -top-1 -right-2 flex h-4 min-w-[16px] px-1 items-center justify-center rounded-full bg-rose-500 text-[8px] font-black text-white shadow-[0_0_10px_rgba(244,63,94,0.4)] animate-pulse">
+                                                {tab.badge}
+                                            </span>
+                                        )}
                                         {isActive && (
                                             <div className="absolute -bottom-1 left-0 w-full h-0.5 bg-identity-sky animate-in slide-in-from-left-2 duration-300 shadow-[0_0_8px_rgba(92,180,228,0.5)]" />
                                         )}

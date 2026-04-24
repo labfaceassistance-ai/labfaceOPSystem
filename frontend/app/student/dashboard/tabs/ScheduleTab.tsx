@@ -128,8 +128,7 @@ export default function ScheduleTab({ user }: ScheduleTabProps) {
                     <div className="text-center sm:text-left">
                         <h1 className="text-2xl font-black text-identity-navy uppercase tracking-tighter italic leading-none mb-2">WEEKLY SCHEDULE</h1>
                         <p className="text-[9px] font-black text-identity-sky uppercase tracking-[0.3em] italic flex items-center justify-center sm:justify-start gap-3">
-                            <span className="w-1.5 h-1.5 rounded-full bg-identity-sky/40 animate-pulse" />
-                            SYNCHRONIZED • STATUS VERIFIED
+                            {/* Decorative text removed for clarity */}
                         </p>
                     </div>
                     <div className="ml-auto hidden lg:flex items-center justify-center p-3 bg-white/40 rounded-xl border border-identity-sky/10">

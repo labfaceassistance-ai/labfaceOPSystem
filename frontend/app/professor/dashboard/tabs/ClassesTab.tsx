@@ -6,7 +6,7 @@ import SessionModal from '@/components/SessionModal';
 import ClassDetailsModal from '@/components/ClassDetailsModal';
 import EditClassModal from '@/components/EditClassModal';
 import ConfirmModal from '@/components/ConfirmModal';
-import { Calendar, BookOpen, Users, Archive, RefreshCw, MoreVertical, Play, Plus, Search, Eye, Edit, Square, Activity, ChevronDown, Filter, Trash2, AlertTriangle, RotateCcw, Monitor, Zap, ShieldCheck } from 'lucide-react';
+import { Calendar, BookOpen, Users, Archive, RefreshCw, MoreVertical, Play, Plus, Search, Eye, Edit, Square, Activity, ChevronDown, Filter, Trash2, AlertTriangle, RotateCcw, Monitor, Zap, ShieldCheck, ArrowRight } from 'lucide-react';
 
 import axios from 'axios';
 import { getToken } from '@/utils/auth';
@@ -31,7 +31,7 @@ interface ClassesTabProps {
     classes: Class[];
     loading: boolean;
     onRefresh: (isBackground?: boolean) => void;
-    onTabChange?: (tab: 'home' | 'classes' | 'monitor' | 'analytics') => void;
+    onTabChange?: (tab: 'home' | 'classes' | 'monitor' | 'analytics' | 'schedule') => void;
 }
 
 export default function ClassesTab({ user, classes, loading, onRefresh, onTabChange }: ClassesTabProps) {
@@ -324,9 +324,18 @@ export default function ClassesTab({ user, classes, loading, onRefresh, onTabCha
                                 </div>
                                 
                                 <div className="grid grid-cols-1 gap-2 bg-white/40 p-3 rounded-xl border border-white shadow-inner">
-                                    <div className="flex items-center gap-3 text-slate-500">
+                                    <div className="flex items-center gap-3 text-slate-500 min-h-[20px]">
                                         <Calendar size={12} className="text-[#5CB4E4]" />
-                                        <p className="text-[9px] font-black text-[#041C3C] uppercase tracking-tight italic truncate">{formatSchedule(cls.schedule_json)}</p>
+                                        {formatSchedule(cls.schedule_json) === 'NO SCHEDULE SET' ? (
+                                            <button 
+                                                onClick={() => onTabChange?.('schedule')}
+                                                className="text-[8px] font-black text-[#5CB4E4] uppercase tracking-widest hover:underline italic flex items-center gap-1 group/sch"
+                                            >
+                                                SET SCHEDULE <ArrowRight size={10} className="group-hover/sch:translate-x-1 transition-transform" />
+                                            </button>
+                                        ) : (
+                                            <p className="text-[9px] font-black text-[#041C3C] uppercase tracking-tight italic truncate">{formatSchedule(cls.schedule_json)}</p>
+                                        )}
                                     </div>
                                     <div className="flex items-center gap-3 text-slate-500">
                                         <Users size={12} className="text-[#041C3C]" />

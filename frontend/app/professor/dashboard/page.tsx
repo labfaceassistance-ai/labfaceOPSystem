@@ -47,7 +47,8 @@ function DashboardContent() {
     const [classes, setClasses] = useState<Class[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const { setTabs, activeTab, setActiveTab } = useNavigation();
+    const [analyticsKpis, setAnalyticsKpis] = useState<any>(null);
+    const { setTabs, activeTab, setActiveTab, updateTabBadge } = useNavigation();
 
     // Initial Data Fetch
     useEffect(() => {
@@ -139,11 +140,31 @@ function DashboardContent() {
             const response = await axios.get(`${API_URL}/api/classes/professor/${professorId}`);
             setClasses(response.data);
             setError(null);
+            
+            // Also fetch analytics badge globally
+            fetchAnalyticsBadge(professorId);
         } catch (error: any) {
             console.error("Failed to fetch classes", error);
             setError("Failed to load classes. Please try again.");
         } finally {
             if (!isBackgroundRefresh) setLoading(false);
+        }
+    };
+
+    const fetchAnalyticsBadge = async (professorId: string) => {
+        try {
+            const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
+            const token = getToken();
+            if (!token) return;
+            const res = await axios.get(`${API_URL}/api/analytics/professor/${professorId}/dashboard`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            const kpis = res.data;
+            setAnalyticsKpis(kpis);
+            const totalAlerts = (kpis.atRisk ?? 0) + (kpis.dropoutTriggered ?? 0);
+            updateTabBadge('analytics', totalAlerts > 0 ? totalAlerts : undefined);
+        } catch (err) {
+            console.error('Failed to fetch analytics badge:', err);
         }
     };
 
@@ -183,6 +204,7 @@ function DashboardContent() {
             // Refresh every 30 seconds in the background
             intervalId = setInterval(() => {
                 fetchClasses(user.professorId, true);
+                fetchAnalyticsBadge(user.professorId);
             }, 30000);
         }
 
@@ -252,11 +274,11 @@ function DashboardContent() {
             <main className="max-w-7xl mx-auto px-6 pt-28 pb-12 relative z-10">
                 {/* Tab Content */}
                 <div key={activeTab} className="tab-content-fade min-h-[70vh] mt-8">
-                    {activeTab === 'home' && <HomeTab user={user} classes={classes} error={error} />}
+                    {activeTab === 'home' && <HomeTab user={user} classes={classes} error={error} analyticsKpis={analyticsKpis} />}
                     {activeTab === 'classes' && <ClassesTab user={user} classes={classes} loading={loading} onRefresh={handleRefresh} onTabChange={handleTabChange} />}
                     {activeTab === 'schedule' && <ScheduleTab user={user} classes={classes} />}
                     {activeTab === 'monitor' && <MonitorTab />}
-                    {activeTab === 'analytics' && <AnalyticsTab user={user} classes={classes} />}
+                    {activeTab === 'analytics' && <AnalyticsTab user={user} classes={classes} initialKpis={analyticsKpis} />}
                 </div>
             </main>
 

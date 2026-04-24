@@ -3,37 +3,43 @@ const { templates } = require('../utils/notificationHelper');
 
 class AttendanceWarningService {
 
-    // Calculate equivalent absences: 3 Lates = 1 Absent + Actual Absences
+    // Calculate equivalent absences: 3 Lates = 1 Absent (now recorded directly)
+    // So equivalent absences is simply the absent count.
     calculateEquivalentAbsences(lateCount, absentCount) {
-        const lateEquivalent = Math.floor(lateCount / 3);
-        return absentCount + lateEquivalent;
+        return absentCount;
     }
 
-    // Determine the highest priority warning level based on counts
-    determineWarningLevel(lateCount, absentCount) {
+    determineWarningLevel(lateCount, absentCount, isConverted = false) {
         const equivalent = this.calculateEquivalentAbsences(lateCount, absentCount);
 
         if (equivalent >= 3) return 'dropout_warning';
         if (equivalent >= 2) return 'absence_warning';
 
-        // 3 lates conversion (3, 6, 9...)
-        if (lateCount >= 3 && lateCount % 3 === 0) return 'late_threshold';
+        // Trigger conversion alert if this record was just converted
+        if (isConverted) return 'late_threshold';
 
         // 2 lates warning (2, 5, 8...)
-        if (lateCount >= 2 && lateCount % 3 === 2) return 'incoming_absence_warning';
+        // Since 3rd becomes absent, lateCount will be 2, 4, 6...
+        // 1st cycle: 2 lates. 2 % 2 == 0? No, let's use the actual count.
+        // If we have 2 lates and 0 absents -> incoming warning.
+        // If we have 4 lates and 1 absent -> incoming warning.
+        // Pattern: lateCount is 2, 4, 6...
+        if (lateCount > 0 && lateCount % 2 === 0 && (lateCount / 2) === (absentCount + 1)) {
+            return 'incoming_absence_warning';
+        }
 
         return null;
     }
 
     // Main function to check status and trigger warnings if needed
-    async checkAndNotify(studentId, classId) {
+    async checkAndNotify(studentId, classId, isConverted = false) {
         try {
             // 1. Get current counts
             const counts = await this.getAttendanceCounts(studentId, classId);
             const { late_count, absent_count, excused_count } = counts;
 
             // 2. Determine implied warning level
-            const warningType = this.determineWarningLevel(late_count, absent_count);
+            const warningType = this.determineWarningLevel(late_count, absent_count, isConverted);
             if (!warningType) return; // No warning needed
 
             // 3. Check if we already have an active warning of this type or higher
@@ -105,7 +111,7 @@ class AttendanceWarningService {
                 const absent_count = parseInt(s.absent_count || 0);
                 const counts = { late_count, absent_count, excused_count: 0 }; 
 
-                const warningType = this.determineWarningLevel(late_count, absent_count);
+                const warningType = this.determineWarningLevel(late_count, absent_count, false);
                 if (!warningType) continue;
 
                 const existing = await this.getActiveWarning(s.student_id, classId, warningType);

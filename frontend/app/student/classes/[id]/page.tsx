@@ -2,11 +2,22 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Navbar from '../../../../components/Navbar';
-import { Calendar, Clock, User as UserIcon, AlertCircle, XCircle, CheckCircle, Filter, Camera } from 'lucide-react';
+import { Calendar, Clock, User as UserIcon, AlertCircle, XCircle, CheckCircle, Filter, Camera, Users, UserPlus } from 'lucide-react';
 import Link from 'next/link';
 import BackButton from '@/components/ui/BackButton';
 import { getToken, getUser, getBackendUrl } from '../../../../utils/auth';
 import { useMemo } from 'react';
+
+interface HistoryRecord {
+    date: string;
+    weekday: string;
+    status: string;
+    timeIn: string | null;
+    snapshotUrl?: string | null;
+    recognitionMethod: string | null;
+    startTime: string;
+    type: string;
+}
 
 interface ClassData {
     classInfo: {
@@ -24,19 +35,14 @@ interface ClassData {
         absent: number;
         total: number;
     };
-    history: {
-        date: string;
-        weekday: string;
-        status: string;
-        timeIn: string | null;
-        snapshotUrl?: string | null;
-        recognitionMethod: string | null;
-        startTime: string;
-        type: string;
-    }[];
+    history: HistoryRecord[];
+    currentBatch: any;
+    availableBatches: any[];
+    pendingRequests: any[];
 }
 
 import IdentityBackground from '../../../../components/IdentityBackground';
+import StudentBatchModal from '../../../../components/StudentBatchModal';
 
 export default function ClassDetailsPage() {
     const params = useParams();
@@ -47,6 +53,7 @@ export default function ClassDetailsPage() {
     const [data, setData] = useState<ClassData | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [isBatchModalOpen, setIsBatchModalOpen] = useState(false);
 
     // Filter Stats
     const [statusFilter, setStatusFilter] = useState('All');
@@ -54,7 +61,7 @@ export default function ClassDetailsPage() {
     const [specificDate, setSpecificDate] = useState('');
 
     // Modal State
-    const [selectedRecord, setSelectedRecord] = useState<any>(null);
+    const [selectedRecord, setSelectedRecord] = useState<HistoryRecord | null>(null);
 
     useEffect(() => {
         const token = getToken();
@@ -99,7 +106,7 @@ export default function ClassDetailsPage() {
 
         // 1. Filter by Status
         if (statusFilter !== 'All') {
-            filtered = filtered.filter(record => record.status === statusFilter);
+            filtered = filtered.filter((record: HistoryRecord) => record.status === statusFilter);
         }
 
         // 2. Filter by Date
@@ -107,19 +114,19 @@ export default function ClassDetailsPage() {
         if (dateFilterType === 'Week') {
             const oneWeekAgo = new Date(today);
             oneWeekAgo.setDate(today.getDate() - 7);
-            filtered = filtered.filter(record => {
+            filtered = filtered.filter((record: HistoryRecord) => {
                 const recordDate = new Date(record.date);
                 return recordDate >= oneWeekAgo && recordDate <= today;
             });
         } else if (dateFilterType === 'Month') {
             const currentMonth = today.getMonth();
             const currentYear = today.getFullYear();
-            filtered = filtered.filter(record => {
+            filtered = filtered.filter((record: HistoryRecord) => {
                 const recordDate = new Date(record.date);
                 return recordDate.getMonth() === currentMonth && recordDate.getFullYear() === currentYear;
             });
         } else if (dateFilterType === 'Date' && specificDate) {
-            filtered = filtered.filter(record => {
+            filtered = filtered.filter((record: HistoryRecord) => {
                 const selected = new Date(specificDate).toDateString();
                 const current = new Date(record.date).toDateString();
                 return selected === current;
@@ -238,6 +245,41 @@ export default function ClassDetailsPage() {
                     ))}
                 </div>
 
+                {/* Batch Management Card */}
+                <div className="mb-12 animate-fade-up" style={{ animationDelay: '150ms' }}>
+                    <div className="identity-glass p-8 rounded-[2rem] border border-identity-sky/10 shadow-xl bg-white/40 overflow-hidden relative group">
+                        <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-blueprint-fine" />
+                        <div className="flex flex-col md:flex-row items-center justify-between gap-8 relative z-10">
+                            <div className="flex items-center gap-6">
+                                <div className="w-16 h-16 rounded-[2rem] bg-identity-navy text-white flex items-center justify-center shadow-xl border-2 border-identity-sky/20 group-hover:rotate-3 transition-transform">
+                                    <Users size={28} />
+                                </div>
+                                <div>
+                                    <h3 className="text-xl font-black text-identity-navy uppercase tracking-tighter italic leading-none mb-2">Laboratory Batch Management</h3>
+                                    <div className="flex items-center gap-3">
+                                        <div className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-[0.2em] border shadow-sm italic ${
+                                            data.currentBatch ? 'bg-identity-sky/10 text-identity-sky border-identity-sky/10' : 'bg-slate-50 text-slate-400 border-slate-100'
+                                        }`}>
+                                            CURRENT: {data.currentBatch ? data.currentBatch.name : 'UNASSIGNED'}
+                                        </div>
+                                        {data.pendingRequests?.length > 0 && (
+                                            <div className="px-4 py-1.5 rounded-full bg-amber-500/10 text-amber-500 text-[9px] font-black uppercase tracking-[0.2em] border border-amber-500/10 shadow-sm italic animate-pulse">
+                                                REQUEST PENDING
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => setIsBatchModalOpen(true)}
+                                className="w-full md:w-auto px-10 py-5 bg-identity-navy hover:bg-identity-sky text-white rounded-3xl font-black uppercase text-[10px] tracking-[0.2em] transition-all shadow-2xl shadow-identity-navy/20 flex items-center justify-center gap-3 italic group/btn"
+                            >
+                                <UserPlus size={18} className="group-hover/btn:scale-110 transition-transform" /> Open Marketplace
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
                 {/* History List */}
                 <div className="identity-glass rounded-[2.5rem] md:rounded-[3.5rem] border border-white/20 shadow-4xl relative overflow-hidden animate-fade-up bg-white/40 mb-16" style={{ animationDelay: '200ms' }}>
                     <div className="p-8 md:p-10 border-b border-identity-sky/5 flex flex-col md:flex-row md:items-center justify-between gap-6">
@@ -295,7 +337,7 @@ export default function ClassDetailsPage() {
 
                     <div className="divide-y divide-identity-sky/5 max-h-[700px] overflow-y-auto custom-scrollbar">
                         {filteredHistory.length > 0 ? (
-                            filteredHistory.map((record, index) => (
+                            filteredHistory.map((record: HistoryRecord, index: number) => (
                                 <div
                                     key={index}
                                     onClick={() => {
@@ -413,6 +455,30 @@ export default function ClassDetailsPage() {
                         </div>
                     </div>
                 </div>
+            )}
+            {/* Batch Marketplace Modal */}
+            {isBatchModalOpen && (
+                <StudentBatchModal
+                    isOpen={isBatchModalOpen}
+                    onClose={() => setIsBatchModalOpen(false)}
+                    classId={Number(classId)}
+                    currentBatch={data.currentBatch}
+                    availableBatches={data.availableBatches}
+                    onSuccess={() => {
+                        // Re-fetch data to show pending status or new batch
+                        const fetchData = async () => {
+                            try {
+                                const axios = (await import('axios')).default;
+                                const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
+                                const response = await axios.get(`${API_URL}/api/student/classes/${classId}/details?studentId=${user.id}`);
+                                setData(response.data);
+                            } catch (err) {
+                                console.error("Refresh failed", err);
+                            }
+                        };
+                        fetchData();
+                    }}
+                />
             )}
         </div>
     );

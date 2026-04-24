@@ -938,6 +938,30 @@ router.get('/classes/:classId/details', async (req, res) => {
             };
         });
 
+        // 4. Get Current Batch for this student
+        const [currentBatchRows] = await pool.query(`
+            SELECT sg.* 
+            FROM student_groups sg
+            JOIN group_members gm ON sg.id = gm.group_id
+            WHERE sg.class_id = ? AND (gm.student_id = ? OR gm.enrollment_id IN (?))
+        `, [classId, studentId, enrollmentIds]);
+        const currentBatch = currentBatchRows.length > 0 ? currentBatchRows[0] : null;
+
+        // 5. Get All Batches for this class with occupancy
+        const [availableBatches] = await pool.query(`
+            SELECT 
+                sg.*,
+                (SELECT COUNT(*) FROM group_members WHERE group_id = sg.id) as student_count
+            FROM student_groups sg
+            WHERE sg.class_id = ?
+        `, [classId]);
+
+        // 6. Get Pending Requests for this student
+        const [pendingRequests] = await pool.query(`
+            SELECT * FROM batch_requests 
+            WHERE requester_id = ? AND class_id = ? AND status IN ('pending_peer', 'pending_professor')
+        `, [studentId, classId]);
+
         res.json({
             classInfo: {
                 id: classInfo.id,
@@ -945,8 +969,11 @@ router.get('/classes/:classId/details', async (req, res) => {
                 subjectCode: classInfo.subject_code,
                 professor: professorName,
                 schedule: classInfo.schedule_json,
-                isArchived: !!classInfo.is_archived  // Let frontend show archived badge
+                isArchived: !!classInfo.is_archived
             },
+            currentBatch,
+            availableBatches,
+            pendingRequests,
             stats: {
                 rate,
                 present,
@@ -957,6 +984,7 @@ router.get('/classes/:classId/details', async (req, res) => {
             },
             history
         });
+
 
     } catch (err) {
         console.error("Class Details Error:", err);
@@ -1179,7 +1207,7 @@ router.get('/analytics/:id', async (req, res) => {
                 : 0;
 
             // Effective absences = raw absences + floor(lates / 3)
-            const effectiveAbsences = absent + Math.floor(late / 3);
+            const effectiveAbsences = absent;
 
             return {
                 id: cls.id,
@@ -1206,6 +1234,108 @@ router.get('/analytics/:id', async (req, res) => {
 
     } catch (err) {
         console.error('Analytics Error:', err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Batch Join/Swap Request
+router.post('/batch-request', authenticateToken, async (req, res) => {
+    const { classId, type, targetGroupId, targetStudentId } = req.body;
+    const studentId = req.user.id;
+
+    try {
+        // 1. Basic Validation
+        if (!classId || !type || !targetGroupId) {
+            return res.status(400).json({ error: "Missing required fields" });
+        }
+
+        // 2. Check if student is already in a batch for this class
+        const [currentBatch] = await pool.query(`
+            SELECT sg.id FROM student_groups sg
+            JOIN group_members gm ON sg.id = gm.group_id
+            WHERE sg.class_id = ? AND gm.student_id = ?
+        `, [classId, studentId]);
+
+        if (type === 'join' && currentBatch.length > 0 && currentBatch[0].id === targetGroupId) {
+            return res.status(400).json({ error: "You are already in this batch" });
+        }
+
+        // 3. Resolve Target Student (for swaps)
+        let resolvedTargetId = null;
+        if (type === 'swap') {
+            if (!targetStudentId) {
+                return res.status(400).json({ error: "Target Student ID is required for swaps" });
+            }
+
+            // Find the user ID for the given student number
+            const [targetUsers] = await pool.query('SELECT id FROM users WHERE user_id = ?', [targetStudentId]);
+            if (targetUsers.length === 0) {
+                return res.status(404).json({ error: "Target student not found" });
+            }
+            resolvedTargetId = targetUsers[0].id;
+
+            // Verify they are in the class
+            const [isEnrolled] = await pool.query('SELECT 1 FROM enrollments WHERE class_id = ? AND student_id = ?', [classId, resolvedTargetId]);
+            if (isEnrolled.length === 0) {
+                return res.status(400).json({ error: "Target student is not enrolled in this class" });
+            }
+        }
+
+        // 4. Create the request
+        const status = type === 'join' ? 'pending_professor' : 'pending_peer';
+
+        await pool.query(`
+            INSERT INTO batch_requests 
+            (requester_id, target_student_id, target_group_id, class_id, request_type, status)
+            VALUES (?, ?, ?, ?, ?, ?)
+        `, [studentId, resolvedTargetId, targetGroupId, classId, type, status]);
+
+        res.json({ 
+            message: type === 'join' ? "Join request sent to professor" : "Swap request sent to peer",
+            status 
+        });
+
+    } catch (err) {
+        console.error("Batch Request Error:", err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Get Pending Peer Requests for current student
+router.get('/pending-swaps', authenticateToken, async (req, res) => {
+    try {
+        const studentId = req.user.id;
+        const [requests] = await pool.query(`
+            SELECT 
+                br.*,
+                CONCAT(u.first_name, ' ', u.last_name) as requester_name,
+                c.subject_name,
+                sg.name as target_group_name
+            FROM batch_requests br
+            JOIN users u ON br.requester_id = u.id
+            JOIN classes c ON br.class_id = c.id
+            JOIN student_groups sg ON br.target_group_id = sg.id
+            WHERE br.target_student_id = ? AND br.status = 'pending_peer'
+        `, [studentId]);
+        res.json(requests);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Action a Peer Request (Accept/Decline)
+router.post('/batch-request/:requestId/:action', authenticateToken, async (req, res) => {
+    const { requestId, action } = req.params;
+    const studentId = req.user.id;
+
+    try {
+        if (action === 'accept') {
+            await pool.query('UPDATE batch_requests SET status = "pending_professor" WHERE id = ? AND target_student_id = ?', [requestId, studentId]);
+        } else {
+            await pool.query('UPDATE batch_requests SET status = "rejected" WHERE id = ? AND target_student_id = ?', [requestId, studentId]);
+        }
+        res.json({ message: `Swap request ${action}ed` });
+    } catch (err) {
         res.status(500).json({ error: err.message });
     }
 });

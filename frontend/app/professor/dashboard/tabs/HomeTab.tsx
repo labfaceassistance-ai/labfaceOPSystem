@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
 import { getToken } from '@/utils/auth';
 import { Calendar, BookOpen, Users, XCircle, Clock, MapPin, ChevronRight, TrendingUp, AlertCircle, CheckCircle, Briefcase, Coffee, PartyPopper, Activity, Zap, RefreshCw, ArrowRight, ShieldCheck } from 'lucide-react';
@@ -10,6 +10,7 @@ interface HomeTabProps {
     user: any;
     classes: any[];
     error?: string | null;
+    analyticsKpis?: any;
 }
 
 const formatTime = (timeStr: string) => {
@@ -34,25 +35,31 @@ const formatTime = (timeStr: string) => {
     }
 };
 
-export default function HomeTab({ user, classes, error }: HomeTabProps) {
+export default function HomeTab({ user, classes, error, analyticsKpis }: HomeTabProps) {
     const router = useRouter();
     const [totalStudents, setTotalStudents] = useState(0);
     const [nextClass, setNextClass] = useState<any>(null);
 
     const today = new Date().toLocaleDateString('en-US', { weekday: 'long' });
-    const activeClasses = classes.filter(c => !c.is_archived);
+    
+    const activeClasses = useMemo(() => 
+        classes.filter(c => !c.is_archived), 
+    [classes]);
 
-    // Filter today's classes
-    const todayClasses = activeClasses.filter(c => {
-        try {
-            const schedule = JSON.parse(c.schedule_json);
-            return Array.isArray(schedule) && schedule.some((s: any) => s.day === today);
-        } catch {
-            return false;
-        }
-    });
+    const todayClasses = useMemo(() => 
+        activeClasses.filter(c => {
+            try {
+                const schedule = JSON.parse(c.schedule_json);
+                return Array.isArray(schedule) && schedule.some((s: any) => s.day === today);
+            } catch {
+                return false;
+            }
+        }), 
+    [activeClasses, today]);
 
     useEffect(() => {
+        if (!user || !classes.length) return;
+
         const calculateNextClass = () => {
             const now = new Date();
             const currentTime = now.getHours() * 60 + now.getMinutes();
@@ -101,13 +108,15 @@ export default function HomeTab({ user, classes, error }: HomeTabProps) {
             try {
                 const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
                 const token = getToken();
-                const response = await axios.get(`${API_URL}/api/classes/professor/${user.professorId || user.userId}/stats-overview`, {
+                const profId = user.professorId || user.userId;
+                if (!profId) return;
+
+                const response = await axios.get(`${API_URL}/api/classes/professor/${profId}/stats-overview`, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
                 setTotalStudents(response.data.totalStudents || 0);
             } catch (err) {
-                const simpleSum = activeClasses.reduce((acc, curr) => acc + (curr.student_count || 0), 0);
-                setTotalStudents(simpleSum);
+                console.error("Stats fetch error", err);
             }
         };
         fetchStats();
@@ -115,12 +124,12 @@ export default function HomeTab({ user, classes, error }: HomeTabProps) {
         const interval = setInterval(calculateNextClass, 60000);
         return () => clearInterval(interval);
 
-    }, [user, classes, today, todayClasses, activeClasses]);
+    }, [user?.professorId, user?.userId, classes, todayClasses, today]);
 
     const stats = [
         { label: 'Total Students', value: totalStudents, suffix: 'STUDENTS', icon: Users, color: 'text-[#041C3C]', trend: '+12%', trendUp: true },
-        { label: 'Active Classes', value: activeClasses.length, suffix: 'CLASSES', icon: Zap, color: 'text-[#5CB4E4]', trend: 'ACTIVE', trendUp: true },
-        { label: 'Classes Today', value: todayClasses.length, suffix: 'SESSIONS', icon: Activity, color: 'text-emerald-500', trend: 'ACTIVE', trendUp: true },
+        { label: 'At Risk', value: analyticsKpis?.atRisk ?? 0, suffix: 'ALERT', icon: AlertCircle, color: 'text-[#F59E0B]', trend: 'CRITICAL', trendUp: false },
+        { label: 'Dropped', value: analyticsKpis?.dropoutTriggered ?? 0, suffix: 'BREACH', icon: XCircle, color: 'text-rose-500', trend: 'ACTION', trendUp: false },
     ];
 
     return (
@@ -184,8 +193,7 @@ export default function HomeTab({ user, classes, error }: HomeTabProps) {
                         <h3 className="text-[10px] sm:text-[11px] font-black text-identity-navy uppercase tracking-[0.3em] sm:tracking-[0.4em] italic">DAILY_OPERATIONS_MATRIX</h3>
                     </div>
                     <div className="flex items-center gap-2 sm:gap-3">
-                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                        <span className="text-[8px] sm:text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] sm:tracking-[0.3em] italic">LIVE_STATUS_ACTIVE</span>
+                        {/* Status indicator removed */}
                     </div>
                 </div>
 

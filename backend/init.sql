@@ -127,6 +127,7 @@ CREATE TABLE IF NOT EXISTS student_groups (
     id INT AUTO_INCREMENT PRIMARY KEY,
     class_id INT NOT NULL,
     name VARCHAR(100) NOT NULL,
+    capacity INT DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (class_id) REFERENCES classes(id) ON DELETE CASCADE
 );
@@ -138,6 +139,22 @@ CREATE TABLE IF NOT EXISTS student_group_members (
     PRIMARY KEY (group_id, enrollment_id),
     FOREIGN KEY (group_id) REFERENCES student_groups(id) ON DELETE CASCADE,
     FOREIGN KEY (enrollment_id) REFERENCES enrollments(id) ON DELETE CASCADE
+);
+
+-- Batch Requests Table
+CREATE TABLE IF NOT EXISTS batch_requests (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    class_id INT NOT NULL,
+    requester_id INT NOT NULL,
+    target_group_id INT NOT NULL,
+    request_type ENUM('join', 'swap') NOT NULL,
+    target_student_id INT DEFAULT NULL, -- For swaps (User ID)
+    status ENUM('pending_peer', 'pending_professor', 'approved', 'rejected', 'cancelled') DEFAULT 'pending_peer',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (class_id) REFERENCES classes(id) ON DELETE CASCADE,
+    FOREIGN KEY (requester_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (target_group_id) REFERENCES student_groups(id) ON DELETE CASCADE,
+    FOREIGN KEY (target_student_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
 -- ==================== 4. FACE RECOGNITION & FILES ====================
@@ -168,6 +185,11 @@ CREATE TABLE IF NOT EXISTS sessions (
     status ENUM('active', 'completed') DEFAULT 'active',
     late_threshold_minutes INT DEFAULT 15,
     session_name VARCHAR(150),
+    reason TEXT,
+    batch_students JSON,
+    monitoring_started_at TIMESTAMP NULL,
+    monitoring_ended_at TIMESTAMP NULL,
+    auto_close TINYINT(1) DEFAULT 1, -- 0: Manual, 1: Auto (Default to Auto)
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (class_id) REFERENCES classes(id) ON DELETE CASCADE
 );

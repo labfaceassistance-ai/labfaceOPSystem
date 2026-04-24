@@ -101,10 +101,10 @@ export default function NotificationsPage() {
             <IdentityBackground />
             <Navbar />
 
-            <main className="max-w-7xl mx-auto px-6 pt-32 pb-20 relative z-10">
+            <main className="max-w-7xl mx-auto px-6 pt-24 pb-12 relative z-10">
                 <BackButton
                     label="Back to Dashboard"
-                    className="mb-8 bg-white/40 px-8 py-4 rounded-[1.5rem] border-2 border-white/40 backdrop-blur-md shadow-xl hover:scale-105 italic"
+                    className="mb-6 bg-white/40 px-6 py-3 rounded-2xl border-2 border-white/40 backdrop-blur-md shadow-lg hover:scale-105 italic text-[11px] font-black uppercase tracking-widest"
                     onClick={() => {
                         const user = getUser();
                         if (user) {
@@ -120,32 +120,31 @@ export default function NotificationsPage() {
                         }
                     }}
                 />
-
-                <div className="identity-glass rounded-[3.5rem] shadow-4xl border-2 border-white/40 backdrop-blur-2xl overflow-hidden animate-fade-in bg-white/10">
-                    <div className="p-8 md:p-10 border-b-2 border-identity-navy/5 bg-white/20">
-                        <div className="flex flex-col lg:flex-row justify-between items-center gap-8">
-                           <div className="flex items-center gap-6">
-                               <div className="w-16 h-16 bg-identity-navy text-identity-sky rounded-[1.5rem] flex items-center justify-center shadow-2xl border-2 border-white/10">
-                                   <Bell size={28} className="animate-pulse" />
+                <div className="identity-glass rounded-[2rem] shadow-3xl border-2 border-white/40 backdrop-blur-2xl overflow-hidden animate-fade-in bg-white/10">
+                    <div className="p-4 md:p-6 border-b-2 border-identity-navy/5 bg-white/20">
+                        <div className="flex flex-col lg:flex-row justify-between items-center gap-6">
+                           <div className="flex items-center gap-4">
+                               <div className="w-12 h-12 bg-identity-navy text-identity-sky rounded-2xl flex items-center justify-center shadow-xl border-2 border-white/10">
+                                   <Bell size={20} className="animate-pulse" />
                                </div>
                                <div>
-                                   <h1 className="text-2xl md:text-4xl font-black text-identity-navy uppercase tracking-tighter italic">
+                                   <h1 className="text-xl md:text-2xl font-black text-identity-navy uppercase tracking-tighter italic">
                                        System <span className="text-identity-sky">Alerts</span>
                                    </h1>
-                                   <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.4em] italic opacity-60">Identity Management Activity Logs</p>
+                                   <p className="text-[8px] font-black text-slate-400 uppercase tracking-[0.3em] italic opacity-60">Identity Management Activity Logs</p>
                                </div>
                            </div>
 
-                           <div className="flex items-center gap-4 bg-white/40 p-2 rounded-2xl border border-white/40 shadow-inner">
+                           <div className="flex items-center gap-3 bg-white/40 p-1.5 rounded-2xl border border-white/40 shadow-inner">
                                 <button
                                     onClick={() => setFilter('all')}
-                                    className={`px-6 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-[0.2em] transition-all italic ${filter === 'all' ? 'bg-identity-navy text-white shadow-lg' : 'text-slate-400 hover:text-identity-navy'}`}
+                                    className={`px-5 py-2 rounded-xl text-[8px] font-black uppercase tracking-[0.2em] transition-all italic ${filter === 'all' ? 'bg-identity-navy text-white shadow-md' : 'text-slate-400 hover:text-identity-navy'}`}
                                 >
                                     All Logs
                                 </button>
                                 <button
                                     onClick={() => setFilter('unread')}
-                                    className={`px-6 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-[0.2em] transition-all italic ${filter === 'unread' ? 'bg-identity-navy text-white shadow-lg' : 'text-slate-400 hover:text-identity-navy'}`}
+                                    className={`px-5 py-2 rounded-xl text-[8px] font-black uppercase tracking-[0.2em] transition-all italic ${filter === 'unread' ? 'bg-identity-navy text-white shadow-md' : 'text-slate-400 hover:text-identity-navy'}`}
                                 >
                                     Unread
                                 </button>
@@ -155,9 +154,9 @@ export default function NotificationsPage() {
                                 {notifications.some(n => !n.is_read) && (
                                     <button
                                         onClick={markAllAsRead}
-                                        className="px-6 py-2.5 bg-identity-sky/10 text-identity-sky hover:bg-identity-sky hover:text-white rounded-xl text-[9px] font-black uppercase tracking-[0.2em] transition-all flex items-center gap-2 italic border border-identity-sky/20"
+                                        className="px-5 py-2 bg-identity-sky/10 text-identity-sky hover:bg-identity-sky hover:text-white rounded-xl text-[8px] font-black uppercase tracking-[0.2em] transition-all flex items-center gap-2 italic border border-identity-sky/20"
                                     >
-                                        <Check size={14} /> Clear All
+                                        <Check size={12} /> Clear All
                                     </button>
                                 )}
                            </div>
@@ -174,7 +173,7 @@ export default function NotificationsPage() {
                             filteredNotifications.map((notification) => (
                                 <div
                                     key={notification.id}
-                                    className={`p-10 md:p-12 hover:bg-white/40 transition-all cursor-pointer group relative overflow-hidden ${!notification.is_read ? 'bg-identity-sky/[0.03]' : ''}`}
+                                    className={`p-6 md:p-8 hover:bg-white/40 transition-all cursor-pointer group relative overflow-hidden ${!notification.is_read ? 'bg-identity-sky/[0.03]' : ''}`}
                                     onClick={() => !notification.is_read && markAsRead(notification.id)}
                                 >
                                     {/* Unread Indicator Bar */}
@@ -182,38 +181,38 @@ export default function NotificationsPage() {
                                         <div className="absolute left-0 top-0 bottom-0 w-2 bg-identity-sky shadow-glow-blue"></div>
                                     )}
 
-                                    <div className="flex flex-col md:flex-row justify-between items-start gap-8 relative z-10">
+                                    <div className="flex flex-col md:flex-row justify-between items-start gap-6 relative z-10">
                                         <div className="flex-1">
-                                            <div className="flex items-center gap-4 mb-4">
+                                            <div className="flex items-center gap-4 mb-3">
                                                 {!notification.is_read && (
-                                                    <span className="px-3 py-1 bg-identity-sky text-white text-[9px] font-black uppercase tracking-[0.2em] rounded-md italic shadow-glow-blue animate-pulse">
+                                                    <span className="px-2 py-0.5 bg-identity-sky text-white text-[8px] font-black uppercase tracking-[0.2em] rounded-md italic shadow-glow-blue animate-pulse">
                                                         New
                                                     </span>
                                                 )}
-                                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] flex items-center gap-2 italic">
-                                                    <Clock size={12} /> {formatDate(notification.created_at)}
+                                                <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em] flex items-center gap-2 italic">
+                                                    <Clock size={10} /> {formatDate(notification.created_at)}
                                                 </span>
                                             </div>
-                                            <h3 className={`text-xl md:text-2xl font-black uppercase tracking-tighter mb-3 italic ${!notification.is_read ? 'text-identity-navy underline decoration-identity-sky/20' : 'text-identity-navy/80'}`}>
+                                            <h3 className={`text-lg md:text-xl font-black uppercase tracking-tighter mb-2 italic ${!notification.is_read ? 'text-identity-navy underline decoration-identity-sky/20' : 'text-identity-navy/80'}`}>
                                                 {notification.title}
                                             </h3>
-                                            <p className="text-[12px] font-black text-slate-500 leading-relaxed uppercase tracking-widest italic opacity-70 group-hover:opacity-100 transition-opacity">
+                                            <p className="text-[10.5px] font-black text-slate-500 leading-relaxed uppercase tracking-widest italic opacity-70 group-hover:opacity-100 transition-opacity">
                                                 {notification.message}
                                             </p>
                                         </div>
                                         <div className="flex flex-col items-end shrink-0">
-                                            <div className={`w-14 h-14 rounded-2xl flex items-center justify-center border-2 transition-all duration-500 ${!notification.is_read ? 'bg-identity-sky/10 border-identity-sky/40 text-identity-sky shadow-glow-blue rotate-12' : 'bg-white border-identity-navy/5 text-slate-300'}`}>
-                                                <Bell size={24} />
+                                            <div className={`w-10 h-10 rounded-xl flex items-center justify-center border-2 transition-all duration-500 ${!notification.is_read ? 'bg-identity-sky/10 border-identity-sky/40 text-identity-sky shadow-glow-blue rotate-12' : 'bg-white border-identity-navy/5 text-slate-300'}`}>
+                                                <Bell size={18} />
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                             ))
                         ) : (
-                            <div className="p-32 text-center opacity-40">
-                                <Bell size={80} className="mx-auto text-slate-300 mb-8" />
-                                <h3 className="text-2xl font-black text-identity-navy uppercase tracking-tighter italic">No New Notifications</h3>
-                                <p className="text-[10px] font-black uppercase tracking-[0.4em] mt-4 italic">Your notification log is currently empty</p>
+                            <div className="p-16 text-center opacity-40">
+                                <Bell size={48} className="mx-auto text-slate-300 mb-4" />
+                                <h3 className="text-xl font-black text-identity-navy uppercase tracking-tighter italic">No New Notifications</h3>
+                                <p className="text-[9px] font-black uppercase tracking-[0.4em] mt-3 italic">Your notification log is currently empty</p>
                             </div>
                         )}
                     </div>

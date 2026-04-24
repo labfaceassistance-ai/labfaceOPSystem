@@ -175,17 +175,13 @@ export default function ScheduleTab({ user, classes }: ScheduleTabProps) {
                                 WEEKLY SCHEDULE
                             </h2>
                             <div className="flex items-center gap-3">
-                                <div className="w-2 h-2 rounded-full bg-[#5CB4E4] animate-pulse" />
-                                <p className="text-[9px] font-black text-[#5CB4E4] uppercase tracking-[0.3em] italic">
-                                    SYNCHRONIZED • ONLINE STATUS VERIFIED
-                                </p>
+                                {/* Decorative status removed */}
                             </div>
                         </div>
                     </div>
                     
                     <div className="hidden lg:flex items-center gap-4 bg-white/60 p-3 px-6 rounded-2xl border border-white/40 shadow-sm">
-                        <Zap size={14} className="text-[#5CB4E4] animate-pulse" />
-                        <p className="text-[9px] font-black text-[#041C3C] uppercase tracking-[0.3em] italic">REAL-TIME SYNC ACTIVE</p>
+                        {/* Real-time sync text removed */}
                     </div>
                     
                     <div className="flex items-center gap-4 bg-white/60 p-3 rounded-2xl border border-white/50 shadow-3xl backdrop-blur-3xl font-outfit">

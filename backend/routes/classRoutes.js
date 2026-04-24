@@ -352,8 +352,6 @@ router.get('/:id/status-today', async (req, res) => {
     }
 });
 
-module.exports = router;
-
 // Get Professor Stats Overview (Deduplicated Stats)
 router.get('/professor/:id/stats-overview', async (req, res) => {
     try {
@@ -856,11 +854,15 @@ router.get('/:id/students', async (req, res) => {
                 u.profile_picture, 
                 u.course, 
                 u.year_level,
-                CASE WHEN u.id IS NULL THEN 0 ELSE 1 END as is_registered
+                CASE WHEN u.id IS NULL THEN 0 ELSE 1 END as is_registered,
+                sg.name as group_name,
+                sg.id as group_id
             FROM enrollments e
             LEFT JOIN users u ON e.student_id = u.id OR 
                 REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(TRIM(u.user_id), '-', ''), ' ', ''), '.', ''), CHAR(9), ''), CHAR(13), ''), CHAR(10), '') = 
                 REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(TRIM(e.student_number), '-', ''), ' ', ''), '.', ''), CHAR(9), ''), CHAR(13), ''), CHAR(10), '')
+            LEFT JOIN student_group_members sgm ON e.id = sgm.enrollment_id
+            LEFT JOIN student_groups sg ON sgm.group_id = sg.id
             WHERE e.class_id = ?
             ORDER BY COALESCE(u.last_name, e.student_name)
         `, [req.params.id]);

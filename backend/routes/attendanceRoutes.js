@@ -17,9 +17,9 @@ const AI_SERVICE_URL = process.env.AI_SERVICE_URL || 'http://ai-service:8000';
 const upload = multer({ storage: multer.memoryStorage() });
 
 // ============================================
-// SCHEMA INITIALIZATION
+// SCHEMA INITIALIZATION (Deferred for maximum stability)
 // ============================================
-(async () => {
+setTimeout(async () => {
     try {
         // Ensure table exists
         await pool.query(`
@@ -69,6 +69,14 @@ const upload = multer({ storage: multer.memoryStorage() });
                 await pool.query('ALTER TABLE attendance_logs ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP');
             }
         }
+
+        // Check availability of remarks column
+        const [remarksCols] = await pool.query("SHOW COLUMNS FROM attendance_logs LIKE 'remarks'");
+        if (remarksCols.length === 0) {
+            console.log('[MIGRATION] Adding remarks to attendance_logs');
+            await pool.query('ALTER TABLE attendance_logs ADD COLUMN remarks TEXT AFTER recognition_method');
+        }
+
         // Check availability of monitoring_started_at column in sessions
         const [sessionCols] = await pool.query("SHOW COLUMNS FROM sessions LIKE 'monitoring_started_at'");
         if (sessionCols.length === 0) {
@@ -77,7 +85,7 @@ const upload = multer({ storage: multer.memoryStorage() });
         }
 
         // Fix for missing columns causing 500 Error
-        const missingSessionCols = ['reason', 'batch_students', 'session_name', 'monitoring_ended_at'];
+        const missingSessionCols = ['reason', 'batch_students', 'session_name', 'monitoring_ended_at', 'auto_close'];
         for (const col of missingSessionCols) {
             const [cols] = await pool.query(`SHOW COLUMNS FROM sessions LIKE '${col}'`);
             if (cols.length === 0) {
@@ -86,9 +94,62 @@ const upload = multer({ storage: multer.memoryStorage() });
                 if (col === 'batch_students') type = 'JSON';
                 if (col === 'session_name') type = 'VARCHAR(150)';
                 if (col === 'monitoring_ended_at') type = 'DATETIME';
-                if (col === 'monitoring_ended_at') type = 'DATETIME';
+                if (col === 'auto_close') type = 'TINYINT(1) DEFAULT 1';
                 await pool.query(`ALTER TABLE sessions ADD COLUMN ${col} ${type}`);
             }
+        }
+
+        // Ensure student_groups and student_group_members exist with correct columns
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS student_groups (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                class_id INT NOT NULL,
+                name VARCHAR(100) NOT NULL,
+                capacity INT DEFAULT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (class_id) REFERENCES classes(id) ON DELETE CASCADE
+            )
+        `);
+
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS student_group_members (
+                group_id INT NOT NULL,
+                enrollment_id INT NOT NULL,
+                PRIMARY KEY (group_id, enrollment_id),
+                FOREIGN KEY (group_id) REFERENCES student_groups(id) ON DELETE CASCADE,
+                FOREIGN KEY (enrollment_id) REFERENCES enrollments(id) ON DELETE CASCADE
+            )
+        `);
+
+        // Ensure batch_requests table exists with correct columns
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS batch_requests (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                requester_id INT NOT NULL,
+                target_group_id INT NOT NULL,
+                class_id INT NOT NULL,
+                request_type ENUM('join', 'swap') NOT NULL,
+                target_student_id INT DEFAULT NULL,
+                status ENUM('pending_peer', 'pending_professor', 'approved', 'rejected') DEFAULT 'pending_professor',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (requester_id) REFERENCES users(id) ON DELETE CASCADE,
+                FOREIGN KEY (target_group_id) REFERENCES student_groups(id) ON DELETE CASCADE,
+                FOREIGN KEY (class_id) REFERENCES classes(id) ON DELETE CASCADE
+            )
+        `);
+
+        // Check if status enum is up to date (specifically check for pending_peer)
+        const [statusCol] = await pool.query("SHOW COLUMNS FROM batch_requests LIKE 'status'");
+        if (statusCol.length > 0 && !statusCol[0].Type.includes('pending_peer')) {
+            console.log('[MIGRATION] Updating status ENUM in batch_requests');
+            await pool.query("ALTER TABLE batch_requests MODIFY COLUMN status ENUM('pending_peer', 'pending_professor', 'approved', 'rejected') DEFAULT 'pending_professor'");
+        }
+
+        // Check availability of capacity column in student_groups
+        const [capacityCol] = await pool.query("SHOW COLUMNS FROM student_groups LIKE 'capacity'");
+        if (capacityCol.length === 0) {
+            console.log('[MIGRATION] Adding capacity to student_groups');
+            await pool.query('ALTER TABLE student_groups ADD COLUMN capacity INT DEFAULT NULL');
         }
 
         // Check availability of late_threshold_minutes column in sessions
@@ -100,7 +161,7 @@ const upload = multer({ storage: multer.memoryStorage() });
     } catch (err) {
         console.error('Error initializing tables:', err);
     }
-})();
+}, 10000);
 
 // ============================================
 // SESSION MANAGEMENT
@@ -145,18 +206,19 @@ router.post('/sessions', async (req, res) => {
 
             const [result] = await pool.query(
                 `INSERT INTO sessions 
-                (class_id, date, start_time, end_time, type, batch_students, session_name, reason, late_threshold_minutes, monitoring_started_at) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NULL)`,
+                (class_id, date, start_time, end_time, type, batch_students, session_name, reason, late_threshold_minutes, auto_close, monitoring_started_at) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL)`,
                 [
                     classId,
-                    date, // Use provided future date
+                    date, 
                     startTime,
                     endTime || null,
                     sessionType,
                     batchStudents ? JSON.stringify(batchStudents) : null,
                     sessionName || null,
                     reason || null,
-                    req.body.lateThreshold || 15
+                    req.body.lateThreshold || 15,
+                    req.body.autoClose ? 1 : 0
                 ]
             );
 
@@ -259,9 +321,9 @@ router.post('/sessions', async (req, res) => {
             const pendingId = pendingSessions[0].id;
             await pool.query(
                 `UPDATE sessions 
-                 SET monitoring_started_at = NOW() 
+                 SET monitoring_started_at = NOW(), auto_close = ?
                  WHERE id = ?`,
-                [pendingId]
+                [req.body.autoClose ? 1 : 0, pendingId]
             );
 
             // Invalidate AI service session cache to ensure immediate attendance detection
@@ -333,8 +395,8 @@ router.post('/sessions', async (req, res) => {
 
         const [result] = await pool.query(
             `INSERT INTO sessions 
-            (class_id, date, start_time, end_time, type, batch_students, session_name, reason, late_threshold_minutes, monitoring_started_at) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            (class_id, date, start_time, end_time, type, batch_students, session_name, reason, late_threshold_minutes, auto_close, monitoring_started_at) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
                 classId,
                 sessionDate,
@@ -344,8 +406,9 @@ router.post('/sessions', async (req, res) => {
                 batchStudents ? JSON.stringify(batchStudents) : null,
                 sessionName || null,
                 reason || null,
-                req.body.lateThreshold || 15, // Use provided threshold or default
-                now // Set actual monitoring start time
+                req.body.lateThreshold || 15,
+                req.body.autoClose ? 1 : 0,
+                now 
             ]
         );
 
@@ -652,6 +715,38 @@ router.post('/mark', async (req, res) => {
 
         const session = sessions[0];
 
+        // --- SMART IDLE: Check Batch Windows ---
+        const now = detectionTime ? new Date(detectionTime) : new Date();
+        const phTime = new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Manila', hour: '2-digit', minute: '2-digit', hour12: false }).format(now);
+        
+        // If it's a batch session, verify we are in a batch window (+15 mins early bird)
+        if (session.type === 'batch' || (session.type === 'makeup' && session.batch_students)) {
+            // Standardizing comparison (HH:MM vs HH:MM)
+            const currentTime = phTime.substring(0, 5);
+            const sessionStart = session.start_time ? String(session.start_time).substring(0, 5) : '00:00';
+            const sessionEnd = session.end_time ? String(session.end_time).substring(0, 5) : '23:59';
+
+            if (currentTime < sessionStart || currentTime > sessionEnd) {
+                // Check if within 15 min early bird
+                const startHour = parseInt(sessionStart.split(':')[0]);
+                const startMin = parseInt(sessionStart.split(':')[1]);
+                const currHour = parseInt(currentTime.split(':')[0]);
+                const currMin = parseInt(currentTime.split(':')[1]);
+
+                const startTotalMins = startHour * 60 + startMin;
+                const currTotalMins = currHour * 60 + currMin;
+                const diffMins = startTotalMins - currTotalMins;
+
+                if (diffMins > 15 || diffMins < 0) {
+                     return res.json({ 
+                        success: false, 
+                        standby: true, 
+                        message: 'Server in Standby Mode. No active batch window.' 
+                    });
+                }
+            }
+        }
+
         // 1. Resilient Enrollment Check (Matches by student_id or student_number)
         const [enrollment] = await pool.query(
             `SELECT e.* FROM enrollments e
@@ -697,9 +792,6 @@ router.post('/mark', async (req, res) => {
             [sessionId, studentId]
         );
 
-        // Use detectionTime from AI service if available, otherwise server time
-        const now = detectionTime ? new Date(detectionTime) : new Date();
-
         // EXIT LOGIC REMOVED: Hardware is now one-camera entrance only.
         if (direction === 'EXIT') {
             return res.json({ success: true, message: 'Exit event ignored (Entrance Focus Mode)' });
@@ -709,20 +801,13 @@ router.post('/mark', async (req, res) => {
         // LOGIC: ENTRY
         // ---------------------------------------------------------
 
-        // 1. If already marked Present/Late, just log this as a movement
+        // 1. If already marked Present/Late, ignore subsequent scans (Entry Only Mode)
         if (existing.length > 0) {
-            await pool.query(
-                `INSERT INTO attendance_logs 
-                (session_id, student_id, enrollment_id, time_in, status, snapshot_url, recognition_method) 
-                VALUES (?, ?, ?, ?, ?, ?, ?)`,
-                [sessionId, studentId, enrollment[0].id, now, 'Log - Entry', snapshotUrl || null, 'CCTV']
-            );
-
             return res.json({
                 success: true,
-                message: 'Movement logged (Already Present)',
-                status: 'Log',
-                timeIn: now
+                message: 'Recognition ignored (Already marked Present)',
+                status: 'Already Present',
+                timeIn: existing[0].time_in
             });
         }
 
@@ -731,21 +816,49 @@ router.post('/mark', async (req, res) => {
         let status = 'Present';
         
         // BASELINE LOGIC: Calculated from when the Professor STARTED the session
-        // This ensures tracking is relative to the actual operational start time.
-        const startTime = new Date(session.monitoring_started_at);
+        // Fallback to session date/time if monitoring_started_at is not set
+        const startTime = session.monitoring_started_at 
+            ? new Date(session.monitoring_started_at) 
+            : new Date(`${session.date.toISOString().split('T')[0]}T${session.start_time}`);
+        
         const diffMins = (now.getTime() - startTime.getTime()) / 60000;
         const lateThreshold = session.late_threshold_minutes || 15;
 
-        // Standardized Thresholds per User Request:
-        // - Present: within 15 mins
-        // - Late: 16 to 60 mins
-        // - Absent: after 60 mins (61st min)
-        if (diffMins > 60) {
+        if (isNaN(diffMins) || diffMins > 60) {
             status = 'Absent';
         } else if (diffMins > lateThreshold) {
             status = 'Late';
         } else {
             status = 'Present';
+        }
+        
+        // Final sanity check for status: if monitoring has not actually started, default to Present
+        if (!session.monitoring_started_at && diffMins < 0) {
+            status = 'Present';
+        }
+
+        // ---------------------------------------------------------
+        // 3rd LATE CONVERSION LOGIC
+        // ---------------------------------------------------------
+        let remarks = null;
+        if (status === 'Late') {
+            // Count existing lates for this student in this class
+            const [lateCountRows] = await pool.query(`
+                SELECT COUNT(*) as count 
+                FROM attendance_logs al
+                JOIN sessions s ON al.session_id = s.id
+                JOIN enrollments e ON al.enrollment_id = e.id
+                WHERE e.student_id = ? AND s.class_id = ? AND al.status = 'Late'
+            `, [studentId, session.class_id]);
+            
+            const currentLates = parseInt(lateCountRows[0].count || 0);
+            
+            // If this is the 3rd, 6th, etc. late arrival
+            if ((currentLates + 1) % 3 === 0) {
+                status = 'Absent';
+                remarks = `Converted from ${currentLates + 1}th Late arrival`;
+                console.log(`[Attendance] Student ${studentId} 3rd late detected. Converting to Absent.`);
+            }
         }
 
         // Duplicate check is handled by the initial 'existing' query above
@@ -753,13 +866,13 @@ router.post('/mark', async (req, res) => {
         // Insert MAIN attendance log
         const [result] = await pool.query(
             `INSERT INTO attendance_logs 
-            (session_id, student_id, enrollment_id, time_in, status, snapshot_url, recognition_method) 
-            VALUES (?, ?, ?, ?, ?, ?, ?)`,
-            [sessionId, studentId, enrollment[0].id, now, status, snapshotUrl || null, 'CCTV']
+            (session_id, student_id, enrollment_id, time_in, status, snapshot_url, recognition_method, remarks) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+            [sessionId, studentId, enrollment[0].id, now, status, snapshotUrl || null, 'CCTV', remarks]
         );
 
         // Trigger warning check
-        await warningService.checkAndNotify(studentId, session.class_id);
+        await warningService.checkAndNotify(studentId, session.class_id, remarks !== null);
 
         res.status(201).json({
             success: true,
@@ -915,8 +1028,30 @@ router.put('/manual-update', async (req, res) => {
         if (existing.length > 0) {
             logId = existing[0].id;
             console.log('[DEBUG] Updating existing log:', logId);
-            // Ensure proper capitalization for consistency
-            const capitalizedStatus = status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
+            let capitalizedStatus = status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
+            let remarks = null;
+
+            // 3rd Late Conversion in Manual Update
+            if (capitalizedStatus === 'Late' && studentId) {
+                const [sessionInfo] = await pool.query('SELECT class_id FROM sessions WHERE id = ?', [sessionId]);
+                if (sessionInfo.length > 0) {
+                    const [lateCountRows] = await pool.query(`
+                        SELECT COUNT(*) as count 
+                        FROM attendance_logs al
+                        JOIN sessions s ON al.session_id = s.id
+                        JOIN enrollments e ON al.enrollment_id = e.id
+                        WHERE e.student_id = ? AND s.class_id = ? AND al.status = 'Late' AND al.id != ?
+                    `, [studentId, sessionInfo[0].class_id, logId]);
+                    
+                    const currentLates = parseInt(lateCountRows[0].count || 0);
+                    if ((currentLates + 1) % 3 === 0) {
+                        capitalizedStatus = 'Absent';
+                        remarks = `Converted from ${currentLates + 1}th Late arrival (Manual)`;
+                        console.log(`[ManualUpdate] Student ${studentId} 3rd late detected. Converting to Absent.`);
+                    }
+                }
+            }
+
             // Update existing log - also ensure student_id/enrollment_id are set if they were null
             // We use COALESCE to keep existing non-null values, or update if we have better info
             const [updateRes] = await pool.query(
@@ -925,20 +1060,42 @@ router.put('/manual-update', async (req, res) => {
                      time_in = COALESCE(time_in, ?),
                      student_id = COALESCE(student_id, ?),
                      enrollment_id = COALESCE(enrollment_id, ?),
-                     recognition_method = 'Manual'
+                     recognition_method = 'Manual',
+                     remarks = COALESCE(?, remarks)
                  WHERE id = ?`,
-                [capitalizedStatus, now, studentId, enrollmentId, logId]
+                [capitalizedStatus, now, studentId, enrollmentId, remarks, logId]
             );
             console.log('[DEBUG] Update Result:', updateRes);
         } else {
             console.log('[DEBUG] Creating new log');
             // Create new log
             if (status !== 'Absent') {
-                // Ensure proper capitalization for consistency
-                const capitalizedStatus = status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
+                let capitalizedStatus = status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
+                let remarks = null;
+
+                // 3rd Late Conversion in Manual Creation
+                if (capitalizedStatus === 'Late' && studentId) {
+                    const [sessionInfo] = await pool.query('SELECT class_id FROM sessions WHERE id = ?', [sessionId]);
+                    if (sessionInfo.length > 0) {
+                        const [lateCountRows] = await pool.query(`
+                            SELECT COUNT(*) as count 
+                            FROM attendance_logs al
+                            JOIN sessions s ON al.session_id = s.id
+                            JOIN enrollments e ON al.enrollment_id = e.id
+                            WHERE e.student_id = ? AND s.class_id = ? AND al.status = 'Late'
+                        `, [studentId, sessionInfo[0].class_id]);
+                        
+                        const currentLates = parseInt(lateCountRows[0].count || 0);
+                        if ((currentLates + 1) % 3 === 0) {
+                            capitalizedStatus = 'Absent';
+                            remarks = `Converted from ${currentLates + 1}th Late arrival (Manual)`;
+                        }
+                    }
+                }
+
                 const [result] = await pool.query(
-                    'INSERT INTO attendance_logs (session_id, student_id, enrollment_id, time_in, status, snapshot_url, recognition_method) VALUES (?, ?, ?, ?, ?, ?, ?)',
-                    [sessionId, studentId || null, enrollmentId || null, now, capitalizedStatus, null, 'Manual']
+                    'INSERT INTO attendance_logs (session_id, student_id, enrollment_id, time_in, status, snapshot_url, recognition_method, remarks) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+                    [sessionId, studentId || null, enrollmentId || null, now, capitalizedStatus, null, 'Manual', remarks]
                 );
                 logId = result.insertId;
                 console.log('[DEBUG] Inserted log with ID:', logId);
@@ -947,8 +1104,8 @@ router.put('/manual-update', async (req, res) => {
                 // Create manual Absent record
                 const capitalizedStatus = 'Absent';
                 const [result] = await pool.query(
-                    'INSERT INTO attendance_logs (session_id, student_id, enrollment_id, time_in, status, snapshot_url, recognition_method) VALUES (?, ?, ?, ?, ?, ?, ?)',
-                    [sessionId, studentId || null, enrollmentId || null, now, capitalizedStatus, null, 'Manual']
+                    'INSERT INTO attendance_logs (session_id, student_id, enrollment_id, time_in, status, snapshot_url, recognition_method, remarks) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+                    [sessionId, studentId || null, enrollmentId || null, now, capitalizedStatus, null, 'Manual', null]
                 );
                 logId = result.insertId;
                 console.log('[DEBUG] Inserted manual Absent log with ID:', logId);
@@ -962,7 +1119,7 @@ router.put('/manual-update', async (req, res) => {
             try {
                 const [sessionInfo] = await pool.query('SELECT class_id FROM sessions WHERE id = ?', [sessionId]);
                 if (sessionInfo.length > 0) {
-                    warningService.checkAndNotify(studentId, sessionInfo[0].class_id)
+                    warningService.checkAndNotify(studentId, sessionInfo[0].class_id, remarks !== null)
                         .catch(err => console.error('[ManualUpdate] Warning check failed:', err.message));
                 }
             } catch (warnErr) {

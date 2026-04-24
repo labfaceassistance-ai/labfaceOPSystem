@@ -1,8 +1,9 @@
 "use client";
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { X, Calendar, Clock, Play, Users, Search, Save, Trash2, ChevronDown, AlertCircle } from 'lucide-react';
+import { X, Calendar, Clock, Play, Users, Search, Save, Trash2, ChevronDown, AlertCircle, UserPlus, Bell, ArrowRightLeft } from 'lucide-react';
 import axios from 'axios';
+import { useNavigation } from '@/context/NavigationContext';
 import ConfirmModal from './ConfirmModal';
 
 interface SessionModalProps {
@@ -22,10 +23,13 @@ interface Student {
     course: string;
     year_level: number;
     is_registered: number; // 0 or 1
+    group_name?: string;
+    group_id?: number;
 }
 
 export default function SessionModal({ isOpen, onClose, classId, className, onSuccess }: SessionModalProps) {
     const router = useRouter();
+    const { setActiveTab } = useNavigation();
     const [type, setType] = useState('regular'); // regular, makeup, batch
     const [loading, setLoading] = useState(false);
     const [isRedirecting, setIsRedirecting] = useState(false);
@@ -52,9 +56,13 @@ export default function SessionModal({ isOpen, onClose, classId, className, onSu
 
     // Group Management State
     const [groups, setGroups] = useState<any[]>([]);
-    const [viewMode, setViewMode] = useState<'schedule' | 'create_batch'>('schedule');
+    const [viewMode, setViewMode] = useState<'schedule' | 'create_batch' | 'requests'>('schedule');
     const [newGroupName, setNewGroupName] = useState('');
     const [isSavingGroup, setIsSavingGroup] = useState(false);
+    const [hideAssigned, setHideAssigned] = useState(false);
+    const [isCapacityEnabled, setIsCapacityEnabled] = useState(false);
+    const [groupCapacity, setGroupCapacity] = useState<number>(30);
+    const [pendingRequests, setPendingRequests] = useState<any[]>([]);
 
     // Status State (For Restrictions)
     const [todayStatus, setTodayStatus] = useState<any>(null);
@@ -87,9 +95,32 @@ export default function SessionModal({ isOpen, onClose, classId, className, onSu
             if (type === 'batch' || (type === 'makeup' && makeupByBatch)) {
                 fetchEnrolledStudents();
                 fetchGroups();
+                fetchPendingRequests();
             }
         }
     }, [type, makeupByBatch, classId, isOpen]);
+
+    const fetchPendingRequests = async () => {
+        try {
+            const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
+            const response = await axios.get(`${API_URL}/api/groups/class/${classId}/requests`);
+            setPendingRequests(response.data);
+        } catch (error) {
+            console.error('Failed to fetch requests:', error);
+        }
+    };
+
+    const handleRequestAction = async (requestId: number, action: 'approve' | 'reject') => {
+        try {
+            const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
+            await axios.post(`${API_URL}/api/groups/requests/${requestId}/${action}`);
+            await fetchPendingRequests();
+            await fetchGroups(); // Refresh groups if join was approved
+            await fetchEnrolledStudents();
+        } catch (error) {
+            console.error(`Failed to ${action} request:`, error);
+        }
+    };
 
     const fetchStatusToday = async () => {
         setFetchingStatus(true);
@@ -122,11 +153,16 @@ export default function SessionModal({ isOpen, onClose, classId, className, onSu
             await axios.post(`${API_URL}/api/groups`, {
                 classId,
                 name: newGroupName,
-                enrollmentIds: selectedStudents
+                enrollmentIds: selectedStudents,
+                capacity: isCapacityEnabled ? groupCapacity : null
             });
+            
             setNewGroupName('');
             setSelectedStudents([]);
-            fetchGroups();
+            setIsCapacityEnabled(false);
+            setGroupCapacity(30);
+            await fetchGroups();
+            await fetchEnrolledStudents(); // Refresh student availability badges
             setViewMode('schedule');
             setConfirmModal({
                 isOpen: true,
@@ -162,7 +198,12 @@ export default function SessionModal({ isOpen, onClose, classId, className, onSu
                 try {
                     const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
                     await axios.delete(`${API_URL}/api/groups/${groupId}`);
-                    fetchGroups();
+                    
+                    // Remove from scheduled batches if present
+                    setScheduledBatches(prev => prev.filter(b => b.groupId !== groupId));
+                    
+                    await fetchGroups();
+                    await fetchEnrolledStudents(); // Refresh student availability badges
                     setConfirmModal(prev => ({ ...prev, isOpen: false }));
                 } catch (error) {
                     console.error('Failed to delete group:', error);
@@ -240,18 +281,33 @@ export default function SessionModal({ isOpen, onClose, classId, className, onSu
     };
 
     const selectAll = () => {
-        setSelectedStudents(filteredStudents.map(s => s.enrollment_id));
+        // Smart selection: Only select unassigned students by default if they aren't all already selected
+        const unassigned = filteredStudents.filter(s => !s.group_name);
+        const unassignedIds = unassigned.map(s => s.enrollment_id);
+        
+        // If all unassigned are already selected, then select actually ALL
+        const allUnassignedSelected = unassignedIds.every(id => selectedStudents.includes(id));
+        
+        if (allUnassignedSelected || unassignedIds.length === 0) {
+            setSelectedStudents(filteredStudents.map(s => s.enrollment_id));
+        } else {
+            setSelectedStudents(prev => Array.from(new Set([...prev, ...unassignedIds])));
+        }
     };
 
     const deselectAll = () => {
         setSelectedStudents([]);
     };
 
-    const filteredStudents = students.filter(student =>
-        `${student.first_name} ${student.last_name} ${student.user_id}`
+    const filteredStudents = students.filter(student => {
+        const matchesSearch = `${student.first_name} ${student.last_name} ${student.user_id}`
             .toLowerCase()
-            .includes(searchQuery.toLowerCase())
-    );
+            .includes(searchQuery.toLowerCase());
+        
+        if (hideAssigned && student.group_name) return false;
+        
+        return matchesSearch;
+    });
 
     const handleStartSession = async () => {
         setLoading(true);
@@ -318,7 +374,8 @@ export default function SessionModal({ isOpen, onClose, classId, className, onSu
                         sessionName: batch.groupName,
 
                         isScheduled: batchIsScheduled,
-                        lateThreshold: batch.lateThreshold || 15
+                        lateThreshold: batch.lateThreshold || 15,
+                        autoClose: true
                     };
 
                     if (type === 'makeup' && reason) {
@@ -338,7 +395,9 @@ export default function SessionModal({ isOpen, onClose, classId, className, onSu
 
                 if (lastStartedSessionId) {
                     willRedirect = true;
+                    willRedirect = true;
                     setIsRedirecting(true);
+                    setActiveTab('monitor');
                     router.push(`/professor/dashboard?tab=monitor&sessionId=${lastStartedSessionId}`);
                     // Do NOT close modal, kept open for loading state
                 } else {
@@ -353,7 +412,8 @@ export default function SessionModal({ isOpen, onClose, classId, className, onSu
                     startTime,
                     type,
                     isScheduled,
-                    lateThreshold: lateThreshold || 15
+                    lateThreshold: lateThreshold || 15,
+                    autoClose: true
                 };
 
                 if (endTime) payload.endTime = endTime;
@@ -370,7 +430,9 @@ export default function SessionModal({ isOpen, onClose, classId, className, onSu
                 } else if (response.data.sessionId) {
                     // Immediate start
                     willRedirect = true;
+                    willRedirect = true;
                     setIsRedirecting(true);
+                    setActiveTab('monitor');
                     router.push(`/professor/dashboard?tab=monitor&sessionId=${response.data.sessionId}`);
                     // Do NOT close modal, kept open for loading state
                 }
@@ -543,8 +605,8 @@ export default function SessionModal({ isOpen, onClose, classId, className, onSu
                                     onChange={(e) => setLateThreshold(parseInt(e.target.value) || 15)}
                                     className="w-full pl-12 pr-4 py-3 bg-white/60 border border-identity-sky/10 rounded-xl text-sm font-black text-identity-navy uppercase tracking-[0.15em] focus:border-identity-sky/50 focus:outline-none transition-all shadow-inner"
                                 />
-                                <p className="text-[10px] text-slate-300 mt-3 font-bold uppercase tracking-[0.15em] ml-1">Students arriving after {lateThreshold}m will be marked Late.</p>
                             </div>
+                            <p className="mt-2 text-[8px] font-bold text-slate-400 uppercase tracking-[0.15em] ml-1 italic">Students arriving after {lateThreshold}m will be marked late.</p>
                         </div>
                     </div>
                 )}
@@ -673,16 +735,60 @@ export default function SessionModal({ isOpen, onClose, classId, className, onSu
                                             />
                                         </div>
 
+                                        {/* Slot Limit Logic (Copied from By Batch) */}
+                                        <div className="space-y-4">
+                                            <div className="flex items-center justify-between p-4 bg-white/40 border border-identity-sky/10 rounded-2xl shadow-inner group hover:border-identity-sky/30 transition-all">
+                                                <div className="flex items-center gap-3">
+                                                    <div className={`p-2 rounded-xl ${isCapacityEnabled ? 'bg-identity-sky/10 text-identity-sky' : 'bg-slate-100 text-slate-400'}`}>
+                                                        <Users size={18} />
+                                                    </div>
+                                                    <div>
+                                                        <h4 className="text-[10px] font-black text-identity-navy uppercase tracking-[0.15em] mb-0.5">Enable Slot Limit</h4>
+                                                        <p className="text-[8px] font-bold text-slate-400 uppercase tracking-[0.15em] italic">Restrict number of students for this batch</p>
+                                                    </div>
+                                                </div>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setIsCapacityEnabled(!isCapacityEnabled)}
+                                                    className={`w-12 h-6 rounded-full transition-all relative flex items-center px-1 ${isCapacityEnabled ? 'bg-identity-sky' : 'bg-slate-200'}`}
+                                                >
+                                                    <div className={`w-4 h-4 bg-white rounded-full shadow-md transition-all ${isCapacityEnabled ? 'translate-x-6' : 'translate-x-0'}`} />
+                                                </button>
+                                            </div>
+
+                                            {isCapacityEnabled && (
+                                                <div className="p-4 bg-identity-sky/5 border border-identity-sky/10 rounded-2xl animate-in zoom-in-95 duration-300">
+                                                    <label className="block text-[10px] font-black text-identity-sky mb-2 uppercase tracking-[0.15em] ml-1">Maximum Capacity</label>
+                                                    <input
+                                                        type="number"
+                                                        value={groupCapacity}
+                                                        onChange={(e) => setGroupCapacity(parseInt(e.target.value) || 1)}
+                                                        className="w-full px-4 py-3 bg-white/60 border border-identity-sky/20 rounded-xl text-sm font-black text-identity-navy focus:border-identity-sky/50 focus:outline-none shadow-inner"
+                                                        placeholder="e.g. 30"
+                                                    />
+                                                </div>
+                                            )}
+                                        </div>
+
                                         <div>
                                             <div className="flex items-center justify-between mb-3 ml-1">
                                                 <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.15em] flex items-center gap-2">
                                                     <Users size={16} />
                                                     Select Students ({selectedStudents.length}/{students.length})
                                                 </label>
-                                                <div className="flex gap-3">
-                                                    <button type="button" onClick={selectAll} className="text-[10px] font-black text-identity-sky uppercase tracking-[0.15em]">All</button>
-                                                    <span className="text-slate-200">|</span>
-                                                    <button type="button" onClick={deselectAll} className="text-[10px] font-black text-slate-500 uppercase tracking-[0.15em]">None</button>
+                                                <div className="flex items-center gap-4">
+                                                    <button 
+                                                        type="button" 
+                                                        onClick={() => setHideAssigned(!hideAssigned)}
+                                                        className={`text-[8px] px-2 py-1 rounded border font-black uppercase tracking-[0.15em] transition-all ${hideAssigned ? 'bg-identity-sky/20 border-identity-sky text-identity-sky' : 'bg-white/40 border-identity-sky/10 text-slate-400'}`}
+                                                    >
+                                                        {hideAssigned ? 'Showing Unassigned' : 'Hide Assigned'}
+                                                    </button>
+                                                    <div className="flex gap-3">
+                                                        <button type="button" onClick={selectAll} className="text-[10px] font-black text-identity-sky uppercase tracking-[0.15em]">All</button>
+                                                        <span className="text-slate-200">|</span>
+                                                        <button type="button" onClick={deselectAll} className="text-[10px] font-black text-slate-500 uppercase tracking-[0.15em]">None</button>
+                                                    </div>
                                                 </div>
                                             </div>
 
@@ -704,7 +810,10 @@ export default function SessionModal({ isOpen, onClose, classId, className, onSu
                                                     <div className="p-12 text-center text-[10px] font-black text-slate-300 uppercase tracking-[0.15em]">No students found</div>
                                                 ) : (
                                                     filteredStudents.map((student) => (
-                                                        <label key={student.enrollment_id} className="flex items-center gap-4 px-4 py-3 hover:bg-identity-sky/5 cursor-pointer border-b border-identity-sky/5 last:border-0 transition-colors">
+                                                        <label 
+                                                            key={student.enrollment_id} 
+                                                            className={`flex items-center gap-4 px-4 py-3 hover:bg-identity-sky/5 cursor-pointer border-b border-identity-sky/5 last:border-0 transition-all ${student.group_name ? 'opacity-40' : ''}`}
+                                                        >
                                                             <input
                                                                 type="checkbox"
                                                                 checked={selectedStudents.includes(student.enrollment_id)}
@@ -712,9 +821,16 @@ export default function SessionModal({ isOpen, onClose, classId, className, onSu
                                                                 className="w-5 h-5 bg-white border-identity-sky/20 rounded text-identity-sky focus:ring-identity-sky"
                                                             />
                                                             <div className="flex-1 min-w-0">
-                                                                <div className="flex items-center gap-3">
-                                                                    <div className="text-[10px] font-black text-identity-navy uppercase tracking-[0.15em] truncate">{student.last_name}, {student.first_name}</div>
-                                                                    {!student.is_registered && <span className="px-2 py-0.5 rounded-lg bg-slate-100 text-slate-400 text-[8px] font-black uppercase border border-slate-200">NO ACCOUNT</span>}
+                                                                <div className="flex items-center justify-between gap-3">
+                                                                    <div className="flex items-center gap-3 min-w-0">
+                                                                        <div className="text-[10px] font-black text-identity-navy uppercase tracking-[0.15em] truncate">{student.last_name}, {student.first_name}</div>
+                                                                        {!student.is_registered && <span className="px-2 py-0.5 rounded-lg bg-slate-100 text-slate-400 text-[8px] font-black uppercase border border-slate-200">NO ACCOUNT</span>}
+                                                                    </div>
+                                                                    {student.group_name && (
+                                                                        <span className="px-2 py-0.5 rounded-lg bg-identity-sky/10 text-identity-sky text-[8px] font-black uppercase border border-identity-sky/20 shrink-0">
+                                                                            {student.group_name}
+                                                                        </span>
+                                                                    )}
                                                                 </div>
                                                                 <div className="text-[8px] font-black text-slate-400 font-mono mt-0.5 uppercase tracking-[0.15em]">{student.user_id}</div>
                                                             </div>
@@ -806,17 +922,31 @@ export default function SessionModal({ isOpen, onClose, classId, className, onSu
                             </div>
                         </div>
 
-                        {/* View Switcher */}
-                        <div className="flex justify-between items-center mb-6">
-                            <h4 className="text-sm font-black text-identity-navy uppercase tracking-tight">
-                                {viewMode === 'schedule' ? 'Schedule Batches' : 'Create New Batch'}
-                            </h4>
-                            <button
-                                onClick={() => setViewMode(viewMode === 'schedule' ? 'create_batch' : 'schedule')}
-                                className="text-[10px] font-black text-identity-sky hover:text-identity-navy uppercase tracking-[0.15em] transition-all"
-                            >
-                                {viewMode === 'schedule' ? '+ Create New Batch' : '← Back to Schedule'}
-                            </button>
+                        {/* View Switcher (Tabs) */}
+                        <div className="flex items-center gap-2 mb-8 bg-black/20 p-1.5 rounded-2xl border border-white/5 shadow-inner">
+                            {[
+                                { id: 'schedule', label: 'Schedule', icon: Clock },
+                                { id: 'create_batch', label: 'Create Batch', icon: UserPlus },
+                                { id: 'requests', label: 'Requests', icon: Bell, badge: pendingRequests.length }
+                            ].map((tab) => (
+                                <button
+                                    key={tab.id}
+                                    onClick={() => setViewMode(tab.id as any)}
+                                    className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-[10px] font-black uppercase tracking-[0.15em] transition-all relative ${
+                                        viewMode === tab.id 
+                                        ? 'bg-identity-navy text-white shadow-lg border border-identity-sky/20' 
+                                        : 'text-slate-400 hover:text-white hover:bg-white/5'
+                                    }`}
+                                >
+                                    <tab.icon size={14} />
+                                    {tab.label}
+                                    {tab.badge ? (
+                                        <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[8px] flex items-center justify-center rounded-full shadow-lg border-2 border-identity-navy animate-pulse">
+                                            {tab.badge}
+                                        </span>
+                                    ) : null}
+                                </button>
+                            ))}
                         </div>
 
                         {viewMode === 'create_batch' ? (
@@ -831,6 +961,30 @@ export default function SessionModal({ isOpen, onClose, classId, className, onSu
                                         placeholder="e.g., Batch 1"
                                         className="w-full px-4 py-3 bg-black/40 border border-white/5 rounded-xl text-sm font-black text-brand-gold uppercase tracking-[0.15em] focus:border-brand-gold/50 focus:outline-none shadow-inner"
                                     />
+                                </div>
+
+                                <div className="bg-white/10 p-4 rounded-xl border border-white/5 shadow-inner">
+                                    <div className="flex items-center justify-between mb-2">
+                                        <label className="text-[10px] font-black text-slate-300 uppercase tracking-[0.15em]">Enable Slot Limit</label>
+                                        <button
+                                            type="button"
+                                            onClick={() => setIsCapacityEnabled(!isCapacityEnabled)}
+                                            className={`w-10 h-5 rounded-full transition-all relative ${isCapacityEnabled ? 'bg-identity-sky' : 'bg-white/10'}`}
+                                        >
+                                            <div className={`absolute top-1 w-3 h-3 rounded-full bg-white transition-all ${isCapacityEnabled ? 'left-6' : 'left-1'}`} />
+                                        </button>
+                                    </div>
+                                    {isCapacityEnabled && (
+                                        <div className="mt-4 animate-in fade-in slide-in-from-top-1">
+                                            <label className="block text-[8px] font-black text-slate-400 mb-1 uppercase tracking-[0.15em] ml-1">Max Students</label>
+                                            <input
+                                                type="number"
+                                                value={groupCapacity}
+                                                onChange={(e) => setGroupCapacity(parseInt(e.target.value) || 0)}
+                                                className="w-full px-4 py-2 bg-black/40 border border-white/5 rounded-lg text-xs font-black text-brand-gold focus:outline-none focus:border-brand-gold/50"
+                                            />
+                                        </div>
+                                    )}
                                 </div>
 
                                 <div>
@@ -892,6 +1046,51 @@ export default function SessionModal({ isOpen, onClose, classId, className, onSu
                                     <Save size={18} /> {isSavingGroup ? 'Saving Batch...' : 'Save Batch'}
                                 </button>
                             </div>
+                        ) : viewMode === 'requests' ? (
+                            // --- REQUESTS VIEW ---
+                            <div className="space-y-4 animate-fade-in">
+                                {pendingRequests.length === 0 ? (
+                                    <div className="text-slate-300 text-[10px] font-black uppercase tracking-[0.15em] py-16 text-center border-2 border-dashed border-identity-sky/5 rounded-2xl bg-white/40 shadow-inner">
+                                        No pending requests for this class.
+                                    </div>
+                                ) : (
+                                    pendingRequests.map((req) => (
+                                        <div key={req.id} className="bg-white/60 p-5 rounded-2xl border border-identity-sky/10 shadow-xl flex flex-col sm:flex-row items-center justify-between gap-4 group hover:border-identity-sky/30 transition-all">
+                                            <div className="flex items-center gap-4">
+                                                <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${req.request_type === 'swap' ? 'bg-amber-500/10 text-amber-500' : 'bg-emerald-500/10 text-emerald-500'}`}>
+                                                    {req.request_type === 'swap' ? <ArrowRightLeft size={20} /> : <UserPlus size={20} />}
+                                                </div>
+                                                <div>
+                                                    <div className="text-[10px] font-black text-identity-navy uppercase tracking-[0.1em]">{req.requester_name}</div>
+                                                    <div className="text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mt-0.5">
+                                                        {req.request_type.toUpperCase()} TO: <span className="text-identity-sky">{req.target_group_name}</span>
+                                                    </div>
+                                                    {req.request_type === 'swap' && (
+                                                        <div className="text-[8px] font-black text-amber-500 uppercase tracking-[0.2em] mt-1">
+                                                            WITH: {req.target_student_name || req.target_student_id} ({req.status === 'pending_peer' ? 'WAITING FOR PEER' : 'PEER AGREED'})
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-3 w-full sm:w-auto">
+                                                <button
+                                                    onClick={() => handleRequestAction(req.id, 'reject')}
+                                                    className="flex-1 sm:flex-none px-4 py-2 bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white rounded-xl text-[8px] font-black uppercase tracking-[0.2em] border border-rose-500/10 transition-all"
+                                                >
+                                                    Reject
+                                                </button>
+                                                <button
+                                                    onClick={() => handleRequestAction(req.id, 'approve')}
+                                                    disabled={req.request_type === 'swap' && req.status === 'pending_peer'}
+                                                    className="flex-1 sm:flex-none px-4 py-2 bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500 hover:text-white disabled:opacity-30 disabled:hover:bg-emerald-500/10 disabled:hover:text-emerald-500 rounded-xl text-[8px] font-black uppercase tracking-[0.2em] border border-emerald-500/10 transition-all"
+                                                >
+                                                    Approve
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ))
+                                )}
+                            </div>
                         ) : (
                             // --- SCHEDULE VIEW ---
                             <div className="space-y-6 animate-fade-in">
@@ -908,7 +1107,9 @@ export default function SessionModal({ isOpen, onClose, classId, className, onSu
                                                     >
                                                         <option value="">Select a batch...</option>
                                                         {groups.map(g => (
-                                                            <option key={g.id} value={g.id} className="bg-white text-identity-navy">{g.name} ({g.enrollmentIds.length} students)</option>
+                                                            <option key={g.id} value={g.id} className="bg-white text-identity-navy">
+                                                                {g.name} ({g.enrollmentIds.length}{g.capacity ? ` / ${g.capacity}` : ''} students)
+                                                            </option>
                                                         ))}
                                                     </select>
                                                     <ChevronDown className="absolute right-4 top-3.5 text-slate-300 pointer-events-none" size={16} />
@@ -972,8 +1173,12 @@ export default function SessionModal({ isOpen, onClose, classId, className, onSu
                                                         </div>
                                                         <div className="text-[10px] font-black text-identity-navy uppercase tracking-[0.15em]">{batch.groupName}</div>
                                                     </div>
-                                                    <button onClick={() => handleRemoveFromSchedule(idx)} className="text-slate-300 hover:text-red-500 p-2 rounded-lg hover:bg-red-50 transition-all" title="Remove Batch">
-                                                        <X size={18} />
+                                                    <button 
+                                                        onClick={() => handleDeleteGroup(batch.groupId)} 
+                                                        className="text-slate-300 hover:text-red-500 p-2 rounded-lg hover:bg-red-50 transition-all" 
+                                                        title="Permanently Delete Batch"
+                                                    >
+                                                        <Trash2 size={18} />
                                                     </button>
                                                 </div>
                                                 

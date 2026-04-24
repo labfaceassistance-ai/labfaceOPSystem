@@ -116,6 +116,35 @@ app.use(notFoundHandler);
 app.use(errorHandler);
 
 // Run server
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
+  
+  // DEFERRED BACKGROUND JOB (Wait 30s before starting to ensure server is fully responsive)
+  setTimeout(() => {
+    setInterval(async () => {
+      try {
+        const pool = require('./config/db');
+        const now = new Date();
+        const phTime = new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Manila', hour: '2-digit', minute: '2-digit', hour12: false }).format(now);
+        const phDate = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Manila', year: 'numeric', month: '2-digit', day: '2-digit' }).format(now);
+
+        const [result] = await pool.query(`
+          UPDATE sessions 
+          SET monitoring_ended_at = NOW() 
+          WHERE auto_close = 1 
+          AND monitoring_started_at IS NOT NULL 
+          AND monitoring_ended_at IS NULL 
+          AND end_time IS NOT NULL
+          AND end_time <= ?
+          AND date <= ?
+        `, [phTime, phDate]);
+
+        if (result.affectedRows > 0) {
+          console.log(`[Auto-Close] Automatically ended ${result.affectedRows} session(s) at ${phTime}`);
+        }
+      } catch (err) {
+        console.error('[Auto-Close Error]', err.message);
+      }
+    }, 60000);
+  }, 30000);
 });
