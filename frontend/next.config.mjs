@@ -39,10 +39,10 @@ const nextConfig = {
         const BACKEND_URL = process.env.BACKEND_URL || 'http://backend:5000';
 
         return [
-            // {
-            //     source: '/api/ai/:path*',
-            //     destination: `http://ai-service:8000/:path*`,
-            // },
+            {
+                source: '/api/ai/:path*',
+                destination: `${BACKEND_URL}/api/ai/:path*`,
+            },
             {
                 source: '/api/:path*',
                 destination: `${BACKEND_URL}/api/:path*`,

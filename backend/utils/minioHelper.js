@@ -2,19 +2,47 @@ console.error('DEBUG: Loading minioHelper.js');
 const Minio = require('minio');
 
 const endpointStr = process.env.MINIO_ENDPOINT || 'minio';
+const configuredPort = process.env.MINIO_PORT ? parseInt(process.env.MINIO_PORT, 10) : undefined;
+const useSSL = process.env.MINIO_USE_SSL === 'true';
+
 console.error('DEBUG: MinIO Helper Init - Raw Endpoint:', process.env.MINIO_ENDPOINT);
 console.error('DEBUG: MinIO Helper Init - Resolved EndpointStr:', endpointStr);
+console.error('DEBUG: MinIO Helper Init - Use SSL:', useSSL);
 
-let endPoint, port;
-if (endpointStr.includes(':')) {
-    const parts = endpointStr.split(':');
-    endPoint = parts[0];
-    port = parseInt(parts[1], 10);
-} else {
-    endPoint = endpointStr;
-    port = 9000;
+function parseEndpoint(rawEndpoint) {
+    const defaultPort = useSSL ? 443 : 9000;
+
+    if (!rawEndpoint) {
+        return { endPoint: 'minio', port: configuredPort || defaultPort, useSSL };
+    }
+
+    if (/^https?:\/\//i.test(rawEndpoint)) {
+        const parsed = new URL(rawEndpoint);
+        return {
+            endPoint: parsed.hostname,
+            port: parseInt(parsed.port || String(configuredPort || (parsed.protocol === 'https:' ? 443 : 80)), 10),
+            useSSL: parsed.protocol === 'https:'
+        };
+    }
+
+    if (rawEndpoint.includes(':') && !rawEndpoint.includes('/')) {
+        const [host, portPart] = rawEndpoint.split(':');
+        return {
+            endPoint: host,
+            port: parseInt(portPart, 10) || configuredPort || defaultPort,
+            useSSL
+        };
+    }
+
+    return {
+        endPoint: rawEndpoint,
+        port: configuredPort || defaultPort,
+        useSSL
+    };
 }
-console.error(`DEBUG: MinIO Configuration - Host: ${endPoint}, Port: ${port}`);
+
+const { endPoint, port } = parseEndpoint(endpointStr);
+console.error(`DEBUG: MinIO Configuration - Host: ${endPoint}, Port: ${port}, SSL: ${useSSL}`);
 
 // Initialize MinIO client
 let minioClient;
@@ -23,7 +51,7 @@ try {
     minioClient = new Minio.Client({
         endPoint: endPoint,
         port: port,
-        useSSL: false,
+        useSSL: useSSL,
         accessKey: process.env.MINIO_ACCESS_KEY || 'minioadmin',
         secretKey: process.env.MINIO_SECRET_KEY || 'minioadmin'
     });
